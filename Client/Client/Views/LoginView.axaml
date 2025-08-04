@@ -31,11 +31,11 @@
 			<StackPanel Spacing="20">
 				<TextBlock HorizontalAlignment="Center" FontSize="58" FontWeight="Bold" Foreground="#6c8b8d">Login</TextBlock>
 		
-				<TextBox HorizontalAlignment="Stretch" Watermark="Username" MaxLength="64" Margin="0, 20, 0, 0"/>
+				<TextBox HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"/>
 					
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
-					<TextBox HorizontalAlignment="Stretch" Watermark="Password" MaxLength="64" Padding="10, 6, 40, 0" 
+					<TextBox HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0" 
 					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"></TextBox>
 					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
 						<Panel>
@@ -45,8 +45,8 @@
 					</ToggleButton>
 				</Grid>
 				
-				<Button HorizontalAlignment="Center" FontSize="18" Margin="0, 70, 0, 0">Login</Button>
-				<Button HorizontalAlignment="Center" FontSize="18">Create Account</Button>
+				<Button HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 0">Login</Button>
+				<Button HorizontalAlignment="Center" Classes="submit" >Create Account</Button>
 			</StackPanel>
 			
 		</Border>

@@ -29,4 +29,18 @@
 		<Setter Property="Background" Value="#b5c3c4"/>
 	</Style>
 
+	<Style Selector="TextBox">
+		<Setter Property="MaxLength" Value="64"/>							<!-- Buffer overflow protection for all TextBoxes -->
+		<Setter Property="Background" Value="#ecfeff"></Setter>
+		<Setter Property="BorderThickness" Value="1"></Setter>
+		<Setter Property="BorderBrush" Value="#c7d7d8"></Setter>
+		<Setter Property="CornerRadius" Value="8"></Setter>
+	</Style>
+	
+	<Style Selector="Button.submit">
+		<Setter Property="Background" Value="#ecffff"/>
+		<Setter Property="Foreground" Value="#6c8b8d"/>
+		<Setter Property="CornerRadius" Value="8"/>
+		<Setter Property="FontSize" Value="18"/>
+	</Style>
 </Styles>
