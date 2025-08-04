@@ -1,0 +1,33 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
+			 x:Class="Client.Views.LoginView">
+	
+	<Grid RowDefinitions="*, Auto, *">
+		<Grid.Background>
+			<LinearGradientBrush StartPoint="100%, 100%" EndPoint="30%, 0%">
+				<GradientStop Offset="0" Color="#d3f8ff"/>
+				<GradientStop Offset="1" Color="White"/>
+			</LinearGradientBrush>
+		</Grid.Background>
+
+		<TextBlock HorizontalAlignment="Center" Margin="0, 5, 0, 0" FontSize="72" FontWeight="Bold" Foreground="#6c8b8d">VM Nexus</TextBlock>
+		
+		<Border Grid.Row="1" HorizontalAlignment="Center" Background="#d4eff1" CornerRadius="15" Padding="30, 5" Width="340" Height="460">
+			<StackPanel Spacing="20">
+				<TextBlock HorizontalAlignment="Center" FontSize="58" FontWeight="Bold" Foreground="#6c8b8d">Login</TextBlock>
+		
+				<TextBox HorizontalAlignment="Stretch" Watermark="Username" MaxLength="64" Margin="0, 20, 0, 0"/>
+				<TextBox HorizontalAlignment="Stretch" Watermark="Password" MaxLength="64" PasswordChar="•"></TextBox>
+				
+				<Button HorizontalAlignment="Center" FontSize="18" Margin="0, 70, 0, 0">Login</Button>
+				<Button HorizontalAlignment="Center" FontSize="18">Create Account</Button>
+			</StackPanel>
+			
+		</Border>
+		
+	</Grid>	
+	
+</UserControl>
