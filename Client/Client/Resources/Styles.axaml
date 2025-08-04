@@ -1,0 +1,32 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	<Design.PreviewWith>
+		<Border Padding="20">
+			<!-- Add Controls for Previewer Here -->
+		</Border>
+	</Design.PreviewWith>
+
+	<Style Selector="TextBox">
+		<Setter Property="BorderThickness" Value="1"></Setter>
+		<Setter Property="BorderBrush" Value="#c7d7d8"></Setter>
+		<Setter Property="CornerRadius" Value="8"></Setter>
+	</Style>
+        
+	<Style Selector="ToggleButton:unchecked PathIcon.password-show">		<!-- Password is hidden, toggle to show (password_show is visible) -->
+		<Setter Property="IsVisible" Value="True"/>
+	</Style>
+	<Style Selector="ToggleButton:checked PathIcon.password-show">			<!-- Password is revealed, toggle to hide (password_show is not visible) -->
+		<Setter Property="IsVisible" Value="False"/>
+	</Style>
+	<Style Selector="ToggleButton:unchecked PathIcon.password-hide">		<!-- Password is hidden, toggle to show (password_hide is not visible) -->
+		<Setter Property="IsVisible" Value="False"/>
+	</Style>
+	<Style Selector="ToggleButton:checked PathIcon.password-hide">			<!-- Password is hidden, toggle to show (password_hide is visible) -->
+		<Setter Property="IsVisible" Value="True"/>
+	</Style>
+	
+	<Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+		<Setter Property="Background" Value="#b5c3c4"/>
+	</Style>
+
+</Styles>
