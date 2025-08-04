@@ -3,8 +3,9 @@
   <component name="AvaloniaProject">
     <option name="projectPerEditor">
       <map>
-        <entry key="Client/Client/App.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
-        <entry key="Client/Client/Views/MainView.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
+        <entry key="Client/Client/App.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
+        <entry key="Client/Client/Views/MainView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
+        <entry key="Server/Views/MainWindow.axaml" value="Server/Server.csproj" />
       </map>
     </option>
   </component>

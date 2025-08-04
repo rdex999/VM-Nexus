@@ -1,3 +1,9 @@
 ﻿<wpf:ResourceDictionary xml:space="preserve" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:s="clr-namespace:System;assembly=mscorlib" xmlns:ss="urn:shemas-jetbrains-com:settings-storage-xaml" xmlns:wpf="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/SolBuilderDuo/CustomGlobalProperties/=AndroidSdkDirectory/@EntryIndexedValue">/home/rdex999/dotnetSDKs/android</s:String>
-	<s:Boolean x:Key="/Default/UnloadedProject/UnloadedProjects/=347607a0_002Dfcc5_002D49cf_002Da861_002D61fafdeccc59_0023Client_002EiOS/@EntryIndexedValue">True</s:Boolean></wpf:ResourceDictionary>
+	<s:Boolean x:Key="/Default/UnloadedProject/UnloadedProjects/=8ac38600_002Dfa09_002D4068_002Dafbc_002Dd6bc3ae5bb03_0023Client_002EiOS/@EntryIndexedValue">True</s:Boolean>
+	
+	
+	
+	
+	
+	</wpf:ResourceDictionary>
