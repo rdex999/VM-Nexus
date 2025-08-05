@@ -4,5 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
              x:Class="Client.Views.CreateAccountView">
-	Welcome to Avalonia!
+	
+	<Grid Background="Red">
+		
+	</Grid>	
+	
 </UserControl>

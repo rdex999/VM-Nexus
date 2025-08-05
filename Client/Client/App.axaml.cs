@@ -5,6 +5,7 @@ using Avalonia.Data.Core.Plugins;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
+using Client.Services;
 using Client.ViewModels;
 using Client.Views;
 
@@ -27,12 +28,15 @@ public partial class App : Application
 
 			desktop.MainWindow = new Window
 			{
-				Content = new LoginView()
+				Content = new LoginView() { DataContext = new LoginViewModel(new NavigationService()) }
 			};
 		}
 		else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
 		{
-			singleViewPlatform.MainView = new LoginView();
+			singleViewPlatform.MainView = new LoginView()
+			{
+				DataContext = new LoginViewModel(new NavigationService())
+			};
 		}
 
 		base.OnFrameworkInitializationCompleted();

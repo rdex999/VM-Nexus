@@ -2,8 +2,10 @@
 			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
 			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
 			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+			 xmlns:viewModels="clr-namespace:Client.ViewModels"
 			 mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
-			 x:Class="Client.Views.LoginView">
+			 x:Class="Client.Views.LoginView"
+			 x:DataType="viewModels:LoginViewModel">
 
 	<UserControl.Resources>
 		<ResourceDictionary>
@@ -36,7 +38,7 @@
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
 					<TextBox HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0" 
-					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"></TextBox>
+					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"/>
 					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
 						<Panel>
 							<PathIcon Classes="password-show" Data="{StaticResource EyeShowRegular}"/>
@@ -46,7 +48,7 @@
 				</Grid>
 				
 				<Button HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 0">Login</Button>
-				<Button HorizontalAlignment="Center" Classes="submit" >Create Account</Button>
+				<Button HorizontalAlignment="Center" Classes="submit" Command="{Binding NavigateToCreateAccountCommand}">Create Account</Button>
 			</StackPanel>
 			
 		</Border>
