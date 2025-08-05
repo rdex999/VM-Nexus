@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -12,7 +13,8 @@ public class MainWindowModel
 {
 	private Thread? _listener;
 	private CancellationTokenSource? _listenerCts;
-
+	private LinkedList<Client>? _clients;	
+	
 	public ExitCode ServerStart()
 	{
 		_listenerCts = new CancellationTokenSource();
@@ -28,6 +30,8 @@ public class MainWindowModel
 	
 		Socket socket = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);		/* Create the socket */	
 		socket.Bind(localEndPoint);																	/* Associate the IP address and port (end point) in the socket */
+	
+		_clients = new LinkedList<Client>();
 		
 		_listener = new Thread(() => ListenForClients(_listenerCts.Token, socket));
 		_listener.Start();
@@ -42,6 +46,7 @@ public class MainWindowModel
 			_listener.Join();
 			_listenerCts.Dispose();
 		}
+		/* TODO: Disconnect all clients */
 	}
 	
 	private void ListenForClients(CancellationToken token, Socket socket)
@@ -50,18 +55,25 @@ public class MainWindowModel
 		
 		while (token.IsCancellationRequested == false)
 		{
-			Debug.WriteLine("Waiting for connection...");
 			if (socket.Poll(10000, SelectMode.SelectRead))		/* Similar to Accept(), but blocks for a specified time. Returns true if there is a connection */
 			{
-				Socket client = socket.Accept();							/* There is a client in the queue, accept him */
-				
-				Debug.WriteLine("Client connected.");
-				Thread.Sleep(5000);
-				
-				client.Shutdown(SocketShutdown.Both);					/* Disable sending and receiving of data */
-				client.Close();												/* Free used resources and close the socket */
+				Socket clientSocket = socket.Accept();						/* There is a client in the queue, accept him */
+			
+				Client client = new Client(clientSocket);
+				client.Disconnected += DisconnectedHandler;
+				_clients.AddLast(client);
 			}
 		}
 		socket.Close();
+	}
+
+	private void DisconnectedHandler(object? sender, EventArgs args)
+	{
+		Client? client = (Client?)sender;
+		if (client != null)
+		{
+			client.Disconnected -= DisconnectedHandler;
+			_clients.Remove(client);
+		}
 	}
 }
