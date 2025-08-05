@@ -38,15 +38,16 @@
 				           Padding="0, 10, 0, 0">Create Account</TextBlock>
 		
 				<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"/>
-					
+				
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
-					<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0" 
+					<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0"
 					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"/>
+					
 					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
 						<Panel>
-							<PathIcon Classes="password-show" Data="{StaticResource EyeShowRegular}"/>
-							<PathIcon Classes="password-hide" Data="{StaticResource EyeHideRegular}"/>
+							<PathIcon IsVisible="{Binding !IsChecked, ElementName=PasswordStateButton}" Data="{StaticResource EyeShowRegular}"/>
+							<PathIcon IsVisible="{Binding IsChecked, ElementName=PasswordStateButton}" Data="{StaticResource EyeHideRegular}"/>
 						</Panel>
 					</ToggleButton>
 				</Grid>
@@ -55,16 +56,16 @@
 					<!-- Padding for stopping the text before the button -->
 					<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Repeat Password" Padding="10, 6, 40, 0" 
 					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordRepeatedStateButton}"/>
+					
 					<ToggleButton Name="PasswordRepeatedStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
 						<Panel>
-							<PathIcon Classes="password-show" Data="{StaticResource EyeShowRegular}"/>
-							<PathIcon Classes="password-hide" Data="{StaticResource EyeHideRegular}"/>
+							<PathIcon IsVisible="{Binding !IsChecked, ElementName=PasswordRepeatedStateButton}" Data="{StaticResource EyeShowRegular}"/>
+							<PathIcon IsVisible="{Binding IsChecked, ElementName=PasswordRepeatedStateButton}" Data="{StaticResource EyeHideRegular}"/>
 						</Panel>
 					</ToggleButton>
 				</Grid>
 				
-				<Button HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 0">Create Account</Button>
-				<!-- <Button HorizontalAlignment="Center" Classes="submit">Login</Button> -->
+				<Button HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 5">Create Account</Button>
 				
 				<TextBlock HorizontalAlignment="Center" Foreground="{StaticResource Title}" FontWeight="DemiBold" Text="Already have an account? ">
 					<HyperlinkButton Command="{Binding NavigateToLoginCommand}">Login</HyperlinkButton>

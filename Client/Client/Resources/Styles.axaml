@@ -20,19 +20,6 @@
 		<Setter Property="CornerRadius" Value="8"></Setter>
 	</Style>
         
-	<Style Selector="ToggleButton:unchecked PathIcon.password-show">		<!-- Password is hidden, toggle to show (password_show is visible) -->
-		<Setter Property="IsVisible" Value="True"/>
-	</Style>
-	<Style Selector="ToggleButton:checked PathIcon.password-show">			<!-- Password is revealed, toggle to hide (password_show is not visible) -->
-		<Setter Property="IsVisible" Value="False"/>
-	</Style>
-	<Style Selector="ToggleButton:unchecked PathIcon.password-hide">		<!-- Password is hidden, toggle to show (password_hide is not visible) -->
-		<Setter Property="IsVisible" Value="False"/>
-	</Style>
-	<Style Selector="ToggleButton:checked PathIcon.password-hide">			<!-- Password is hidden, toggle to show (password_hide is visible) -->
-		<Setter Property="IsVisible" Value="True"/>
-	</Style>
-	
 	<Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
 		<Setter Property="Background" Value="#b5c3c4"/>
 	</Style>
