@@ -2,11 +2,74 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:viewModels="clr-namespace:Client.ViewModels"
              mc:Ignorable="d" d:DesignWidth="1100" d:DesignHeight="750"
-             x:Class="Client.Views.CreateAccountView">
+             x:Class="Client.Views.CreateAccountView"
+			 x:DataType="viewModels:CreateAccountViewModel">
 	
-	<Grid Background="Red">
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<MergeResourceInclude Source="/Resources/Geometries.axaml"/>
+				<MergeResourceInclude Source="/Resources/Colors.axaml"/>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</UserControl.Resources>
+	
+	<UserControl.Styles>
+		<StyleInclude Source="/Resources/Styles.axaml"/>
+	</UserControl.Styles>
+	
+	<Grid RowDefinitions="*, Auto, *">
+		<Grid.Background>
+			<LinearGradientBrush StartPoint="100%, 100%" EndPoint="30%, 0%">
+				<GradientStop Offset="0" Color="#d3f8ff"/>
+				<GradientStop Offset="1" Color="White"/>
+			</LinearGradientBrush>
+		</Grid.Background>
+
+		<TextBlock HorizontalAlignment="Center" Margin="0, 5, 0, 0" 
+		           FontSize="72" FontWeight="Bold" Foreground="{StaticResource Title}">VM Nexus</TextBlock>
 		
+		<Border Grid.Row="1" HorizontalAlignment="Center" Background="#d4eff1" CornerRadius="15" Padding="30, 5" Width="340" Height="440">
+			<StackPanel Spacing="15">
+				<TextBlock TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" 
+				           FontSize="36" FontWeight="Bold" Foreground="{StaticResource Title}"
+				           Padding="0, 10, 0, 0">Create Account</TextBlock>
+		
+				<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"/>
+					
+				<Grid>
+					<!-- Padding for stopping the text before the button -->
+					<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0" 
+					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"/>
+					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
+						<Panel>
+							<PathIcon Classes="password-show" Data="{StaticResource EyeShowRegular}"/>
+							<PathIcon Classes="password-hide" Data="{StaticResource EyeHideRegular}"/>
+						</Panel>
+					</ToggleButton>
+				</Grid>
+					
+				<Grid>
+					<!-- Padding for stopping the text before the button -->
+					<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Repeat Password" Padding="10, 6, 40, 0" 
+					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordRepeatedStateButton}"/>
+					<ToggleButton Name="PasswordRepeatedStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
+						<Panel>
+							<PathIcon Classes="password-show" Data="{StaticResource EyeShowRegular}"/>
+							<PathIcon Classes="password-hide" Data="{StaticResource EyeHideRegular}"/>
+						</Panel>
+					</ToggleButton>
+				</Grid>
+				
+				<Button HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 0">Create Account</Button>
+				<!-- <Button HorizontalAlignment="Center" Classes="submit">Login</Button> -->
+				
+				<TextBlock HorizontalAlignment="Center" Foreground="{StaticResource Title}" FontWeight="DemiBold" Text="Already have an account? ">
+					<HyperlinkButton Command="{Binding NavigateToLoginCommand}">Login</HyperlinkButton>
+				</TextBlock>
+			</StackPanel>
+		</Border>
 	</Grid>	
-	
 </UserControl>

@@ -16,6 +16,11 @@ public partial class App : Application
 	public override void Initialize()
 	{
 		AvaloniaXamlLoader.Load(this);
+
+		if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+		{
+			this.AttachDevTools();
+		}
 	}
 
 	public override void OnFrameworkInitializationCompleted()

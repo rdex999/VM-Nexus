@@ -18,6 +18,6 @@ public partial class LoginViewModel : ViewModelBase
 	[RelayCommand]
 	private void NavigateToCreateAccount()
 	{
-		_navigationService.NavigateToView(new CreateAccountView() { DataContext = new CreateAccountViewModel(new NavigationService()) });
+		_navigationService.NavigateToView(new CreateAccountView() { DataContext = new CreateAccountViewModel(_navigationService) });
 	}
 }

@@ -11,6 +11,7 @@
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
 				<MergeResourceInclude Source="/Resources/Geometries.axaml"/>
+				<MergeResourceInclude Source="/Resources/Colors.axaml"/>
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
@@ -27,17 +28,17 @@
 			</LinearGradientBrush>
 		</Grid.Background>
 
-		<TextBlock HorizontalAlignment="Center" Margin="0, 5, 0, 0" FontSize="72" FontWeight="Bold" Foreground="#6c8b8d">VM Nexus</TextBlock>
+		<TextBlock HorizontalAlignment="Center" Margin="0, 5, 0, 0" FontSize="72" FontWeight="Bold" Foreground="{StaticResource Title}">VM Nexus</TextBlock>
 		
-		<Border Grid.Row="1" HorizontalAlignment="Center" Background="#d4eff1" CornerRadius="15" Padding="30, 5" Width="340" Height="460">
-			<StackPanel Spacing="20">
-				<TextBlock HorizontalAlignment="Center" FontSize="58" FontWeight="Bold" Foreground="#6c8b8d">Login</TextBlock>
+		<Border Grid.Row="1" HorizontalAlignment="Center" Background="#d4eff1" CornerRadius="15" Padding="30, 5" Width="340" Height="440">
+			<StackPanel Spacing="15">
+				<TextBlock HorizontalAlignment="Center" FontSize="58" FontWeight="Bold" Foreground="{StaticResource Title}">Login</TextBlock>
 		
-				<TextBox HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"/>
-					
+				<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"/>
+				
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
-					<TextBox HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0" 
+					<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0" 
 					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"/>
 					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
 						<Panel>
