@@ -24,8 +24,8 @@ public class Client
 	{
 		while (!token.IsCancellationRequested)
 		{
-			Thread.Sleep(5000);
-			_cts.Cancel();	/* For testing */
+			// Thread.Sleep(40000);
+			// _cts.Cancel();	/* For testing */
 		}
 		Disconnect();
 	}

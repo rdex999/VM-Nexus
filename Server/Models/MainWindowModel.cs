@@ -46,7 +46,14 @@ public class MainWindowModel
 			_listener.Join();
 			_listenerCts.Dispose();
 		}
-		/* TODO: Disconnect all clients */
+
+		LinkedListNode<Client>? node = _clients!.First;
+		while (node != null)
+		{
+			LinkedListNode<Client>? next = node.Next;
+			node.Value.Disconnect();
+			node = next;
+		}
 	}
 	
 	private void ListenForClients(CancellationToken token, Socket socket)
@@ -61,7 +68,7 @@ public class MainWindowModel
 			
 				Client client = new Client(clientSocket);
 				client.Disconnected += DisconnectedHandler;
-				_clients.AddLast(client);
+				_clients!.AddLast(client);
 			}
 		}
 		socket.Close();
@@ -73,7 +80,7 @@ public class MainWindowModel
 		if (client != null)
 		{
 			client.Disconnected -= DisconnectedHandler;
-			_clients.Remove(client);
+			_clients!.Remove(client);
 		}
 	}
 }
