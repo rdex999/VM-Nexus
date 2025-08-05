@@ -27,6 +27,8 @@ public partial class App : Application
 			{
 				DataContext = new MainWindowViewModel(),
 			};
+
+			desktop.Exit += ((MainWindowViewModel)(desktop.MainWindow.DataContext)).OnProgramExit;
 		}
 
 		base.OnFrameworkInitializationCompleted();

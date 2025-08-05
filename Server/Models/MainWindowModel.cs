@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -9,8 +10,8 @@ namespace Server.Models;
 
 public class MainWindowModel
 {
-	private Thread _listener;
-	private CancellationTokenSource _listenerCts;
+	private Thread? _listener;
+	private CancellationTokenSource? _listenerCts;
 
 	public ExitCode ServerStart()
 	{
@@ -35,9 +36,12 @@ public class MainWindowModel
 
 	public void ServerStop()
 	{
-		_listenerCts.Cancel();
-		_listener.Join();
-		_listenerCts.Dispose();
+		if (_listener != null && _listenerCts != null && _listener.IsAlive)
+		{
+			_listenerCts.Cancel();
+			_listener.Join();
+			_listenerCts.Dispose();
+		}
 	}
 	
 	private void ListenForClients(CancellationToken token, Socket socket)

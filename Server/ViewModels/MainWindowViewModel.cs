@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Threading;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Server.Models;
@@ -17,6 +18,11 @@ public partial class MainWindowViewModel : ViewModelBase
 	public MainWindowViewModel()
 	{
 		_mainWindowModel = new MainWindowModel();
+	}
+
+	public void OnProgramExit(object? sender, ControlledApplicationLifetimeExitEventArgs args)
+	{
+		_mainWindowModel.ServerStop();
 	}
 		
 	[RelayCommand]
