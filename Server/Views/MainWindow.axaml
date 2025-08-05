@@ -7,7 +7,7 @@
         x:Class="Server.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="Server">
+        Title="VM Nexus Server">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -15,6 +15,27 @@
         <vm:MainWindowViewModel/>
     </Design.DataContext>
 
-    <TextBlock Text="{Binding Greeting}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-
+	<Window.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<MergeResourceInclude Source="/Resources/Geometries.axaml"/>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</Window.Resources>	
+	
+	<Grid Margin="10">
+		<ToggleButton HorizontalAlignment="Right" VerticalAlignment="Top" Width="150" Height="150" CornerRadius="90" 
+		              Command="{Binding ServerStateToggleChangedCommand}" 
+		              CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}">
+			
+			<ToggleButton.Styles>
+				<Style Selector="ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+					<Setter Property="Background" Value="LightGreen"/>
+				</Style>
+			</ToggleButton.Styles>
+			
+			<PathIcon Data="{StaticResource PowerRegular}" Width="120" Height="120"/>
+		</ToggleButton>
+	</Grid>
+	
 </Window>
