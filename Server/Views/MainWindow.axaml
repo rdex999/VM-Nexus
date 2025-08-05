@@ -24,7 +24,8 @@
 	</Window.Resources>	
 	
 	<Grid Margin="10">
-		<ToggleButton HorizontalAlignment="Right" VerticalAlignment="Top" Width="150" Height="150" CornerRadius="90" 
+		<ToggleButton HorizontalAlignment="Right" VerticalAlignment="Top" Width="150" Height="150" 
+		              CornerRadius="90" IsChecked="{Binding ServerStateIsChecked}"
 		              Command="{Binding ServerStateToggleChangedCommand}" 
 		              CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}">
 			
