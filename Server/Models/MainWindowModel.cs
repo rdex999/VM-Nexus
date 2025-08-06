@@ -47,12 +47,13 @@ public class MainWindowModel
 			_listenerCts.Dispose();
 		}
 
-		LinkedListNode<Client>? node = _clients!.First;
-		while (node != null)
+		if (_clients == null)
+			return;
+		
+		while (_clients.FirstOrDefault() != null)
 		{
-			LinkedListNode<Client>? next = node.Next;
-			node.Value.Disconnect();
-			node = next;
+			Client client = _clients.First();
+			client.Disconnect();
 		}
 	}
 	
