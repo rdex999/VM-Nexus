@@ -9,7 +9,7 @@ public static class Common
 		return JsonSerializer.SerializeToUtf8Bytes(obj);
 	}
 
-	public static T? FromByteArray<T>(byte[] bytes)
+	public static T? FromByteArray<T>(byte[]? bytes)
 	{
 		return JsonSerializer.Deserialize<T>(bytes);
 	}

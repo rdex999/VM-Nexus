@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Shared;
@@ -79,6 +77,24 @@ public class CommunicationService
 		}
 	}
 
+	private Message? ReceiveMessage()
+	{
+		byte[]? messageSizeInBytes = ReceiveBytesExact(4);
+		if (messageSizeInBytes == null || messageSizeInBytes.Length == 0)
+		{
+			return null;
+		}
+		int size =  BitConverter.ToInt32(messageSizeInBytes, 0);	/* If size is 0, then its an invalid message */
+	
+		byte[]? messageBytes = ReceiveBytesExact(size);
+		if (messageBytes == null || messageBytes.Length == 0)
+		{
+			return null;
+		}
+
+		return Common.FromByteArray<Message>(messageBytes);
+	}
+	
 	private Byte[]? ReceiveBytesExact(int size)
 	{
 		if (size <= 0)
@@ -89,7 +105,7 @@ public class CommunicationService
 		while (bytesRead < size)
 		{
 			int currentRead = _socket.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
-			if (currentRead <= 0) /* Means that the socket was disconnected */
+			if (currentRead <= 0)	/* Means that the socket was disconnected */
 			{
 				return null;
 			}
