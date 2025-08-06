@@ -71,13 +71,18 @@ public class CommunicationService
 		{
 			if (!IsConnectedToServer())
 			{
-				OnFailure(ExitCode.DisconnectedFromServer);
-				ConnectToServerAsync().Wait(token);
-				/* TODO: Add logic to display a message */
+				HandleDisconnection().Wait(token);
 			}
 		}
 	}
 
+	private async Task HandleDisconnection()
+	{
+		OnFailure(ExitCode.DisconnectedFromServer);
+		await ConnectToServerAsync();
+		/* TODO: Add logic to display a message */
+	}
+	
 	private void OnFailure(ExitCode code)
 	{
 		FailEvent?.Invoke(this, code);
