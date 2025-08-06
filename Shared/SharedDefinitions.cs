@@ -6,4 +6,3 @@ public static class SharedDefinitions
 	public const string ServerIp = "192.168.1.155";		/* local IP in network */
 }
 
-

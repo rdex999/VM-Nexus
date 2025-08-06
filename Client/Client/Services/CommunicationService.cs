@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Shared;
+using Shared.Networking;
 
 namespace Client.Services;
 
@@ -49,7 +52,7 @@ public class CommunicationService
 		{
 			try
 			{
-				await _socket.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerPort);
+				await _socket.ConnectAsync(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
 				break; /* Runs only if there was no exception (on exception it jumps to the catch block) */
 			}
 			catch (Exception)
@@ -76,6 +79,25 @@ public class CommunicationService
 		}
 	}
 
+	private Byte[]? ReceiveBytesExact(int size)
+	{
+		if (size <= 0)
+			return null;
+		
+		Byte[] bytes = new Byte[size];
+		int bytesRead = 0;
+		while (bytesRead < size)
+		{
+			int currentRead = _socket.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
+			if (currentRead <= 0) /* Means that the socket was disconnected */
+			{
+				return null;
+			}
+			bytesRead += currentRead;
+		}
+		return bytes;
+	}
+	
 	private async Task HandleDisconnection()
 	{
 		OnFailure(ExitCode.DisconnectedFromServer);

@@ -2,7 +2,7 @@ namespace Shared.Networking;
 
 public class Message
 {
-	private Guid Id { get; }
+	public Guid Id { get; }
 	private MessageSubject Subject { get; }
 
 	public Message(MessageSubject subject)
