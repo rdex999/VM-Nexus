@@ -4,4 +4,6 @@ public enum ExitCode
 {
 	Success = 0,
 	ServerNoValidLocalhostIp,
+	ConnectionToServerFailed,
+	DisconnectedFromServer,
 }
