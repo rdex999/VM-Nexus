@@ -74,6 +74,27 @@ public class CommunicationService
 			{
 				HandleDisconnection().Wait(token);
 			}
+			
+			Message? message = ReceiveMessage();
+			if (message == null)
+			{
+				if (!IsConnectedToServer())
+				{
+					HandleDisconnection().Wait(token);
+				}
+				continue;	
+			}
+
+			switch (message)
+			{
+				case MessageResponseConnect resConnect:
+				{
+					throw new NotImplementedException();
+					break;
+				}
+				default:
+					throw new NotImplementedException();
+			}
 		}
 	}
 
