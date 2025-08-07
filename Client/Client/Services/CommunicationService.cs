@@ -103,6 +103,23 @@ public class CommunicationService
 		}
 	}
 
+	/* On disconnection, stop trying to send the message. The message must be sent again from its beginning. */
+	private ExitCode SendMessage(Message message)
+	{
+		ExitCode result;
+		
+		byte[] bytes = Common.ToByteArray(message);
+		byte[] sizeInBytes = BitConverter.GetBytes(bytes.Length);
+		result = SendBytesExact(sizeInBytes);
+		
+		if (result != ExitCode.Success)
+			return result;
+		
+		result = SendBytesExact(sizeInBytes);
+		
+		return result;
+	}
+
 	private Message? ReceiveMessage()
 	{
 		byte[]? messageSizeInBytes = ReceiveBytesExact(4);
