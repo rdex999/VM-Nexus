@@ -8,4 +8,5 @@ public enum ExitCode
 	DisconnectedFromServer,
 	MessageSendingTimeout,
 	MessageReceivingTimeout,
+	MessageReceivedCorrupted,
 }

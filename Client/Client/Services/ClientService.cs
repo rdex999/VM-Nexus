@@ -23,11 +23,40 @@ public class ClientService : MessagingService
 		if (IsInitialized())
 			return;
 
-		await ConnectToServerAsync();
+		await SocketConnectToServerAsync();
 		await base.InitializeAsync();
+		await RequestConnectAsync();
 	}
 
 	private async Task ConnectToServerAsync()
+	{
+		await SocketConnectToServerAsync();
+		await RequestConnectAsync();
+	}
+	
+	private async Task RequestConnectAsync()
+	{
+		bool connected = false;
+		while (!connected)
+		{
+			(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnect(true));
+			if (result != ExitCode.Success)
+			{
+				/* TODO: Handle errors here */
+				throw new NotImplementedException();
+			}
+
+			MessageResponseConnect resConnect = (MessageResponseConnect)response;
+			connected = resConnect.Accepted;
+			if (!connected)		/* If the connection was denied by the server, then it probably has a lot of clients, we should wait a bit and then retry */
+			{
+				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout);
+				/* TODO: Add logic to display error message on UI */
+			}
+		}
+	}
+	
+	private async Task SocketConnectToServerAsync()
 	{
 		if (IsConnected() && IsInitialized())
 			return;

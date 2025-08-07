@@ -2,10 +2,11 @@ namespace Shared.Networking;
 
 public class Message
 {
-	public Guid Id { get; }
+	public Guid Id { get; set; }
 
-	public Message()
+	public Message(bool generateGuid)
 	{
-		Id = Guid.NewGuid();
+		if (generateGuid)
+			Id = Guid.NewGuid();
 	}
 }

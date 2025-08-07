@@ -2,6 +2,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Text.Json;
 
 namespace Shared.Networking;
 
@@ -69,9 +70,10 @@ public class MessagingService
 			{
 				case MessageResponse response:
 				{
-					TaskCompletionSource<MessageResponse> tcs = new TaskCompletionSource<MessageResponse>();
-					tcs.SetResult(response);
-					_responses[response.RequestId] = tcs;
+					if (_responses.TryRemove(response.RequestId, out var tcs))
+					{
+						tcs.SetResult(response);
+					}
 					break;
 				}
 				case MessageRequest request:
@@ -94,7 +96,7 @@ public class MessagingService
 		AfterDisconnection();
 	}
 
-	protected async Task<MessageResponse?> SendRequestAsync(MessageRequest message)
+	protected async Task<(MessageResponse?, ExitCode)> SendRequestAsync(MessageRequest message)
 	{
 		/* The loop might take a while, so put it inside Task.Run and await it */
 		/* Use a cancellation for canceling the operation after 3 seconds if it didnt work */
@@ -114,40 +116,32 @@ public class MessagingService
 		}
 		catch (OperationCanceledException)	/* If three seconds have passed and the message wasnt sent, abort. */
 		{
-			return null;
+			return (null, ExitCode.MessageSendingTimeout);
 		}
 		cts.Dispose();
 		
 		/* Here, the message was sent successfully */
+		TaskCompletionSource<MessageResponse>? tcs = new TaskCompletionSource<MessageResponse>();
+		_responses[message.Id] = tcs;
+		
 		/* Now wait for the response for this specific request that we just send */
-		cts = new CancellationTokenSource();
-		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
-		Task<MessageResponse>? response = null;
+		ExitCode result = ExitCode.Success;
+		MessageResponse response = null;
 		try
 		{
-			await Task.Run(() =>
-			{
-				cts.Token.ThrowIfCancellationRequested();
-				while (true)
-				{
-					if (_responses.TryRemove(message.Id, out TaskCompletionSource<MessageResponse>? tcs))
-					{
-						response = tcs.Task;
-						break;
-					}
-				}
-			}, cts.Token);
+			response = await tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(SharedDefinitions.MessageTimeoutMilliseconds));
 		}
-		catch (OperationCanceledException)
+		catch (TimeoutException)
 		{
-			return null;
+			result = ExitCode.MessageSendingTimeout;
 		}
-		cts.Dispose();
+
+		if (result != ExitCode.Success)
+		{
+			_responses.TryRemove(message.Id, out _);
+		}
 	
-		if(response != null)
-			return await response;
-		
-		return null;
+		return (response, result);
 	}
 
 	protected async Task<ExitCode> SendResponse(MessageResponse response)
@@ -160,7 +154,7 @@ public class MessagingService
 		{
 			await Task.Run(() =>
 			{
-				while (!cts.Token.IsCancellationRequested && result != ExitCode.Success)
+				while (result != ExitCode.Success)
 				{
 					result = SendMessage(response);
 					
@@ -169,6 +163,7 @@ public class MessagingService
 						/* Then need to send the request itself again, so return and exit from this function */
 						break;
 					}
+					cts.Token.ThrowIfCancellationRequested();
 				}
 			},  cts.Token);
 		}
@@ -199,14 +194,14 @@ public class MessagingService
 	{
 		ExitCode result;
 		
-		byte[] bytes = Common.ToByteArray(message);
+		byte[] bytes = Common.ToByteArrayWithType(message);
 		byte[] sizeInBytes = BitConverter.GetBytes(bytes.Length);
 		result = SendBytesExact(sizeInBytes);
 		
 		if (result != ExitCode.Success)
 			return result;
 		
-		result = SendBytesExact(sizeInBytes);
+		result = SendBytesExact(bytes);
 		
 		return result;
 	}
@@ -226,7 +221,7 @@ public class MessagingService
 			return null;
 		}
 
-		return Common.FromByteArray<Message>(messageBytes);
+		return (Message)Common.FromByteArrayWithType(messageBytes)!;
 	}
 	
 	private ExitCode SendBytesExact(byte[] bytes)
@@ -243,12 +238,12 @@ public class MessagingService
 		return ExitCode.Success;
 	}
 	
-	private Byte[]? ReceiveBytesExact(int size)
+	private byte[]? ReceiveBytesExact(int size)
 	{
 		if (size <= 0)
 			return null;
 		
-		Byte[] bytes = new Byte[size];
+		byte[] bytes = new byte[size];
 		int bytesRead = 0;
 		while (bytesRead < size)
 		{

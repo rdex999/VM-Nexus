@@ -2,6 +2,7 @@ using System;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Shared;
 using Shared.Networking;
 
 namespace Server.Models;
@@ -33,12 +34,13 @@ public sealed class Client : MessagingService
 	{
 		await base.ProcessRequestAsync(request);
 
+		ExitCode code;
 		switch (request)
 		{
 			case MessageRequestConnect req:
 			{
-				throw new NotImplementedException();
-				MessageResponse response = new MessageResponseConnect(req.Id, true);
+				MessageResponse response = new MessageResponseConnect(true, req.Id, true);
+				code = await SendResponse(response);
 				break;
 			}
 			default:
@@ -47,6 +49,22 @@ public sealed class Client : MessagingService
 				break;
 			}
 		}
-		
+
+		switch (code)
+		{
+			case ExitCode.Success:
+				return;
+			
+			case ExitCode.DisconnectedFromServer:
+			{
+				HandleSuddenDisconnection();
+				break;
+			}
+
+			default:
+			{
+				throw new NotImplementedException();
+			}
+		}
 	}
 }
