@@ -33,14 +33,14 @@ public partial class App : Application
 
 			desktop.MainWindow = new Window
 			{
-				Content = new LoginView() { DataContext = new LoginViewModel(new NavigationService(), new CommunicationService()) }
+				Content = new LoginView() { DataContext = new LoginViewModel(new NavigationService(), new ClientService()) }
 			};
 		}
 		else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
 		{
 			singleViewPlatform.MainView = new LoginView()
 			{
-				DataContext = new LoginViewModel(new NavigationService(), new CommunicationService())
+				DataContext = new LoginViewModel(new NavigationService(), new ClientService())
 			};
 		}
 

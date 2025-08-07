@@ -18,7 +18,7 @@ public partial class LoginView : UserControl
 		{
 			if (!loginViewModel.IsInitialized())
 			{
-				await loginViewModel.Initialize();
+				await loginViewModel.InitializeAsync();
 			}
 		}
 	}

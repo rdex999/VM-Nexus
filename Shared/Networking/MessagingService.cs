@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
 
@@ -6,7 +7,7 @@ namespace Shared.Networking;
 
 public class MessagingService
 {
-	private Socket _socket;
+	protected Socket _socket;
 	private Thread _thread;								/* Runs the Communicate function */
 	private CancellationTokenSource _cts;
 	protected bool _isInitialized;
@@ -34,27 +35,6 @@ public class MessagingService
 		return _isInitialized;
 	}
 
-	protected async void ConnectToServerAsync()
-	{
-		if (IsConnected() && _isInitialized)
-			return;
-		
-		/* Connect to the server. On connection failure try connecting with a 3-second delay between each try. */
-		while (true)
-		{
-			try
-			{
-				await _socket.ConnectAsync(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
-				break; /* Runs only if there was no exception (on exception it jumps to the catch block) */
-			}
-			catch (Exception)
-			{
-				OnFailure(ExitCode.ConnectionToServerFailed);
-				await Task.Delay(3000);
-			}
-		}
-	}
-
 	public bool IsConnected()
 	{
 		return _socket.Connected;
@@ -64,6 +44,7 @@ public class MessagingService
 	{
 		while (!token.IsCancellationRequested)
 		{
+			Debug.WriteLine("\nCommunicating...\n");
 			if (!IsConnected())
 			{
 				HandleDisconnectionAsync().Wait(token);
@@ -85,12 +66,12 @@ public class MessagingService
 				{
 					TaskCompletionSource<MessageResponse> tcs = new TaskCompletionSource<MessageResponse>();
 					tcs.SetResult(response);
-					_responses[response.Id] = tcs;
+					_responses[response.RequestId] = tcs;
 					break;
 				}
 				case MessageRequest request:
 				{
-					ProcessRequestAsync(request).Wait(token);
+					_ = HandleRequestAsync(token, request);
 					break;
 				}
 				default:
@@ -158,6 +139,18 @@ public class MessagingService
 		return null;
 	}
 
+	protected async Task HandleRequestAsync(CancellationToken token, MessageRequest request)
+	{
+		try
+		{
+			token.ThrowIfCancellationRequested();
+			await ProcessRequestAsync(request);
+		}
+		catch (OperationCanceledException)
+		{
+		}
+	}
+	
 	/* On disconnection, stop trying to send the message. The message must be sent again from its beginning. */
 	private ExitCode SendMessage(Message message)
 	{
@@ -234,8 +227,9 @@ public class MessagingService
 	protected virtual async Task ProcessRequestAsync(MessageRequest request)
 	{
 	}
-	
+
 	protected virtual async Task HandleDisconnectionAsync()
 	{
+		OnFailure(ExitCode.DisconnectedFromServer);
 	}
 }

@@ -2,7 +2,7 @@ namespace Shared.Networking;
 
 public class MessageResponse : Message
 {
-	private Guid RequestId { get; }		/* This is a response for request ID=... */
+	public Guid RequestId { get; }		/* This is a response for request ID=... */
 	
 	public MessageResponse(Guid requestId)
 	{

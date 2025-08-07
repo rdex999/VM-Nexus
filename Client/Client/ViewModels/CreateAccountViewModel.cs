@@ -8,17 +8,17 @@ namespace Client.ViewModels;
 public partial class CreateAccountViewModel : ViewModelBase
 {
 	private readonly NavigationService _navigationService;
-	private CommunicationService _communicationService;
+	private ClientService _clientService;
 
-	public CreateAccountViewModel(NavigationService navigationService,  CommunicationService communicationService)
+	public CreateAccountViewModel(NavigationService navigationService,  ClientService clientService)
 	{
 		_navigationService = navigationService;
-		_communicationService = communicationService;
+		_clientService = clientService;
 	}
 
 	[RelayCommand]
 	private void NavigateToLogin()
 	{
-		_navigationService.NavigateToView(new LoginView() {  DataContext = new LoginViewModel(_navigationService, _communicationService) });
+		_navigationService.NavigateToView(new LoginView() {  DataContext = new LoginViewModel(_navigationService, _clientService) });
 	}
 }

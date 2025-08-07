@@ -9,30 +9,30 @@ namespace Client.ViewModels;
 public partial class LoginViewModel : ViewModelBase
 {
 	private readonly NavigationService _navigationService;
-	private CommunicationService _communicationService;
+	private ClientService _clientService;
 
-	public LoginViewModel(NavigationService navigationService, CommunicationService communicationService)
+	public LoginViewModel(NavigationService navigationService, ClientService clientService)
 	{
 		_navigationService = navigationService;
-		_communicationService = communicationService;
+		_clientService = clientService;
 	}
 
-	public async Task Initialize()
+	public async Task InitializeAsync()
 	{
 		if (IsInitialized())
 			return;
 		
-		await _communicationService.Initialize();
+		await _clientService.InitializeAsync();
 	}
 
 	public bool IsInitialized()
 	{
-		return _communicationService.IsInitialized();
+		return _clientService.IsInitialized();
 	}
 
 	[RelayCommand]
 	private void NavigateToCreateAccount()
 	{
-		_navigationService.NavigateToView(new CreateAccountView() { DataContext = new CreateAccountViewModel(_navigationService, _communicationService) });
+		_navigationService.NavigateToView(new CreateAccountView() { DataContext = new CreateAccountViewModel(_navigationService, _clientService) });
 	}
 }
