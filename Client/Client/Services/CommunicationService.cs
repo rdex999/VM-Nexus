@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -15,6 +16,7 @@ public class CommunicationService
 	private Thread _thread;								/* Runs the Communicate function */
 	private CancellationTokenSource _cts;
 	private bool _isInitialized;
+	private ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
 	public event EventHandler<ExitCode> FailEvent;
 
 	public CommunicationService()
@@ -23,6 +25,7 @@ public class CommunicationService
 		_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 		_cts = new CancellationTokenSource();
 		_thread = new Thread(() => Communicate(_cts.Token));
+		_responses =  new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
 	}
 
 	public async Task Initialize()
@@ -89,7 +92,9 @@ public class CommunicationService
 			{
 				case MessageResponse response:
 				{
-					throw new NotImplementedException();
+					TaskCompletionSource<MessageResponse> tcs = new TaskCompletionSource<MessageResponse>();
+					tcs.SetResult(response);
+					_responses[response.Id] = tcs;
 					break;
 				}
 				case MessageRequest request:
@@ -98,9 +103,68 @@ public class CommunicationService
 					break;
 				}
 				default:
+				{
 					throw new NotImplementedException();
+					break;
+				}
 			}
 		}
+	}
+
+	private async Task<MessageResponse?> SendRequestAsync(MessageRequest message)
+	{
+		/* The loop might take a while, so put it inside Task.Run and await it */
+		/* Use a cancellation for canceling the operation after 3 seconds if it didnt work */
+		CancellationTokenSource cts = new CancellationTokenSource();
+		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
+		try
+		{
+			await Task.Run(() =>
+			{
+				ExitCode result;
+				do
+				{
+					result = SendMessage(message);
+					cts.Token.ThrowIfCancellationRequested();
+				} while (result != ExitCode.Success);
+			}, cts.Token);
+		}
+		catch (OperationCanceledException)	/* If three seconds have passed and the message wasnt sent, abort. */
+		{
+			return null;
+		}
+		cts.Dispose();
+		
+		/* Here, the message was sent successfully */
+		/* Now wait for the response for this specific request that we just send */
+		cts = new CancellationTokenSource();
+		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
+		Task<MessageResponse>? response = null;
+		try
+		{
+			await Task.Run(() =>
+			{
+				while (true)
+				{
+					if (_responses.TryRemove(message.Id, out TaskCompletionSource<MessageResponse>? tcs))
+					{
+						response = tcs.Task;
+						break;
+					}
+					cts.Token.ThrowIfCancellationRequested();
+				}
+			}, cts.Token);
+		}
+		catch (OperationCanceledException)
+		{
+			return null;
+		}
+		cts.Dispose();
+	
+		if(response != null)
+			return await response;
+		
+		return null;
 	}
 
 	/* On disconnection, stop trying to send the message. The message must be sent again from its beginning. */
