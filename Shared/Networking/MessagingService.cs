@@ -94,7 +94,7 @@ public class MessagingService
 		AfterDisconnection();
 	}
 
-	public async Task<MessageResponse?> SendRequestAsync(MessageRequest message)
+	protected async Task<MessageResponse?> SendRequestAsync(MessageRequest message)
 	{
 		/* The loop might take a while, so put it inside Task.Run and await it */
 		/* Use a cancellation for canceling the operation after 3 seconds if it didnt work */
@@ -127,6 +127,7 @@ public class MessagingService
 		{
 			await Task.Run(() =>
 			{
+				cts.Token.ThrowIfCancellationRequested();
 				while (true)
 				{
 					if (_responses.TryRemove(message.Id, out TaskCompletionSource<MessageResponse>? tcs))
@@ -134,7 +135,6 @@ public class MessagingService
 						response = tcs.Task;
 						break;
 					}
-					cts.Token.ThrowIfCancellationRequested();
 				}
 			}, cts.Token);
 		}
@@ -150,7 +150,39 @@ public class MessagingService
 		return null;
 	}
 
-	protected async Task HandleRequestAsync(CancellationToken token, MessageRequest request)
+	protected async Task<ExitCode> SendResponse(MessageResponse response)
+	{
+		CancellationTokenSource cts = new CancellationTokenSource();
+		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
+
+		ExitCode result = SendMessage(response);
+		try
+		{
+			await Task.Run(() =>
+			{
+				while (!cts.Token.IsCancellationRequested && result != ExitCode.Success)
+				{
+					result = SendMessage(response);
+					
+					if (result == ExitCode.DisconnectedFromServer)
+					{
+						/* Then need to send the request itself again, so return and exit from this function */
+						break;
+					}
+				}
+			},  cts.Token);
+		}
+		catch (OperationCanceledException)
+		{
+			result = ExitCode.MessageSendingTimeout;
+		}
+		
+		cts.Dispose();
+
+		return result;
+	}
+
+	private async Task HandleRequestAsync(CancellationToken token, MessageRequest request)
 	{
 		try
 		{

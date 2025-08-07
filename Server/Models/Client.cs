@@ -25,6 +25,28 @@ public sealed class Client : MessagingService
 
 	protected override void AfterDisconnection()
 	{
+		base.AfterDisconnection();
 		Disconnected?.Invoke(this, EventArgs.Empty);
+	}
+
+	protected override async Task ProcessRequestAsync(MessageRequest request)
+	{
+		await base.ProcessRequestAsync(request);
+
+		switch (request)
+		{
+			case MessageRequestConnect req:
+			{
+				throw new NotImplementedException();
+				MessageResponse response = new MessageResponseConnect(req.Id, true);
+				break;
+			}
+			default:
+			{
+				throw new NotImplementedException();
+				break;
+			}
+		}
+		
 	}
 }

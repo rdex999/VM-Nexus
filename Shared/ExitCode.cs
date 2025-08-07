@@ -6,4 +6,6 @@ public enum ExitCode
 	ServerNoValidLocalhostIp,
 	ConnectionToServerFailed,
 	DisconnectedFromServer,
+	MessageSendingTimeout,
+	MessageReceivingTimeout,
 }
