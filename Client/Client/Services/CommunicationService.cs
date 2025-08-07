@@ -87,7 +87,12 @@ public class CommunicationService
 
 			switch (message)
 			{
-				case MessageResponseConnect resConnect:
+				case MessageResponse response:
+				{
+					throw new NotImplementedException();
+					break;
+				}
+				case MessageRequest request:
 				{
 					throw new NotImplementedException();
 					break;
@@ -114,6 +119,20 @@ public class CommunicationService
 		}
 
 		return Common.FromByteArray<Message>(messageBytes);
+	}
+
+	private ExitCode SendBytesExact(byte[] bytes)
+	{
+		int bytesSent = 0;
+		while (bytesSent < bytes.Length)
+		{
+			int sent = _socket.Send(bytes, bytesSent, bytes.Length - bytesSent, SocketFlags.None);
+			if (sent <= 0)
+				return ExitCode.DisconnectedFromServer;
+			
+			bytesSent += sent;
+		}
+		return ExitCode.Success;
 	}
 	
 	private Byte[]? ReceiveBytesExact(int size)
