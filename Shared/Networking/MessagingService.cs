@@ -39,15 +39,20 @@ public class MessagingService
 	{
 		return _socket.Connected;
 	}
-	
+
+	public virtual void Disconnect()
+	{
+		/* TODO: Add logic to send a disconnection request */
+		_cts.Cancel();
+	}
+
 	private void Communicate(CancellationToken token)
 	{
 		while (!token.IsCancellationRequested)
 		{
-			Debug.WriteLine("\nCommunicating...\n");
 			if (!IsConnected())
 			{
-				HandleDisconnectionAsync().Wait(token);
+				HandleSuddenDisconnection();
 			}
 			
 			Message? message = ReceiveMessage();
@@ -55,7 +60,7 @@ public class MessagingService
 			{
 				if (!IsConnected())
 				{
-					HandleDisconnectionAsync().Wait(token);
+					HandleSuddenDisconnection();
 				}
 				continue;	
 			}
@@ -81,6 +86,12 @@ public class MessagingService
 				}
 			}
 		}
+		
+		_cts.Dispose();
+		_socket.Dispose();
+		_socket.Close();
+		
+		AfterDisconnection();
 	}
 
 	public async Task<MessageResponse?> SendRequestAsync(MessageRequest message)
@@ -223,12 +234,16 @@ public class MessagingService
 	{
 		FailEvent?.Invoke(this, code);
 	}
+
+	protected virtual void AfterDisconnection()
+	{
+	}
 	
 	protected virtual async Task ProcessRequestAsync(MessageRequest request)
 	{
 	}
 
-	protected virtual async Task HandleDisconnectionAsync()
+	protected virtual void HandleSuddenDisconnection()
 	{
 		OnFailure(ExitCode.DisconnectedFromServer);
 	}

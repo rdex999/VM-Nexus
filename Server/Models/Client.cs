@@ -1,47 +1,30 @@
 using System;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
+using Shared.Networking;
 
 namespace Server.Models;
 
-public class Client
+public sealed class Client : MessagingService
 {
-	private Socket _socket;
-	private Thread _thread;
-	private CancellationTokenSource _cts;
-
 	public event EventHandler Disconnected;
-	
-	public Client(Socket socket)
-	{
-		_socket = socket;
-		_cts = new CancellationTokenSource();
-		_thread = new Thread(() => Communicate(_cts.Token));
-		_thread.Start();
-	}
-	
-	private void Communicate(CancellationToken token)
-	{
-		while (!token.IsCancellationRequested)
-		{
-			// Thread.Sleep(40000);
-			// _cts.Cancel();	/* For testing */
-		}
-		Disconnect();
-	}
-	
-	public void Disconnect()
-	{
-		_cts.Cancel();
 
-		if (Thread.CurrentThread != _thread)
-		{
-			_thread.Join();
-		}
-		
-		_socket.Dispose();
-		_socket.Close();
-	
+	public Client(Socket socket)
+		: base(socket)
+	{
+		InitializeAsync().Wait();	/* Doesnt contain long-running code, so its fine to just Wait() it here */
+	}
+
+	/* When the client suddenly disconnects, delete this client object, and let it be re-created in ListenForClients */
+	protected override void HandleSuddenDisconnection()
+	{
+		base.HandleSuddenDisconnection();
+		AfterDisconnection();
+	}
+
+	protected override void AfterDisconnection()
+	{
 		Disconnected?.Invoke(this, EventArgs.Empty);
 	}
 }
