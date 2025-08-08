@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using Npgsql;
 using Shared;
 
@@ -15,23 +16,38 @@ public class DatabaseService
 		NpgsqlCommand command = _connection.CreateCommand();
 		
 		#if DEBUG
-			command.CommandText = "DROP TABLE IF EXISTS users;";
-			command.ExecuteNonQuery();
+			ExecuteCommand("DROP TABLE IF EXISTS users;");
 		#endif
-		
+
 		/* TODO: Generate salts and fill in the length of a salt here */
-		command.CommandText = $"""
-		                       CREATE TABLE IF NOT EXISTS users (
-		                           		username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
-		                           		password_hashed VARCHAR(255), 
-		                           		password_salt VARCHAR(255)
-		                           	)
-		                       """;
-		command.ExecuteNonQuery();
+		ExecuteCommand($"""
+		                CREATE TABLE IF NOT EXISTS users (
+		                    		username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
+		                    		password_hashed VARCHAR(255), 
+		                    		password_salt VARCHAR(255)
+		                    	)
+		                """);
 	}
 
 	public void Close()
 	{
 		_connection.Close();
+	}
+
+	public async Task<int> ExecuteCommandAsync(string command, params NpgsqlParameter[] parameters)
+	{
+		/* TODO: Add  */
+		NpgsqlCommand cmd = _connection.CreateCommand();
+		cmd.CommandText = command;
+		cmd.Parameters.AddRange(parameters);
+		return await cmd.ExecuteNonQueryAsync();
+	}
+
+	public int ExecuteCommand(string command, params NpgsqlParameter[] parameters)
+	{
+		NpgsqlCommand cmd = _connection.CreateCommand();
+		cmd.CommandText = command;
+		cmd.Parameters.AddRange(parameters);
+		return cmd.ExecuteNonQuery();	
 	}
 }
