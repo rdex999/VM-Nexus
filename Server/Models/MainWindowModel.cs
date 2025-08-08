@@ -13,7 +13,7 @@ public class MainWindowModel
 {
 	private Thread? _listener;
 	private CancellationTokenSource? _listenerCts;
-	private LinkedList<Client>? _clients;	
+	private LinkedList<ClientConnection>? _clients;	
 	
 	public ExitCode ServerStart()
 	{
@@ -31,7 +31,7 @@ public class MainWindowModel
 		Socket socket = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);		/* Create the socket */	
 		socket.Bind(localEndPoint);																	/* Associate the IP address and port (end point) in the socket */
 	
-		_clients = new LinkedList<Client>();
+		_clients = new LinkedList<ClientConnection>();
 		
 		_listener = new Thread(() => ListenForClients(_listenerCts.Token, socket));
 		_listener.Start();
@@ -53,8 +53,8 @@ public class MainWindowModel
 		List<Task> tasks = new List<Task>();
 		while (_clients.FirstOrDefault() != null)
 		{
-			Client client = _clients.First();
-			tasks.Add(client.DisconnectClient());
+			ClientConnection clientConnection = _clients.First();
+			tasks.Add(clientConnection.DisconnectClient());
 		}
 
 		await Task.WhenAll(tasks);
@@ -70,9 +70,9 @@ public class MainWindowModel
 			{
 				Socket clientSocket = socket.Accept();						/* There is a client in the queue, accept him */
 			
-				Client client = new Client(clientSocket);
-				client.Disconnected += DisconnectedHandler;
-				_clients!.AddLast(client);
+				ClientConnection clientConnection = new ClientConnection(clientSocket);
+				clientConnection.Disconnected += DisconnectedHandler;
+				_clients!.AddLast(clientConnection);
 			}
 		}
 		socket.Close();
@@ -80,7 +80,7 @@ public class MainWindowModel
 
 	private void DisconnectedHandler(object? sender, EventArgs args)
 	{
-		Client? client = (Client?)sender;
+		ClientConnection? client = (ClientConnection?)sender;
 		if (client != null)
 		{
 			client.Disconnected -= DisconnectedHandler;

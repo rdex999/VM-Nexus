@@ -73,11 +73,16 @@
 				</Grid>
 			
 				<Panel>
-					<TextBlock IsVisible="{Binding PasswordNoteIsVisible}" 
+					<TextBlock IsVisible="{Binding PasswordNotEqualTextIsVisible}" 
 					           HorizontalAlignment="Center" Classes="error">Passwords are not the same.</TextBlock>
+					
+					<TextBox IsVisible="{Binding AccountCreationFailedTextIsVisible}"
+					         HorizontalAlignment="Center" Classes="error">Account creation failed. Try again later.</TextBox>
 				</Panel>
 				
-				<Button IsEnabled="{Binding CreateAccountIsEnabled}" HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 5">Create Account</Button>
+				<Button IsEnabled="{Binding CreateAccountIsEnabled}" 
+				        Command="{Binding CreateAccountCommand}"
+				        HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 5">Create Account</Button>
 				
 				<TextBlock HorizontalAlignment="Center" Foreground="{StaticResource Title}" FontWeight="DemiBold" Text="Already have an account? ">
 					<HyperlinkButton Command="{Binding NavigateToLoginCommand}">Login</HyperlinkButton>

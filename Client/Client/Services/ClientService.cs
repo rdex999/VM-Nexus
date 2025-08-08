@@ -10,8 +10,6 @@ namespace Client.Services;
 /* Responsible for communicating with the server */
 public class ClientService : MessagingService
 {
-	private string _loginSessionId;
-	
 	public ClientService()
 		: base(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
 	{
@@ -44,11 +42,7 @@ public class ClientService : MessagingService
 			return false;
 		
 		MessageResponseCreateAccount reqCreateAccount = (MessageResponseCreateAccount)response!;
-		if(!reqCreateAccount.Success)
-			return false;
-		
-		_loginSessionId = reqCreateAccount.LoginSessionId;
-		return true;
+		return reqCreateAccount.Success;
 	}
 
 	private async Task ConnectToServerAsync()

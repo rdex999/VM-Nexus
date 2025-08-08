@@ -6,11 +6,12 @@ using Shared.Networking;
 
 namespace Server.Models;
 
-public sealed class Client : MessagingService
+public sealed class ClientConnection : MessagingService
 {
 	public event EventHandler Disconnected;
+	private bool _isLoggedIn = false;
 
-	public Client(Socket socket)
+	public ClientConnection(Socket socket)
 		: base(socket)
 	{
 		InitializeAsync().Wait();	/* Doesnt contain long-running code, so its fine to just Wait() it here */
@@ -35,6 +36,17 @@ public sealed class Client : MessagingService
 				result = await SendResponse(new MessageResponseDisconnect(true, reqDisconnect.Id));
 				Disconnect();
 				AfterDisconnection();
+				break;
+			}
+
+			case MessageRequestCreateAccount reqCreateAccount:
+			{
+				/* TODO: Register into database */
+				result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, true));
+				if (result == ExitCode.Success)
+				{
+					_isLoggedIn = true;
+				}
 				break;
 			}
 				

@@ -38,7 +38,7 @@ public class MessagingService
 
 	public bool IsConnected()
 	{
-		return _socket.Connected;
+		return IsInitialized() && _socket.Connected;
 	}
 
 	private void Communicate(CancellationToken token)
@@ -242,6 +242,7 @@ public class MessagingService
 		int bytesRead = 0;
 		while (bytesRead < size)
 		{
+			/* TODO: Handle exception */
 			int currentRead = _socket.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
 			if (currentRead <= 0)	/* Means that the socket was disconnected */
 			{
