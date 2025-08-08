@@ -31,10 +31,22 @@
 		<Setter Property="CornerRadius" Value="8"></Setter>
 	</Style>
 	
+	<Style Selector="TextBox.error">
+		<Setter Property="BorderBrush" Value="Red"/>
+	</Style>
+	
+	<Style Selector="TextBox.success">
+		<Setter Property="BorderBrush" Value="LightGreen"/>
+	</Style>
+	
 	<Style Selector="Button.submit">
 		<Setter Property="Background" Value="#ecffff"/>
 		<Setter Property="Foreground" Value="{StaticResource Title}"/>
 		<Setter Property="CornerRadius" Value="8"/>
 		<Setter Property="FontSize" Value="18"/>
+	</Style>	
+	
+	<Style Selector="TextBlock.error">
+		<Setter Property="Foreground" Value="Red"/>
 	</Style>
 </Styles>

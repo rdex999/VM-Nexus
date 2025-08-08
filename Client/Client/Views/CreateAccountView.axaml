@@ -37,12 +37,16 @@
 				           FontSize="36" FontWeight="Bold" Foreground="{StaticResource Title}"
 				           Padding="0, 10, 0, 0">Create Account</TextBlock>
 		
-				<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"/>
+				<TextBox Text="{Binding Username}" TextChanged="OnUsernameTextChangedAsync"
+				         Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"/>
 				
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
-					<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0"
-					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"/>
+					<TextBox Classes="form" Classes.error="{Binding PasswordClassError}" 
+					         Classes.success="{Binding PasswordClassSuccess}"
+					         HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0"
+					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
+					         Text="{Binding Password}" TextChanged="OnPasswordTextChanged"/>
 					
 					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
 						<Panel>
@@ -54,8 +58,11 @@
 					
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
-					<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Repeat Password" Padding="10, 6, 40, 0" 
-					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordRepeatedStateButton}"/>
+					<TextBox Classes="form" Classes.error="{Binding PasswordClassError}" 
+					         Classes.success="{Binding PasswordClassSuccess}"
+					         HorizontalAlignment="Stretch" Watermark="Repeat Password" Padding="10, 6, 40, 0" 
+					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordRepeatedStateButton}"
+					         Text="{Binding PasswordConfirm}" TextChanged="OnPasswordTextChanged"/>
 					
 					<ToggleButton Name="PasswordRepeatedStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
 						<Panel>
@@ -64,6 +71,11 @@
 						</Panel>
 					</ToggleButton>
 				</Grid>
+			
+				<Panel>
+					<TextBlock IsVisible="{Binding PasswordNoteIsVisible}" 
+					           HorizontalAlignment="Center" Classes="error">Passwords are not the same.</TextBlock>
+				</Panel>
 				
 				<Button HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 5">Create Account</Button>
 				

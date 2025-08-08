@@ -29,6 +29,9 @@ public class ClientService : MessagingService
 
 	public async Task<ExitCode> DisconnectFromServerAsync()
 	{
+		if(!IsConnected() || !IsInitialized())
+			return ExitCode.Success;
+			
 		(MessageResponse? _, ExitCode result) = await SendRequestAsync(new  MessageRequestDisconnect(true));
 		Disconnect();
 		return result;
