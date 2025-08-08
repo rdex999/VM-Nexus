@@ -77,7 +77,7 @@
 					           HorizontalAlignment="Center" Classes="error">Passwords are not the same.</TextBlock>
 				</Panel>
 				
-				<Button HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 5">Create Account</Button>
+				<Button IsEnabled="{Binding CreateAccountIsEnabled}" HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 5">Create Account</Button>
 				
 				<TextBlock HorizontalAlignment="Center" Foreground="{StaticResource Title}" FontWeight="DemiBold" Text="Already have an account? ">
 					<HyperlinkButton Command="{Binding NavigateToLoginCommand}">Login</HyperlinkButton>

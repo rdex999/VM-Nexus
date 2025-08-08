@@ -30,6 +30,9 @@ public partial class CreateAccountViewModel : ViewModelBase
 	[ObservableProperty] 
 	private bool _passwordClassSuccess = false;
 	
+	[ObservableProperty]
+	private bool _createAccountIsEnabled = false;
+	
 	public CreateAccountViewModel(NavigationService navigationService,  ClientService clientService)
 	{
 		_navigationService = navigationService;
@@ -46,13 +49,14 @@ public partial class CreateAccountViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task CreateAccountAsync()
 	{
-		throw new NotImplementedException();
 	}
 
 	public async Task UsernameTextChangedAsync()
 	{
+		CreateAccountIsEnabled = !string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password) &&
+		                         !string.IsNullOrEmpty(PasswordConfirm) && Password == PasswordConfirm;
+		
 		/* TODO: Search database for the username, to display a message if the username is available or not */
-		throw new NotImplementedException();
 	}
 	
 	public void PasswordTextChanged()
@@ -62,18 +66,22 @@ public partial class CreateAccountViewModel : ViewModelBase
 			PasswordNoteIsVisible = false;
 			PasswordClassError = false;	
 			PasswordClassSuccess = false;
+			CreateAccountIsEnabled = false;
 		}
 		else if (Password == PasswordConfirm)
 		{
 			PasswordNoteIsVisible = false;
 			PasswordClassError = false;
 			PasswordClassSuccess = true;
+
+			CreateAccountIsEnabled = !string.IsNullOrEmpty(Username);
 		}
 		else
 		{
 			PasswordNoteIsVisible = true;
 			PasswordClassError = true;
 			PasswordClassSuccess = false;
+			CreateAccountIsEnabled = false;
 		}
 	}
 }
