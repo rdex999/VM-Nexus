@@ -15,10 +15,18 @@ public class MainWindowModel
 	private CancellationTokenSource? _listenerCts;
 	private LinkedList<ClientConnection>? _clients;	
 	
-	public ExitCode ServerStart()
+	public async Task<ExitCode> ServerStartAsync()
 	{
 		_listenerCts = new CancellationTokenSource();
+
+		/* PostgreSQL startup */
+		int exitCode = await Common.RunBashCommandAsync("sudo systemctl start postgresql");
+		if (exitCode != 0)
+		{
+			return ExitCode.DatabaseStartupFailed;
+		}
 		
+		/* Socket initialization and listening */
 		IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());		/* Get local host ip addresses */
 
 		/* Filter out ip addresses that are not IPv4, and loop-back ip's. Basically leave only usable ip's. Then from the array get the first ip, or null if empty. */
@@ -38,7 +46,7 @@ public class MainWindowModel
 		return ExitCode.Success;
 	}
 
-	public async Task ServerStopAsync()
+	public async Task<ExitCode> ServerStopAsync()
 	{
 		if (_listener != null && _listenerCts != null && _listener.IsAlive)
 		{
@@ -47,17 +55,25 @@ public class MainWindowModel
 			_listenerCts.Dispose();
 		}
 
-		if (_clients == null)
-			return;
-	
-		List<Task> tasks = new List<Task>();
-		while (_clients.FirstOrDefault() != null)
+		if (_clients != null)
 		{
-			ClientConnection clientConnection = _clients.First();
-			tasks.Add(clientConnection.DisconnectClient());
+			List<Task> tasks = new List<Task>();
+			while (_clients.FirstOrDefault() != null)
+			{
+				ClientConnection clientConnection = _clients.First();
+				tasks.Add(clientConnection.DisconnectClient());
+			}
+
+			await Task.WhenAll(tasks);
 		}
 
-		await Task.WhenAll(tasks);
+		int exitCode = await Common.RunBashCommandAsync("sudo systemctl stop postgresql");
+		if (exitCode != 0)
+		{
+			return ExitCode.DatabaseShutdownFailed;
+		}
+		
+		return ExitCode.Success;
 	}
 	
 	private void ListenForClients(CancellationToken token, Socket socket)

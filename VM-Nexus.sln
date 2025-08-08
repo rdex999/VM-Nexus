@@ -1,6 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{D98EC168-996A-4D07-80E3-B5C197ECDA20}"
+	ProjectSection(SolutionItems) = preProject
+		Server\ServerInit.sh = Server\ServerInit.sh
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{523F56E4-6A91-4F81-9D09-1E9819A77136}"
 EndProject

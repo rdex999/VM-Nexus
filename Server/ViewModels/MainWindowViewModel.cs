@@ -31,8 +31,8 @@ public partial class MainWindowViewModel : ViewModelBase
 	{
 		if (isToggled)
 		{
-			ExitCode code = _mainWindowModel.ServerStart();
-			if (code != ExitCode.Success)
+			ExitCode result = await _mainWindowModel.ServerStartAsync();
+			if (result != ExitCode.Success)
 			{
 				/* TODO: Add logic to display error message */
 				ServerStateIsChecked = false;
@@ -40,7 +40,12 @@ public partial class MainWindowViewModel : ViewModelBase
 		}
 		else
 		{
-			await _mainWindowModel.ServerStopAsync();
+			ExitCode result = await _mainWindowModel.ServerStopAsync();
+			if (result != ExitCode.Success)
+			{
+				/* TODO: Add logic to display error message */
+				ServerStateIsChecked = true;
+			}
 		}
 	}
 }

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
@@ -32,5 +33,19 @@ public static class Common
 		var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
 		var json = System.Text.Encoding.UTF8.GetString(bytes);
 		return JsonConvert.DeserializeObject(json, settings);
+	}
+
+	public static async Task<int> RunBashCommandAsync(string command)
+	{
+		ProcessStartInfo psi = new ProcessStartInfo();
+		psi.FileName = "/bin/bash";
+		psi.Arguments = command;
+		
+		Process process = Process.Start(psi);
+		if (process == null)
+			return -1;
+		
+		await process.WaitForExitAsync();
+		return process.ExitCode;
 	}
 }
