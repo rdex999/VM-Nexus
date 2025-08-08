@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Npgsql;
 using Shared;
 
 namespace Server.Models;
@@ -14,17 +15,33 @@ public class MainWindowModel
 	private Thread? _listener;
 	private CancellationTokenSource? _listenerCts;
 	private LinkedList<ClientConnection>? _clients;	
+	private NpgsqlConnection _connection;
 	
 	public async Task<ExitCode> ServerStartAsync()
 	{
 		_listenerCts = new CancellationTokenSource();
 
 		/* PostgreSQL startup */
-		int exitCode = await Common.RunBashCommandAsync("sudo systemctl start postgresql");
-		if (exitCode != 0)
-		{
-			return ExitCode.DatabaseStartupFailed;
-		}
+		_connection = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;User Id=postgres;Password=postgres;Database=VM_Nexus_DB;");
+		_connection.Open();
+		
+		NpgsqlCommand command = _connection.CreateCommand();
+		
+		#if DEBUG
+			command.CommandText = "DROP TABLE IF EXISTS users;";
+			await command.ExecuteNonQueryAsync();
+		#endif
+		
+		/* TODO: Generate salts and fill in the length of a salt here */
+		command.CommandText = $"""
+		                       CREATE TABLE IF NOT EXISTS users (
+		                           		username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
+		                           		password_hashed VARCHAR(255), 
+		                           		password_salt VARCHAR(255)
+		                           	)
+		                       """;
+		
+		await command.ExecuteNonQueryAsync();
 		
 		/* Socket initialization and listening */
 		IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());		/* Get local host ip addresses */
@@ -67,12 +84,6 @@ public class MainWindowModel
 			await Task.WhenAll(tasks);
 		}
 
-		int exitCode = await Common.RunBashCommandAsync("sudo systemctl stop postgresql");
-		if (exitCode != 0)
-		{
-			return ExitCode.DatabaseShutdownFailed;
-		}
-		
 		return ExitCode.Success;
 	}
 	

@@ -23,7 +23,10 @@ public partial class MainWindowViewModel : ViewModelBase
 
 	public void OnProgramExit(object? sender, ControlledApplicationLifetimeExitEventArgs args)
 	{
-		_mainWindowModel.ServerStopAsync().Wait();
+		if (ServerStateIsChecked)
+		{
+			_mainWindowModel.ServerStopAsync().Wait();
+		}
 	}
 		
 	[RelayCommand]
