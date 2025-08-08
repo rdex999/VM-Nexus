@@ -1,6 +1,5 @@
 using System;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 using Shared;
 using Shared.Networking;
@@ -17,32 +16,28 @@ public sealed class Client : MessagingService
 		InitializeAsync().Wait();	/* Doesnt contain long-running code, so its fine to just Wait() it here */
 	}
 
-	/* When the client suddenly disconnects, delete this client object, and let it be re-created in ListenForClients */
-	protected override void HandleSuddenDisconnection()
-	{
-		base.HandleSuddenDisconnection();
-		AfterDisconnection();
-	}
-
-	protected override void AfterDisconnection()
-	{
-		base.AfterDisconnection();
-		Disconnected?.Invoke(this, EventArgs.Empty);
-	}
-
 	protected override async Task ProcessRequestAsync(MessageRequest request)
 	{
 		await base.ProcessRequestAsync(request);
 
-		ExitCode code;
+		ExitCode result;
 		switch (request)
 		{
-			case MessageRequestConnect req:
+			case MessageRequestConnect reqConnect:
 			{
-				MessageResponse response = new MessageResponseConnect(true, req.Id, true);
-				code = await SendResponse(response);
+				MessageResponse response = new MessageResponseConnect(true, reqConnect.Id, true);
+				result = await SendResponse(response);
 				break;
 			}
+
+			case MessageRequestDisconnect reqDisconnect:
+			{
+				result = await SendResponse(new MessageResponseDisconnect(true, reqDisconnect.Id));
+				Disconnect();
+				AfterDisconnection();
+				break;
+			}
+				
 			default:
 			{
 				throw new NotImplementedException();
@@ -50,7 +45,7 @@ public sealed class Client : MessagingService
 			}
 		}
 
-		switch (code)
+		switch (result)
 		{
 			case ExitCode.Success:
 				return;
@@ -66,5 +61,24 @@ public sealed class Client : MessagingService
 				throw new NotImplementedException();
 			}
 		}
+	}
+	
+	/* When the client suddenly disconnects, delete this client object, and let it be re-created in ListenForClients */
+	protected override void HandleSuddenDisconnection()
+	{
+		base.HandleSuddenDisconnection();
+	}
+
+	protected override void AfterDisconnection()
+	{
+		base.AfterDisconnection();
+		Disconnected?.Invoke(this, EventArgs.Empty);
+	}
+
+	public async Task DisconnectClient()
+	{
+		/* It doesnt matter what the client says (the client shall always accept a disconnection) - What can he do? haha */
+		await SendRequestAsync(new MessageRequestDisconnect(true));
+		Disconnect();
 	}
 }

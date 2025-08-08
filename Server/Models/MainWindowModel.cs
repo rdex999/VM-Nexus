@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using Shared;
 
 namespace Server.Models;
@@ -37,7 +38,7 @@ public class MainWindowModel
 		return ExitCode.Success;
 	}
 
-	public void ServerStop()
+	public async Task ServerStopAsync()
 	{
 		if (_listener != null && _listenerCts != null && _listener.IsAlive)
 		{
@@ -48,12 +49,15 @@ public class MainWindowModel
 
 		if (_clients == null)
 			return;
-		
+	
+		List<Task> tasks = new List<Task>();
 		while (_clients.FirstOrDefault() != null)
 		{
 			Client client = _clients.First();
-			client.Disconnect();
+			tasks.Add(client.DisconnectClient());
 		}
+
+		await Task.WhenAll(tasks);
 	}
 	
 	private void ListenForClients(CancellationToken token, Socket socket)

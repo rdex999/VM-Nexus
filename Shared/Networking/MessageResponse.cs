@@ -24,11 +24,8 @@ public class MessageResponseConnect : MessageResponse
 
 public class MessageResponseDisconnect : MessageResponse
 {
-	public bool Accepted { get; }
-
-	public MessageResponseDisconnect(bool generateGuid, Guid requestId, bool accepted)
+	public MessageResponseDisconnect(bool generateGuid, Guid requestId)
 		: base(generateGuid, requestId)
 	{
-		Accepted = accepted;
 	}
 }

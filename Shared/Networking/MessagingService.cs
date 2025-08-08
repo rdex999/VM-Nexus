@@ -41,13 +41,6 @@ public class MessagingService
 		return _socket.Connected;
 	}
 
-	public void Disconnect()
-	{
-		_cts.Cancel();
-		_socket.Dispose();
-		_socket.Close();
-	}
-
 	private void Communicate(CancellationToken token)
 	{
 		while (!token.IsCancellationRequested)
@@ -189,8 +182,9 @@ public class MessagingService
 		{
 		}
 	}
-	
+
 	/* On disconnection, stop trying to send the message. The message must be sent again from its beginning. */
+
 	private ExitCode SendMessage(Message message)
 	{
 		ExitCode result;
@@ -224,7 +218,7 @@ public class MessagingService
 
 		return (Message)Common.FromByteArrayWithType(messageBytes)!;
 	}
-	
+
 	private ExitCode SendBytesExact(byte[] bytes)
 	{
 		int bytesSent = 0;
@@ -238,7 +232,7 @@ public class MessagingService
 		}
 		return ExitCode.Success;
 	}
-	
+
 	private byte[]? ReceiveBytesExact(int size)
 	{
 		if (size <= 0)
@@ -263,10 +257,18 @@ public class MessagingService
 		FailEvent?.Invoke(this, code);
 	}
 
+	protected void Disconnect()
+	{
+		_cts.Cancel();
+		_socket.Dispose();
+		_socket.Close();
+		_cts.Dispose();
+	}
+
 	protected virtual void AfterDisconnection()
 	{
 	}
-	
+
 	protected virtual async Task ProcessRequestAsync(MessageRequest request)
 	{
 	}
@@ -274,5 +276,6 @@ public class MessagingService
 	protected virtual void HandleSuddenDisconnection()
 	{
 		OnFailure(ExitCode.DisconnectedFromServer);
+		AfterDisconnection();
 	}
 }

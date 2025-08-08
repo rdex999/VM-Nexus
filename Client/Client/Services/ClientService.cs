@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 using Shared;
 using Shared.Networking;
@@ -28,6 +26,13 @@ public class ClientService : MessagingService
 		await RequestConnectAsync();
 	}
 
+	public async Task<ExitCode> DisconnectFromServerAsync()
+	{
+		(MessageResponse? _, ExitCode result) = await SendRequestAsync(new  MessageRequestDisconnect(true));
+		Disconnect();
+		return result;
+	}
+	
 	private async Task ConnectToServerAsync()
 	{
 		await SocketConnectToServerAsync();
@@ -87,7 +92,7 @@ public class ClientService : MessagingService
 			case MessageRequestDisconnect reqDisconnect:
 			{
 				Disconnect();
-				result = await SendResponse(new MessageResponseDisconnect(true, reqDisconnect.Id, true));
+				result = await SendResponse(new MessageResponseDisconnect(true, reqDisconnect.Id));
 				HandleSuddenDisconnection();
 				break;
 			}
@@ -112,11 +117,6 @@ public class ClientService : MessagingService
 			}
 		}
 		
-	}
-
-	private async Task<ExitCode> DisconnectFromServerAsync()
-	{
-		throw new NotImplementedException();
 	}
 
 	protected override void HandleSuddenDisconnection()

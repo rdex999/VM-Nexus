@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Threading;
+using System.Threading.Tasks;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -22,11 +23,11 @@ public partial class MainWindowViewModel : ViewModelBase
 
 	public void OnProgramExit(object? sender, ControlledApplicationLifetimeExitEventArgs args)
 	{
-		_mainWindowModel.ServerStop();
+		_mainWindowModel.ServerStopAsync().Wait();
 	}
 		
 	[RelayCommand]
-	private void ServerStateToggleChanged(bool isToggled)
+	private async Task ServerStateToggleChangedAsync(bool isToggled)
 	{
 		if (isToggled)
 		{
@@ -39,7 +40,7 @@ public partial class MainWindowViewModel : ViewModelBase
 		}
 		else
 		{
-			_mainWindowModel.ServerStop();
+			await _mainWindowModel.ServerStopAsync();
 		}
 	}
 }

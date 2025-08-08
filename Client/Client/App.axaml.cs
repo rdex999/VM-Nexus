@@ -31,10 +31,12 @@ public partial class App : Application
 			// More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
 			DisableAvaloniaDataAnnotationValidation();
 
+			ClientService clientService = new ClientService();
 			desktop.MainWindow = new Window
 			{
-				Content = new LoginView() { DataContext = new LoginViewModel(new NavigationService(), new ClientService()) }
+				Content = new LoginView() { DataContext = new LoginViewModel(new NavigationService(), clientService) }
 			};
+			desktop.Exit += (s, e) => clientService.DisconnectFromServerAsync().GetAwaiter().GetResult();
 		}
 		else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
 		{
