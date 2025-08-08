@@ -29,3 +29,16 @@ public class MessageResponseDisconnect : MessageResponse
 	{
 	}
 }
+
+public class MessageResponseCreateAccount : MessageResponse
+{
+	public bool Success { get; }
+	public string LoginSessionId { get; }
+
+	public MessageResponseCreateAccount(bool generateGuid, Guid requestId, bool success,  string loginSessionId)
+		: base(generateGuid, requestId)
+	{
+		Success = success;
+		LoginSessionId = loginSessionId;
+	}
+}
