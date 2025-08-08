@@ -11,3 +11,9 @@ public class MessageRequestConnect : MessageRequest
 	public MessageRequestConnect(bool generateGuid)
 		: base(generateGuid) {}
 }
+
+public class MessageRequestDisconnect : MessageRequest
+{
+	public MessageRequestDisconnect(bool generateGuid)
+		: base(generateGuid) {}
+}

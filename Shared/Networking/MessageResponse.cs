@@ -21,3 +21,14 @@ public class MessageResponseConnect : MessageResponse
 		Accepted = accepted;
 	}
 }
+
+public class MessageResponseDisconnect : MessageResponse
+{
+	public bool Accepted { get; }
+
+	public MessageResponseDisconnect(bool generateGuid, Guid requestId, bool accepted)
+		: base(generateGuid, requestId)
+	{
+		Accepted = accepted;
+	}
+}
