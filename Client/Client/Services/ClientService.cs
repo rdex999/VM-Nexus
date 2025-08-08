@@ -66,8 +66,7 @@ public class ClientService : MessagingService
 		{
 			try
 			{
-				await _socket.ConnectAsync(IPAddress.Parse(Shared.SharedDefinitions.ServerIp),
-					Shared.SharedDefinitions.ServerPort);
+				await _socket.ConnectAsync(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
 				break; /* Runs only if there was no exception (on exception it jumps to the catch block) */
 			}
 			catch (Exception)
@@ -76,5 +75,53 @@ public class ClientService : MessagingService
 				await Task.Delay(3000);
 			}
 		}
+	}
+
+	protected override async Task ProcessRequestAsync(MessageRequest request)
+	{
+		await base.ProcessRequestAsync(request);
+
+		ExitCode result;
+		switch (request)
+		{
+			case MessageRequestDisconnect reqDisconnect:
+			{
+				Disconnect();
+				result = await SendResponse(new MessageResponseDisconnect(true, reqDisconnect.Id, true));
+				HandleSuddenDisconnection();
+				break;
+			}
+
+			default:
+			{
+				throw new NotImplementedException();
+			}
+		}
+
+		switch (result)
+		{
+			case ExitCode.DisconnectedFromServer:
+			{
+				HandleSuddenDisconnection();
+				break;
+			}
+
+			default:
+			{
+				throw new NotImplementedException();
+			}
+		}
+		
+	}
+
+	private async Task<ExitCode> DisconnectFromServerAsync()
+	{
+		throw new NotImplementedException();
+	}
+
+	protected override void HandleSuddenDisconnection()
+	{
+		base.HandleSuddenDisconnection();
+		ConnectToServerAsync().Wait();
 	}
 }

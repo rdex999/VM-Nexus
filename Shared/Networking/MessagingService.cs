@@ -41,10 +41,11 @@ public class MessagingService
 		return _socket.Connected;
 	}
 
-	public virtual void Disconnect()
+	public void Disconnect()
 	{
-		/* TODO: Add logic to send a disconnection request */
 		_cts.Cancel();
+		_socket.Dispose();
+		_socket.Close();
 	}
 
 	private void Communicate(CancellationToken token)
