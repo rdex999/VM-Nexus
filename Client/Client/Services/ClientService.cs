@@ -79,7 +79,7 @@ public class ClientService : MessagingService
 			
 			break;
 		}
-
+		Reconnected?.Invoke(this, EventArgs.Empty);
 	}
 	
 	private bool SocketConnectToServer()

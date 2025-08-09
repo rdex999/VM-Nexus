@@ -271,7 +271,7 @@ public class MessagingService
 		FailEvent?.Invoke(this, code);
 	}
 
-	public void Disconnect()
+	public virtual void Disconnect()
 	{
 		if (_cts != null)
 		{

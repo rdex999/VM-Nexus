@@ -12,6 +12,7 @@ public sealed class ClientConnection : MessagingService
 	public event EventHandler Disconnected;
 	private bool _isLoggedIn = false;
 	private DatabaseService _databaseService;
+	private bool _hasDisconnected = false;		/* Has the Disconnect function ran? */
 
 	public ClientConnection(Socket socket, DatabaseService databaseService)
 		: base()
@@ -107,18 +108,27 @@ public sealed class ClientConnection : MessagingService
 			}
 		}
 	}
+
+	public override void Disconnect()
+	{
+		base.Disconnect();
+		AfterDisconnection();
+	}
 	
 	/* When the client suddenly disconnects, delete this client object, and let it be re-created in ListenForClients */
 	protected override void HandleSuddenDisconnection()
 	{
-		Disconnect();
 		base.HandleSuddenDisconnection();
 	}
 
 	protected override void AfterDisconnection()
 	{
-		base.AfterDisconnection();
-		Disconnect();
-		Disconnected?.Invoke(this, EventArgs.Empty);
+		if (!_hasDisconnected) /* To prevent recursion */
+		{
+			_hasDisconnected = true;
+			base.AfterDisconnection();
+			base.Disconnect();
+			Disconnected?.Invoke(this, EventArgs.Empty);
+		}
 	}
 }

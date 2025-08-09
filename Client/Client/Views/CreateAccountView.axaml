@@ -28,8 +28,14 @@
 			</LinearGradientBrush>
 		</Grid.Background>
 
-		<TextBlock HorizontalAlignment="Center" Margin="0, 5, 0, 0" 
-		           FontSize="72" FontWeight="Bold" Foreground="{StaticResource Title}">VM Nexus</TextBlock>
+		<StackPanel>
+			<TextBlock HorizontalAlignment="Center" Margin="0, 5, 0, 0"
+			           FontSize="72" FontWeight="Bold" Foreground="{StaticResource Title}">
+				VM Nexus
+			</TextBlock>
+
+			<TextBlock HorizontalAlignment="Center" TextAlignment="Center" Classes="error" Text="{Binding ConnectionErrorMessage}" />
+		</StackPanel>
 		
 		<Border Grid.Row="1" HorizontalAlignment="Center" Background="#d4eff1" CornerRadius="15" Padding="30, 5" Width="340" Height="440">
 			<StackPanel Spacing="15">
