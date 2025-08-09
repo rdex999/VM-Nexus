@@ -59,7 +59,7 @@ public class MainWindowModel
 			while (_clients.FirstOrDefault() != null)
 			{
 				ClientConnection clientConnection = _clients.First();
-				tasks.Add(clientConnection.DisconnectClient());
+				clientConnection.Disconnect();
 			}
 
 			await Task.WhenAll(tasks);

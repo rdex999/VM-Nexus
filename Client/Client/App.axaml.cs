@@ -8,6 +8,7 @@ using Avalonia.Markup.Xaml;
 using Client.Services;
 using Client.ViewModels;
 using Client.Views;
+using CommunityToolkit.Mvvm.ComponentModel.__Internals;
 
 namespace Client;
 
@@ -36,7 +37,7 @@ public partial class App : Application
 			{
 				Content = new LoginView() { DataContext = new LoginViewModel(new NavigationService(), clientService) }
 			};
-			desktop.Exit += (s, e) => clientService.OnExit().GetAwaiter().GetResult();
+			desktop.Exit += (s, e) => clientService.OnExit();
 		}
 		else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
 		{

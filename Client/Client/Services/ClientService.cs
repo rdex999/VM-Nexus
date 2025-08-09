@@ -25,9 +25,9 @@ public class ClientService : MessagingService
 		await RequestConnectAsync();
 	}
 
-	public async Task OnExit()
+	public void OnExit()
 	{
-		await DisconnectFromServerAsync();
+		Disconnect();
 	}
 
 	public async Task<MessageResponseCreateAccount.Status> CreateAccountAsync(string username, string password)
@@ -54,16 +54,6 @@ public class ClientService : MessagingService
 	{
 		await SocketConnectToServerAsync();
 		await RequestConnectAsync();
-	}
-	
-	private async Task<ExitCode> DisconnectFromServerAsync()
-	{
-		if(!IsConnected() || !IsInitialized())
-			return ExitCode.Success;
-			
-		(MessageResponse? _, ExitCode result) = await SendRequestAsync(new  MessageRequestDisconnect(true));
-		Disconnect();
-		return result;
 	}
 	
 	private async Task RequestConnectAsync()
@@ -116,14 +106,6 @@ public class ClientService : MessagingService
 		ExitCode result;
 		switch (request)
 		{
-			case MessageRequestDisconnect reqDisconnect:
-			{
-				result = await SendResponse(new MessageResponseDisconnect(true, reqDisconnect.Id));
-				Disconnect();
-				HandleSuddenDisconnection();
-				break;
-			}
-
 			default:
 			{
 				throw new NotImplementedException();

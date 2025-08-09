@@ -22,14 +22,6 @@ public class MessageResponseConnect : MessageResponse
 	}
 }
 
-public class MessageResponseDisconnect : MessageResponse
-{
-	public MessageResponseDisconnect(bool generateGuid, Guid requestId)
-		: base(generateGuid, requestId)
-	{
-	}
-}
-
 public class MessageResponseCheckUsername : MessageResponse
 {
 	public bool Available { get; }

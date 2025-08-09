@@ -12,12 +12,6 @@ public class MessageRequestConnect : MessageRequest
 		: base(generateGuid) {}
 }
 
-public class MessageRequestDisconnect : MessageRequest
-{
-	public MessageRequestDisconnect(bool generateGuid)
-		: base(generateGuid) {}
-}
-
 public class MessageRequestCheckUsername : MessageRequest	/* Check if the provided username is available (that there is no such user) */
 {
 	public string Username { get; }

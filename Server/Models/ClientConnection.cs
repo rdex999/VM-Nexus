@@ -34,14 +34,6 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
-			case MessageRequestDisconnect reqDisconnect:
-			{
-				result = await SendResponse(new MessageResponseDisconnect(true, reqDisconnect.Id));
-				Disconnect();
-				AfterDisconnection();
-				break;
-			}
-
 			case MessageRequestCheckUsername reqCheckUsername:
 			{
 				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCheckUsername.Username);
@@ -117,19 +109,14 @@ public sealed class ClientConnection : MessagingService
 	/* When the client suddenly disconnects, delete this client object, and let it be re-created in ListenForClients */
 	protected override void HandleSuddenDisconnection()
 	{
+		Disconnect();
 		base.HandleSuddenDisconnection();
 	}
 
 	protected override void AfterDisconnection()
 	{
 		base.AfterDisconnection();
-		Disconnected?.Invoke(this, EventArgs.Empty);
-	}
-
-	public async Task DisconnectClient()
-	{
-		/* It doesnt matter what the client says (the client shall always accept a disconnection) - What can he do? haha */
-		await SendRequestAsync(new MessageRequestDisconnect(true));
 		Disconnect();
+		Disconnected?.Invoke(this, EventArgs.Empty);
 	}
 }

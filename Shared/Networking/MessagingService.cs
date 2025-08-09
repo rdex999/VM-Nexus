@@ -45,7 +45,7 @@ public class MessagingService
 	{
 		while (!token.IsCancellationRequested)
 		{
-			if (!IsConnected())
+			if (!IsConnected() && !token.IsCancellationRequested)
 			{
 				HandleSuddenDisconnection();
 			}
@@ -53,7 +53,7 @@ public class MessagingService
 			Message? message = ReceiveMessage();
 			if (message == null)
 			{
-				if (!IsConnected())
+				if (!IsConnected() && !token.IsCancellationRequested)
 				{
 					HandleSuddenDisconnection();
 				}
@@ -83,10 +83,7 @@ public class MessagingService
 			}
 		}
 		
-		_cts.Dispose();
-		_socket.Dispose();
-		_socket.Close();
-		
+		Disconnect();
 		AfterDisconnection();
 	}
 
@@ -184,7 +181,6 @@ public class MessagingService
 	}
 
 	/* On disconnection, stop trying to send the message. The message must be sent again from its beginning. */
-
 	private ExitCode SendMessage(Message message)
 	{
 		ExitCode result;
@@ -224,9 +220,20 @@ public class MessagingService
 		int bytesSent = 0;
 		while (bytesSent < bytes.Length)
 		{
-			int sent = _socket.Send(bytes, bytesSent, bytes.Length - bytesSent, SocketFlags.None);
-			if (sent <= 0)
+			int sent;
+			try
+			{
+				sent = _socket.Send(bytes, bytesSent, bytes.Length - bytesSent, SocketFlags.None);
+			}
+			catch (Exception e)
+			{
 				return ExitCode.DisconnectedFromServer;
+			}
+
+			if (sent <= 0)
+			{
+				return ExitCode.DisconnectedFromServer;
+			}
 			
 			bytesSent += sent;
 		}
@@ -242,8 +249,16 @@ public class MessagingService
 		int bytesRead = 0;
 		while (bytesRead < size)
 		{
-			/* TODO: Handle exception */
-			int currentRead = _socket.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
+			int currentRead;
+			try
+			{
+				currentRead = _socket.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
+			}
+			catch (Exception e)
+			{
+				return null;
+			}
+			
 			if (currentRead <= 0)	/* Means that the socket was disconnected */
 			{
 				return null;
@@ -258,21 +273,24 @@ public class MessagingService
 		FailEvent?.Invoke(this, code);
 	}
 
-	protected void Disconnect()
+	public void Disconnect()
 	{
-		_cts.Cancel();
+		if (_cts != null)
+		{
+			_cts.Cancel();
+		}
 		_socket.Dispose();
 		_socket.Close();
-		if (Thread.CurrentThread == _thread)
+		if (Thread.CurrentThread != _thread)
 		{
 			_thread.Join();
 		}
-		_thread = null;
-		_cts.Dispose();
-	}
-
-	protected virtual void AfterDisconnection()
-	{
+		
+		if (_cts != null)
+		{
+			_cts.Dispose();
+			_cts = null;
+		}
 	}
 
 	protected virtual async Task ProcessRequestAsync(MessageRequest request)
@@ -283,5 +301,9 @@ public class MessagingService
 	{
 		OnFailure(ExitCode.DisconnectedFromServer);
 		AfterDisconnection();
+	}
+	
+	protected virtual void AfterDisconnection()
+	{
 	}
 }
