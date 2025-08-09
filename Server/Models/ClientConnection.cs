@@ -78,6 +78,17 @@ public sealed class ClientConnection : MessagingService
 				}
 				break;
 			}
+
+			case MessageRequestLogin reqLogin:
+			{
+				bool validLogin = await _databaseService.IsValidLoginAsync(reqLogin.Username, reqLogin.Password);
+				result = await SendResponse(new MessageResponseLogin(true, reqLogin.Id, validLogin));
+				if (result == ExitCode.Success)
+				{
+					_isLoggedIn = validLogin;
+				}
+				break;
+			}
 				
 			default:
 			{

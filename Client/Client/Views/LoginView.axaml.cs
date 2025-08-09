@@ -22,4 +22,9 @@ public partial class LoginView : UserControl
 			}
 		}
 	}
+
+	private void OnCredentialsTextChanged(object? sender, TextChangedEventArgs e)
+	{
+		((LoginViewModel)DataContext!).OnCredentialsTextChanged();
+	}
 }

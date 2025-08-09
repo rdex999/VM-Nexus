@@ -40,6 +40,16 @@ public class ClientService : MessagingService
 		return reqCreateAccount.Result;
 	}
 
+	public async Task<bool?> LoginAsync(string username, string password)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogin(true, username, password));
+		if (result != ExitCode.Success)
+			return null;
+		
+		MessageResponseLogin reqLogin = (MessageResponseLogin)response!;
+		return reqLogin.Accepted;
+	}
+
 	private async Task ConnectToServerAsync()
 	{
 		await SocketConnectToServerAsync();
