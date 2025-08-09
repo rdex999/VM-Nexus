@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Npgsql;
 using Shared;
@@ -7,6 +8,7 @@ namespace Server.Services;
 public class DatabaseService
 {
 	private NpgsqlConnection _connection;
+	private const int SaltSize = 32;
 
 	public DatabaseService()
 	{
@@ -24,7 +26,7 @@ public class DatabaseService
 		                CREATE TABLE IF NOT EXISTS users (
 		                    		username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
 		                    		password_hashed VARCHAR(255), 
-		                    		password_salt VARCHAR(255)
+		                    		password_salt VARCHAR({SaltSize})
 		                    	)
 		                """);
 	}
@@ -92,5 +94,16 @@ public class DatabaseService
 			cmd.Parameters.AddRange(parameters);
 			return await cmd.ExecuteScalarAsync();	
 		}	
+	}
+
+	private byte[] GenerateSalt()
+	{
+		byte[] salt = new byte[SaltSize];
+		using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
+		{
+			rng.GetBytes(salt);
+		}
+
+		return salt;
 	}
 }
