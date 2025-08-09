@@ -106,6 +106,16 @@ public class DatabaseService
 		}	
 	}
 
+	public async Task<NpgsqlDataReader> ExecuteReaderAsync(string command, params NpgsqlParameter[] parameters)
+	{
+		using (NpgsqlCommand cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = command;
+			cmd.Parameters.AddRange(parameters);
+			return await cmd.ExecuteReaderAsync();	
+		}		
+	}
+
 	private async Task<byte[]> EncryptPasswordAsync(string password, byte[] salt)
 	{
 		using (Argon2id argon2 = new Argon2id(Encoding.UTF8.GetBytes(password)))
