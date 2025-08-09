@@ -1,3 +1,6 @@
+using System;
+using System.Diagnostics;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -75,6 +78,26 @@ public class DatabaseService
 		return ExitCode.DatabaseOperationFailed;
 	}
 
+	public async Task<bool> IsValidLoginAsync(string username, string password)
+	{
+		using NpgsqlDataReader reader = await ExecuteReaderAsync(
+				"SELECT password_hashed, password_salt FROM users WHERE username = @username",
+				new NpgsqlParameter("@username", username)
+			);
+		
+		if (!reader.Read() || reader.IsDBNull(0) || reader.IsDBNull(1))
+		{
+			return false;
+		}
+		
+		byte[] dbPasswordHash = (byte[])reader.GetValue(0);
+		byte[] passwordSalt = (byte[])reader.GetValue(1);
+		
+		byte[] passwordHash = await EncryptPasswordAsync(password, passwordSalt);
+
+		return dbPasswordHash.SequenceEqual(passwordHash);
+	}
+
 	public async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
 	{
 		/* TODO: Add SQL injection handling and checks */
@@ -108,12 +131,10 @@ public class DatabaseService
 
 	public async Task<NpgsqlDataReader> ExecuteReaderAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		using (NpgsqlCommand cmd = _connection.CreateCommand())
-		{
-			cmd.CommandText = command;
-			cmd.Parameters.AddRange(parameters);
-			return await cmd.ExecuteReaderAsync();	
-		}		
+		NpgsqlCommand cmd = _connection.CreateCommand();
+		cmd.CommandText = command;
+		cmd.Parameters.AddRange(parameters);
+		return await cmd.ExecuteReaderAsync();
 	}
 
 	private async Task<byte[]> EncryptPasswordAsync(string password, byte[] salt)
