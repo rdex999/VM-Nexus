@@ -41,3 +41,16 @@ public class MessageRequestCreateAccount : MessageRequest
 		Password = password;
 	}
 }
+
+public class MessageRequestLogin : MessageRequest
+{
+	public string Username { get; }
+	public string Password { get; }
+
+	public MessageRequestLogin(bool generateGuid, string username, string password)
+		: base(generateGuid)
+	{
+		Username = username;
+		Password = password;
+	}
+}

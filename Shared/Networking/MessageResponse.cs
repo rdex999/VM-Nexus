@@ -58,3 +58,14 @@ public class MessageResponseCreateAccount : MessageResponse
 		UsernameNotAvailable = 2,
 	}
 }
+
+public class MessageResponseLogin : MessageResponse
+{
+	public bool Accepted { get; }
+
+	public MessageResponseLogin(bool generateGuid, Guid requestId, bool accepted)
+		: base(generateGuid, requestId)
+	{
+		Accepted = accepted;
+	}
+}
