@@ -11,4 +11,5 @@ public enum ExitCode
 	MessageReceivedCorrupted,
 	DatabaseStartupFailed,
 	DatabaseShutdownFailed,
+	DatabaseOperationFailed,
 }

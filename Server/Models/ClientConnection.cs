@@ -52,7 +52,26 @@ public sealed class ClientConnection : MessagingService
 			case MessageRequestCreateAccount reqCreateAccount:
 			{
 				/* TODO: Register into database */
-				result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, true));
+				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCreateAccount.Username);
+				MessageResponseCreateAccount.Status status;
+				if (usernameAvailable)
+				{
+					ExitCode code = await _databaseService.RegisterUserAsync(reqCreateAccount.Username, reqCreateAccount.Password);
+					if (code == ExitCode.Success)
+					{
+						status = MessageResponseCreateAccount.Status.Success;
+					}
+					else
+					{
+						status = MessageResponseCreateAccount.Status.Failure;
+					}
+				}
+				else
+				{
+					status = MessageResponseCreateAccount.Status.UsernameNotAvailable;
+				}
+				
+				result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, status));
 				if (result == ExitCode.Success)
 				{
 					_isLoggedIn = true;
@@ -62,6 +81,7 @@ public sealed class ClientConnection : MessagingService
 				
 			default:
 			{
+				throw new NotImplementedException();
 			}
 		}
 

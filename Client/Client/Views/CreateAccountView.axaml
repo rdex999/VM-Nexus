@@ -76,8 +76,9 @@
 					<TextBlock IsVisible="{Binding PasswordNotEqualTextIsVisible}" 
 					           HorizontalAlignment="Center" Classes="error">Passwords are not the same.</TextBlock>
 					
-					<TextBox IsVisible="{Binding AccountCreationFailedTextIsVisible}"
-					         HorizontalAlignment="Center" Classes="error">Account creation failed. Try again later.</TextBox>
+					<TextBlock IsVisible="{Binding AccountCreationFailedTextIsVisible}"
+					         Text="{Binding AccountCreationFailedText}"
+					         HorizontalAlignment="Center" Classes="error"/>
 				</Panel>
 				
 				<Button IsEnabled="{Binding CreateAccountIsEnabled}" 

@@ -46,6 +46,23 @@ public class DatabaseService
 		return userCount > 0;
 	}
 
+	public async Task<ExitCode> RegisterUserAsync(string username, string password)
+	{
+		int rowCount = await ExecuteNonQueryAsync($"""
+		                                           INSERT INTO users (username, password_hashed)
+		                                           		VALUES (@username, @password_hashed)
+		                                           """,
+			new NpgsqlParameter("@username", username), new NpgsqlParameter("@password_hashed", password)
+		);
+
+		if (rowCount == 1)
+		{
+			return ExitCode.Success;
+		}
+		
+		return ExitCode.DatabaseOperationFailed;
+	}
+
 	public async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
 	{
 		/* TODO: Add SQL injection handling and checks */

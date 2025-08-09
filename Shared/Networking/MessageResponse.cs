@@ -43,11 +43,18 @@ public class MessageResponseCheckUsername : MessageResponse
 
 public class MessageResponseCreateAccount : MessageResponse
 {
-	public bool Success { get; }
+	public Status Result { get; }
 
-	public MessageResponseCreateAccount(bool generateGuid, Guid requestId, bool success)
+	public MessageResponseCreateAccount(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
+	{ 
+		Result = result;
+	}
+	
+	public enum Status
 	{
-		Success = success;
+		Success = 0,
+		Failure = 1,
+		UsernameNotAvailable = 2,
 	}
 }

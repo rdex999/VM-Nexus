@@ -35,14 +35,14 @@ public class ClientService : MessagingService
 		return result;
 	}
 
-	public async Task<bool> CreateAccountAsync(string username, string password)
+	public async Task<MessageResponseCreateAccount.Status> CreateAccountAsync(string username, string password)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateAccount(true, username, password));
 		if (result != ExitCode.Success)
-			return false;
+			return MessageResponseCreateAccount.Status.Failure;
 		
 		MessageResponseCreateAccount reqCreateAccount = (MessageResponseCreateAccount)response!;
-		return reqCreateAccount.Success;
+		return reqCreateAccount.Result;
 	}
 
 	private async Task ConnectToServerAsync()

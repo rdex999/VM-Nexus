@@ -4,6 +4,7 @@ using Client.Services;
 using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Shared.Networking;
 
 namespace Client.ViewModels;
 
@@ -36,6 +37,9 @@ public partial class CreateAccountViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _accountCreationFailedTextIsVisible = false;
 	
+	[ObservableProperty]
+	private string _accountCreationFailedText;
+	
 	public CreateAccountViewModel(NavigationService navigationService,  ClientService clientService)
 	{
 		_navigationService = navigationService;
@@ -52,14 +56,21 @@ public partial class CreateAccountViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task CreateAccountAsync()
 	{
-		bool success = await _clientService.CreateAccountAsync(Username, Password);
-		if (success)
+		AccountCreationFailedTextIsVisible = false;
+		
+		MessageResponseCreateAccount.Status status= await _clientService.CreateAccountAsync(Username, Password);
+		if (status == MessageResponseCreateAccount.Status.Success)
 		{
-			AccountCreationFailedTextIsVisible = false;		/* User should not even see that disappear, but in case he does. */
 			_navigationService.NavigateToView(new MainView() {  DataContext = new MainViewModel(_navigationService, _clientService) });
+		}
+		else if  (status == MessageResponseCreateAccount.Status.UsernameNotAvailable)
+		{
+			AccountCreationFailedText = $"Username \"{Username}\" is not available.";
+			AccountCreationFailedTextIsVisible = true;
 		}
 		else
 		{
+			AccountCreationFailedText = "Account creation failed. Try again later.";
 			AccountCreationFailedTextIsVisible = true;
 		}
 	}
