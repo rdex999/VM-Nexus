@@ -10,9 +10,6 @@ namespace Client.ViewModels;
 
 public partial class CreateAccountViewModel : ViewModelBase
 {
-	private readonly NavigationService _navigationService;
-	private readonly ClientService _clientService;
-
 	[ObservableProperty] 
 	private string _username;
 	
@@ -41,11 +38,9 @@ public partial class CreateAccountViewModel : ViewModelBase
 	private string _accountCreationFailedText;
 	
 	public CreateAccountViewModel(NavigationService navigationService,  ClientService clientService)
+		: base(navigationService, clientService)
 	{
-		_navigationService = navigationService;
-		_clientService = clientService;
 	}
-
 
 	[RelayCommand]
 	private void NavigateToLogin()

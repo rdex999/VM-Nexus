@@ -8,8 +8,7 @@ public partial class MainViewModel : ViewModelBase
 	private ClientService _clientService;
 
 	public MainViewModel(NavigationService navigationService, ClientService clientService)
+		: base(navigationService, clientService)
 	{
-		_navigationService = navigationService;
-		_clientService = clientService;
 	}
 }

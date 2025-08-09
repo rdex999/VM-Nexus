@@ -10,9 +10,6 @@ namespace Client.ViewModels;
 
 public partial class LoginViewModel : ViewModelBase
 {
-	private readonly NavigationService _navigationService;
-	private ClientService _clientService;
-
 	[ObservableProperty]
 	private string _username;
 	
@@ -26,9 +23,8 @@ public partial class LoginViewModel : ViewModelBase
 	private bool _loginButtonIsEnabled = false;
 
 	public LoginViewModel(NavigationService navigationService, ClientService clientService)
+		: base(navigationService, clientService)
 	{
-		_navigationService = navigationService;
-		_clientService = clientService;
 	}
 
 	public async Task InitializeAsync()
