@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
+using Konscious.Security.Cryptography;
 using Npgsql;
 using Shared;
 
@@ -8,8 +10,13 @@ namespace Server.Services;
 public class DatabaseService
 {
 	private NpgsqlConnection _connection;
-	private const int SaltSize = 32;
 
+	private const int EncryptedPasswordSize = 64;
+	private const int SaltSize = 32;
+	private const int Argon2MemorySize = 1024 * 512;	/* 512 MiB */
+	private const int Argon2Iterations = 4;
+	private const int Argon2Threads = 2;
+	
 	public DatabaseService()
 	{
 		_connection = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;User Id=postgres;Password=postgres;Database=VM_Nexus_DB;");
@@ -96,6 +103,19 @@ public class DatabaseService
 		}	
 	}
 
+	private async Task<byte[]> EncryptPasswordAsync(string password, byte[] salt)
+	{
+		using (Argon2id argon2 = new Argon2id(Encoding.UTF8.GetBytes(password)))
+		{
+			argon2.Salt = salt;
+			argon2.MemorySize = Argon2MemorySize;
+			argon2.Iterations = Argon2Iterations;
+			argon2.DegreeOfParallelism = Argon2Threads;
+			
+			return await argon2.GetBytesAsync(Argon2MemorySize);
+		}
+	}
+	
 	private byte[] GenerateSalt()
 	{
 		byte[] salt = new byte[SaltSize];
