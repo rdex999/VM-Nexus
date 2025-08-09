@@ -42,6 +42,13 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestCheckUsername reqCheckUsername:
+			{
+				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCheckUsername.Username);
+				result = await SendResponse(new MessageResponseCheckUsername(true, reqCheckUsername.Id, usernameAvailable));
+				break;
+			}
+
 			case MessageRequestCreateAccount reqCreateAccount:
 			{
 				/* TODO: Register into database */
@@ -55,8 +62,6 @@ public sealed class ClientConnection : MessagingService
 				
 			default:
 			{
-				throw new NotImplementedException();
-				break;
 			}
 		}
 

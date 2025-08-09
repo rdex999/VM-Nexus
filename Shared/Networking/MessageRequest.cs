@@ -18,6 +18,17 @@ public class MessageRequestDisconnect : MessageRequest
 		: base(generateGuid) {}
 }
 
+public class MessageRequestCheckUsername : MessageRequest	/* Check if the provided username is available (that there is no such user) */
+{
+	public string Username { get; }
+
+	public MessageRequestCheckUsername(bool generateGuid, string username)
+		: base(generateGuid)
+	{
+		Username = username;
+	}
+}
+
 public class MessageRequestCreateAccount : MessageRequest
 {
 	public string Username { get; }

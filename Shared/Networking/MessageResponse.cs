@@ -30,6 +30,17 @@ public class MessageResponseDisconnect : MessageResponse
 	}
 }
 
+public class MessageResponseCheckUsername : MessageResponse
+{
+	public bool Available { get; }
+
+	public MessageResponseCheckUsername(bool generateGuid, Guid requestId, bool available)
+		: base(generateGuid, requestId)
+	{
+		Available = available;
+	}
+}
+
 public class MessageResponseCreateAccount : MessageResponse
 {
 	public bool Success { get; }
