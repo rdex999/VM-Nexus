@@ -32,8 +32,8 @@ public class DatabaseService
 		ExecuteNonQuery($"""
 		                CREATE TABLE IF NOT EXISTS users (
 		                    		username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
-		                    		password_hashed VARCHAR(255), 
-		                    		password_salt VARCHAR({SaltSize})
+		                    		password_hashed BYTEA, 
+		                    		password_salt BYTEA
 		                    	)
 		                """);
 	}
@@ -57,11 +57,14 @@ public class DatabaseService
 
 	public async Task<ExitCode> RegisterUserAsync(string username, string password)
 	{
+		byte[] salt = GenerateSalt();
+		byte[] passwordHash = await EncryptPasswordAsync(password, salt);
+		
 		int rowCount = await ExecuteNonQueryAsync($"""
-		                                           INSERT INTO users (username, password_hashed)
-		                                           		VALUES (@username, @password_hashed)
+		                                           INSERT INTO users (username, password_hashed, password_salt)
+		                                           		VALUES (@username, @password_hashed, @password_salt)
 		                                           """,
-			new NpgsqlParameter("@username", username), new NpgsqlParameter("@password_hashed", password)
+			new NpgsqlParameter("@username", username), new NpgsqlParameter("@password_hashed", passwordHash), new NpgsqlParameter("@password_salt",  salt)
 		);
 
 		if (rowCount == 1)
@@ -112,7 +115,7 @@ public class DatabaseService
 			argon2.Iterations = Argon2Iterations;
 			argon2.DegreeOfParallelism = Argon2Threads;
 			
-			return await argon2.GetBytesAsync(Argon2MemorySize);
+			return await argon2.GetBytesAsync(EncryptedPasswordSize);
 		}
 	}
 	

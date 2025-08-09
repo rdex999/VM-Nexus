@@ -72,14 +72,14 @@
 					</ToggleButton>
 				</Grid>
 			
-				<Panel>
+				<StackPanel>
 					<TextBlock IsVisible="{Binding PasswordNotEqualTextIsVisible}" 
 					           HorizontalAlignment="Center" Classes="error">Passwords are not the same.</TextBlock>
 					
 					<TextBlock IsVisible="{Binding AccountCreationFailedTextIsVisible}"
 					         Text="{Binding AccountCreationFailedText}"
 					         HorizontalAlignment="Center" Classes="error"/>
-				</Panel>
+				</StackPanel>
 				
 				<Button IsEnabled="{Binding CreateAccountIsEnabled}" 
 				        Command="{Binding CreateAccountCommand}"

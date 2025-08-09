@@ -6,7 +6,7 @@ using Avalonia.Android;
 namespace Client.Android;
 
 [Activity(
-	Label = "Client.Android",
+	Label = "VM Nexus",
 	Theme = "@style/MyTheme.NoActionBar",
 	Icon = "@drawable/icon",
 	MainLauncher = true,

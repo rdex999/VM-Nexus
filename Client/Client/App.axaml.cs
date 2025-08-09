@@ -36,7 +36,7 @@ public partial class App : Application
 			{
 				Content = new LoginView() { DataContext = new LoginViewModel(new NavigationService(), clientService) }
 			};
-			desktop.Exit += (s, e) => clientService.DisconnectFromServerAsync().GetAwaiter().GetResult();
+			desktop.Exit += (s, e) => clientService.OnExit().GetAwaiter().GetResult();
 		}
 		else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
 		{

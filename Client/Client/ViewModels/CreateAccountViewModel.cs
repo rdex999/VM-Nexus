@@ -77,6 +77,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 
 	public async Task UsernameTextChangedAsync()
 	{
+		AccountCreationFailedTextIsVisible = false;
 		CreateAccountIsEnabled = !string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password) &&
 		    !string.IsNullOrEmpty(PasswordConfirm) && Password == PasswordConfirm && _clientService.IsConnected();
 		
@@ -85,6 +86,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 	
 	public void PasswordTextChanged()
 	{
+		AccountCreationFailedTextIsVisible = false;
 		if (Password == PasswordConfirm && Password.Length == 0)
 		{
 			PasswordNotEqualTextIsVisible = false;

@@ -263,6 +263,11 @@ public class MessagingService
 		_cts.Cancel();
 		_socket.Dispose();
 		_socket.Close();
+		if (Thread.CurrentThread == _thread)
+		{
+			_thread.Join();
+		}
+		_thread = null;
 		_cts.Dispose();
 	}
 
