@@ -10,19 +10,19 @@ namespace Client.Services;
 /* Responsible for communicating with the server */
 public class ClientService : MessagingService
 {
+	public event EventHandler Reconnected;
+	
 	public ClientService()
-		: base(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
+		: base()
 	{
 	}
 
-	public override async Task InitializeAsync()
+	public async Task InitializeAsync()
 	{
 		if (IsInitialized())
 			return;
 
-		await SocketConnectToServerAsync();
-		await base.InitializeAsync();
-		await RequestConnectAsync();
+		await ConnectToServerAsync();
 	}
 
 	public void OnExit()
@@ -52,50 +52,51 @@ public class ClientService : MessagingService
 
 	private async Task ConnectToServerAsync()
 	{
-		await SocketConnectToServerAsync();
-		await RequestConnectAsync();
-	}
-	
-	private async Task RequestConnectAsync()
-	{
-		bool connected = false;
-		while (!connected)
+		while(true)
 		{
-			(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnect(true));
-			if (result != ExitCode.Success)
-			{
-				/* TODO: Handle errors here */
-				throw new NotImplementedException();
-			}
-
-			MessageResponseConnect resConnect = (MessageResponseConnect)response;
-			connected = resConnect.Accepted;
-			if (!connected)		/* If the connection was denied by the server, then it probably has a lot of clients, we should wait a bit and then retry */
-			{
-				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout);
-				/* TODO: Add logic to display error message on UI */
-			}
-		}
-	}
-	
-	private async Task SocketConnectToServerAsync()
-	{
-		if (IsConnected() && IsInitialized())
-			return;
-
-		/* Connect to the server. On connection failure try connecting with a 3-second delay between each try. */
-		while (true)
-		{
-			try
-			{
-				await _socket.ConnectAsync(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
-				break; /* Runs only if there was no exception (on exception it jumps to the catch block) */
-			}
-			catch (Exception)
+			await base.InitializeAsync(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
+			
+			bool socketConnected = SocketConnectToServer();
+			if (!socketConnected)
 			{
 				OnFailure(ExitCode.ConnectionToServerFailed);
-				await Task.Delay(3000);
+				Disconnect();
+				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout);
+				continue;
 			}
+
+			_isInitialized = true;
+			_thread.Start();
+			
+			(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnect(true));
+			if (result != ExitCode.Success || !((MessageResponseConnect)response!).Accepted)
+			{
+				OnFailure(ExitCode.ConnectionToServerFailed);
+				Disconnect();
+				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout);
+				continue;
+			}
+			
+			break;
+		}
+
+	}
+	
+	private bool SocketConnectToServer()
+	{
+		if (IsConnected() && IsInitialized())
+			return false;
+
+		/* Connect to the server. On connection failure try connecting with a 3-second delay between each try. */
+		try
+		{
+			_socket.Connect(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
+			return true;
+		}
+		catch (Exception)
+		{
+			OnFailure(ExitCode.ConnectionToServerFailed);
+			return false;
 		}
 	}
 

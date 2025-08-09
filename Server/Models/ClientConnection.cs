@@ -14,10 +14,12 @@ public sealed class ClientConnection : MessagingService
 	private DatabaseService _databaseService;
 
 	public ClientConnection(Socket socket, DatabaseService databaseService)
-		: base(socket)
+		: base()
 	{
 		_databaseService = databaseService;
-		InitializeAsync().Wait();	/* Doesnt contain long-running code, so its fine to just Wait() it here */
+		InitializeAsync(socket).Wait();	/* Doesnt contain long-running code, so its fine to just Wait() it here */
+		_isInitialized = true;
+		_thread.Start();
 	}
 
 	protected override async Task ProcessRequestAsync(MessageRequest request)

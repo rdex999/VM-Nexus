@@ -9,26 +9,24 @@ namespace Shared.Networking;
 public class MessagingService
 {
 	protected Socket _socket;
-	private Thread _thread;								/* Runs the Communicate function */
+	protected Thread _thread;								/* Runs the Communicate function */
 	private CancellationTokenSource _cts;
 	protected bool _isInitialized;
 	private ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
 	
 	public event EventHandler<ExitCode> FailEvent;
 
-	public MessagingService(Socket socket)
+	public MessagingService()
 	{
 		_isInitialized = false;
+	}
+
+	public async Task InitializeAsync(Socket socket)
+	{
 		_socket = socket;
 		_cts = new CancellationTokenSource();
 		_thread = new Thread(() => Communicate(_cts.Token));
 		_responses =  new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
-	}
-
-	public virtual async Task InitializeAsync()
-	{
-		_isInitialized = true;
-		_thread.Start();
 	}
 
 	public bool IsInitialized()
@@ -281,7 +279,7 @@ public class MessagingService
 		}
 		_socket.Dispose();
 		_socket.Close();
-		if (Thread.CurrentThread != _thread)
+		if (_thread != null && Thread.CurrentThread != _thread && _thread.IsAlive)
 		{
 			_thread.Join();
 		}
@@ -291,6 +289,8 @@ public class MessagingService
 			_cts.Dispose();
 			_cts = null;
 		}
+
+		_isInitialized = false;
 	}
 
 	protected virtual async Task ProcessRequestAsync(MessageRequest request)
