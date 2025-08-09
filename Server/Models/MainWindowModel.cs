@@ -80,7 +80,7 @@ public class MainWindowModel
 			{
 				Socket clientSocket = socket.Accept();						/* There is a client in the queue, accept him */
 			
-				ClientConnection clientConnection = new ClientConnection(clientSocket);
+				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService);
 				clientConnection.Disconnected += DisconnectedHandler;
 				_clients!.AddLast(clientConnection);
 			}

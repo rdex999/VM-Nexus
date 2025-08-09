@@ -34,6 +34,18 @@ public class DatabaseService
 		_connection.Close();
 	}
 
+	public async Task<bool> IsUserExistAsync(string username)
+	{
+		object? result = await ExecuteScalarAsync("SELECT COUNT(*) FROM users WHERE username = @username",  new NpgsqlParameter("@username", username));
+		if (result == null)
+		{
+			return false;
+		}
+		
+		long userCount = (long)result;
+		return userCount > 0;
+	}
+
 	public async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
 	{
 		/* TODO: Add SQL injection handling and checks */

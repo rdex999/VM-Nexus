@@ -1,6 +1,7 @@
 using System;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Server.Services;
 using Shared;
 using Shared.Networking;
 
@@ -10,10 +11,12 @@ public sealed class ClientConnection : MessagingService
 {
 	public event EventHandler Disconnected;
 	private bool _isLoggedIn = false;
+	private DatabaseService _databaseService;
 
-	public ClientConnection(Socket socket)
+	public ClientConnection(Socket socket, DatabaseService databaseService)
 		: base(socket)
 	{
+		_databaseService = databaseService;
 		InitializeAsync().Wait();	/* Doesnt contain long-running code, so its fine to just Wait() it here */
 	}
 
