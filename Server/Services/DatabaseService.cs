@@ -16,11 +16,11 @@ public class DatabaseService
 		NpgsqlCommand command = _connection.CreateCommand();
 		
 		#if DEBUG
-			ExecuteCommand("DROP TABLE IF EXISTS users;");
+			ExecuteNonQuery("DROP TABLE IF EXISTS users;");
 		#endif
 
 		/* TODO: Generate salts and fill in the length of a salt here */
-		ExecuteCommand($"""
+		ExecuteNonQuery($"""
 		                CREATE TABLE IF NOT EXISTS users (
 		                    		username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
 		                    		password_hashed VARCHAR(255), 
@@ -34,20 +34,34 @@ public class DatabaseService
 		_connection.Close();
 	}
 
-	public async Task<int> ExecuteCommandAsync(string command, params NpgsqlParameter[] parameters)
+	public async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		/* TODO: Add  */
-		NpgsqlCommand cmd = _connection.CreateCommand();
-		cmd.CommandText = command;
-		cmd.Parameters.AddRange(parameters);
-		return await cmd.ExecuteNonQueryAsync();
+		/* TODO: Add SQL injection handling and checks */
+		using (NpgsqlCommand cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = command;
+			cmd.Parameters.AddRange(parameters);
+			return await cmd.ExecuteNonQueryAsync();	
+		}
 	}
 
-	public int ExecuteCommand(string command, params NpgsqlParameter[] parameters)
+	public int ExecuteNonQuery(string command, params NpgsqlParameter[] parameters)
 	{
-		NpgsqlCommand cmd = _connection.CreateCommand();
-		cmd.CommandText = command;
-		cmd.Parameters.AddRange(parameters);
-		return cmd.ExecuteNonQuery();	
+		using (NpgsqlCommand cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = command;
+			cmd.Parameters.AddRange(parameters);
+			return cmd.ExecuteNonQuery();	
+		}
+	}
+
+	public async Task<object?> ExecuteScalarAsync(string command, params NpgsqlParameter[] parameters)
+	{
+		using (NpgsqlCommand cmd = _connection.CreateCommand())
+		{
+			cmd.CommandText = command;
+			cmd.Parameters.AddRange(parameters);
+			return await cmd.ExecuteScalarAsync();	
+		}	
 	}
 }
