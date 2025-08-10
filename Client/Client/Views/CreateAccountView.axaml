@@ -48,13 +48,14 @@
 				
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
-					<TextBox Classes="form" Classes.error="{Binding PasswordClassError}" 
+					<TextBox Name="PasswordTextBox" Classes="form" Classes.error="{Binding PasswordClassError}" 
 					         Classes.success="{Binding PasswordClassSuccess}"
 					         HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0"
 					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
 					         Text="{Binding Password}" TextChanged="OnPasswordTextChanged"/>
 					
-					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
+					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" 
+					              Background="Transparent" IsChecked="{Binding RevealPassword, ElementName=PasswordTextBox}">
 						<Panel>
 							<PathIcon IsVisible="{Binding !IsChecked, ElementName=PasswordStateButton}" Data="{StaticResource EyeShowRegular}"/>
 							<PathIcon IsVisible="{Binding IsChecked, ElementName=PasswordStateButton}" Data="{StaticResource EyeHideRegular}"/>
@@ -64,18 +65,12 @@
 					
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
-					<TextBox Classes="form" Classes.error="{Binding PasswordClassError}" 
+					<TextBox Name="PasswordConfirmTextBox" Classes="form" Classes.error="{Binding PasswordClassError}" 
 					         Classes.success="{Binding PasswordClassSuccess}"
 					         HorizontalAlignment="Stretch" Watermark="Repeat Password" Padding="10, 6, 40, 0" 
-					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordRepeatedStateButton}"
-					         Text="{Binding PasswordConfirm}" TextChanged="OnPasswordTextChanged"/>
-					
-					<ToggleButton Name="PasswordRepeatedStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
-						<Panel>
-							<PathIcon IsVisible="{Binding !IsChecked, ElementName=PasswordRepeatedStateButton}" Data="{StaticResource EyeShowRegular}"/>
-							<PathIcon IsVisible="{Binding IsChecked, ElementName=PasswordRepeatedStateButton}" Data="{StaticResource EyeHideRegular}"/>
-						</Panel>
-					</ToggleButton>
+					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
+					         Text="{Binding PasswordConfirm}" TextChanged="OnPasswordTextChanged"
+					         LostFocus="PasswordConfirmTextBox_OnLostFocus"/>
 				</Grid>
 			
 				<StackPanel>

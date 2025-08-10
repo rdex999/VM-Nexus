@@ -47,12 +47,13 @@
 				<!-- TODO: Fix bug, at losing focus when revealed, password hides and toggle state doesnt change. (Try Custom Templated Control?) -->
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
-					<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0" PasswordChar="•" 
-					         RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
+					<TextBox Name="PasswordTextBox" Classes="form" HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0" 
+					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
 					         TextChanged="OnCredentialsTextChanged"
 					         Text="{Binding Password}"/>
 					
-					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent">
+					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" Background="Transparent"
+					              IsChecked="{Binding RevealPassword, ElementName=PasswordTextBox}">
 						<Panel>
 							<PathIcon IsVisible="{Binding !IsChecked, ElementName=PasswordStateButton}" Data="{StaticResource EyeShowRegular}"/>
 							<PathIcon IsVisible="{Binding IsChecked, ElementName=PasswordStateButton}" Data="{StaticResource EyeHideRegular}"/>
