@@ -25,7 +25,7 @@
 	<Grid RowDefinitions="Auto, *">
 		<Border Background="#cad7da" Padding="5">		<!-- Also looks good #e2e7e8 -->	
 			<Grid>
-				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left">
+				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}">
 					<PathIcon Data="{StaticResource NavigationRegular}"></PathIcon>
 				</ToggleButton>
 
@@ -33,7 +33,7 @@
 			</Grid>
 		</Border>
 		
-		<SplitView Grid.Row="1" Name="SplitView" IsPaneOpen="{Binding IsChecked, ElementName=MenuToggle}" DisplayMode="CompactInline">
+		<SplitView Grid.Row="1" Name="SplitView" IsPaneOpen="{Binding IsChecked, ElementName=MenuToggle}" DisplayMode="{Binding MenuDisplayMode}">
 			<SplitView.Pane>
 				<StackPanel Margin="8">
 				</StackPanel>
@@ -51,7 +51,7 @@
 						</StackPanel>
 					</Border>
 				</StackPanel>
-
+			
 				<TransitioningContentControl Grid.Row="1" Content="{Binding CurrentPageViewModel}" Padding="10"/>
 			</Grid>
 		</SplitView>
