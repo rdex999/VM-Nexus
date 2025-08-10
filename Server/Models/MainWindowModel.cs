@@ -68,7 +68,6 @@ public class MainWindowModel
 			{
 				ClientConnection clientConnection = _clients.First();
 				clientConnection.Disconnect();
-				_clients.RemoveFirst();
 			}
 
 			await Task.WhenAll(tasks);
