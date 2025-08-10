@@ -13,5 +13,48 @@
 		<vm:MainViewModel />
 	</Design.DataContext>
 
-	<TextBlock>Heyyyy</TextBlock>
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<MergeResourceInclude Source="/Resources/Geometries.axaml"/>
+				<MergeResourceInclude Source="/Resources/Colors.axaml"/>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</UserControl.Resources>
+
+	<Grid RowDefinitions="Auto, *">
+		<Border Background="#cad7da" Padding="5">		<!-- Also looks good #e2e7e8 -->	
+			<Grid>
+				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left">
+					<PathIcon Data="{StaticResource NavigationRegular}"></PathIcon>
+				</ToggleButton>
+
+				<TextBlock Foreground="{StaticResource Title}" FontSize="31" FontWeight="Bold" HorizontalAlignment="Center">VM Nexus</TextBlock>
+			</Grid>
+		</Border>
+		
+		<SplitView Grid.Row="1" Name="SplitView" IsPaneOpen="{Binding IsChecked, ElementName=MenuToggle}" DisplayMode="CompactInline">
+			<SplitView.Pane>
+				<StackPanel Margin="8">
+				</StackPanel>
+			</SplitView.Pane>
+
+			<Grid RowDefinitions="Auto, *">
+				<StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Background="#b2c5c8">
+					<Border Background="#cfdee1" Margin="10" CornerRadius="5" Padding="6">
+						<StackPanel Orientation="Horizontal" Spacing="10">
+							<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" FontWeight="DemiBold" Foreground="#5c6d6d">My first VM</TextBlock>
+							
+							<Button Padding="4" VerticalAlignment="Center">
+								<PathIcon VerticalAlignment="Center" Data="{StaticResource DismissRegular}" Width="10" Height="10"/>
+							</Button>
+						</StackPanel>
+					</Border>
+				</StackPanel>
+
+				<TransitioningContentControl Grid.Row="1" Content="{Binding CurrentPageViewModel}" Padding="10"/>
+			</Grid>
+		</SplitView>
+	</Grid>
+	
 </UserControl>

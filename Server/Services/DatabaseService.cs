@@ -28,7 +28,7 @@ public class DatabaseService
 		NpgsqlCommand command = _connection.CreateCommand();
 		
 		#if DEBUG
-			ExecuteNonQuery("DROP TABLE IF EXISTS users;");
+			// ExecuteNonQuery("DROP TABLE IF EXISTS users;");
 		#endif
 
 		/* TODO: Generate salts and fill in the length of a salt here */

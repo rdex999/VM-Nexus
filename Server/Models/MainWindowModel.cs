@@ -22,7 +22,14 @@ public class MainWindowModel
 	{
 		_listenerCts = new CancellationTokenSource();
 
-		_databaseService = new DatabaseService();	
+		try
+		{
+			_databaseService = new DatabaseService();	
+		}
+		catch (Exception e)
+		{
+			return ExitCode.DatabaseStartupFailed;
+		}
 		
 		/* Socket initialization and listening */
 		IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());		/* Get local host ip addresses */
