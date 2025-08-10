@@ -4,9 +4,16 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Client.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-             x:Class="Client.Views.HomeView">
+             x:Class="Client.Views.HomeView"
+			 x:DataType="vm:HomeViewModel">
+
+	<Design.DataContext>
+		<!-- This only sets the DataContext for the previewer in an IDE,
+		 to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+		<vm:HomeViewModel/>
+	</Design.DataContext>
 	
-	<Border CornerRadius=" 10">
+	<Border CornerRadius=" 10" Padding="15">
 		<Border.Background>
 			<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
 				<GradientStop Offset="0" Color="#dffaff"/>
@@ -14,7 +21,61 @@
 			</LinearGradientBrush>
 		</Border.Background>
 		
-		
+		<ListBox ItemsSource="{Binding VMs}" Background="Transparent">
+			<ListBox.Styles>
+				<Style Selector="ListBoxItem">
+					<Setter Property="Padding" Value="0"/>
+					<Setter Property="Margin" Value="10"/>
+					<Setter Property="Background">
+						<Setter.Value>
+							<LinearGradientBrush StartPoint="10%, 10%" EndPoint="100%, 100%">
+								<GradientStop Offset="0" Color="#a3ccce"/>
+								<GradientStop Offset="1" Color="#9ab8bf"/>
+							</LinearGradientBrush>
+						</Setter.Value>
+					</Setter>
+				</Style>
+				
+				<Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+					<Setter Property="Background">
+						<Setter.Value>
+							<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+								<GradientStop Offset="0" Color="#a1dded"/>
+								<GradientStop Offset="1" Color="#b8d8e0"/>
+								<!-- <GradientStop Offset="1" Color="#b4e8ea"/> -->
+							</LinearGradientBrush>
+						</Setter.Value>						
+					</Setter>
+				</Style>
+			</ListBox.Styles>
+			
+			<ListBox.ItemsPanel>
+				<ItemsPanelTemplate>
+					<WrapPanel Orientation="Horizontal"/>
+				</ItemsPanelTemplate>
+			</ListBox.ItemsPanel>
+			
+			<ListBox.ItemTemplate>
+				<DataTemplate DataType="{x:Type vm:VmItemTemplate}">
+					<Border Padding="10" Background="Transparent" Width="180" Height="180">
+						<Border CornerRadius="10" Padding="10" BorderThickness="0" BorderBrush="#5f757a">
+							<Border.Background>
+								<LinearGradientBrush StartPoint="20%, 20%" EndPoint="100%, 100%">
+									<GradientStop Offset="0" Color="#a9cad1"/>
+									<GradientStop Offset="1" Color="#9fdfe1"/>
+								</LinearGradientBrush>
+							</Border.Background>
+							
+							<StackPanel>
+								<TextBlock FontSize="16" Text="{Binding OperatingSystem}"/>
+								<TextBlock FontSize="16" Text="{Binding Name}" />
+								<TextBlock FontSize="16" Text="{Binding StatusString}" FontWeight="DemiBold"/>
+							</StackPanel>
+						</Border>
+					</Border>
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
 		
 	</Border>
 </UserControl>
