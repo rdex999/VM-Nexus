@@ -49,4 +49,10 @@
 	<Style Selector="TextBlock.error">
 		<Setter Property="Foreground" Value="Red"/>
 	</Style>
+
+	<Style Selector="ListBoxItem">
+		<Setter Property="Margin" Value="10"/>
+		<Setter Property="CornerRadius" Value="10"/>
+	</Style>
+		
 </Styles>

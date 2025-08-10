@@ -11,7 +11,9 @@ public partial class MainViewModel : ViewModelBase
 	public SplitViewDisplayMode MenuDisplayMode { get; }
 	
 	public ObservableCollection<SideMenuItemTemplate> SideMenuItems { get; }
-		
+	
+	public ObservableCollection<VMTabTemplate> VMTabs { get; }
+	
 	[ObservableProperty] 
 	private ViewModelBase _currentPageViewModel;
 
@@ -28,6 +30,8 @@ public partial class MainViewModel : ViewModelBase
 		};
 		CurrentSideMenuItem = SideMenuItems[0];
 
+		VMTabs = new ObservableCollection<VMTabTemplate>() { new VMTabTemplate("My first VM") };
+
 		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
 		{
 			MenuDisplayMode = SplitViewDisplayMode.Overlay;
@@ -36,6 +40,11 @@ public partial class MainViewModel : ViewModelBase
 		{
 			MenuDisplayMode = SplitViewDisplayMode.CompactInline;
 		}
+	}
+
+	/* WARNING: ONLY FOR THE PREVIEWER IN THE IDE - DO NOT USE THIS */
+	public MainViewModel() : base(new NavigationService(), new ClientService())
+	{
 	}
 
 	partial void OnCurrentSideMenuItemChanged(SideMenuItemTemplate? value)
@@ -56,5 +65,15 @@ public class SideMenuItemTemplate
 	{
 		Title = title;
 		ViewModel = viewModel;
+	}
+}
+
+public class VMTabTemplate
+{
+	public string Name { get; }
+
+	public VMTabTemplate(string name)
+	{
+		Name = name;
 	}
 }

@@ -6,7 +6,15 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.HomeView">
 	
-	<Border Background="Red" CornerRadius=" 10">
+	<Border CornerRadius=" 10">
+		<Border.Background>
+			<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+				<GradientStop Offset="0" Color="#dffaff"/>
+				<GradientStop Offset="1" Color="White"/>
+			</LinearGradientBrush>
+		</Border.Background>
+		
+		
 		
 	</Border>
 </UserControl>
