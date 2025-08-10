@@ -53,11 +53,12 @@ public class MainWindowModel
 
 	public async Task<ExitCode> ServerStopAsync()
 	{
-		if (_listener != null && _listenerCts != null && _listener.IsAlive)
+		_listenerCts.Cancel();
+		_listenerCts.Dispose();
+		
+		if (_listener != null && _listener.IsAlive)
 		{
-			_listenerCts.Cancel();
 			_listener.Join();
-			_listenerCts.Dispose();
 		}
 
 		if (_clients != null)
@@ -82,7 +83,7 @@ public class MainWindowModel
 	{
 		socket.Listen();													/* Listen for incoming connections */
 		
-		while (token.IsCancellationRequested == false)
+		while (!token.IsCancellationRequested)
 		{
 			if (socket.Poll(10000, SelectMode.SelectRead))		/* Similar to Accept(), but blocks for a specified time. Returns true if there is a connection */
 			{

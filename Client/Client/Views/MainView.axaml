@@ -35,8 +35,15 @@
 		
 		<SplitView Grid.Row="1" Name="SplitView" IsPaneOpen="{Binding IsChecked, ElementName=MenuToggle}" DisplayMode="{Binding MenuDisplayMode}">
 			<SplitView.Pane>
-				<StackPanel Margin="8">
-				</StackPanel>
+				<ListBox ItemsSource="{Binding SideMenuItems}" SelectedItem="{Binding CurrentSideMenuItem}">
+					<ListBox.ItemTemplate>
+						<DataTemplate DataType="{x:Type vm:SideMenuItemTemplate}">
+							<StackPanel Orientation="Horizontal">
+								<TextBlock Text="{Binding Title}"/>
+							</StackPanel>
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
 			</SplitView.Pane>
 
 			<Grid RowDefinitions="Auto, *">

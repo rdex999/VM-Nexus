@@ -44,7 +44,6 @@
 				<TextBox Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"
 				         Text="{Binding Username}" TextChanged="OnCredentialsTextChanged"/>
 			
-				<!-- TODO: Fix bug, at losing focus when revealed, password hides and toggle state doesnt change. (Try Custom Templated Control?) -->
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
 					<TextBox Name="PasswordTextBox" Classes="form" HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0" 

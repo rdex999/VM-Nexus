@@ -67,7 +67,7 @@
 					<!-- Padding for stopping the text before the button -->
 					<TextBox Name="PasswordConfirmTextBox" Classes="form" Classes.error="{Binding PasswordClassError}" 
 					         Classes.success="{Binding PasswordClassSuccess}"
-					         HorizontalAlignment="Stretch" Watermark="Repeat Password" Padding="10, 6, 40, 0" 
+					         HorizontalAlignment="Stretch" Watermark="Repeat Password"
 					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
 					         Text="{Binding PasswordConfirm}" TextChanged="OnPasswordTextChanged"
 					         LostFocus="PasswordConfirmTextBox_OnLostFocus"/>
