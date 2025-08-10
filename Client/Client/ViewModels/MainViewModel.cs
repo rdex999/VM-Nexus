@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace Client.ViewModels;
 
@@ -30,7 +31,7 @@ public partial class MainViewModel : ViewModelBase
 		};
 		CurrentSideMenuItem = SideMenuItems[0];
 
-		VMTabs = new ObservableCollection<VMTabTemplate>() { new VMTabTemplate("My first VM") };
+		VMTabs = new ObservableCollection<VMTabTemplate>() { new VMTabTemplate("My first VM"), new VMTabTemplate("My second VM") };
 
 		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
 		{
@@ -53,6 +54,15 @@ public partial class MainViewModel : ViewModelBase
 			return;
 		
 		CurrentPageViewModel = value.ViewModel;
+	}
+	
+	[RelayCommand]
+	private void CloseVmTab(VMTabTemplate? value)
+	{
+		if (value == null)
+			return;
+		
+		VMTabs.Remove(value);
 	}
 }
 
