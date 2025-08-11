@@ -12,6 +12,7 @@ public sealed class ClientConnection : MessagingService
 {
 	public event EventHandler Disconnected;
 	private bool _isLoggedIn = false;
+	private string _username = string.Empty;
 	private DatabaseService _databaseService;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function ran? */
 
@@ -64,6 +65,7 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					_isLoggedIn = true;
+					_username = reqCreateAccount.Username;
 				}
 				break;
 			}
@@ -75,6 +77,7 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					_isLoggedIn = validLogin;
+					_username = reqLogin.Username;
 				}
 				break;
 			}

@@ -1,7 +1,9 @@
 ﻿using System;
 using Avalonia;
 using Avalonia.Platform;
+using Avalonia.Threading;
 using Client.Services;
+using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Shared;
 
@@ -42,6 +44,13 @@ public abstract partial class ViewModelBase : ObservableObject
 			case ExitCode.DisconnectedFromServer:
 			{
 				ConnectionErrorMessage = "Disconnected from the server. Do you have internet?\nTrying to connect...";
+				if (this is not LoginViewModel && this is not CreateAccountViewModel)
+				{
+					Dispatcher.UIThread.Post(() =>
+					{
+						_navigationService.NavigateToView(new LoginView() { DataContext = new LoginViewModel(_navigationService, _clientService) });
+					});
+				}
 				break;
 			}
 
