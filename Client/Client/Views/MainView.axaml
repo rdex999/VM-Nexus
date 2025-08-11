@@ -1,12 +1,12 @@
 <UserControl xmlns="https://github.com/avaloniaui"
-			 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-			 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-			 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-			 xmlns:vm="clr-namespace:Client.ViewModels"
-			 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
-			 x:Class="Client.Views.MainView"
-			 x:DataType="vm:MainViewModel">
-	
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Client.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Client.Views.MainView"
+             x:DataType="vm:MainViewModel">
+
 	<Design.DataContext>
 		<!-- This only sets the DataContext for the previewer in an IDE,
 		 to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
@@ -16,51 +16,70 @@
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<MergeResourceInclude Source="/Resources/Geometries.axaml"/>
-				<MergeResourceInclude Source="/Resources/Colors.axaml"/>
+				<MergeResourceInclude Source="/Resources/Geometries.axaml" />
+				<MergeResourceInclude Source="/Resources/Colors.axaml" />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
-	
+
 	<UserControl.Styles>
-		<StyleInclude Source="/Resources/Styles.axaml"/>
+		<StyleInclude Source="/Resources/Styles.axaml" />
 	</UserControl.Styles>
 
 	<Grid RowDefinitions="Auto, *">
-		<Border Background="#d3e6eb" Padding="10">		<!-- Also looks good #e2e7e8 -->	
+		<Border Background="#d3e6eb" Padding="10">		<!-- Also looks good #e2e7e8 -->
 			<Grid>
 				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}">
 					<PathIcon Data="{StaticResource NavigationRegular}"></PathIcon>
 				</ToggleButton>
 
 				<TextBlock Foreground="{StaticResource Title}" FontSize="31" FontWeight="Bold" HorizontalAlignment="Center">VM Nexus</TextBlock>
-				
+
 				<StackPanel HorizontalAlignment="Right" Orientation="Horizontal" FlowDirection="RightToLeft">
 					<Button CornerRadius="200" Width="45" Height="45" Background="#8fcdc9">
 						<Button.Styles>
 							<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-								<Setter Property="Background" Value="#78adaa"/>
+								<Setter Property="Background" Value="#78adaa" />
 							</Style>
 							<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
-								<Setter Property="Background" Value="#5e8986"/>
+								<Setter Property="Background" Value="#5e8986" />
 							</Style>
 						</Button.Styles>
 						
+						<Button.Flyout>
+							<MenuFlyout Placement="BottomEdgeAlignedLeft" VerticalOffset="10">
+								<MenuItem Header="{Binding AccountMenuTitle}" IsHitTestVisible="False">
+									<MenuItem.Template>
+										<ControlTemplate>
+											<TextBlock Text="{TemplateBinding Header}"
+											           FontWeight="Bold"
+											           Foreground="Black"
+											           Padding="12,5,12,5" />
+										</ControlTemplate>
+									</MenuItem.Template>
+								</MenuItem>
+								
+								<MenuItem Header="-"/>
+								<MenuItem Header="Log Out" Command="{Binding LogOutCommand}"/>
+							</MenuFlyout>
+						</Button.Flyout>
+
 						<PathIcon Data="{StaticResource PersonRegular}" HorizontalAlignment="Center" VerticalAlignment="Center" />
 					</Button>
+
 				</StackPanel>
 			</Grid>
 		</Border>
-		
-		<SplitView Grid.Row="1" Name="SplitView" IsPaneOpen="{Binding IsChecked, ElementName=MenuToggle}" 
+
+		<SplitView Grid.Row="1" Name="SplitView" IsPaneOpen="{Binding IsChecked, ElementName=MenuToggle}"
 		           DisplayMode="{Binding MenuDisplayMode}" CompactPaneLength="63">
 			<SplitView.Pane>
 				<ListBox ItemsSource="{Binding SideMenuItems}" SelectedItem="{Binding CurrentSideMenuItem}">
 					<ListBox.ItemTemplate>
 						<DataTemplate DataType="{x:Type vm:SideMenuItemTemplate}">
 							<StackPanel Orientation="Horizontal" Spacing="10">
-								<PathIcon Data="{StaticResource HomeRegular}"/>
-								<TextBlock Text="{Binding Title}" FontSize="16"/>
+								<PathIcon Data="{StaticResource HomeRegular}" />
+								<TextBlock Text="{Binding Title}" FontSize="16" />
 							</StackPanel>
 						</DataTemplate>
 					</ListBox.ItemTemplate>
@@ -72,42 +91,42 @@
 					<ListBox ItemsSource="{Binding VMTabs}" Background="Transparent">
 						<ListBox.Styles>
 							<Style Selector="ListBoxItem">
-								<Setter Property="Margin" Value="5"/>
-								<Setter Property="Padding" Value="0"/>
+								<Setter Property="Margin" Value="5" />
+								<Setter Property="Padding" Value="0" />
 								<Setter Property="Background" Value="#e1eff1"></Setter>
 							</Style>
-							
+
 							<Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-								<Setter Property="Background" Value="#c4eeff"/>
+								<Setter Property="Background" Value="#c4eeff" />
 							</Style>
 							<Style Selector="ListBoxItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
-								<Setter Property="Background" Value="#b8e0ef"/>
+								<Setter Property="Background" Value="#b8e0ef" />
 							</Style>
 						</ListBox.Styles>
-						
+
 						<ListBox.ItemsPanel>
 							<ItemsPanelTemplate>
 								<StackPanel Orientation="Horizontal" />
 							</ItemsPanelTemplate>
 						</ListBox.ItemsPanel>
-						
+
 						<ListBox.ItemTemplate>
 							<DataTemplate DataType="{x:Type vm:VMTabTemplate}">
 								<Border Background="Transparent" CornerRadius="5" Padding="9, 6" VerticalAlignment="Center">
 									<StackPanel Orientation="Horizontal" Spacing="13">
 										<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" FontWeight="DemiBold" Foreground="#5c6d6d"
-										           FontSize="15" Text="{Binding Name}"/>
+										           FontSize="15" Text="{Binding Name}" />
 
 										<Button Padding="4" VerticalAlignment="Center" Background="#ccd1d1ca" IsHitTestVisible="True"
 										        Command="{Binding $parent[UserControl].DataContext.CloseVmTabCommand}"
 										        CommandParameter="{Binding}">
-											
+
 											<Button.Styles>
 												<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
-													<Setter Property="Background" Value="#cc8a8a8f"/>
+													<Setter Property="Background" Value="#cc8a8a8f" />
 												</Style>
 											</Button.Styles>
-											
+
 											<PathIcon VerticalAlignment="Center" Data="{StaticResource DismissRegular}"
 											          Width="14" Height="14" />
 										</Button>
@@ -117,10 +136,10 @@
 						</ListBox.ItemTemplate>
 					</ListBox>
 				</StackPanel>
-			
-				<TransitioningContentControl Grid.Row="1" Content="{Binding CurrentPageViewModel}" Padding="10"/>
+
+				<TransitioningContentControl Grid.Row="1" Content="{Binding CurrentPageViewModel}" Padding="10" />
 			</Grid>
 		</SplitView>
 	</Grid>
-	
+
 </UserControl>

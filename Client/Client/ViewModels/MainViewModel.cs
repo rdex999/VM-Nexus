@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using Avalonia.Controls;
 using Client.Services;
+using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 
@@ -20,10 +21,19 @@ public partial class MainViewModel : ViewModelBase
 
 	[ObservableProperty]
 	private SideMenuItemTemplate? _currentSideMenuItem;
+
+	[ObservableProperty] 
+	private string _accountMenuTitle;
 	
-	public MainViewModel(NavigationService navigationService, ClientService clientService)
+	private string _username;
+	
+	
+	
+	public MainViewModel(NavigationService navigationService, ClientService clientService, string username)
 		: base(navigationService, clientService)
 	{
+		_username = username;
+		AccountMenuTitle = $"Welcome, {_username}.";
 		CurrentPageViewModel = new HomeViewModel(navigationService, clientService);
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
@@ -63,6 +73,12 @@ public partial class MainViewModel : ViewModelBase
 			return;
 		
 		VMTabs.Remove(value);
+	}
+
+	[RelayCommand]
+	private void LogOut()
+	{
+		_navigationService.NavigateToView(new LoginView() { DataContext = new LoginViewModel(_navigationService, _clientService) });
 	}
 }
 

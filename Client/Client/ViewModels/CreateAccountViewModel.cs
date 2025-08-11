@@ -63,7 +63,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 		MessageResponseCreateAccount.Status status= await _clientService.CreateAccountAsync(Username, Password);
 		if (status == MessageResponseCreateAccount.Status.Success)
 		{
-			_navigationService.NavigateToView(new MainView() {  DataContext = new MainViewModel(_navigationService, _clientService) });
+			_navigationService.NavigateToView(new MainView() {  DataContext = new MainViewModel(_navigationService, _clientService, Username) });
 		}
 		else if  (status == MessageResponseCreateAccount.Status.UsernameNotAvailable)
 		{
