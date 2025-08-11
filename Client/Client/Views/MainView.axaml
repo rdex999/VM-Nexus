@@ -34,6 +34,21 @@
 				</ToggleButton>
 
 				<TextBlock Foreground="{StaticResource Title}" FontSize="31" FontWeight="Bold" HorizontalAlignment="Center">VM Nexus</TextBlock>
+				
+				<StackPanel HorizontalAlignment="Right" Orientation="Horizontal" FlowDirection="RightToLeft">
+					<Button CornerRadius="200" Width="45" Height="45" Background="#8fcdc9">
+						<Button.Styles>
+							<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+								<Setter Property="Background" Value="#78adaa"/>
+							</Style>
+							<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+								<Setter Property="Background" Value="#5e8986"/>
+							</Style>
+						</Button.Styles>
+						
+						<PathIcon Data="{StaticResource PersonRegular}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+					</Button>
+				</StackPanel>
 			</Grid>
 		</Border>
 		
