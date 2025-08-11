@@ -13,6 +13,19 @@
 		<vm:HomeViewModel/>
 	</Design.DataContext>
 	
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<MergeResourceInclude Source="/Resources/Geometries.axaml"/>
+				<MergeResourceInclude Source="/Resources/Colors.axaml"/>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</UserControl.Resources>
+	
+	<UserControl.Styles>
+		<StyleInclude Source="/Resources/Styles.axaml"/>
+	</UserControl.Styles>
+	
 	<Border CornerRadius=" 10" Padding="15">
 		<Border.Background>
 			<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
@@ -20,104 +33,127 @@
 				<GradientStop Offset="1" Color="White"/>
 			</LinearGradientBrush>
 		</Border.Background>
-		
-		<ListBox ItemsSource="{Binding VMs}" Background="Transparent">
-			<ListBox.Styles>
-				
-				<Style Selector="ListBoxItem">
-					<Setter Property="Padding" Value="0"/>
-					<Setter Property="Margin" Value="10"/>
-					<Setter Property="Background">
-						<Setter.Value>
-							<LinearGradientBrush StartPoint="10%, 10%" EndPoint="100%, 100%">
-								<GradientStop Offset="0" Color="#8fadbc"/>
-								<GradientStop Offset="1" Color="#9ab8bf"/>
-							</LinearGradientBrush>
-						</Setter.Value>
-					</Setter>
-				</Style>
-				
-				<Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-					<Setter Property="Background">
-						<Setter.Value>
-							<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-								<GradientStop Offset="0" Color="#9dbccc"/>
-								<GradientStop Offset="1" Color="#a7c7ce"/>
-							</LinearGradientBrush>
-						</Setter.Value>
-					</Setter>
-				</Style>
-				
-				<Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-					<Setter Property="Background">
-						<Setter.Value>
-							<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-								<GradientStop Offset="0" Color="#a1dded"/>
-								<GradientStop Offset="1" Color="#80a6b5"/>
-								<!-- <GradientStop Offset="1" Color="#b4e8ea"/> -->
-							</LinearGradientBrush>
-						</Setter.Value>						
-					</Setter>
-				</Style>
-				
-				<Style Selector="ListBoxItem:pointerover:selected /template/ ContentPresenter#PART_ContentPresenter">
-					<Setter Property="Background">
-						<Setter.Value>
-							<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-								<GradientStop Offset="0" Color="#a9e8f9"/>
-								<GradientStop Offset="1" Color="#89b1c1"/>
-							</LinearGradientBrush>
-						</Setter.Value>
-					</Setter>
-				</Style>
-				
-			</ListBox.Styles>
-			
-			<ListBox.ItemsPanel>
-				<ItemsPanelTemplate>
-					<WrapPanel Orientation="Horizontal"/>
-				</ItemsPanelTemplate>
-			</ListBox.ItemsPanel>
-			
-			<ListBox.ItemTemplate>
-				<DataTemplate DataType="{x:Type vm:VmItemTemplate}">
-					<Border Padding="10" Background="Transparent" Width="230" Height="190">
-						<Border CornerRadius="10" Padding="10" BorderThickness="0" BorderBrush="#5f757a">
-							<Border.Background>
-								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-									<GradientStop Offset="0" Color="#a9cad1"/>
-									<GradientStop Offset="1" Color="#abd1dd"/>
+
+		<ScrollViewer AllowAutoHide="False">
+			<StackPanel>
+				<ListBox ItemsSource="{Binding VMs}" Background="Transparent">
+					<ListBox.Styles>
+
+						<Style Selector="ListBoxItem">
+							<Setter Property="Padding" Value="0" />
+							<Setter Property="Margin" Value="10" />
+							<Setter Property="Background">
+								<Setter.Value>
+									<LinearGradientBrush StartPoint="10%, 10%" EndPoint="100%, 100%">
+										<GradientStop Offset="0" Color="#8fadbc" />
+										<GradientStop Offset="1" Color="#9ab8bf" />
+									</LinearGradientBrush>
+								</Setter.Value>
+							</Setter>
+						</Style>
+
+						<Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+							<Setter Property="Background">
+								<Setter.Value>
+									<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+										<GradientStop Offset="0" Color="#9dbccc" />
+										<GradientStop Offset="1" Color="#a7c7ce" />
+									</LinearGradientBrush>
+								</Setter.Value>
+							</Setter>
+						</Style>
+
+						<Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+							<Setter Property="Background">
+								<Setter.Value>
+									<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+										<GradientStop Offset="0" Color="#a1dded" />
+										<GradientStop Offset="1" Color="#80a6b5" />
+										<!-- <GradientStop Offset="1" Color="#b4e8ea"/> -->
+									</LinearGradientBrush>
+								</Setter.Value>
+							</Setter>
+						</Style>
+
+						<Style Selector="ListBoxItem:pointerover:selected /template/ ContentPresenter#PART_ContentPresenter">
+							<Setter Property="Background">
+								<Setter.Value>
+									<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+										<GradientStop Offset="0" Color="#a9e8f9" />
+										<GradientStop Offset="1" Color="#89b1c1" />
+									</LinearGradientBrush>
+								</Setter.Value>
+							</Setter>
+						</Style>
+
+					</ListBox.Styles>
+
+					<ListBox.ItemsPanel>
+						<ItemsPanelTemplate>
+							<WrapPanel Orientation="Horizontal" />
+						</ItemsPanelTemplate>
+					</ListBox.ItemsPanel>
+
+					<ListBox.ItemTemplate>
+						<DataTemplate DataType="{x:Type vm:VmItemTemplate}">
+							<Border Padding="10" Background="Transparent" Width="230" Height="200">
+								<Border CornerRadius="10" Padding="10" BorderThickness="0" BorderBrush="#5f757a">
+									<Border.Background>
+										<LinearGradientBrush StartPoint="0%, 0%" EndPoint="45%, 45%">
+											<GradientStop Offset="0" Color="#f8f8ff" />
+											<GradientStop Offset="1" Color="#daf1ff" />
+										</LinearGradientBrush>
+									</Border.Background>
+
+									<Grid>
+										<StackPanel VerticalAlignment="Top" Spacing="5">
+											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding OperatingSystem}" />
+											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding Name}" />
+											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding StatusString}" FontWeight="Bold" />
+										</StackPanel>
+
+										<StackPanel HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Bottom">
+											<Button HorizontalAlignment="Center">
+												<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Open</TextBlock>
+											</Button>
+
+											<StackPanel Orientation="Horizontal" Spacing="10">
+												<Button Padding="8,5,8,6" Width="80">
+													<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Start</TextBlock>
+												</Button>
+
+												<Button>
+													<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Power Off</TextBlock>
+												</Button>
+											</StackPanel>
+										</StackPanel>
+									</Grid>
+								</Border>
+							</Border>
+						</DataTemplate>
+					</ListBox.ItemTemplate>
+				</ListBox>
+
+				<Button Padding="10" Margin="10" CornerRadius="10" Width="200" Height="200">
+					<Button.Background>
+						<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+							<GradientStop Offset="0" Color="#a9cad1" />
+							<GradientStop Offset="1" Color="#abd1dd" />
+						</LinearGradientBrush>
+					</Button.Background>
+
+					<Border Background="White" CornerRadius="10">
+						<PathIcon Data="{StaticResource AddRegular}" Width="150" Height="150">
+							<PathIcon.Foreground>
+								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="45%, 45%">
+									<GradientStop Offset="0" Color="#dadae4" />
+									<GradientStop Offset="1" Color="#cae1ef" />
 								</LinearGradientBrush>
-							</Border.Background>
-							
-							<Grid>
-								<StackPanel VerticalAlignment="Top" Spacing="5">
-									<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding OperatingSystem}" />
-									<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding Name}" />
-									<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding StatusString}" FontWeight="Bold" />
-								</StackPanel>
-								
-								<StackPanel HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Bottom">
-									<Button HorizontalAlignment="Center">
-										<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Open</TextBlock>
-									</Button>
-									
-									<StackPanel Orientation="Horizontal" Spacing="10">
-										<Button Padding="8,5,8,6" Width="80">
-											<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Start</TextBlock>
-										</Button>
-										
-										<Button>
-											<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Power Off</TextBlock>
-										</Button>
-									</StackPanel>
-								</StackPanel>
-							</Grid>
-						</Border>
+							</PathIcon.Foreground>
+						</PathIcon>
 					</Border>
-				</DataTemplate>
-			</ListBox.ItemTemplate>
-		</ListBox>
-		
+				</Button>
+			</StackPanel>
+		</ScrollViewer>
 	</Border>
 </UserControl>
