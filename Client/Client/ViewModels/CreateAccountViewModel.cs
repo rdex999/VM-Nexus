@@ -36,6 +36,12 @@ public partial class CreateAccountViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private string _accountCreationFailedText;
+
+	[ObservableProperty] 
+	private string _usernameAvailabilityMessage = "Username must not be empty.";
+	
+	[ObservableProperty]
+	private bool _usernameAvailabilitySuccessClass = false;
 	
 	public CreateAccountViewModel(NavigationService navigationService,  ClientService clientService)
 		: base(navigationService, clientService)
@@ -74,9 +80,27 @@ public partial class CreateAccountViewModel : ViewModelBase
 	public async Task UsernameTextChangedAsync()
 	{
 		AccountCreationFailedTextIsVisible = false;
+
+		if (!string.IsNullOrEmpty(Username))
+		{
+			bool usernameAvailable = await _clientService.IsUsernameAvailableAsync(Username);
+			if (usernameAvailable)
+			{
+				UsernameAvailabilitySuccessClass = true;
+				UsernameAvailabilityMessage = $"Username {Username} is available.";
+			}
+			else
+			{
+				UsernameAvailabilitySuccessClass = false;
+				UsernameAvailabilityMessage = $"Username {Username} is not available.";
+			}
+		}
+		else
+		{
+			UsernameAvailabilitySuccessClass = false;
+			UsernameAvailabilityMessage = "Username must not be empty.";
+		}
 		CreateAccountIsEnabledSetup();
-		
-		/* TODO: Search database for the username, to display a message if the username is available or not */
 	}
 	
 	public void PasswordTextChanged()
@@ -114,6 +138,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 	private void CreateAccountIsEnabledSetup()
 	{
 		CreateAccountIsEnabled = !string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password) &&
-		                         Password == PasswordConfirm && _clientService.IsConnected();
+		                         Password == PasswordConfirm && _clientService.IsConnected() 
+		                         && UsernameAvailabilitySuccessClass;
 	}
 }

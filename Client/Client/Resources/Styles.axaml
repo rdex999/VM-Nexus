@@ -46,6 +46,10 @@
 		<Setter Property="FontSize" Value="18"/>
 	</Style>	
 	
+	<Style Selector="TextBlock.success">
+		<Setter Property="Foreground" Value="Green"/>
+	</Style>
+	
 	<Style Selector="TextBlock.error">
 		<Setter Property="Foreground" Value="Red"/>
 	</Style>

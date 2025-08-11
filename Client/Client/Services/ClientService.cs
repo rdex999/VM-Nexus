@@ -32,6 +32,13 @@ public class ClientService : MessagingService
 		Disconnect();
 	}
 
+	public async Task<bool> IsUsernameAvailableAsync(string username)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCheckUsername(true, username));
+		
+		return result == ExitCode.Success && ((MessageResponseCheckUsername)response!).Available;
+	}
+
 	public async Task<MessageResponseCreateAccount.Status> CreateAccountAsync(string username, string password)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateAccount(true, username, password));

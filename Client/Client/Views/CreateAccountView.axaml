@@ -42,9 +42,17 @@
 				<TextBlock TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" 
 				           FontSize="36" FontWeight="Bold" Foreground="{StaticResource Title}"
 				           Padding="0, 10, 0, 0">Create Account</TextBlock>
-		
-				<TextBox Text="{Binding Username}" TextChanged="OnUsernameTextChangedAsync"
-				         Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"/>
+
+				<StackPanel>
+					<TextBox Text="{Binding Username}" TextChanged="OnUsernameTextChangedAsync"
+					         Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"
+					         Classes.success="{Binding UsernameAvailabilitySuccessClass}"
+					         Classes.error="{Binding !UsernameAvailabilitySuccessClass}" />
+
+					<TextBlock Text="{Binding UsernameAvailabilityMessage}"
+					           Classes.success="{Binding UsernameAvailabilitySuccessClass}"
+					           Classes.error="{Binding !UsernameAvailabilitySuccessClass}" />
+				</StackPanel>
 				
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
