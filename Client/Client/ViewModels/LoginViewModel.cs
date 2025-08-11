@@ -25,6 +25,7 @@ public partial class LoginViewModel : ViewModelBase
 	public LoginViewModel(NavigationService navigationService, ClientService clientService)
 		: base(navigationService, clientService)
 	{
+		_clientService.Reconnected += OnReconnected;
 	}
 
 	public async Task InitializeAsync()
@@ -67,6 +68,11 @@ public partial class LoginViewModel : ViewModelBase
 	public void OnCredentialsTextChanged()
 	{
 		ErrorMessage = string.Empty;
-		LoginButtonIsEnabled = !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password);
+		LoginButtonIsEnabled = !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password) && _clientService.IsConnected();
+	}
+
+	private void OnReconnected(object? sender, EventArgs eventArgs)
+	{
+		LoginButtonIsEnabled = !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password) && _clientService.IsConnected();
 	}
 }

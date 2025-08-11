@@ -40,6 +40,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 	public CreateAccountViewModel(NavigationService navigationService,  ClientService clientService)
 		: base(navigationService, clientService)
 	{
+		_clientService.Reconnected += OnReconnected;
 	}
 
 	[RelayCommand]
@@ -73,8 +74,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 	public async Task UsernameTextChangedAsync()
 	{
 		AccountCreationFailedTextIsVisible = false;
-		CreateAccountIsEnabled = !string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password) &&
-		    !string.IsNullOrEmpty(PasswordConfirm) && Password == PasswordConfirm && _clientService.IsConnected();
+		CreateAccountIsEnabledSetup();
 		
 		/* TODO: Search database for the username, to display a message if the username is available or not */
 	}
@@ -95,7 +95,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 			PasswordClassError = false;
 			PasswordClassSuccess = true;
 
-			CreateAccountIsEnabled = !string.IsNullOrEmpty(Username);
+			CreateAccountIsEnabledSetup();
 		}
 		else
 		{
@@ -104,5 +104,16 @@ public partial class CreateAccountViewModel : ViewModelBase
 			PasswordClassSuccess = false;
 			CreateAccountIsEnabled = false;
 		}
+	}
+
+	private void OnReconnected(object? sender, EventArgs e)
+	{
+		CreateAccountIsEnabledSetup();
+	}
+
+	private void CreateAccountIsEnabledSetup()
+	{
+		CreateAccountIsEnabled = !string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password) &&
+		                         Password == PasswordConfirm && _clientService.IsConnected();
 	}
 }
