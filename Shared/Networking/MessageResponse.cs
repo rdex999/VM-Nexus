@@ -11,17 +11,6 @@ public class MessageResponse : Message
 	}
 }
 
-public class MessageResponseConnect : MessageResponse
-{
-	public bool Accepted { get; }		/* Was the connect request Accepted or Denied by the server? (true: client is connected all good) */
-
-	public MessageResponseConnect(bool generateGuid, Guid requestId, bool accepted)
-		: base(generateGuid, requestId)
-	{
-		Accepted = accepted;
-	}
-}
-
 public class MessageResponseCheckUsername : MessageResponse
 {
 	public bool Available { get; }

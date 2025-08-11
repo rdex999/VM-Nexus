@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Shared;
 using Shared.Networking;
@@ -22,6 +23,7 @@ public class ClientService : MessagingService
 		if (IsInitialized())
 			return;
 
+		await base.InitializeAsync(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
 		await ConnectToServerAsync();
 	}
 
@@ -50,35 +52,48 @@ public class ClientService : MessagingService
 		return reqLogin.Accepted;
 	}
 
-	private async Task ConnectToServerAsync()
+	private async Task ConnectToServerAsync(CancellationToken? token = null)
 	{
-		while(true)
+		while (token == null || !token.Value.IsCancellationRequested)
 		{
-			await base.InitializeAsync(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
-			
 			bool socketConnected = SocketConnectToServer();
-			if (!socketConnected)
+			if (socketConnected)
 			{
-				OnFailure(ExitCode.ConnectionToServerFailed);
-				Disconnect();
-				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout);
-				continue;
+				break;
 			}
 
-			_isInitialized = true;
-			_thread.Start();
-			
-			(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnect(true));
-			if (result != ExitCode.Success || !((MessageResponseConnect)response!).Accepted)
+			_socket.Close();
+			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+
+			if (token == null)
 			{
-				OnFailure(ExitCode.ConnectionToServerFailed);
-				Disconnect();
 				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout);
-				continue;
 			}
-			
-			break;
+			else
+			{
+				try
+				{
+					await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout, token.Value);
+				}
+				catch (Exception e)
+				{
+					return;
+				}
+			}
+			OnFailure(ExitCode.ConnectionToServerFailed);
 		}
+
+		if (token != null && token.Value.IsCancellationRequested)
+		{
+			return;
+		}
+
+		_isInitialized = true;
+		if (!_thread.IsAlive)
+		{
+			_thread.Start();
+		}
+
 		Reconnected?.Invoke(this, EventArgs.Empty);
 	}
 	
@@ -129,9 +144,9 @@ public class ClientService : MessagingService
 		
 	}
 
-	protected override void HandleSuddenDisconnection()
+	protected override void HandleSuddenDisconnection(CancellationToken? token = null)
 	{
-		base.HandleSuddenDisconnection();
-		ConnectToServerAsync().Wait();
+		base.HandleSuddenDisconnection(token);
+		ConnectToServerAsync(token).Wait();
 	}
 }

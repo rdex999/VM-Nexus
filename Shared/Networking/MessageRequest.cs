@@ -6,12 +6,6 @@ public class MessageRequest : Message
 		: base(generateGuid) {}
 }
 
-public class MessageRequestConnect : MessageRequest
-{
-	public MessageRequestConnect(bool generateGuid)
-		: base(generateGuid) {}
-}
-
 public class MessageRequestCheckUsername : MessageRequest	/* Check if the provided username is available (that there is no such user) */
 {
 	public string Username { get; }

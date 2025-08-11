@@ -45,7 +45,7 @@ public class MessagingService
 		{
 			if (!IsConnected() && !token.IsCancellationRequested)
 			{
-				HandleSuddenDisconnection();
+				HandleSuddenDisconnection(token);
 			}
 			
 			Message? message = ReceiveMessage();
@@ -53,7 +53,7 @@ public class MessagingService
 			{
 				if (!IsConnected() && !token.IsCancellationRequested)
 				{
-					HandleSuddenDisconnection();
+					HandleSuddenDisconnection(token);
 				}
 				continue;	
 			}
@@ -297,7 +297,7 @@ public class MessagingService
 	{
 	}
 
-	protected virtual void HandleSuddenDisconnection()
+	protected virtual void HandleSuddenDisconnection(CancellationToken? token = null)
 	{
 		OnFailure(ExitCode.DisconnectedFromServer);
 		AfterDisconnection();

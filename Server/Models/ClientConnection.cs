@@ -1,5 +1,6 @@
 using System;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 using Server.Services;
 using Shared;
@@ -30,13 +31,6 @@ public sealed class ClientConnection : MessagingService
 		ExitCode result;
 		switch (request)
 		{
-			case MessageRequestConnect reqConnect:
-			{
-				MessageResponse response = new MessageResponseConnect(true, reqConnect.Id, true);
-				result = await SendResponse(response);
-				break;
-			}
-
 			case MessageRequestCheckUsername reqCheckUsername:
 			{
 				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCheckUsername.Username);
@@ -116,9 +110,9 @@ public sealed class ClientConnection : MessagingService
 	}
 	
 	/* When the client suddenly disconnects, delete this client object, and let it be re-created in ListenForClients */
-	protected override void HandleSuddenDisconnection()
+	protected override void HandleSuddenDisconnection(CancellationToken? token = null)
 	{
-		base.HandleSuddenDisconnection();
+		base.HandleSuddenDisconnection(token);
 	}
 
 	protected override void AfterDisconnection()
