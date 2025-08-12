@@ -110,12 +110,12 @@ public class MessagingService
 		cts.Dispose();
 		
 		/* Here, the message was sent successfully */
-		TaskCompletionSource<MessageResponse>? tcs = new TaskCompletionSource<MessageResponse>();
+		TaskCompletionSource<MessageResponse> tcs = new TaskCompletionSource<MessageResponse>();
 		_responses[message.Id] = tcs;
 		
 		/* Now wait for the response for this specific request that we just send */
 		ExitCode result = ExitCode.Success;
-		MessageResponse response = null;
+		MessageResponse? response = null;
 		try
 		{
 			response = await tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(SharedDefinitions.MessageTimeoutMilliseconds));

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Client.Services;
 using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Shared.Networking;
 
 namespace Client.ViewModels;
 
@@ -76,9 +78,13 @@ public partial class MainViewModel : ViewModelBase
 	}
 
 	[RelayCommand]
-	private void LogOut()
+	private async Task LogoutAsync()
 	{
-		_navigationService.NavigateToView(new LoginView() { DataContext = new LoginViewModel(_navigationService, _clientService) });
+		MessageResponseLogout.Status result = await _clientService.LogoutAsync();
+		if (result == MessageResponseLogout.Status.Success || result == MessageResponseLogout.Status.UserNotLoggedIn)
+		{
+			_navigationService.NavigateToView(new LoginView() { DataContext = new LoginViewModel(_navigationService, _clientService) });
+		}
 	}
 }
 

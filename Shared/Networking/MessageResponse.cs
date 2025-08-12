@@ -65,5 +65,6 @@ public class MessageResponseLogout : MessageResponse
 	{
 		Success,
 		UserNotLoggedIn,
+		Failure,
 	}
 }

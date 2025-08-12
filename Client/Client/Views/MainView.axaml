@@ -60,7 +60,7 @@
 								</MenuItem>
 								
 								<MenuItem Header="-"/>
-								<MenuItem Header="Log Out" Command="{Binding LogOutCommand}"/>
+								<MenuItem Header="Log Out" Command="{Binding LogoutCommand}"/>
 							</MenuFlyout>
 						</Button.Flyout>
 

@@ -81,10 +81,28 @@ public sealed class ClientConnection : MessagingService
 				}
 				break;
 			}
+
+			case MessageRequestLogout reqLogout:
+			{
+				if (_isLoggedIn)
+				{
+					_isLoggedIn = false;
+					_username = string.Empty;
+					await Task.Delay(50);		/* If i dont do this, the client gets a response timeout - like the client doesnt receive the response.. */
+					result = await SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
+				}
+				else
+				{
+					result = await SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.UserNotLoggedIn));
+				}
+
+				break;
+			}
 				
 			default:
 			{
-				throw new NotImplementedException();
+				result = ExitCode.Success;
+				break;
 			}
 		}
 

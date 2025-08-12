@@ -59,6 +59,18 @@ public class ClientService : MessagingService
 		return reqLogin.Accepted;
 	}
 
+	public async Task<MessageResponseLogout.Status> LogoutAsync()
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogout(true));
+		if (result != ExitCode.Success)
+		{
+			return  MessageResponseLogout.Status.Failure;
+		}
+		
+		MessageResponseLogout resLogout = (MessageResponseLogout)response!;
+		return resLogout.Result;
+	}
+
 	private async Task ConnectToServerAsync(CancellationToken? token = null)
 	{
 		while (token == null || !token.Value.IsCancellationRequested)
