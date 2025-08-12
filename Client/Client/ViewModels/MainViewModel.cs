@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Net.Mime;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 using Client.Services;
 using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -29,8 +32,6 @@ public partial class MainViewModel : ViewModelBase
 	
 	private string _username;
 	
-	
-	
 	public MainViewModel(NavigationService navigationService, ClientService clientService, string username)
 		: base(navigationService, clientService)
 	{
@@ -39,7 +40,8 @@ public partial class MainViewModel : ViewModelBase
 		CurrentPageViewModel = new HomeViewModel(navigationService, clientService);
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
-			new SideMenuItemTemplate("Home", new HomeViewModel(_navigationService, _clientService))
+			new SideMenuItemTemplate("Home", new HomeViewModel(_navigationService, _clientService), "HomeRegular"),
+			new SideMenuItemTemplate("Create New VM", new CreateVmViewModel(_navigationService,  _clientService), "AddRegular"),
 		};
 		CurrentSideMenuItem = SideMenuItems[0];
 
@@ -53,11 +55,6 @@ public partial class MainViewModel : ViewModelBase
 		{
 			MenuDisplayMode = SplitViewDisplayMode.CompactInline;
 		}
-	}
-
-	/* WARNING: ONLY FOR THE PREVIEWER IN THE IDE - DO NOT USE THIS */
-	public MainViewModel() : base(new NavigationService(), new ClientService())
-	{
 	}
 
 	partial void OnCurrentSideMenuItemChanged(SideMenuItemTemplate? value)
@@ -88,15 +85,20 @@ public partial class MainViewModel : ViewModelBase
 	}
 }
 
-public class SideMenuItemTemplate
+public partial class SideMenuItemTemplate : ObservableObject
 {
 	public string Title { get; }
 	public ViewModelBase ViewModel { get; }
+	public string IconKey { get; }
 
-	public SideMenuItemTemplate(string title, ViewModelBase viewModel)
+	[ObservableProperty] 
+	private Geometry? _icon;
+	
+	public SideMenuItemTemplate(string title, ViewModelBase viewModel, string iconGeometry)
 	{
 		Title = title;
 		ViewModel = viewModel;
+		IconKey = iconGeometry;
 	}
 }
 

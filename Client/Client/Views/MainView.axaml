@@ -78,7 +78,7 @@
 					<ListBox.ItemTemplate>
 						<DataTemplate DataType="{x:Type vm:SideMenuItemTemplate}">
 							<StackPanel Orientation="Horizontal" Spacing="10">
-								<PathIcon Data="{StaticResource HomeRegular}" />
+								<PathIcon Data="{Binding Icon}" />
 								<TextBlock Text="{Binding Title}" FontSize="16" />
 							</StackPanel>
 						</DataTemplate>
