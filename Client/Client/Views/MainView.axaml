@@ -27,13 +27,14 @@
 	</UserControl.Styles>
 
 	<Grid RowDefinitions="Auto, *">
-		<Border Background="#d3e6eb" Padding="10">		<!-- Also looks good #e2e7e8 -->
+		<Border Background="#d3e6eb" Padding="7">		<!-- Also looks good #e2e7e8 -->
 			<Grid>
-				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}">
+				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}"
+				              Width="40" Height="40" Margin="0">
 					<PathIcon Data="{StaticResource NavigationRegular}"></PathIcon>
 				</ToggleButton>
 
-				<TextBlock Foreground="{StaticResource Title}" FontSize="31" FontWeight="Bold" HorizontalAlignment="Center">VM Nexus</TextBlock>
+				<TextBlock Foreground="{StaticResource Title}" FontSize="38" FontWeight="Bold" HorizontalAlignment="Center">VM Nexus</TextBlock>
 
 				<StackPanel HorizontalAlignment="Right" Orientation="Horizontal" FlowDirection="RightToLeft">
 					<Button CornerRadius="200" Width="45" Height="45" Background="#8fcdc9">
@@ -111,7 +112,7 @@
 						</ListBox.ItemsPanel>
 
 						<ListBox.ItemTemplate>
-							<DataTemplate DataType="{x:Type vm:VMTabTemplate}">
+							<DataTemplate DataType="{x:Type vm:VmTabTemplate}">
 								<Border Background="Transparent" CornerRadius="5" Padding="9, 6" VerticalAlignment="Center">
 									<StackPanel Orientation="Horizontal" Spacing="13">
 										<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" FontWeight="DemiBold" Foreground="#5c6d6d"

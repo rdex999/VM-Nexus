@@ -6,5 +6,85 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.CreateVmView"
              x:DataType="vm:CreateAccountViewModel">
-	Welcome to Avalonia!
+
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<MergeResourceInclude Source="/Resources/Geometries.axaml" />
+				<MergeResourceInclude Source="/Resources/Colors.axaml" />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</UserControl.Resources>
+
+	<UserControl.Styles>
+		<StyleInclude Source="/Resources/Styles.axaml" />
+	</UserControl.Styles>
+
+	<Grid>
+		<TextBlock HorizontalAlignment="Center" VerticalAlignment="Top"
+		           Margin="0, 15, 0, 25" Padding="0" Classes="h2">
+			Create a New Virtual Machine
+		</TextBlock>
+
+		<Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="340" Height="440"
+		        Background="#d4eff1" CornerRadius="15" Padding="20">
+
+			<Grid>
+
+				<StackPanel Spacing="25">
+					<TextBox Watermark="Name" Classes="form" />
+
+					<Grid>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Classes="form">Operating System</TextBlock>
+						<ComboBox VerticalAlignment="Center" HorizontalAlignment="Right" SelectedIndex="0">
+							<ComboBoxItem>Ubuntu</ComboBoxItem>
+							<ComboBoxItem>Kali Linux</ComboBoxItem>
+							<ComboBoxItem>Parrot OS</ComboBoxItem>
+							<ComboBoxItem>Manjaro Linux</ComboBoxItem>
+						</ComboBox>
+					</Grid>
+
+					<Grid ColumnDefinitions="Auto, *">
+						<TextBlock Classes="form" VerticalAlignment="Center" FontSize="15"
+						           Margin="0, 0, 10, 0">
+							Main drive size (MiB)
+						</TextBlock>
+
+						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" Value="20480" Minimum="1" Increment="1024" />
+					</Grid>
+
+					<Grid ColumnDefinitions="Auto, *">
+						<TextBlock Classes="form" VerticalAlignment="Center"
+						           Margin="0, 0, 10, 0">
+							Main drive type
+						</TextBlock>
+
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" SelectedIndex="0">
+							<ComboBoxItem>NVME (Non-Volatile Memory Express)</ComboBoxItem>
+							<ComboBoxItem>SSD (Solid State Drive)</ComboBoxItem>
+							<ComboBoxItem>HDD (Hard Disk Drive)</ComboBoxItem>
+							<ComboBoxItem>CD-ROM</ComboBoxItem>
+							<ComboBoxItem>Floppy Drive</ComboBoxItem>
+						</ComboBox>
+					</Grid>
+
+					<Grid ColumnDefinitions="Auto, *">
+						<TextBlock Classes="form" VerticalAlignment="Center"
+						           Margin="0, 0, 10, 0">
+							CPU Architecture
+						</TextBlock>
+
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" SelectedIndex="0">
+							<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
+							<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
+							<ComboBoxItem>ARM</ComboBoxItem>
+						</ComboBox>
+					</Grid>
+				</StackPanel>
+				
+				<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit" 
+				        Margin="0, 0, 0, 15">Create</Button>
+			</Grid>
+		</Border>
+	</Grid>
 </UserControl>

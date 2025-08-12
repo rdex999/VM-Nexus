@@ -19,7 +19,7 @@ public partial class MainViewModel : ViewModelBase
 	
 	public ObservableCollection<SideMenuItemTemplate> SideMenuItems { get; }
 	
-	public ObservableCollection<VMTabTemplate> VMTabs { get; }
+	public ObservableCollection<VmTabTemplate> VMTabs { get; }
 	
 	[ObservableProperty] 
 	private ViewModelBase _currentPageViewModel;
@@ -41,11 +41,11 @@ public partial class MainViewModel : ViewModelBase
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
 			new SideMenuItemTemplate("Home", new HomeViewModel(_navigationService, _clientService), "HomeRegular"),
-			new SideMenuItemTemplate("Create New VM", new CreateVmViewModel(_navigationService,  _clientService), "AddRegular"),
+			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(_navigationService,  _clientService), "AddRegular"),
 		};
 		CurrentSideMenuItem = SideMenuItems[0];
 
-		VMTabs = new ObservableCollection<VMTabTemplate>() { new VMTabTemplate("My first VM"), new VMTabTemplate("My second VM") };
+		VMTabs = new ObservableCollection<VmTabTemplate>() { new VmTabTemplate("My first VM"), new VmTabTemplate("My second VM") };
 
 		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
 		{
@@ -66,7 +66,7 @@ public partial class MainViewModel : ViewModelBase
 	}
 	
 	[RelayCommand]
-	private void CloseVmTab(VMTabTemplate? value)
+	private void CloseVmTab(VmTabTemplate? value)
 	{
 		if (value == null)
 			return;
@@ -102,11 +102,11 @@ public partial class SideMenuItemTemplate : ObservableObject
 	}
 }
 
-public class VMTabTemplate
+public class VmTabTemplate
 {
 	public string Name { get; }
 
-	public VMTabTemplate(string name)
+	public VmTabTemplate(string name)
 	{
 		Name = name;
 	}

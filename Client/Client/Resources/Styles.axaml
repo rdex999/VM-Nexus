@@ -46,6 +46,22 @@
 		<Setter Property="FontSize" Value="18"/>
 	</Style>	
 	
+	<Style Selector="TextBlock">
+		<Setter Property="Foreground" Value="#516466"/>
+		<Setter Property="FontSize" Value="14"/>
+	</Style>
+	
+	<Style Selector="TextBlock.form">
+		<Setter Property="FontSize" Value="16"/>
+		<Setter Property="FontWeight" Value="DemiBold"/>
+	</Style>
+	
+	<Style Selector="TextBlock.h2">
+		<Setter Property="FontSize" Value="36"/>
+		<Setter Property="FontWeight" Value="Bold"/>
+		<Setter Property="Foreground" Value="{StaticResource Title}"/>
+	</Style>
+	
 	<Style Selector="TextBlock.success">
 		<Setter Property="Foreground" Value="Green"/>
 	</Style>
@@ -67,6 +83,10 @@
 	
 	<Style Selector="MenuItem">
 		<Setter Property="FlowDirection" Value="LeftToRight"/>
+	</Style>
+	
+	<Style Selector="ComboBox">
+		<Setter Property="MinWidth" Value="110"/>
 	</Style>
 	
 </Styles>
