@@ -42,3 +42,11 @@ public class MessageRequestLogin : MessageRequest
 		Password = password;
 	}
 }
+
+public class MessageRequestLogout : MessageRequest
+{
+	public MessageRequestLogout(bool generateGuid)
+		: base(generateGuid)
+	{
+	}
+}

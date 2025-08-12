@@ -50,3 +50,20 @@ public class MessageResponseLogin : MessageResponse
 		Accepted = accepted;
 	}
 }
+
+public class MessageResponseLogout : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseLogout(bool generateGuid, Guid requestId, Status result)
+		:  base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		UserNotLoggedIn,
+	}
+}
