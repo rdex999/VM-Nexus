@@ -1,16 +1,11 @@
 using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Net;
 using System.Net.Sockets;
-using System.Net.WebSockets;
-using System.Text.Json;
 
 namespace Shared.Networking;
 
 public class MessagingService
 {
-	protected Socket? _socket;
-	protected WebSocket? _webSocket;
+	protected Socket _socket;
 	protected Thread _thread;								/* Runs the Communicate function */
 	private CancellationTokenSource _cts;
 	protected bool _isInitialized;
@@ -30,13 +25,6 @@ public class MessagingService
 		_thread = new Thread(() => Communicate(_cts.Token));
 		_responses =  new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
 	}
-	public void Initialize(WebSocket socket)
-	{
-		_webSocket = socket;
-		_cts = new CancellationTokenSource();
-		_thread = new Thread(() => Communicate(_cts.Token));
-		_responses =  new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
-	}
 
 	public bool IsInitialized()
 	{
@@ -45,14 +33,8 @@ public class MessagingService
 
 	public bool IsConnected()
 	{
-		if (OperatingSystem.IsBrowser())
-		{
-			return IsInitialized() && _webSocket!.State == WebSocketState.Open;
-		}
-		else
-		{
-			return IsInitialized() && _socket!.Connected;
-		}
+
+		return IsInitialized() && _socket!.Connected;
 	}
 
 	private void Communicate(CancellationToken token)
@@ -231,21 +213,13 @@ public class MessagingService
 
 	private ExitCode SendBytesExact(byte[] bytes)
 	{
-		if (_webSocket != null)
-		{
-			_webSocket.SendAsync(bytes, WebSocketMessageType.Binary, WebSocketMessageFlags.None,
-				CancellationToken.None).AsTask().Wait();
-			
-			return ExitCode.Success;
-		}
-		
 		int bytesSent = 0;
 		while (bytesSent < bytes.Length)
 		{
 			int sent;
 			try
 			{
-				sent = _socket!.Send(bytes, bytesSent, bytes.Length - bytesSent, SocketFlags.None);
+				sent = _socket.Send(bytes, bytesSent, bytes.Length - bytesSent, SocketFlags.None);
 			}
 			catch (Exception e)
 			{
@@ -274,21 +248,7 @@ public class MessagingService
 			int currentRead;
 			try
 			{
-				if (_socket != null)
-				{
-					currentRead = _socket.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
-				} 
-				else if (_webSocket != null)
-				{
-					byte[] currentReadBytes = new byte[size - bytesRead];
-					WebSocketReceiveResult result = _webSocket.ReceiveAsync(currentReadBytes, CancellationToken.None).GetAwaiter().GetResult();
-					currentReadBytes.CopyTo(bytes,  bytesRead);
-					currentRead = result.Count;
-				}
-				else
-				{
-					throw new Exception("MessagingService initialized incorrectly.");
-				}
+				currentRead = _socket.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
 			}
 			catch (Exception e)
 			{
