@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Net.Mime;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Client.Services;

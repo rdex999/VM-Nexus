@@ -119,8 +119,7 @@
 										           FontSize="15" Text="{Binding Name}" />
 
 										<Button Padding="4" VerticalAlignment="Center" Background="#ccd1d1ca" IsHitTestVisible="True"
-										        Command="{Binding $parent[UserControl].DataContext.CloseVmTabCommand}"
-										        CommandParameter="{Binding}">
+										        Click="CloseVMTab_OnClick">
 
 											<Button.Styles>
 												<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
