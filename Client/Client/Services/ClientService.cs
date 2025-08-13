@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Shared;
@@ -11,19 +12,21 @@ namespace Client.Services;
 /* Responsible for communicating with the server */
 public class ClientService : MessagingService
 {
-	public event EventHandler Reconnected;
+	public event EventHandler? Reconnected;
 	
-	public ClientService()
-		: base()
-	{
-	}
-
 	public async Task InitializeAsync()
 	{
 		if (IsInitialized())
 			return;
 
-		await base.InitializeAsync(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
+		if (OperatingSystem.IsBrowser())
+		{
+			base.Initialize(new ClientWebSocket());
+		}
+		else
+		{
+			base.Initialize(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
+		}
 		await ConnectToServerAsync();
 	}
 
@@ -81,8 +84,29 @@ public class ClientService : MessagingService
 				break;
 			}
 
-			_socket.Close();
-			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			if (OperatingSystem.IsBrowser())
+			{
+				if (token == null)
+				{
+					await _webSocket!.CloseAsync(WebSocketCloseStatus.EndpointUnavailable,  string.Empty, CancellationToken.None);
+				}
+				else
+				{
+					try
+					{
+						await _webSocket!.CloseAsync(WebSocketCloseStatus.EndpointUnavailable,  string.Empty, token.Value);
+					}
+					catch (OperationCanceledException)
+					{
+						return;
+					}
+				}
+			}
+			else
+			{
+				_socket!.Close();
+				_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			}
 
 			if (token == null)
 			{
@@ -124,7 +148,16 @@ public class ClientService : MessagingService
 		/* Connect to the server. On connection failure try connecting with a 3-second delay between each try. */
 		try
 		{
-			_socket.Connect(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
+			if (OperatingSystem.IsBrowser())
+			{
+				ClientWebSocket clientWebSocket = (ClientWebSocket)_webSocket!;
+				clientWebSocket.ConnectAsync(new Uri($"http://{SharedDefinitions.ServerIp}:{SharedDefinitions.ServerPort}"), CancellationToken.None).Wait();
+				return clientWebSocket.State == WebSocketState.Open;
+			}
+			else
+			{
+				_socket!.Connect(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
+			}
 			return true;
 		}
 		catch (Exception)

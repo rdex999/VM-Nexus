@@ -20,7 +20,7 @@ public sealed class ClientConnection : MessagingService
 		: base()
 	{
 		_databaseService = databaseService;
-		InitializeAsync(socket).Wait();	/* Doesnt contain long-running code, so its fine to just Wait() it here */
+		Initialize(socket);
 		_isInitialized = true;
 		_thread.Start();
 	}
