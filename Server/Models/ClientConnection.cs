@@ -21,8 +21,8 @@ public sealed class ClientConnection : MessagingService
 	{
 		_databaseService = databaseService;
 		Initialize(socket);
-		_isInitialized = true;
-		_thread.Start();
+		IsServiceInitialized = true;
+		CommunicationThread.Start();
 	}
 
 	protected override async Task ProcessRequestAsync(MessageRequest request)
@@ -122,18 +122,6 @@ public sealed class ClientConnection : MessagingService
 				throw new NotImplementedException();
 			}
 		}
-	}
-
-	public override void Disconnect()
-	{
-		base.Disconnect();
-		AfterDisconnection();
-	}
-	
-	/* When the client suddenly disconnects, delete this client object, and let it be re-created in ListenForClients */
-	protected override void HandleSuddenDisconnection(CancellationToken? token = null)
-	{
-		base.HandleSuddenDisconnection(token);
 	}
 
 	protected override void AfterDisconnection()

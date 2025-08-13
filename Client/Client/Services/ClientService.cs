@@ -77,8 +77,8 @@ public class ClientService : MessagingService
 				break;
 			}
 
-			_socket.Close();
-			_socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			MessagingSocket.Close();
+			MessagingSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 			if (token == null)
 			{
@@ -103,10 +103,10 @@ public class ClientService : MessagingService
 			return;
 		}
 
-		_isInitialized = true;
-		if (!_thread.IsAlive)
+		IsServiceInitialized = true;
+		if (!CommunicationThread.IsAlive)
 		{
-			_thread.Start();
+			CommunicationThread.Start();
 		}
 
 		Reconnected?.Invoke(this, EventArgs.Empty);
@@ -120,7 +120,7 @@ public class ClientService : MessagingService
 		/* Connect to the server. On connection failure try connecting with a 3-second delay between each try. */
 		try
 		{
-			_socket!.Connect(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
+			MessagingSocket!.Connect(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
 			return true;
 		}
 		catch (Exception)
