@@ -24,8 +24,6 @@ public class DatabaseService
 	{
 		_connection = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;User Id=postgres;Password=postgres;Database=VM_Nexus_DB;");
 		_connection.Open();
-
-		NpgsqlCommand command = _connection.CreateCommand();
 		
 		#if DEBUG
 			// ExecuteNonQuery("DROP TABLE IF EXISTS users;");
