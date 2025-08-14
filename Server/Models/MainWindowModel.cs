@@ -4,7 +4,6 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
-using System.Threading.Tasks;
 using Server.Services;
 using Shared;
 
@@ -15,9 +14,20 @@ public class MainWindowModel
 	private Thread? _listener;
 	private CancellationTokenSource? _listenerCts;
 	private LinkedList<ClientConnection>? _clients;	
-	private DatabaseService _databaseService;
-	
-	public async Task<ExitCode> ServerStartAsync()
+	private DatabaseService? _databaseService;
+
+	/// <summary>
+	/// Starts the server.
+	/// </summary>
+	/// <returns>
+	/// An exit code indicating the result of the operation.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: Server is not running. <br/>
+	/// Postcondition: On success, the returned exit code will indicate success, and the server will be running and listening for clients. <br/>
+	/// On failure, the returned exit code will indicate the error, and the server will not be running.
+	/// </remarks>
+	public ExitCode ServerStart()
 	{
 		_listenerCts = new CancellationTokenSource();
 
@@ -25,7 +35,7 @@ public class MainWindowModel
 		{
 			_databaseService = new DatabaseService();	
 		}
-		catch (Exception e)
+		catch (Exception)
 		{
 			return ExitCode.DatabaseStartupFailed;
 		}
@@ -50,10 +60,24 @@ public class MainWindowModel
 		return ExitCode.Success;
 	}
 
-	public async Task<ExitCode> ServerStopAsync()
+	/// <summary>
+	/// Stops the server.
+	/// </summary>
+	/// <returns>
+	/// An exit code indicating the result of the operation.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: The server is up and running. <br/>
+	/// Postcondition: On success, the returned exit code will indicate success, and the server will be shut down. <br/>
+	/// On failure, the returned exit code will indicate the error, and the server will keep running.
+	/// </remarks>
+	public ExitCode ServerStop()
 	{
-		_listenerCts.Cancel();
-		_listenerCts.Dispose();
+		if (_listenerCts != null)
+		{
+			_listenerCts.Cancel();
+			_listenerCts.Dispose();
+		}
 		
 		if (_listener != null && _listener.IsAlive)
 		{
@@ -62,21 +86,34 @@ public class MainWindowModel
 
 		if (_clients != null)
 		{
-			List<Task> tasks = new List<Task>();
 			while (_clients.FirstOrDefault() != null)
 			{
 				ClientConnection clientConnection = _clients.First();
 				clientConnection.Disconnect();
 			}
-
-			await Task.WhenAll(tasks);
 		}
-		
-		_databaseService.Close();
+
+		if (_databaseService != null)
+		{
+			_databaseService.Close();
+		}
 
 		return ExitCode.Success;
 	}
-	
+
+	/// <summary>
+	/// Listens for client connections and redirects them to handlers.
+	/// </summary>
+	/// <param name="token">
+	/// Used to determine when to stop listening for clients. token != null.
+	/// </param>
+	/// <param name="socket">
+	/// The socket to listen for clients on. socket != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: token != null &amp;&amp; socket != null. <br/>
+	/// Postcondition: socket is closed, server does not listen for clients anymore.
+	/// </remarks>
 	private void ListenForClients(CancellationToken token, Socket socket)
 	{
 		socket.Listen();													/* Listen for incoming connections */
@@ -87,7 +124,7 @@ public class MainWindowModel
 			{
 				Socket clientSocket = socket.Accept();						/* There is a client in the queue, accept him */
 			
-				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService);
+				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService!);
 				clientConnection.Disconnected += DisconnectedHandler;
 				_clients!.AddLast(clientConnection);
 			}
@@ -95,6 +132,19 @@ public class MainWindowModel
 		socket.Close();
 	}
 
+	/// <summary>
+	/// Handles a client disconnection. Called by the Disconnected event in ClientConnection.
+	/// </summary>
+	/// <param name="sender">
+	/// The client connection that was disconnected.
+	/// </param>
+	/// <param name="args">
+	/// Always empty (EventArgs.Empty)
+	/// </param>
+	/// <remarks>
+	/// Precondition: Client has disconnected. sender is the ClientConnection that was disconnected. sender != null. args is not used. <br/>
+	/// Postcondition: Client is removed from the client connection list.
+	/// </remarks>
 	private void DisconnectedHandler(object? sender, EventArgs args)
 	{
 		ClientConnection? client = (ClientConnection?)sender;

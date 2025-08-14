@@ -25,16 +25,16 @@ public partial class MainWindowViewModel : ViewModelBase
 	{
 		if (ServerStateIsChecked)
 		{
-			_mainWindowModel.ServerStopAsync().Wait();
+			_mainWindowModel.ServerStop();
 		}
 	}
 		
 	[RelayCommand]
-	private async Task ServerStateToggleChangedAsync(bool isToggled)
+	private void ServerStateToggleChanged(bool isToggled)
 	{
 		if (isToggled)
 		{
-			ExitCode result = await _mainWindowModel.ServerStartAsync();
+			ExitCode result = _mainWindowModel.ServerStart();
 			if (result != ExitCode.Success)
 			{
 				/* TODO: Add logic to display error message */
@@ -43,7 +43,7 @@ public partial class MainWindowViewModel : ViewModelBase
 		}
 		else
 		{
-			ExitCode result = await _mainWindowModel.ServerStopAsync();
+			ExitCode result = _mainWindowModel.ServerStop();
 			if (result != ExitCode.Success)
 			{
 				/* TODO: Add logic to display error message */
