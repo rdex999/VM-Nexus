@@ -1,6 +1,5 @@
 using System;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 using Server.Services;
 using Shared;
@@ -13,18 +12,40 @@ public sealed class ClientConnection : MessagingService
 	public event EventHandler Disconnected;
 	private bool _isLoggedIn = false;
 	private string _username = string.Empty;
-	private DatabaseService _databaseService;
-	private bool _hasDisconnected = false;		/* Has the Disconnect function ran? */
+	private readonly DatabaseService _databaseService;
+	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
 
+	/// <summary>
+	/// Creates and initializes the ClientConnection object.
+	/// </summary>
+	/// <param name="socket">
+	/// The socket on which the client has connected. socket != null.
+	/// </param>
+	/// <param name="databaseService">
+	/// A reference to the database service. databaseService != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: Client has connected to the server. socket != null &amp;&amp; databaseService != null. <br/>
+	/// Postcondition: Messaging service fully initialized and connected to the client.
+	/// </remarks>
 	public ClientConnection(Socket socket, DatabaseService databaseService)
-		: base()
 	{
 		_databaseService = databaseService;
 		Initialize(socket);
 		IsServiceInitialized = true;
-		CommunicationThread.Start();
+		CommunicationThread!.Start();
 	}
 
+	/// <summary>
+	/// Handles requests from the client.
+	/// </summary>
+	/// <param name="request">
+	/// The request that was sent by the client. request != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: A request has been sent by the client to the server. <br/>
+	/// Postcondition: Request is handled and a response has been sent.
+	/// </remarks>
 	protected override async Task ProcessRequestAsync(MessageRequest request)
 	{
 		await base.ProcessRequestAsync(request);
@@ -108,29 +129,28 @@ public sealed class ClientConnection : MessagingService
 
 		switch (result)
 		{
-			case ExitCode.Success:
-				return;
-			
 			case ExitCode.DisconnectedFromServer:
 			{
 				HandleSuddenDisconnection();
 				break;
 			}
-
-			default:
-			{
-				throw new NotImplementedException();
-			}
 		}
 	}
 
+	/// <summary>
+	/// Handles what happens after a disconnection. (sudden or regular disconnection)
+	/// </summary>
+	/// <remarks>
+	/// Precondition: A disconnection has occured. <br/>
+	/// Postcondition: This connection is dropped - client considered as not connected.
+	/// </remarks>
 	protected override void AfterDisconnection()
 	{
 		if (!_hasDisconnected) /* To prevent recursion */
 		{
 			_hasDisconnected = true;
 			base.AfterDisconnection();
-			base.Disconnect();
+			Disconnect();
 			Disconnected?.Invoke(this, EventArgs.Empty);
 		}
 	}
