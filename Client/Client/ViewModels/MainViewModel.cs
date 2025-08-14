@@ -66,8 +66,7 @@ public partial class MainViewModel : ViewModelBase
 		CurrentPageViewModel = value.ViewModel;
 	}
 	
-	[RelayCommand]
-	private void CloseVmTab(VmTabTemplate? value)
+	public void CloseVmTab(VmTabTemplate? value)
 	{
 		if (value == null)
 			return;

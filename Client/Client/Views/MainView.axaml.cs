@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Animation;
 using Avalonia.Animation.Easings;
@@ -19,6 +18,14 @@ public partial class MainView : UserControl
 		InitializeComponent();
 	}
 
+	/// <summary>
+	/// Called when this view is shown - meaning DataContext is set and can be used.
+	/// </summary>
+	/// <param name="e"></param>
+	/// <remarks>
+	/// Precondition: This view is attached to the visual tree - meaning its visible. <br/>
+	/// Postcondition: Side menu icons are set.
+	/// </remarks>
 	protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
 	{
 		base.OnAttachedToVisualTree(e);
@@ -38,6 +45,17 @@ public partial class MainView : UserControl
 		}
 	}
 
+	/// <summary>
+	/// Called when the user closes a VM tab. Animates the tab closing, and then calls the view model's handling method for closing a VM tab.
+	/// </summary>
+	/// <param name="sender">
+	/// The "close" button on the tab (its an X)
+	/// </param>
+	/// <param name="e"></param>
+	/// <remarks>
+	/// Precondition: The user clicked the close button on a VM tab. sender is a Button, sender != null. <br/>
+	/// Postcondition: Tab closed completely.
+	/// </remarks>
 	private async void CloseVMTab_OnClick(object? sender, RoutedEventArgs e)
 	{
 		if (sender is not Button button)
@@ -90,9 +108,15 @@ public partial class MainView : UserControl
 			}
 		};
 
+		/* If its the last tab available */
+		if (viewModel.VMTabs.Count == 1)
+		{
+			animation.Children[0].Setters.Add(new Setter(HeightProperty, listBoxItem.Bounds.Height));
+			animation.Children[1].Setters.Add(new Setter(HeightProperty, 0.0));
+		}
+
 		await animation.RunAsync(listBoxItem);
 
-		viewModel.CloseVmTabCommand.Execute(tab);
+		viewModel.CloseVmTab(tab);
 	}
-
 }
