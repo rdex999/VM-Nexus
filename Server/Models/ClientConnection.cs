@@ -62,7 +62,6 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateAccount reqCreateAccount:
 			{
-				/* TODO: Register into database */
 				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCreateAccount.Username);
 				MessageResponseCreateAccount.Status status;
 				if (usernameAvailable)

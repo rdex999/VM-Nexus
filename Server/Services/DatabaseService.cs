@@ -37,7 +37,6 @@ public class DatabaseService
 			// ExecuteNonQuery("DROP TABLE IF EXISTS users;");
 		#endif
 
-		/* TODO: Generate salts and fill in the length of a salt here */
 		ExecuteNonQuery($"""
 		                CREATE TABLE IF NOT EXISTS users (
 		                    		username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
