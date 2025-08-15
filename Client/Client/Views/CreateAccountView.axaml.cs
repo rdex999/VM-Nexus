@@ -37,7 +37,7 @@ public partial class CreateAccountView : UserControl
 	/// </remarks>
 	private async void OnUsernameTextChangedAsync(object? sender, TextChangedEventArgs e)
 	{
-		await ((CreateAccountViewModel)DataContext!).UsernameTextChangedAsync();
+		await ((CreateAccountViewModel)DataContext!).ValidateUsernameAsync();
 	}
 
 	/// <summary>

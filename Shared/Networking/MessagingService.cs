@@ -197,6 +197,8 @@ public class MessagingService
 	/// </remarks>
 	protected async Task<ExitCode> SendResponse(MessageResponse response)
 	{
+		
+		
 		CancellationTokenSource cts = new CancellationTokenSource();
 		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
 

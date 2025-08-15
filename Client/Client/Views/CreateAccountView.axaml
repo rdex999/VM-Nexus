@@ -47,11 +47,11 @@
 					<TextBox Text="{Binding Username}" TextChanged="OnUsernameTextChangedAsync"
 					         Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"
 					         Classes.success="{Binding UsernameAvailabilitySuccessClass}"
-					         Classes.error="{Binding !UsernameAvailabilitySuccessClass}" />
+					         Classes.error="{Binding UsernameAvailabilityErrorClass}" />
 
 					<TextBlock Text="{Binding UsernameAvailabilityMessage}"
 					           Classes.success="{Binding UsernameAvailabilitySuccessClass}"
-					           Classes.error="{Binding !UsernameAvailabilitySuccessClass}" />
+					           Classes.error="{Binding UsernameAvailabilityErrorClass}" />
 				</StackPanel>
 				
 				<Grid>

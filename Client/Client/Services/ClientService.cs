@@ -54,11 +54,16 @@ public class ClientService : MessagingService
 	/// Precondition: Service fully initialized and connected to the server. username != null. <br/>
 	/// Postcondition: Returns true if there is no user with the given username, false if there is at least one user with that username.
 	/// </remarks>
-	public async Task<bool> IsUsernameAvailableAsync(string username)
+	public async Task<bool?> IsUsernameAvailableAsync(string username)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCheckUsername(true, username));
+
+		if (result != ExitCode.Success)
+		{
+			return null;
+		}
 		
-		return result == ExitCode.Success && ((MessageResponseCheckUsername)response!).Available;
+		return ((MessageResponseCheckUsername)response!).Available;
 	}
 
 	/// <summary>

@@ -86,7 +86,14 @@ public static class Common
 	{
 		var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
 		var json = System.Text.Encoding.UTF8.GetString(bytes);
-		return JsonConvert.DeserializeObject(json, settings);
+		try
+		{
+			return JsonConvert.DeserializeObject(json, settings);
+		}
+		catch (Exception)
+		{
+			return null;
+		}
 	}
 
 	/// <summary>
