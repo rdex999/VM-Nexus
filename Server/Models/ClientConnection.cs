@@ -55,13 +55,19 @@ public sealed class ClientConnection : MessagingService
 		{
 			case MessageRequestCheckUsername reqCheckUsername:
 			{
-				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCheckUsername.Username);
+				bool usernameAvailable = !string.IsNullOrEmpty(reqCheckUsername.Username) && !await _databaseService.IsUserExistAsync(reqCheckUsername.Username);
 				result = await SendResponse(new MessageResponseCheckUsername(true, reqCheckUsername.Id, usernameAvailable));
 				break;
 			}
 
 			case MessageRequestCreateAccount reqCreateAccount:
 			{
+				if (string.IsNullOrEmpty(reqCreateAccount.Username) || string.IsNullOrEmpty(reqCreateAccount.Password))
+				{
+					result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.Failure));
+					break;
+				}
+				
 				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCreateAccount.Username);
 				MessageResponseCreateAccount.Status status;
 				if (usernameAvailable)

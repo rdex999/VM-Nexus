@@ -139,6 +139,11 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsValidLoginAsync(string username, string password)
 	{
+		if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+		{
+			return false;
+		}
+		
 		using NpgsqlDataReader reader = await ExecuteReaderAsync(
 				"SELECT password_hashed, password_salt FROM users WHERE username = @username",
 				new NpgsqlParameter("@username", username)
