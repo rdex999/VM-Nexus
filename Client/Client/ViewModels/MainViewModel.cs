@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Net.Mime;
 using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Client.Services;
@@ -20,7 +17,7 @@ public partial class MainViewModel : ViewModelBase
 	
 	public ObservableCollection<SideMenuItemTemplate> SideMenuItems { get; }
 	
-	public ObservableCollection<VmTabTemplate> VMTabs { get; }
+	public ObservableCollection<VmTabTemplate> VmTabs { get; }
 	
 	[ObservableProperty] 
 	private ViewModelBase _currentPageViewModel;
@@ -30,14 +27,28 @@ public partial class MainViewModel : ViewModelBase
 
 	[ObservableProperty] 
 	private string _accountMenuTitle;
-	
-	private string _username;
-	
+
+	/// <summary>
+	/// Creates the MainViewModel object. Initializes UI.
+	/// </summary>
+	/// <param name="navigationService">
+	/// An instance of the navigation service. navigationService != null.
+	/// </param>
+	/// <param name="clientService">
+	/// an instance of the client service. clientService != null.
+	/// </param>
+	/// <param name="username">
+	/// The username of the user. username != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: User has logged in or created an account successfully.
+	/// navigationService != null &amp;&amp; clientService != null &amp;&amp; username != null. <br/>
+	/// Postcondition: MainView UI is ready and initialized.
+	/// </remarks>
 	public MainViewModel(NavigationService navigationService, ClientService clientService, string username)
 		: base(navigationService, clientService)
 	{
-		_username = username;
-		AccountMenuTitle = $"Welcome, {_username}.";
+		AccountMenuTitle = $"Welcome, {username}.";
 		CurrentPageViewModel = new HomeViewModel(navigationService, clientService);
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
@@ -46,7 +57,7 @@ public partial class MainViewModel : ViewModelBase
 		};
 		CurrentSideMenuItem = SideMenuItems[0];
 
-		VMTabs = new ObservableCollection<VmTabTemplate>() { new VmTabTemplate("My first VM"), new VmTabTemplate("My second VM") };
+		VmTabs = new ObservableCollection<VmTabTemplate>() { new VmTabTemplate("My first VM"), new VmTabTemplate("My second VM") };
 
 		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
 		{
@@ -58,6 +69,16 @@ public partial class MainViewModel : ViewModelBase
 		}
 	}
 
+	/// <summary>
+	/// Handles when the CurrentSideMenuItem property is changed.
+	/// </summary>
+	/// <param name="value">
+	/// The new side menu item that is selected. value != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: User has selected another tab in the side menu. value != null. <br/>
+	/// Postcondition: The current page view model (The main content) is changed to that of the new side menu tab. This results in the view changing.
+	/// </remarks>
 	partial void OnCurrentSideMenuItemChanged(SideMenuItemTemplate? value)
 	{
 		if (value == null)
@@ -65,15 +86,34 @@ public partial class MainViewModel : ViewModelBase
 		
 		CurrentPageViewModel = value.ViewModel;
 	}
-	
+
+	/// <summary>
+	/// Handles when a VM tab is fully closed, after the animation has finished. (Called by the code-behind)
+	/// </summary>
+	/// <param name="value">
+	/// The VM tab that was closed. value != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: Animation of the tab closing has finished, code-behind calls this method. value != null. <br/>
+	/// Postcondition: The VM tab is removed from the VmTabs collection. (The VM tab is officially closed)
+	/// </remarks>
 	public void CloseVmTab(VmTabTemplate? value)
 	{
 		if (value == null)
 			return;
 		
-		VMTabs.Remove(value);
+		VmTabs.Remove(value);
 	}
 
+	/// <summary>
+	/// Handles a click on the logout button - attempts to log out.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User clicks on the logout button. <br/>
+	/// Postcondition: On success, the user is logged out and redirected to the login page.
+	/// (This includes the case in which the user was not considered as logged in by the server - still redirected to the login page) <br/>
+	/// On failure, the click will have no effect, and the user will stay logged in.
+	/// </remarks>
 	[RelayCommand]
 	private async Task LogoutAsync()
 	{
@@ -93,7 +133,24 @@ public partial class SideMenuItemTemplate : ObservableObject
 
 	[ObservableProperty] 
 	private Geometry? _icon;
-	
+
+	/// <summary>
+	/// Creates an instance of SideMenuItemTemplate.
+	/// </summary>
+	/// <param name="title">
+	/// The title of the side menu item, for example, "Home" or "Create a New Virtual Machine". title != null.
+	/// </param>
+	/// <param name="viewModel">
+	/// The view model of the page that this side menu item corresponds to. (What page will be shown when this side menu item is selected) viewModel != null.
+	/// </param>
+	/// <param name="iconGeometry">
+	/// The name of the icon geometry resource - defined in /Client/Client/Resources/Geometries.axaml. (The icon of the side menu item) iconGeometry != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: MainViewModel is created. <br/>
+	/// title != null &amp;&amp; viewModel != null &amp;&amp; iconGeometry != null. <br/>
+	/// Postcondition: An object of type SideMenuItemTemplate is created.
+	/// </remarks>
 	public SideMenuItemTemplate(string title, ViewModelBase viewModel, string iconGeometry)
 	{
 		Title = title;

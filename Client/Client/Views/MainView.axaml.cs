@@ -109,7 +109,7 @@ public partial class MainView : UserControl
 		};
 
 		/* If its the last tab available */
-		if (viewModel.VMTabs.Count == 1)
+		if (viewModel.VmTabs.Count == 1)
 		{
 			animation.Children[0].Setters.Add(new Setter(HeightProperty, listBoxItem.Bounds.Height));
 			animation.Children[1].Setters.Add(new Setter(HeightProperty, 0.0));
