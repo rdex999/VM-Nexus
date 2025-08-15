@@ -31,10 +31,10 @@ public partial class MainViewModel : ViewModelBase
 	/// <summary>
 	/// Creates the MainViewModel object. Initializes UI.
 	/// </summary>
-	/// <param name="navigationService">
+	/// <param name="navigationSvc">
 	/// An instance of the navigation service. navigationService != null.
 	/// </param>
-	/// <param name="clientService">
+	/// <param name="clientSvc">
 	/// an instance of the client service. clientService != null.
 	/// </param>
 	/// <param name="username">
@@ -45,15 +45,15 @@ public partial class MainViewModel : ViewModelBase
 	/// navigationService != null &amp;&amp; clientService != null &amp;&amp; username != null. <br/>
 	/// Postcondition: MainView UI is ready and initialized.
 	/// </remarks>
-	public MainViewModel(NavigationService navigationService, ClientService clientService, string username)
-		: base(navigationService, clientService)
+	public MainViewModel(NavigationService navigationSvc, ClientService clientSvc, string username)
+		: base(navigationSvc, clientSvc)
 	{
 		AccountMenuTitle = $"Welcome, {username}.";
-		CurrentPageViewModel = new HomeViewModel(navigationService, clientService);
+		CurrentPageViewModel = new HomeViewModel(navigationSvc, clientSvc);
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
-			new SideMenuItemTemplate("Home", new HomeViewModel(_navigationService, _clientService), "HomeRegular"),
-			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(_navigationService,  _clientService), "AddRegular"),
+			new SideMenuItemTemplate("Home", new HomeViewModel(NavigationSvc, ClientSvc), "HomeRegular"),
+			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(NavigationSvc,  ClientSvc), "AddRegular"),
 		};
 		CurrentSideMenuItem = SideMenuItems[0];
 
@@ -117,10 +117,10 @@ public partial class MainViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task LogoutAsync()
 	{
-		MessageResponseLogout.Status result = await _clientService.LogoutAsync();
+		MessageResponseLogout.Status result = await ClientSvc.LogoutAsync();
 		if (result == MessageResponseLogout.Status.Success || result == MessageResponseLogout.Status.UserNotLoggedIn)
 		{
-			_navigationService.NavigateToView(new LoginView() { DataContext = new LoginViewModel(_navigationService, _clientService) });
+			NavigationSvc.NavigateToView(new LoginView() { DataContext = new LoginViewModel(NavigationSvc, ClientSvc) });
 		}
 	}
 }

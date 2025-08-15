@@ -22,10 +22,10 @@ public partial class LoginViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _loginButtonIsEnabled = false;
 
-	public LoginViewModel(NavigationService navigationService, ClientService clientService)
-		: base(navigationService, clientService)
+	public LoginViewModel(NavigationService navigationSvc, ClientService clientSvc)
+		: base(navigationSvc, clientSvc)
 	{
-		_clientService.Reconnected += OnReconnected;
+		ClientSvc.Reconnected += OnReconnected;
 	}
 
 	public async Task InitializeAsync()
@@ -33,31 +33,31 @@ public partial class LoginViewModel : ViewModelBase
 		if (IsInitialized())
 			return;
 		
-		await _clientService.InitializeAsync();
+		await ClientSvc.InitializeAsync();
 	}
 
 	public bool IsInitialized()
 	{
-		return _clientService.IsInitialized();
+		return ClientSvc.IsInitialized();
 	}
 
 	[RelayCommand]
 	private void NavigateToCreateAccount()
 	{
-		_navigationService.NavigateToView(new CreateAccountView() { DataContext = new CreateAccountViewModel(_navigationService, _clientService) });
+		NavigationSvc.NavigateToView(new CreateAccountView() { DataContext = new CreateAccountViewModel(NavigationSvc, ClientSvc) });
 	}
 
 	[RelayCommand]
 	private async Task LoginAsync()
 	{
-		bool? result = await _clientService.LoginAsync(Username, Password);
+		bool? result = await ClientSvc.LoginAsync(Username, Password);
 		if (result == null)
 		{
 			ErrorMessage = "Server error. Try again later.";
 		} 
 		else if (result.Value)
 		{
-			_navigationService.NavigateToView(new MainView() { DataContext = new MainViewModel(_navigationService, _clientService, Username) });
+			NavigationSvc.NavigateToView(new MainView() { DataContext = new MainViewModel(NavigationSvc, ClientSvc, Username) });
 		}
 		else
 		{
@@ -68,11 +68,11 @@ public partial class LoginViewModel : ViewModelBase
 	public void OnCredentialsTextChanged()
 	{
 		ErrorMessage = string.Empty;
-		LoginButtonIsEnabled = !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password) && _clientService.IsConnected();
+		LoginButtonIsEnabled = !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password) && ClientSvc.IsConnected();
 	}
 
 	private void OnReconnected(object? sender, EventArgs eventArgs)
 	{
-		LoginButtonIsEnabled = !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password) && _clientService.IsConnected();
+		LoginButtonIsEnabled = !string.IsNullOrWhiteSpace(Username) && !string.IsNullOrWhiteSpace(Password) && ClientSvc.IsConnected();
 	}
 }

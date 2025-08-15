@@ -7,8 +7,8 @@ public class HomeViewModel : ViewModelBase
 {
 	public ObservableCollection<VmItemTemplate> VMs { get; }
 	
-	public HomeViewModel(NavigationService navigationService, ClientService clientService)
-		: base(navigationService, clientService)
+	public HomeViewModel(NavigationService navigationSvc, ClientService clientSvc)
+		: base(navigationSvc, clientSvc)
 	{
 		VMs = new ObservableCollection<VmItemTemplate>()
 		{

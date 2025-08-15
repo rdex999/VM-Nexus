@@ -43,16 +43,16 @@ public partial class CreateAccountViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _usernameAvailabilitySuccessClass = false;
 	
-	public CreateAccountViewModel(NavigationService navigationService,  ClientService clientService)
-		: base(navigationService, clientService)
+	public CreateAccountViewModel(NavigationService navigationSvc,  ClientService clientSvc)
+		: base(navigationSvc, clientSvc)
 	{
-		_clientService.Reconnected += OnReconnected;
+		ClientSvc.Reconnected += OnReconnected;
 	}
 
 	[RelayCommand]
 	private void NavigateToLogin()
 	{
-		_navigationService.NavigateToView(new LoginView() {  DataContext = new LoginViewModel(_navigationService, _clientService) });
+		NavigationSvc.NavigateToView(new LoginView() {  DataContext = new LoginViewModel(NavigationSvc, ClientSvc) });
 	}
 
 	[RelayCommand]
@@ -60,10 +60,10 @@ public partial class CreateAccountViewModel : ViewModelBase
 	{
 		AccountCreationFailedTextIsVisible = false;
 		
-		MessageResponseCreateAccount.Status status= await _clientService.CreateAccountAsync(Username, Password);
+		MessageResponseCreateAccount.Status status= await ClientSvc.CreateAccountAsync(Username, Password);
 		if (status == MessageResponseCreateAccount.Status.Success)
 		{
-			_navigationService.NavigateToView(new MainView() {  DataContext = new MainViewModel(_navigationService, _clientService, Username) });
+			NavigationSvc.NavigateToView(new MainView() {  DataContext = new MainViewModel(NavigationSvc, ClientSvc, Username) });
 		}
 		else if  (status == MessageResponseCreateAccount.Status.UsernameNotAvailable)
 		{
@@ -83,7 +83,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 
 		if (!string.IsNullOrEmpty(Username))
 		{
-			bool usernameAvailable = await _clientService.IsUsernameAvailableAsync(Username);
+			bool usernameAvailable = await ClientSvc.IsUsernameAvailableAsync(Username);
 			if (usernameAvailable)
 			{
 				UsernameAvailabilitySuccessClass = true;
@@ -138,7 +138,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 	private void CreateAccountIsEnabledSetup()
 	{
 		CreateAccountIsEnabled = !string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password) &&
-		                         Password == PasswordConfirm && _clientService.IsConnected() 
+		                         Password == PasswordConfirm && ClientSvc.IsConnected() 
 		                         && UsernameAvailabilitySuccessClass;
 	}
 }
