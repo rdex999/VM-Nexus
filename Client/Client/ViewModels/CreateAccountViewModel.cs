@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using Avalonia.Controls;
 using Avalonia.Threading;
 using Client.Services;
 using Client.Views;
@@ -205,16 +204,32 @@ public partial class CreateAccountViewModel : ViewModelBase
 		}
 	}
 
+	/// <summary>
+	/// Handles a change in the email input field.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has typed/deleted something from the email input field. <br/>
+	/// Postcondition: Error messages are displayed if needed, (if the email is invalid or empty) UI styles are updated if needed.
+	/// </remarks>
 	public void OnEmailTextChanged()
 	{
-		/* FOR TESTING */
 		if (string.IsNullOrEmpty(Email))
 		{
+			EmailSuccessClass = false;
+			EmailErrorMessage = "Email must not be empty.";
 			return;
 		}
 
-		bool valid = Common.IsValidEmail(Email);
-		EmailSuccessClass = valid;
+		if (Common.IsValidEmail(Email))
+		{
+			EmailSuccessClass = true;
+			EmailErrorMessage = string.Empty;
+		}
+		else
+		{
+			EmailSuccessClass = false;
+			EmailErrorMessage = "Invalid email address.";
+		}
 	}
 	
 	/// <summary>

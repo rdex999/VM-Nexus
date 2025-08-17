@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Client.ViewModels;
@@ -54,6 +53,15 @@ public partial class CreateAccountView : UserControl
 		PasswordStateButton.IsChecked = false;
 	}
 
+	/// <summary>
+	/// Handles a change in the email input field. Calls the CreateAccountViewModel's version of this function. (email validation happens in the view model)
+	/// </summary>
+	/// <param name="sender"></param>
+	/// <param name="e"></param>
+	/// <remarks>
+	/// Precondition: User has typed/deleted something from the email input field. <br/>
+	/// Postcondition: Error messages are displayed if needed, (if the email is invalid or empty) UI styles are updated if needed.
+	/// </remarks>
 	private void OnEmailTextChanged(object? sender, TextChangedEventArgs e)
 	{
 		((CreateAccountViewModel)DataContext!).OnEmailTextChanged();
