@@ -62,9 +62,17 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateAccount reqCreateAccount:
 			{
-				if (string.IsNullOrEmpty(reqCreateAccount.Username) || string.IsNullOrEmpty(reqCreateAccount.Password))
+				if (string.IsNullOrEmpty(reqCreateAccount.Username) || 
+				    string.IsNullOrEmpty(reqCreateAccount.Email) ||
+				    string.IsNullOrEmpty(reqCreateAccount.Password)) 
 				{
-					result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.Failure));
+					result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty));
+					break;
+				}
+
+				if (!Common.IsValidEmail(reqCreateAccount.Email))
+				{
+					result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.InvalidEmail));
 					break;
 				}
 				
@@ -72,7 +80,7 @@ public sealed class ClientConnection : MessagingService
 				MessageResponseCreateAccount.Status status;
 				if (usernameAvailable)
 				{
-					ExitCode code = await _databaseService.RegisterUserAsync(reqCreateAccount.Username, reqCreateAccount.Password);
+					ExitCode code = await _databaseService.RegisterUserAsync(reqCreateAccount.Username, reqCreateAccount.Email, reqCreateAccount.Password);
 					if (code == ExitCode.Success)
 					{
 						status = MessageResponseCreateAccount.Status.Success;

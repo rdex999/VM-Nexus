@@ -95,7 +95,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 	/// </summary>
 	/// <remarks>
 	/// Precondition: User has clicked on the create account button,
-	/// credentials should be valid, (Password==PasswordConfirm, no empty credentials field) Client service connected to the server. <br/>
+	/// credentials should be valid, (Password==PasswordConfirm, Email valid, no empty credentials field) Client service connected to the server. <br/>
 	/// Postcondition: On success, the user is redirected to the main page and is logged in. <br/>
 	/// On failure, a corresponding error message is displayed.
 	/// </remarks>
@@ -104,20 +104,32 @@ public partial class CreateAccountViewModel : ViewModelBase
 	{
 		AccountCreationFailedTextIsVisible = false;
 		
-		MessageResponseCreateAccount.Status status= await ClientSvc.CreateAccountAsync(Username, Password);
-		if (status == MessageResponseCreateAccount.Status.Success)
+		MessageResponseCreateAccount.Status status= await ClientSvc.CreateAccountAsync(Username, Email, Password);
+		switch (status)
 		{
-			NavigationSvc.NavigateToView(new MainView() {  DataContext = new MainViewModel(NavigationSvc, ClientSvc, Username) });
-		}
-		else if  (status == MessageResponseCreateAccount.Status.UsernameNotAvailable)
-		{
-			AccountCreationFailedText = $"Username \"{Username}\" is not available.";
-			AccountCreationFailedTextIsVisible = true;
-		}
-		else
-		{
-			AccountCreationFailedText = "Account creation failed. Try again later.";
-			AccountCreationFailedTextIsVisible = true;
+			case MessageResponseCreateAccount.Status.Success:
+			{
+				NavigationSvc.NavigateToView(new MainView() {  DataContext = new MainViewModel(NavigationSvc, ClientSvc, Username) });
+				break;
+			}
+			case MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty:
+			{
+				AccountCreationFailedText = "Credentials cannot be empty.";
+				AccountCreationFailedTextIsVisible = true;
+				break;
+			}
+			case MessageResponseCreateAccount.Status.UsernameNotAvailable:
+			{
+				AccountCreationFailedText = $"Username \"{Username}\" is not available.";
+				AccountCreationFailedTextIsVisible = true;
+				break;
+			}
+			case MessageResponseCreateAccount.Status.Failure:
+			{
+				AccountCreationFailedText = "Account creation failed. Try again later.";
+				AccountCreationFailedTextIsVisible = true;
+				break;
+			}
 		}
 	}
 

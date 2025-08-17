@@ -40,6 +40,7 @@ public class DatabaseService
 		ExecuteNonQuery($"""
 		                CREATE TABLE IF NOT EXISTS users (
 		                    		username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
+		                    		email VARCHAR(254),
 		                    		password_hashed BYTEA, 
 		                    		password_salt BYTEA
 		                    	)
@@ -90,6 +91,9 @@ public class DatabaseService
 	/// <param name="username">
 	/// The username for the new account. username != null.
 	/// </param>
+	/// <param name="email">
+	/// The email for the new user. email != null, email must be valid.
+	/// </param>
 	/// <param name="password">
 	/// The password for the new account. password != null.
 	/// </param>
@@ -97,20 +101,25 @@ public class DatabaseService
 	/// An exit code indicating the result of the operation.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: Service is connected to the database. username != null &amp;&amp; password != null. <br/>
+	/// Precondition: Service is connected to the database, no user with the given username exists, the given email must be valid.
+	/// username != null &amp;&amp; email != null &amp;&amp; password != null. <br/>
 	/// Postcondition: On success, the returned exit code will indicate success, and a new account is created with the given username and password. <br/>
 	/// On failure, the returned exit code indicates the error, and no account is created.
 	/// </remarks>
-	public async Task<ExitCode> RegisterUserAsync(string username, string password)
+	public async Task<ExitCode> RegisterUserAsync(string username, string email, string password)
 	{
 		byte[] salt = GenerateSalt();
 		byte[] passwordHash = await EncryptPasswordAsync(password, salt);
 		
 		int rowCount = await ExecuteNonQueryAsync($"""
-		                                           INSERT INTO users (username, password_hashed, password_salt)
-		                                           		VALUES (@username, @password_hashed, @password_salt)
+		                                           INSERT INTO users (username, email, password_hashed, password_salt)
+		                                           		VALUES (@username, @email, @password_hashed, @password_salt)
 		                                           """,
-			new NpgsqlParameter("@username", username), new NpgsqlParameter("@password_hashed", passwordHash), new NpgsqlParameter("@password_salt",  salt)
+			
+			new NpgsqlParameter("@username", username), 
+			new NpgsqlParameter("@email", email),
+			new NpgsqlParameter("@password_hashed", passwordHash), 
+			new NpgsqlParameter("@password_salt",  salt)
 		);
 
 		if (rowCount == 1)

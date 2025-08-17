@@ -20,12 +20,14 @@ public class MessageRequestCheckUsername : MessageRequest	/* Check if the provid
 public class MessageRequestCreateAccount : MessageRequest
 {
 	public string Username { get; }
+	public string Email { get; }
 	public string Password { get; }
 
-	public MessageRequestCreateAccount(bool generateGuid, string username, string password)
+	public MessageRequestCreateAccount(bool generateGuid, string username, string email, string password)
 		: base(generateGuid)
 	{
 		Username = username;
+		Email = email;
 		Password = password;
 	}
 }

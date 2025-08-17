@@ -72,6 +72,9 @@ public class ClientService : MessagingService
 	/// <param name="username">
 	/// The username of the new user. username != null.
 	/// </param>
+	/// <param name="email">
+	/// The email of the new user. email != null
+	/// </param>
 	/// <param name="password">
 	/// The password for the new user. password != null.
 	/// </param>
@@ -79,15 +82,15 @@ public class ClientService : MessagingService
 	/// A status indicating the result of the account creation request.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: Service fully initialized and connected to the server. username != null &amp;&amp; password != null. <br/>
+	/// Precondition: Service fully initialized and connected to the server. username != null &amp;&amp; email != null &amp;&amp; password != null. <br/>
 	/// Postcondition: On success, a new account with the given username and password is created. The returned value will indicate success. <br/>
 	/// On failure, the account is not created, and the returned value will indicate and error.
 	/// </remarks>
-	public async Task<MessageResponseCreateAccount.Status> CreateAccountAsync(string username, string password)
+	public async Task<MessageResponseCreateAccount.Status> CreateAccountAsync(string username, string email, string password)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateAccount(true, username, password));
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateAccount(true, username, email, password));
 		if (result != ExitCode.Success)
-			return MessageResponseCreateAccount.Status.Failure;
+			return MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty;
 		
 		MessageResponseCreateAccount reqCreateAccount = (MessageResponseCreateAccount)response!;
 		return reqCreateAccount.Result;

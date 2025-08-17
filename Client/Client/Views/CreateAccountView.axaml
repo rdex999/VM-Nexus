@@ -58,7 +58,8 @@
 					<TextBox Text="{Binding Email}" TextChanged="OnEmailTextChanged"
 					         Classes="form" HorizontalAlignment="Stretch" Watermark="Email"
 					         Classes.success="{Binding EmailSuccessClass}"
-					         Classes.error="{Binding !EmailSuccessClass}" />
+					         Classes.error="{Binding !EmailSuccessClass}" 
+					         MaxLength="254" />
 
 					<TextBlock Text="{Binding EmailErrorMessage}" Classes="error"/>
 				</StackPanel>
