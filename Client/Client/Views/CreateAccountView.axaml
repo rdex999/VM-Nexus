@@ -54,6 +54,15 @@
 					           Classes.error="{Binding UsernameAvailabilityErrorClass}" />
 				</StackPanel>
 				
+				<StackPanel>
+					<TextBox Text="{Binding Email}" TextChanged="OnEmailTextChanged"
+					         Classes="form" HorizontalAlignment="Stretch" Watermark="Email"
+					         Classes.success="{Binding EmailSuccessClass}"
+					         Classes.error="{Binding !EmailSuccessClass}" />
+
+					<TextBlock Text="{Binding EmailErrorMessage}" Classes="error"/>
+				</StackPanel>
+				
 				<Grid>
 					<!-- Padding for stopping the text before the button -->
 					<TextBox Name="PasswordTextBox" Classes="form" Classes.error="{Binding PasswordClassError}" 
@@ -92,7 +101,7 @@
 				
 				<Button IsEnabled="{Binding CreateAccountIsEnabled}" 
 				        Command="{Binding CreateAccountCommand}"
-				        HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 5">Create Account</Button>
+				        HorizontalAlignment="Center" Classes="submit" Margin="0, 10, 0, 5">Create Account</Button>
 				
 				<TextBlock HorizontalAlignment="Center" Foreground="{StaticResource Title}" FontWeight="DemiBold" Text="Already have an account? ">
 					<HyperlinkButton Command="{Binding NavigateToLoginCommand}">Login</HyperlinkButton>

@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Text.Json;
 using Newtonsoft.Json;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
@@ -115,11 +114,112 @@ public static class Common
 		psi.FileName = "/bin/bash";
 		psi.Arguments = command;
 		
-		Process process = Process.Start(psi);
+		Process? process = Process.Start(psi);
 		if (process == null)
 			return -1;
 		
 		await process.WaitForExitAsync();
 		return process.ExitCode;
+	}
+
+	/// <summary>
+	/// Checks if the given email is in valid email syntax.
+	/// </summary>
+	/// <param name="email">
+	/// The email address to check. email != null.
+	/// </param>
+	/// <returns>
+	/// True if the given email is valid, false otherwise.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: email != null. <br/>
+	/// Postcondition: Returns true if the given email is valid, false otherwise.
+	/// </remarks>
+	public static bool IsValidEmail(string email)
+	{
+		/*
+		 * Check the local part of the email
+		 */
+		
+		int localEndIdx = email.IndexOf('@');
+		if (localEndIdx > 64 || localEndIdx == -1)
+		{
+			return false;
+		}
+
+		if (email.Count(ch => ch == '@') > 1)
+		{
+			return false;
+		}
+
+		if (email[0] == '.' || email[localEndIdx - 1] == '.')
+		{
+			return false;
+		}
+
+		if (email.Contains(' '))
+		{
+			return false;
+		}
+		
+		char[] acceptedSpecialInLocal = { '!', '#', '$', '%', '&', '\'', '*', '+', '-', '/', '=', '?', '^', '_', '`', '.', '{', '|', '}', '~' };
+		for (int i = 0; i < localEndIdx - 1; ++i)
+		{
+			if (email[i] == '.' && email[i + 1] == '.')		/* i+1 will not cause index out of range exception because of the '@' indexing */
+			{
+				return false;
+			}
+			
+			if(!(acceptedSpecialInLocal.Contains(email[i]) || char.IsAsciiLetterOrDigit(email[i])))
+			{
+				return false;
+			}
+		}
+		
+		/*
+		 * Check the domain part of the email
+		 */
+
+		int domainLength = email.Length - localEndIdx - 1;
+		if (domainLength <= 0)	/* Means there is no domain */
+		{
+			return false;
+		}
+		
+		int domainStartIdx = localEndIdx + 1;
+		if (domainLength > 255)
+		{
+			return false;
+		}
+
+		if (email[domainStartIdx] == '-' || email[email.Length - 1] == '-' || email[domainStartIdx] == '.' || email[email.Length - 1] == '.')
+		{
+			return false;
+		}
+
+		int lastDomainStartIdx = domainStartIdx;
+		for (int i = domainStartIdx; i < email.Length; ++i)
+		{
+			if (i - lastDomainStartIdx + 1 > 63)
+			{
+				return false;
+			}
+		
+			if (email[i] == '.')
+			{
+				if (i + 1 < email.Length && email[i + 1] == '.')
+				{
+					return false;
+				}
+				
+				lastDomainStartIdx = i + 1;
+			} 
+			else if (!(char.IsAsciiLetterOrDigit(email[i]) || email[i] == '-'))
+			{
+				return false;
+			}
+		}
+		
+		return lastDomainStartIdx > domainStartIdx;		/* Means there is at least one dot - separating the domain name from the top-level domain (TLD) */
 	}
 }

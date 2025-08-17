@@ -53,4 +53,9 @@ public partial class CreateAccountView : UserControl
 	{
 		PasswordStateButton.IsChecked = false;
 	}
+
+	private void OnEmailTextChanged(object? sender, TextChangedEventArgs e)
+	{
+		((CreateAccountViewModel)DataContext!).OnEmailTextChanged();
+	}
 }

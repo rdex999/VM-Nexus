@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Avalonia.Controls;
 using Avalonia.Threading;
 using Client.Services;
 using Client.Views;
@@ -47,6 +48,15 @@ public partial class CreateAccountViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private bool _usernameAvailabilityErrorClass = true;
+
+	[ObservableProperty] 
+	private string _email = string.Empty;
+	
+	[ObservableProperty] 
+	private bool _emailSuccessClass = false;
+	
+	[ObservableProperty]
+	private string _emailErrorMessage = string.Empty;
 
 	/// <summary>
 	/// Initializes a new instance of CreateAccountViewModel.
@@ -195,6 +205,18 @@ public partial class CreateAccountViewModel : ViewModelBase
 		}
 	}
 
+	public void OnEmailTextChanged()
+	{
+		/* FOR TESTING */
+		if (string.IsNullOrEmpty(Email))
+		{
+			return;
+		}
+
+		bool valid = Common.IsValidEmail(Email);
+		EmailSuccessClass = valid;
+	}
+	
 	/// <summary>
 	/// Handles the reconnected event from the client service. <br/>
 	/// When was disconnected, the username might have changed, so check if its available.
