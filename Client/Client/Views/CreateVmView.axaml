@@ -21,45 +21,64 @@
 	</UserControl.Styles>
 
 	<Grid>
-		<TextBlock HorizontalAlignment="Center" VerticalAlignment="Top"
+		<TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" TextWrapping="Wrap"
 		           Margin="0, 15, 0, 25" Padding="0" Classes="h2">
 			Create a New Virtual Machine
 		</TextBlock>
 
-		<Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="340" Height="440"
+		<Border HorizontalAlignment="Center" VerticalAlignment="Center" Height="440"
 		        Background="#d4eff1" CornerRadius="15" Padding="20">
-
 			<Grid>
-
 				<StackPanel Spacing="25">
 					<TextBox Watermark="Name" Classes="form" />
 
-					<Grid>
-						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Classes="form">Operating System</TextBlock>
-						<ComboBox VerticalAlignment="Center" HorizontalAlignment="Right" SelectedIndex="0">
+					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+						<TextBlock VerticalAlignment="Center" Classes="form">Operating System</TextBlock>
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" SelectedIndex="0" MaxWidth="200">
 							<ComboBoxItem>Ubuntu</ComboBoxItem>
 							<ComboBoxItem>Kali Linux</ComboBoxItem>
 							<ComboBoxItem>Parrot OS</ComboBoxItem>
 							<ComboBoxItem>Manjaro Linux</ComboBoxItem>
+							<ComboBoxItem>
+								<Grid ColumnDefinitions="*, Auto">
+									<TextBlock Margin="0, 0, 20, 0" VerticalAlignment="Center">Mini Coffee OS</TextBlock>
+									<Button Grid.Column="1" VerticalAlignment="Center" Padding="4">
+										<PathIcon Data="{StaticResource QuestionRegular}" Width="12" Height="12"/>
+										<Button.Flyout>
+											<Flyout Placement="Right" HorizontalOffset="20">
+												<StackPanel>
+													<TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" MaxWidth="300">
+														A small MS-DOS like operating system I wrote in Assembly for the 8086 CPU.
+													</TextBlock>
+													<StackPanel Orientation="Horizontal">
+														<TextBlock Text="See: "/>
+														<HyperlinkButton NavigateUri="https://github.com/rdex999/MiniCoffeeOS">https://github.com/rdex999/MiniCoffeeOS</HyperlinkButton>
+													</StackPanel>
+												</StackPanel>
+											</Flyout>
+										</Button.Flyout>
+									</Button>
+								</Grid>
+							</ComboBoxItem>
 						</ComboBox>
 					</Grid>
 
-					<Grid ColumnDefinitions="Auto, *">
-						<TextBlock Classes="form" VerticalAlignment="Center" FontSize="15"
+					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+						<TextBlock Classes="form" VerticalAlignment="Center"
 						           Margin="0, 0, 10, 0">
-							Main drive size (MiB)
+							OS drive size (MiB)
 						</TextBlock>
 
-						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" Value="20480" Minimum="1" Increment="1024" />
+						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" Value="20480" Minimum="1" Increment="1024" MaxWidth="200"/>
 					</Grid>
 
-					<Grid ColumnDefinitions="Auto, *">
+					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
 						<TextBlock Classes="form" VerticalAlignment="Center"
 						           Margin="0, 0, 10, 0">
 							Main drive type
 						</TextBlock>
 
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" SelectedIndex="0">
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" SelectedIndex="0" MaxWidth="200">
 							<ComboBoxItem>NVME (Non-Volatile Memory Express)</ComboBoxItem>
 							<ComboBoxItem>SSD (Solid State Drive)</ComboBoxItem>
 							<ComboBoxItem>HDD (Hard Disk Drive)</ComboBoxItem>
@@ -68,13 +87,13 @@
 						</ComboBox>
 					</Grid>
 
-					<Grid ColumnDefinitions="Auto, *">
+					<Grid ColumnDefinitions="*, Auto">
 						<TextBlock Classes="form" VerticalAlignment="Center"
 						           Margin="0, 0, 10, 0">
 							CPU Architecture
 						</TextBlock>
 
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" SelectedIndex="0">
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" SelectedIndex="0" MaxWidth="200">
 							<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
 							<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
 							<ComboBoxItem>ARM</ComboBoxItem>

@@ -9,5 +9,28 @@ public static class SharedDefinitions
 	public const int ConnectionDeniedRetryTimeout = 4000;
 
 	public const int CredentialsMaxLength = 64;
+	
+	public enum CpuArchitecture
+	{
+		x86_64,
+		x86,
+		ARM,
+	}
+	
+	public enum OperatingSystem
+	{
+		Ubuntu,
+		KaliLinux,
+		ParrotOs,
+		ManjaroLinux,
+	}
+
+	public enum VmState
+	{
+		ShutDown,
+		Running,
+		Sleeping,
+		Hibernated,
+	}
 }
 

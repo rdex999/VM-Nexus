@@ -20,7 +20,9 @@ public partial class App : Application
 
 		if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 		{
-			this.AttachDevTools();
+			#if DEBUG
+				this.AttachDevTools();
+			#endif
 		}
 	}
 

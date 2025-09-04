@@ -38,13 +38,26 @@ public class DatabaseService
 		#endif
 
 		ExecuteNonQuery($"""
-		                CREATE TABLE IF NOT EXISTS users (
-		                    		username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
-		                    		email VARCHAR(254),
-		                    		password_hashed BYTEA, 
-		                    		password_salt BYTEA
-		                    	)
-		                """);
+		                 CREATE TABLE IF NOT EXISTS users (
+		                 	id SERIAL PRIMARY KEY,
+		                 	username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
+		                 	email VARCHAR(254),
+		                 	password_hashed BYTEA, 
+		                 	password_salt BYTEA
+		                 )
+		                 """);
+
+		ExecuteNonQuery($"""
+		                 CREATE TABLE IF NOT EXISTS virtual_machines (
+		                     id SERIAL PRIMARY KEY,
+		                     name VARCHAR({SharedDefinitions.CredentialsMaxLength}),
+		                     owner_id INT REFERENCES users(id) ON DELETE CASCADE,
+		                     cpu_architecture INT,
+		                     ram INT,
+		                     operating_system INT,
+		                     state INT
+		                 )
+		                 """);
 	}
 
 	/// <summary>
@@ -191,7 +204,6 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		/* TODO: Add SQL injection handling and checks */
 		using (NpgsqlCommand cmd = _connection.CreateCommand())
 		{
 			cmd.CommandText = command;

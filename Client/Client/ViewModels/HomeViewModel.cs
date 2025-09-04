@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Client.Services;
+using Shared;
 
 namespace Client.ViewModels;
 
@@ -35,7 +36,7 @@ public class VmItemTemplate
 {
 	public string Name { get; set; }
 	public string OperatingSystem { get; }
-	public VmStatus Status { get; set; }
+	public SharedDefinitions.VmState Status { get; set; }
 	
 	/// <summary>
 	/// The status of the VM as a string.
@@ -79,14 +80,6 @@ public class VmItemTemplate
 	{
 		Name = name;
 		OperatingSystem = operatingSystem;
-		Status = VmStatus.ShutDown;
-	}
-	
-	public enum VmStatus
-	{
-		ShutDown,
-		Running,
-		Sleeping,
-		Hibernated,
+		Status = SharedDefinitions.VmState.ShutDown;
 	}
 }
