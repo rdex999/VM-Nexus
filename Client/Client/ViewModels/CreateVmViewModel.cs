@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -102,7 +103,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	}
 	
 	[RelayCommand]
-	private void CreateVirtualMachine()
+	private async Task CreateVirtualMachineAsync()
 	{
 	}
 }
