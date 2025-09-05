@@ -26,7 +26,7 @@
 			Create a New Virtual Machine
 		</TextBlock>
 
-		<Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="400" Height="440"
+		<Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="400" Height="460"
 		        Background="#d4eff1" CornerRadius="15" Padding="20">
 			<Grid>
 				<StackPanel Spacing="25">
@@ -65,24 +65,35 @@
 							</ComboBoxItem>
 						</ComboBox>
 					</Grid>
+					
+					<Grid ColumnDefinitions="*, Auto">
+						<TextBlock Classes="form" VerticalAlignment="Center"
+						           Margin="0, 0, 10, 0">
+							CPU Architecture
+						</TextBlock>
 
-					<StackPanel>
-						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
-							<TextBlock Classes="form" VerticalAlignment="Center"
-							           Margin="0, 0, 10, 0">
-								OS drive size (MiB)
-							</TextBlock>
-
-							<NumericUpDown Grid.Column="1" VerticalAlignment="Center" 
-							               Classes.error="{Binding OsDriveSizeErrorClass}"
-							               ValueChanged="VmCreationInfoChangedNumeric"
-							               Value="{Binding OsDriveSize}"
-							               IsEnabled="{Binding OsDriveSizeIsEnabled}"
-							               Increment="1024" Width="180"/>
-						</Grid>
-						<TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding OsDriveSizeErrorMessage}" />
-					</StackPanel>
-
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
+						          SelectedIndex="{Binding CpuArchitecture}"
+						          IsEnabled="{Binding CpuArchitectureIsEnabled}"
+						          SelectionChanged="VmCreationInfoChangedComboBox">
+							<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
+							<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
+							<ComboBoxItem>ARM</ComboBoxItem>
+						</ComboBox>
+					</Grid>
+					
+					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+						<TextBlock Classes="form" VerticalAlignment="Center" Margin="0, 0, 10, 0">Boot Mode</TextBlock>
+						
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180" 
+						          SelectedIndex="{Binding BootMode}"
+						          IsEnabled="{Binding BootModeIsEnabled}"
+						          SelectionChanged="VmCreationInfoChangedComboBox">
+							<ComboBoxItem>UEFI</ComboBoxItem>
+							<ComboBoxItem>BIOS</ComboBoxItem>
+						</ComboBox>
+					</Grid>
+					
 					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
 						<TextBlock Classes="form" VerticalAlignment="Center"
 						           Margin="0, 0, 10, 0">
@@ -101,21 +112,23 @@
 						</ComboBox>
 					</Grid>
 
-					<Grid ColumnDefinitions="*, Auto">
-						<TextBlock Classes="form" VerticalAlignment="Center"
-						           Margin="0, 0, 10, 0">
-							CPU Architecture
-						</TextBlock>
+					<StackPanel>
+						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+							<TextBlock Classes="form" VerticalAlignment="Center"
+							           Margin="0, 0, 10, 0">
+								OS drive size (MiB)
+							</TextBlock>
 
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180" 
-						          SelectedIndex="{Binding CpuArchitecture}"
-						          IsEnabled="{Binding CpuArchitectureIsEnabled}"
-						          SelectionChanged="VmCreationInfoChangedComboBox">
-							<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
-							<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
-							<ComboBoxItem>ARM</ComboBoxItem>
-						</ComboBox>
-					</Grid>
+							<NumericUpDown Grid.Column="1" VerticalAlignment="Center"
+							               Classes.error="{Binding OsDriveSizeErrorClass}"
+							               ValueChanged="VmCreationInfoChangedNumeric"
+							               Value="{Binding OsDriveSize}"
+							               IsEnabled="{Binding OsDriveSizeIsEnabled}"
+							               Increment="1024" Width="180" />
+						</Grid>
+						<TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding OsDriveSizeErrorMessage}" />
+					</StackPanel>
+					
 				</StackPanel>
 				
 				<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit" 

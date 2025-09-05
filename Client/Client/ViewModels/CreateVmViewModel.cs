@@ -13,7 +13,25 @@ public partial class CreateVmViewModel : ViewModelBase
 
 	[ObservableProperty] 
 	private SharedDefinitions.OperatingSystem _operatingSystem = SharedDefinitions.OperatingSystem.Ubuntu;
+	
+	[ObservableProperty]
+	private SharedDefinitions.CpuArchitecture _cpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
+	
+	[ObservableProperty]
+	private bool _cpuArchitectureIsEnabled = true;
 
+	[ObservableProperty]
+	private SharedDefinitions.BootMode _bootMode = SharedDefinitions.BootMode.Uefi;
+	
+	[ObservableProperty]
+	private bool _bootModeIsEnabled = true;
+	
+	[ObservableProperty] 
+	private SharedDefinitions.DriveType _osDriveType = SharedDefinitions.DriveType.NVMe;
+    	
+	[ObservableProperty]
+	private bool _osDriveTypeIsEnabled = true;
+	
 	[ObservableProperty] 
 	private int _osDriveSize = 20480;
 
@@ -30,21 +48,8 @@ public partial class CreateVmViewModel : ViewModelBase
 	[ObservableProperty] 
 	private string _osDriveSizeErrorMessage = string.Empty;
 	
-	[ObservableProperty] 
-	private SharedDefinitions.DriveType _osDriveType = SharedDefinitions.DriveType.NVMe;
-	
-	[ObservableProperty]
-	private bool _osDriveTypeIsEnabled = true;
-
-	[ObservableProperty]
-	private SharedDefinitions.CpuArchitecture _cpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
-	
-	[ObservableProperty]
-	private bool _cpuArchitectureIsEnabled = true;
-	
 	[ObservableProperty]
 	private bool _createVmButtonIsEnabled = true;
-
 	
 	public CreateVmViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
@@ -58,18 +63,22 @@ public partial class CreateVmViewModel : ViewModelBase
 			_osDriveSizeMax = 128;
 			_osDriveSizeMin = 1;
 			
-			OsDriveType =  SharedDefinitions.DriveType.Floppy;
-			OsDriveTypeIsEnabled = false;
-			
 			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86;
 			CpuArchitectureIsEnabled = false;
+		
+			BootMode = SharedDefinitions.BootMode.Bios;
+			BootModeIsEnabled = false;
+			
+			OsDriveType =  SharedDefinitions.DriveType.Floppy;
+			OsDriveTypeIsEnabled = false;
 		}
 		else
 		{
+			CpuArchitectureIsEnabled = true;
+			BootModeIsEnabled = true;
+			OsDriveTypeIsEnabled = true;
 			_osDriveSizeMax = 1024 * 256;
 			_osDriveSizeMin = 1024 * 4;
-			OsDriveTypeIsEnabled = true;
-			CpuArchitectureIsEnabled = true;
 		}
 	}
 	
