@@ -222,4 +222,18 @@ public static class Common
 		
 		return lastDomainStartIdx > domainStartIdx;		/* Means there is at least one dot - separating the domain name from the top-level domain (TLD) */
 	}
+
+	public static string SeparateStringWords(string str)
+	{
+		string result = str;
+		for (int i = 0; i < result.Length; i++)
+		{
+			if (result[i] >= 'A' && result[i] <= 'Z' && i != 0)
+			{
+				result = result.Insert(i, " ");
+				++i;
+			}
+		}
+		return result;
+	}
 }

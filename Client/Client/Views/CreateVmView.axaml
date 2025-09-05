@@ -26,15 +26,17 @@
 			Create a New Virtual Machine
 		</TextBlock>
 
-		<Border HorizontalAlignment="Center" VerticalAlignment="Center" Height="440"
+		<Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="400" Height="440"
 		        Background="#d4eff1" CornerRadius="15" Padding="20">
 			<Grid>
 				<StackPanel Spacing="25">
-					<TextBox Watermark="Name" Classes="form" Text="{Binding VmName}"/>
+					<TextBox Watermark="Name" Classes="form" 
+					         Text="{Binding VmName}"
+					         TextChanged="VmCreationInfoChangedText"/>
 
 					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
 						<TextBlock VerticalAlignment="Center" Classes="form">Operating System</TextBlock>
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" 
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="190" 
 						          SelectedIndex="{Binding OperatingSystem}" SelectionChanged="OperatingSystemChanged">
 							<ComboBoxItem>Ubuntu</ComboBoxItem>
 							<ComboBoxItem>Kali Linux</ComboBoxItem>
@@ -64,19 +66,22 @@
 						</ComboBox>
 					</Grid>
 
-					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
-						<TextBlock Classes="form" VerticalAlignment="Center"
-						           Margin="0, 0, 10, 0">
-							OS drive size (MiB)
-						</TextBlock>
+					<StackPanel>
+						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+							<TextBlock Classes="form" VerticalAlignment="Center"
+							           Margin="0, 0, 10, 0">
+								OS drive size (MiB)
+							</TextBlock>
 
-						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" 
-						               Value="{Binding OsDriveSize}" 
-						               Minimum="{Binding OsDriveSizeMin}" 
-						               Maximum="{Binding OsDriveSizeMax}"
-						               IsEnabled="{Binding OsDriveSizeIsEnabled}"
-						               Increment="1024" MaxWidth="200"/>
-					</Grid>
+							<NumericUpDown Grid.Column="1" VerticalAlignment="Center" 
+							               Classes.error="{Binding OsDriveSizeErrorClass}"
+							               ValueChanged="VmCreationInfoChangedNumeric"
+							               Value="{Binding OsDriveSize}"
+							               IsEnabled="{Binding OsDriveSizeIsEnabled}"
+							               Increment="1024" Width="180"/>
+						</Grid>
+						<TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding OsDriveSizeErrorMessage}" />
+					</StackPanel>
 
 					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
 						<TextBlock Classes="form" VerticalAlignment="Center"
@@ -84,9 +89,10 @@
 							OS drive type
 						</TextBlock>
 
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" 
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
 						          SelectedIndex="{Binding OsDriveType}"
-						          IsEnabled="{Binding OsDriveTypeIsEnabled}">
+						          IsEnabled="{Binding OsDriveTypeIsEnabled}"
+						          SelectionChanged="VmCreationInfoChangedComboBox">
 							<ComboBoxItem>NVMe (Non-Volatile Memory Express)</ComboBoxItem>
 							<ComboBoxItem>SSD (Solid State Drive)</ComboBoxItem>
 							<ComboBoxItem>HDD (Hard Disk Drive)</ComboBoxItem>
@@ -101,9 +107,10 @@
 							CPU Architecture
 						</TextBlock>
 
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" 
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180" 
 						          SelectedIndex="{Binding CpuArchitecture}"
-						          IsEnabled="{Binding CpuArchitectureIsEnabled}">
+						          IsEnabled="{Binding CpuArchitectureIsEnabled}"
+						          SelectionChanged="VmCreationInfoChangedComboBox">
 							<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
 							<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
 							<ComboBoxItem>ARM</ComboBoxItem>
@@ -112,7 +119,9 @@
 				</StackPanel>
 				
 				<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit" 
-				        Margin="0, 0, 0, 15" Command="{Binding CreateVirtualMachineCommand}">Create</Button>
+				        Margin="0, 0, 0, 15" 
+				        IsEnabled="{Binding CreateVmButtonIsEnabled}"
+				        Command="{Binding CreateVirtualMachineCommand}">Create</Button>
 			</Grid>
 		</Border>
 	</Grid>

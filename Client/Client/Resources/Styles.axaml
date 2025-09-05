@@ -35,6 +35,10 @@
 		<Setter Property="BorderBrush" Value="Red"/>
 	</Style>
 	
+	<Style Selector="NumericUpDown.error">
+		<Setter Property="BorderBrush" Value="Red"/>
+	</Style>
+	
 	<Style Selector="TextBox.success">
 		<Setter Property="BorderBrush" Value="LightGreen"/>
 	</Style>

@@ -45,23 +45,7 @@ public class VmItemTemplate
 	/// Precondition: No specific precondition. <br/>
 	/// Postcondition: A string representation with space-seperated words of the Status property is returned.
 	/// </remarks>
-	public string StatusString 
-	{
-		get
-		{
-			/* Separate the words with spaces */
-			string result = Status.ToString();
-			for (int i = 0; i < result.Length; i++)
-			{
-				if (result[i] >= 'A' && result[i] <= 'Z' && i != 0)
-				{
-					result = result.Insert(i, " ");
-					++i;
-				}
-			}
-			return result;
-		}
-	}
+	public string StatusString => Common.SeparateStringWords(Status.ToString());
 
 	/// <summary>
 	/// Creates a new instance of a VmItemTemplate.

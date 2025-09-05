@@ -17,15 +17,19 @@ public partial class CreateVmViewModel : ViewModelBase
 	[ObservableProperty] 
 	private int _osDriveSize = 20480;
 
-	[ObservableProperty] 
 	private int _osDriveSizeMax = 1024 * 256;
 	
-	[ObservableProperty]
 	private int _osDriveSizeMin = 1;
 	
 	[ObservableProperty]
 	private bool _osDriveSizeIsEnabled = true;
 
+	[ObservableProperty] 
+	private bool _osDriveSizeErrorClass = false;
+	
+	[ObservableProperty] 
+	private string _osDriveSizeErrorMessage = string.Empty;
+	
 	[ObservableProperty] 
 	private SharedDefinitions.DriveType _osDriveType = SharedDefinitions.DriveType.NVMe;
 	
@@ -38,6 +42,10 @@ public partial class CreateVmViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _cpuArchitectureIsEnabled = true;
 	
+	[ObservableProperty]
+	private bool _createVmButtonIsEnabled = true;
+
+	
 	public CreateVmViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
@@ -47,8 +55,8 @@ public partial class CreateVmViewModel : ViewModelBase
 	{
 		if (OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOs)
 		{
-			OsDriveSizeMax = 128;
-			OsDriveSizeMin = 1;
+			_osDriveSizeMax = 128;
+			_osDriveSizeMin = 1;
 			
 			OsDriveType =  SharedDefinitions.DriveType.Floppy;
 			OsDriveTypeIsEnabled = false;
@@ -58,11 +66,30 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 		else
 		{
-			OsDriveSizeMax = 1024 * 256;
-			OsDriveSizeMin = 1024 * 4;
+			_osDriveSizeMax = 1024 * 256;
+			_osDriveSizeMin = 1024 * 4;
 			OsDriveTypeIsEnabled = true;
 			CpuArchitectureIsEnabled = true;
 		}
+	}
+	
+	public void VmCreationInfoChanged()
+	{
+		if (OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin)
+		{
+			OsDriveSizeErrorClass = true;
+			OsDriveSizeErrorMessage =
+				$"For the {Common.SeparateStringWords(OperatingSystem.ToString())} operating " +
+				$"system, the disk size should be between {_osDriveSizeMin} and {_osDriveSizeMax} MiB.";
+		}
+		else
+		{
+			OsDriveSizeErrorClass = false;
+			OsDriveSizeErrorMessage = string.Empty;
+		}
+		
+		CreateVmButtonIsEnabled = !string.IsNullOrEmpty(VmName) && OsDriveSize >= _osDriveSizeMin &&
+		                          OsDriveSize <= _osDriveSizeMax;
 	}
 	
 	[RelayCommand]
