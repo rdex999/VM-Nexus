@@ -42,5 +42,11 @@ public static class SharedDefinitions
 		Sleeping,
 		Hibernated,
 	}
+
+	public enum BootMode
+	{
+		Uefi,
+		Bios
+	}
 }
 

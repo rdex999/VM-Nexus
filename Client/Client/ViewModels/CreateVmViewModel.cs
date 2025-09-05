@@ -80,7 +80,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			OsDriveSizeErrorClass = true;
 			OsDriveSizeErrorMessage =
 				$"For the {Common.SeparateStringWords(OperatingSystem.ToString())} operating " +
-				$"system, the disk size should be between {_osDriveSizeMin} and {_osDriveSizeMax} MiB.";
+				$"system, the disk size must be between {_osDriveSizeMin} and {_osDriveSizeMax} MiB.";
 		}
 		else
 		{

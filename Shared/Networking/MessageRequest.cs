@@ -52,3 +52,26 @@ public class MessageRequestLogout : MessageRequest
 	{
 	}
 }
+
+public class MessageRequestCreateVm : MessageRequest
+{
+	public string Name { get; }
+	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
+	public SharedDefinitions.CpuArchitecture CpuArchitecture { get; }
+	public SharedDefinitions.BootMode BootMode { get; }
+	public SharedDefinitions.DriveType OsDriveType { get; }
+	public int OsDriveSize { get; }
+	
+	public MessageRequestCreateVm(bool generateGuid, string name,
+		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, 
+		SharedDefinitions.DriveType osDriveType, int osDriveSize)
+		: base(generateGuid)
+	{
+		Name = name;
+		OperatingSystem = operatingSystem;
+		CpuArchitecture = cpuArchitecture;
+		BootMode = bootMode;
+		OsDriveType = osDriveType;
+		OsDriveSize = osDriveSize;
+	}
+}

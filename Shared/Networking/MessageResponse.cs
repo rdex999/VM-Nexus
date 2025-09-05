@@ -70,3 +70,20 @@ public class MessageResponseLogout : MessageResponse
 		Failure,
 	}
 }
+
+public class MessageResponseCreateVm : MessageResponse
+{
+	public Status Result { get; }
+		
+	public MessageResponseCreateVm(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+
+	public enum Status
+	{
+		Success,
+		Failure,
+	}
+}

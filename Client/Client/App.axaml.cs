@@ -35,7 +35,7 @@ public partial class App : Application
 			DisableAvaloniaDataAnnotationValidation();
 
 			ClientService clientService = new ClientService();
-			desktop.MainWindow = new Window
+			desktop.MainWindow = new MainWindow
 			{
 				Content = new LoginView() { DataContext = new LoginViewModel(new NavigationService(), clientService) }
 			};

@@ -7,5 +7,7 @@
 	mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
 	x:Class="Client.Views.MainWindow"
 	Icon="/Assets/avalonia-logo.ico"
-	Title="VM Nexus">
+	Title="VM Nexus"
+	MinHeight="733"
+	MinWidth="500">
 </Window>

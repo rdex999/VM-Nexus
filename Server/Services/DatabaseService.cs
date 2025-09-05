@@ -52,9 +52,9 @@ public class DatabaseService
 		                     id SERIAL PRIMARY KEY,
 		                     name VARCHAR({SharedDefinitions.CredentialsMaxLength}),
 		                     owner_id INT REFERENCES users(id) ON DELETE CASCADE,
-		                     cpu_architecture INT,
-		                     ram INT,
 		                     operating_system INT,
+		                     cpu_architecture INT,
+		                     boot_mode INT,
 		                     state INT
 		                 )
 		                 """);
