@@ -34,7 +34,8 @@
 
 					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
 						<TextBlock VerticalAlignment="Center" Classes="form">Operating System</TextBlock>
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" SelectedIndex="{Binding OperatingSystem}">
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" 
+						          SelectedIndex="{Binding OperatingSystem}" SelectionChanged="OperatingSystemChanged">
 							<ComboBoxItem>Ubuntu</ComboBoxItem>
 							<ComboBoxItem>Kali Linux</ComboBoxItem>
 							<ComboBoxItem>Parrot OS</ComboBoxItem>
@@ -69,7 +70,12 @@
 							OS drive size (MiB)
 						</TextBlock>
 
-						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" Value="{Binding OsDriveSize}" Minimum="1" Increment="1024" MaxWidth="200"/>
+						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" 
+						               Value="{Binding OsDriveSize}" 
+						               Minimum="{Binding OsDriveSizeMin}" 
+						               Maximum="{Binding OsDriveSizeMax}"
+						               IsEnabled="{Binding OsDriveSizeIsEnabled}"
+						               Increment="1024" MaxWidth="200"/>
 					</Grid>
 
 					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
@@ -78,7 +84,9 @@
 							OS drive type
 						</TextBlock>
 
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" SelectedIndex="{Binding OsDriveType}">
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" 
+						          SelectedIndex="{Binding OsDriveType}"
+						          IsEnabled="{Binding OsDriveTypeIsEnabled}">
 							<ComboBoxItem>NVMe (Non-Volatile Memory Express)</ComboBoxItem>
 							<ComboBoxItem>SSD (Solid State Drive)</ComboBoxItem>
 							<ComboBoxItem>HDD (Hard Disk Drive)</ComboBoxItem>
@@ -93,7 +101,9 @@
 							CPU Architecture
 						</TextBlock>
 
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" SelectedIndex="{Binding CpuArchitecture}">
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" 
+						          SelectedIndex="{Binding CpuArchitecture}"
+						          IsEnabled="{Binding CpuArchitectureIsEnabled}">
 							<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
 							<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
 							<ComboBoxItem>ARM</ComboBoxItem>
