@@ -12,9 +12,18 @@ public static class SharedDefinitions
 	
 	public enum CpuArchitecture
 	{
-		x86_64,
-		x86,
-		ARM,
+		X86_64,
+		X86,
+		Arm,
+	}
+
+	public enum DriveType
+	{
+		NVMe,
+		SSD,
+		HDD,
+		CD_ROM,
+		Floppy
 	}
 	
 	public enum OperatingSystem
@@ -23,6 +32,7 @@ public static class SharedDefinitions
 		KaliLinux,
 		ParrotOs,
 		ManjaroLinux,
+		MiniCoffeeOs,
 	}
 
 	public enum VmState

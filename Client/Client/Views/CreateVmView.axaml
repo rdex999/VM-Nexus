@@ -5,7 +5,7 @@
              xmlns:vm="clr-namespace:Client.ViewModels"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.CreateVmView"
-             x:DataType="vm:CreateAccountViewModel">
+             x:DataType="vm:CreateVmViewModel">
 
 	<UserControl.Resources>
 		<ResourceDictionary>
@@ -30,11 +30,11 @@
 		        Background="#d4eff1" CornerRadius="15" Padding="20">
 			<Grid>
 				<StackPanel Spacing="25">
-					<TextBox Watermark="Name" Classes="form" />
+					<TextBox Watermark="Name" Classes="form" Text="{Binding VmName}"/>
 
 					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
 						<TextBlock VerticalAlignment="Center" Classes="form">Operating System</TextBlock>
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" SelectedIndex="0" MaxWidth="200">
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" SelectedIndex="{Binding OperatingSystem}">
 							<ComboBoxItem>Ubuntu</ComboBoxItem>
 							<ComboBoxItem>Kali Linux</ComboBoxItem>
 							<ComboBoxItem>Parrot OS</ComboBoxItem>
@@ -69,17 +69,17 @@
 							OS drive size (MiB)
 						</TextBlock>
 
-						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" Value="20480" Minimum="1" Increment="1024" MaxWidth="200"/>
+						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" Value="{Binding OsDriveSize}" Minimum="1" Increment="1024" MaxWidth="200"/>
 					</Grid>
 
 					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
 						<TextBlock Classes="form" VerticalAlignment="Center"
 						           Margin="0, 0, 10, 0">
-							Main drive type
+							OS drive type
 						</TextBlock>
 
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" SelectedIndex="0" MaxWidth="200">
-							<ComboBoxItem>NVME (Non-Volatile Memory Express)</ComboBoxItem>
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" SelectedIndex="{Binding OsDriveType}">
+							<ComboBoxItem>NVMe (Non-Volatile Memory Express)</ComboBoxItem>
 							<ComboBoxItem>SSD (Solid State Drive)</ComboBoxItem>
 							<ComboBoxItem>HDD (Hard Disk Drive)</ComboBoxItem>
 							<ComboBoxItem>CD-ROM</ComboBoxItem>
@@ -93,7 +93,7 @@
 							CPU Architecture
 						</TextBlock>
 
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" SelectedIndex="0" MaxWidth="200">
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" MaxWidth="200" SelectedIndex="{Binding CpuArchitecture}">
 							<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
 							<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
 							<ComboBoxItem>ARM</ComboBoxItem>
@@ -102,7 +102,7 @@
 				</StackPanel>
 				
 				<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit" 
-				        Margin="0, 0, 0, 15">Create</Button>
+				        Margin="0, 0, 0, 15" Command="{Binding CreateVirtualMachineCommand}">Create</Button>
 			</Grid>
 		</Border>
 	</Grid>
