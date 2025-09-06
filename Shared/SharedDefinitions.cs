@@ -48,5 +48,23 @@ public static class SharedDefinitions
 		Uefi,
 		Bios
 	}
+
+	public class VmDescriptor
+	{
+		public string Name { get; }
+		public OperatingSystem OperatingSystem { get; }
+		public CpuArchitecture CpuArchitecture { get; }
+		public BootMode BootMode { get; }
+		public VmState State { get; }
+
+		public VmDescriptor(string name, OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, BootMode bootMode, VmState state)
+		{
+			Name = name;
+			OperatingSystem = operatingSystem;
+			CpuArchitecture = cpuArchitecture;
+			BootMode = bootMode;
+			State = state;
+		}
+	}
 }
 
