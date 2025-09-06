@@ -88,14 +88,11 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsUserExistAsync(string username)
 	{
-		object? result = await ExecuteScalarAsync("SELECT COUNT(*) FROM users WHERE username = @username",  new NpgsqlParameter("@username", username));
-		if (result == null)
-		{
-			return false;
-		}
+		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM users WHERE username = @username)",
+			new NpgsqlParameter("@username", username)
+		);
 		
-		long userCount = (long)result;
-		return userCount > 0;
+		return exists != null && (bool)exists;
 	}
 
 	/// <summary>
@@ -214,13 +211,19 @@ public class DatabaseService
 	/// <param name="bootMode">The boot mode for the virtual machine. (UEFI or BIOS)</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username must exist, there should not be a virtual machine with the given name under this user. (name is unique).
+	/// Precondition: Service connected to database, a user with the given username must exist,
+	/// there should not be a virtual machine with the given name under this user. (name is unique).
 	/// username != null &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, a virtual machine with the given parameters is created. On failure, the returned exit code will indicate the error.
 	/// </remarks>
 	public async Task<ExitCode> CreateVmAsync(string username, string name, SharedDefinitions.OperatingSystem operatingSystem, 
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
+		if (await IsVmExistsAsync(username, name))
+		{
+			return ExitCode.VmAlreadyExists;
+		}
+		
 		int userId = await GetUserId(username);
 		if (userId == -1)
 		{
@@ -246,7 +249,32 @@ public class DatabaseService
 		
 		return ExitCode.DatabaseOperationFailed;
 	}
-	
+
+	/// <summary>
+	/// Checks if a virtual machine with the given name exists under a user with the given username.
+	/// </summary>
+	/// <param name="username">The username of the user to search for the VM under. username != null.</param>
+	/// <param name="name">The name of the virtual machine. name != null.</param>
+	/// <returns>True if the virtual machine exists, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: Service connected to database, a user with the given username must exist. username != null &amp;&amp; name != null. <br/>
+	/// Postcondition: Returns true if the virtual machine exists, false if the virtual machine does not exist or on failure.
+	/// </remarks>
+	public async Task<bool> IsVmExistsAsync(string username, string name)
+	{
+		int userId = await GetUserId(username);
+		if (userId == -1)
+		{
+			return false;
+		}
+		
+		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM virtual_machines WHERE owner_id = @owner_id AND name = @name)",
+			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@name", name)
+		);
+		
+		return exists != null && (bool)exists;
+	}
 
 	/// <summary>
 	/// The asynchronous version of the ExecuteNonQuery command.
