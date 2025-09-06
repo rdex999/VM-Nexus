@@ -59,19 +59,29 @@ public class MessageRequestCreateVm : MessageRequest
 	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
 	public SharedDefinitions.CpuArchitecture CpuArchitecture { get; }
 	public SharedDefinitions.BootMode BootMode { get; }
-	public SharedDefinitions.DriveType OsDriveType { get; }
-	public int OsDriveSize { get; }
-	
+
 	public MessageRequestCreateVm(bool generateGuid, string name,
-		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, 
-		SharedDefinitions.DriveType osDriveType, int osDriveSize)
+		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 		: base(generateGuid)
 	{
 		Name = name;
 		OperatingSystem = operatingSystem;
 		CpuArchitecture = cpuArchitecture;
 		BootMode = bootMode;
-		OsDriveType = osDriveType;
-		OsDriveSize = osDriveSize;
+	}
+}
+
+public class MessageRequestCreateDrive : MessageRequest
+{
+	public string Name { get; }
+	public SharedDefinitions.DriveType Type { get; }
+	public int Size { get; }	/* The size of the drive - in MiB */
+	
+	public MessageRequestCreateDrive(bool generateGuid,  string name, SharedDefinitions.DriveType type, int size)
+		: base(generateGuid)
+	{
+		Name = name;
+		Type = type;
+		Size = size;
 	}
 }

@@ -167,8 +167,7 @@ public class ClientService : MessagingService
 		SharedDefinitions.DriveType osDriveType, int osDriveSize)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(
-			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode, osDriveType,
-				osDriveSize));
+			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode));
 		
 		if (result != ExitCode.Success)
 			return MessageResponseCreateVm.Status.Failure;

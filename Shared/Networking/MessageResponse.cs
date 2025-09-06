@@ -87,3 +87,21 @@ public class MessageResponseCreateVm : MessageResponse
 		Failure,
 	}
 }
+
+public class MessageResponseCreateDrive : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseCreateDrive(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		AlreadyExistsWithName,
+		InvalidSize,
+	}
+}

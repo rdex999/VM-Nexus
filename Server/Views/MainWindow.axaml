@@ -7,7 +7,9 @@
         x:Class="Server.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
-        Title="VM Nexus Server">
+        Title="VM Nexus Server"
+        MinWidth="600"
+        MinHeight="700">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
