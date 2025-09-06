@@ -13,8 +13,7 @@ namespace Server.Services;
 
 public class DatabaseService
 {
-	private NpgsqlConnection _connection;
-
+	private const string DatabaseConnection = "Server=localhost;Port=5432;User Id=postgres;Password=postgres;Database=VM_Nexus_DB;";
 	private const int EncryptedPasswordSize = 64;
 	private const int SaltSize = 32;
 	private const int Argon2MemorySize = 1024 * 512;	/* 512 MiB */
@@ -31,9 +30,6 @@ public class DatabaseService
 	/// </remarks>
 	public DatabaseService()
 	{
-		_connection = new NpgsqlConnection(connectionString: "Server=localhost;Port=5432;User Id=postgres;Password=postgres;Database=VM_Nexus_DB;");
-		_connection.Open();
-		
 		#if DEBUG
 			// ExecuteNonQuery("DROP TABLE IF EXISTS users;");
 		#endif
@@ -70,7 +66,6 @@ public class DatabaseService
 	/// </remarks>
 	public void Close()
 	{
-		_connection.Close();
 	}
 
 	/// <summary>
@@ -163,8 +158,8 @@ public class DatabaseService
 		{
 			return false;
 		}
-		
-		using NpgsqlDataReader reader = await ExecuteReaderAsync(
+
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
 				"SELECT password_hashed, password_salt FROM users WHERE username = @username",
 				new NpgsqlParameter("@username", username)
 			);
@@ -220,12 +215,9 @@ public class DatabaseService
 	public async Task<ExitCode> CreateVmAsync(string username, string name, SharedDefinitions.OperatingSystem operatingSystem, 
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
-		/* TODO: Fix multiple database operations crash */
 		Task<bool> vmExistsTask = IsVmExistsAsync(username, name);
-		// await Task.WhenAll(vmExistsTask, userIdTask);
-		await vmExistsTask;
 		Task<int> userIdTask = GetUserIdAsync(username);
-		await userIdTask;
+		await Task.WhenAll(vmExistsTask, userIdTask);
 		
 		if (vmExistsTask.Result)
 		{
@@ -304,11 +296,15 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		using (NpgsqlCommand cmd = _connection.CreateCommand())
+		using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
 		{
-			cmd.CommandText = command;
-			cmd.Parameters.AddRange(parameters);
-			return await cmd.ExecuteNonQueryAsync();	
+			await connection.OpenAsync();
+			using (NpgsqlCommand cmd = connection.CreateCommand())
+			{
+				cmd.CommandText = command;
+				cmd.Parameters.AddRange(parameters);
+				return await cmd.ExecuteNonQueryAsync();
+			}
 		}
 	}
 	
@@ -331,11 +327,15 @@ public class DatabaseService
 	/// </remarks>
 	public int ExecuteNonQuery(string command, params NpgsqlParameter[] parameters)
 	{
-		using (NpgsqlCommand cmd = _connection.CreateCommand())
+		using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
 		{
-			cmd.CommandText = command;
-			cmd.Parameters.AddRange(parameters);
-			return cmd.ExecuteNonQuery();	
+			connection.Open();
+			using (NpgsqlCommand cmd = connection.CreateCommand())
+			{
+				cmd.CommandText = command;
+				cmd.Parameters.AddRange(parameters);
+				return cmd.ExecuteNonQuery();
+			}
 		}
 	}
 
@@ -357,12 +357,16 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<object?> ExecuteScalarAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		using (NpgsqlCommand cmd = _connection.CreateCommand())
+		using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
 		{
-			cmd.CommandText = command;
-			cmd.Parameters.AddRange(parameters);
-			return await cmd.ExecuteScalarAsync();	
-		}	
+			await connection.OpenAsync();
+			using (NpgsqlCommand cmd = connection.CreateCommand())
+			{
+				cmd.CommandText = command;
+				cmd.Parameters.AddRange(parameters);
+				return await cmd.ExecuteScalarAsync();
+			}	
+		}
 	}
 
 	/// <summary>
@@ -383,7 +387,9 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<NpgsqlDataReader> ExecuteReaderAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		NpgsqlCommand cmd = _connection.CreateCommand();
+		NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection);
+		await connection.OpenAsync();
+		NpgsqlCommand cmd = connection.CreateCommand();
 		cmd.CommandText = command;
 		cmd.Parameters.AddRange(parameters);
 		return await cmd.ExecuteReaderAsync();
