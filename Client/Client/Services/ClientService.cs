@@ -173,6 +173,12 @@ public class ClientService : MessagingService
 		return resCreateVm.Result;
 	}
 
+	public async Task<bool> IsVmExistsAsync(string name)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCheckVmExist(true, name));
+		return result == ExitCode.Success && ((MessageResponseCheckVmExist)response!).Exists;
+	}
+
 	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
 	/// </summary>

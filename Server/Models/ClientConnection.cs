@@ -163,7 +163,15 @@ public sealed class ClientConnection : MessagingService
 				
 				break;
 			}
-				
+
+			case MessageRequestCheckVmExist reqCheckVmExist:
+			{
+				result = await SendResponse(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 
+					_isLoggedIn && await _databaseService.IsVmExistsAsync(_username, reqCheckVmExist.Name))
+				);
+				break;
+			}
+			
 			default:
 			{
 				result = ExitCode.Success;

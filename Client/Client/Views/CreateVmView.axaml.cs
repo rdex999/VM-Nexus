@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
@@ -13,32 +14,32 @@ public partial class CreateVmView : UserControl
 		InitializeComponent();
 	}
 
-	private void OperatingSystemChanged(object? sender, SelectionChangedEventArgs e)
+	private async void OperatingSystemChangedAsync(object? sender, SelectionChangedEventArgs e)
 	{
 		if (DataContext is CreateVmViewModel vm)
 		{
 			vm.OperatingSystemChanged();
-			vm.VmCreationInfoChanged();
+			await vm.VmCreationInfoChangedAsync();
 		}
 	}
 
-	private void VmCreationInfoChanged(object? sender, EventArgs e)
+	private async void VmCreationInfoChangedAsync(object? sender, EventArgs e)
 	{
 		if (DataContext is CreateVmViewModel vm)
 		{
-			vm.VmCreationInfoChanged();
+			await vm.VmCreationInfoChangedAsync();
 		}	
 	}
 
-	private void VmCreationInfoChangedText(object? sender, TextChangedEventArgs e) => VmCreationInfoChanged(sender, e);
+	private void VmCreationInfoChangedText(object? sender, TextChangedEventArgs e) => VmCreationInfoChangedAsync(sender, e);
 
 	private void VmCreationInfoChangedNumeric(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (DataContext is CreateVmViewModel vm)
 		{
-			vm.OsDriveSize = (int)e.NewValue!;
+			vm.OsDriveSize = (int?)e.NewValue;
 		}
-		VmCreationInfoChanged(sender, e);
+		VmCreationInfoChangedAsync(sender, e);
 	}
-	private void VmCreationInfoChangedComboBox(object? sender, SelectionChangedEventArgs e) => VmCreationInfoChanged(sender, e);
+	private void VmCreationInfoChangedComboBox(object? sender, SelectionChangedEventArgs e) => VmCreationInfoChangedAsync(sender, e);
 }

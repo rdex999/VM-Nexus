@@ -26,18 +26,22 @@
 			Create a New Virtual Machine
 		</TextBlock>
 
-		<Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="400" Height="460"
+		<Border HorizontalAlignment="Center" VerticalAlignment="Center" Width="400" Height="470"
 		        Background="#d4eff1" CornerRadius="15" Padding="20">
 			<Grid>
 				<StackPanel Spacing="25">
-					<TextBox Watermark="Name" Classes="form" 
-					         Text="{Binding VmName}"
-					         TextChanged="VmCreationInfoChangedText"/>
+					<StackPanel>
+						<TextBox Watermark="Name" Classes="form" Classes.error="{Binding VmNameErrorClass}"
+						         Text="{Binding VmName}"
+						         TextChanged="VmCreationInfoChangedText"/>
+						
+						<TextBlock Classes="error" Text="{Binding VmNameErrorMessage}"/>
+					</StackPanel>
 
 					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
 						<TextBlock VerticalAlignment="Center" Classes="form">Operating System</TextBlock>
 						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="190" 
-						          SelectedIndex="{Binding OperatingSystem}" SelectionChanged="OperatingSystemChanged">
+						          SelectedIndex="{Binding OperatingSystem}" SelectionChanged="OperatingSystemChangedAsync">
 							<ComboBoxItem>Ubuntu</ComboBoxItem>
 							<ComboBoxItem>Kali Linux</ComboBoxItem>
 							<ComboBoxItem>Parrot OS</ComboBoxItem>

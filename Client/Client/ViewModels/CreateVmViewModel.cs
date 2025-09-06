@@ -11,6 +11,12 @@ public partial class CreateVmViewModel : ViewModelBase
 {
 	[ObservableProperty] 
 	private string _vmName = string.Empty;
+	
+	[ObservableProperty]
+	private string _vmNameErrorMessage = "The name of the virtual machine must not be empty.";
+
+	[ObservableProperty] 
+	private bool _vmNameErrorClass = true;
 
 	[ObservableProperty] 
 	private SharedDefinitions.OperatingSystem _operatingSystem = SharedDefinitions.OperatingSystem.Ubuntu;
@@ -34,7 +40,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	private bool _osDriveTypeIsEnabled = true;
 	
 	[ObservableProperty] 
-	private int _osDriveSize = 20480;
+	private int? _osDriveSize = 20480;
 
 	private int _osDriveSizeMax = 1024 * 256;
 	
@@ -82,10 +88,10 @@ public partial class CreateVmViewModel : ViewModelBase
 			_osDriveSizeMin = 1024 * 4;
 		}
 	}
-	
-	public void VmCreationInfoChanged()
+
+	public async Task VmCreationInfoChangedAsync()
 	{
-		if (OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin)
+		if (OsDriveSize == null || OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin)
 		{
 			OsDriveSizeErrorClass = true;
 			OsDriveSizeErrorMessage =
@@ -97,9 +103,26 @@ public partial class CreateVmViewModel : ViewModelBase
 			OsDriveSizeErrorClass = false;
 			OsDriveSizeErrorMessage = string.Empty;
 		}
+
+		bool isVmNameValid = false;
+		if (string.IsNullOrEmpty(VmName))
+		{
+			VmNameErrorClass = true;
+			VmNameErrorMessage = "The name of the virtual machine must not be empty.";
+		} 
+		else if (await ClientSvc.IsVmExistsAsync(VmName))
+		{
+			VmNameErrorClass = true;
+			VmNameErrorMessage = "A virtual machine with that name already exists.";
+		}
+		else
+		{
+			VmNameErrorClass = false;
+			VmNameErrorMessage = string.Empty;
+			isVmNameValid = true;
+		}
 		
-		CreateVmButtonIsEnabled = !string.IsNullOrEmpty(VmName) && OsDriveSize >= _osDriveSizeMin &&
-		                          OsDriveSize <= _osDriveSizeMax;
+		CreateVmButtonIsEnabled = isVmNameValid && OsDriveSize != null && OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax;
 	}
 	
 	[RelayCommand]
