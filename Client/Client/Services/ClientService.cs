@@ -282,7 +282,37 @@ public class ClientService : MessagingService
 		ExitCode result = ExitCode.Success;
 		switch (request)
 		{
-			default:
+		}
+
+		switch (result)
+		{
+			case ExitCode.DisconnectedFromServer:
+			{
+				HandleSuddenDisconnection();
+				break;
+			}
+		}
+	}
+
+	
+	/// <summary>
+	/// Handles message info's from the server.
+	/// </summary>
+	/// <param name="info">
+	/// The info message that was sent by the server. info != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. An info message has been sent from the server. info != null. <br/>
+	/// Postcondition: The info message is considered as handled.
+	/// </remarks>
+	protected override async Task ProcessInfoAsync(MessageInfo info)
+	{
+		await base.ProcessInfoAsync(info);
+		
+		ExitCode result = ExitCode.Success;
+		switch (info)
+		{
+			case MessageInfoVmList infoVmList:
 			{
 				break;
 			}
@@ -296,7 +326,6 @@ public class ClientService : MessagingService
 				break;
 			}
 		}
-		
 	}
 
 	/// <summary>

@@ -110,6 +110,12 @@ public class MessagingService
 					_ = HandleRequestAsync(request, token);
 					break;
 				}
+				
+				case MessageInfo info:
+				{
+					_ = HandleInfoAsync(info, token);
+					break;
+				}
 			}
 		}
 		
@@ -252,6 +258,17 @@ public class MessagingService
 		try
 		{
 			await ProcessRequestAsync(request).WaitAsync(token);
+		}
+		catch (OperationCanceledException)
+		{
+		}
+	}
+
+	private async Task HandleInfoAsync(MessageInfo info, CancellationToken token)
+	{
+		try
+		{
+			await ProcessInfoAsync(info).WaitAsync(token);
 		}
 		catch (OperationCanceledException)
 		{
@@ -440,6 +457,22 @@ public class MessagingService
 	/// Postcondition: Request is considered processed.
 	/// </remarks>
 	protected virtual async Task ProcessRequestAsync(MessageRequest request)
+	{
+	}
+	
+	/// <summary>
+	/// Processes message info from the other side. (client/server) <br/>
+	/// Children of this class can override this method to implement message info handling.
+	/// </summary>
+	/// <param name="info">
+	/// The sent message info that should be processed. info != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the other side. <br/>
+	/// A message of info type was received - should be processed. info != null. <br/>
+	/// Postcondition: Info is considered processed.
+	/// </remarks>
+	protected virtual async Task ProcessInfoAsync(MessageInfo info)
 	{
 	}
 	
