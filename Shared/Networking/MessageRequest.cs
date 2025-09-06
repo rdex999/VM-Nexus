@@ -71,6 +71,17 @@ public class MessageRequestCreateVm : MessageRequest
 	}
 }
 
+public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a virtual machine with the given name */
+{
+	public string Name { get; }
+
+	public MessageRequestCheckVmExist(bool generateGuid, string name)
+		: base(generateGuid)
+	{
+		Name = name;
+	}
+}
+
 public class MessageRequestCreateDrive : MessageRequest
 {
 	public string Name { get; }

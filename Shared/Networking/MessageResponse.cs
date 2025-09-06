@@ -89,6 +89,17 @@ public class MessageResponseCreateVm : MessageResponse
 	}
 }
 
+public class MessageResponseCheckVmExist : MessageResponse
+{
+	public bool Exists { get; }
+
+	public MessageResponseCheckVmExist(bool generateGuid, Guid requestId, bool exists)
+		: base(generateGuid, requestId)
+	{
+		Exists = exists;
+	}
+}
+
 public class MessageResponseCreateDrive : MessageResponse
 {
 	public Status Result { get; }
