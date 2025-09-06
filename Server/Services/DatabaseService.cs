@@ -190,7 +190,7 @@ public class DatabaseService
 	/// Precondition: Service connected to database. There should be a user with the given username. username != null. <br/>
 	/// Postcondition: On success, the ID of the user is returned. On failure, -1 is returned.
 	/// </remarks>
-	public async Task<int> GetUserId(string username)
+	public async Task<int> GetUserIdAsync(string username)
 	{
 		object? id = await ExecuteScalarAsync("SELECT id FROM users WHERE username = @username", new NpgsqlParameter("@username", username));
 		if (id == null)
@@ -219,13 +219,16 @@ public class DatabaseService
 	public async Task<ExitCode> CreateVmAsync(string username, string name, SharedDefinitions.OperatingSystem operatingSystem, 
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
-		if (await IsVmExistsAsync(username, name))
+		Task<bool> vmExistsTask = IsVmExistsAsync(username, name);
+		Task<int> userIdTask = GetUserIdAsync(username);
+		await Task.WhenAll(vmExistsTask, userIdTask);
+		
+		if (vmExistsTask.Result)
 		{
 			return ExitCode.VmAlreadyExists;
 		}
-		
-		int userId = await GetUserId(username);
-		if (userId == -1)
+
+		if (userIdTask.Result == -1)
 		{
 			return ExitCode.UserDoesntExist;
 		}
@@ -235,7 +238,7 @@ public class DatabaseService
 		                                      	VALUES (@name, @owner_id, @operating_system, @cpu_architecture,  @boot_mode, @state)
 		                                      """,
 			new NpgsqlParameter("@name", name),
-			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@owner_id", userIdTask.Result),
 			new NpgsqlParameter("@operating_system", operatingSystem),
 			new NpgsqlParameter("@cpu_architecture", cpuArchitecture),
 			new NpgsqlParameter("@boot_mode", bootMode),
@@ -262,7 +265,7 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsVmExistsAsync(string username, string name)
 	{
-		int userId = await GetUserId(username);
+		int userId = await GetUserIdAsync(username);
 		if (userId == -1)
 		{
 			return false;

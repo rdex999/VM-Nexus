@@ -132,6 +132,37 @@ public sealed class ClientConnection : MessagingService
 
 				break;
 			}
+
+			case MessageRequestCreateVm reqCreateVm:
+			{
+				if (!_isLoggedIn || string.IsNullOrEmpty(reqCreateVm.Name) ||
+				    !Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), reqCreateVm.OperatingSystem) ||
+				    !Enum.IsDefined(typeof(SharedDefinitions.CpuArchitecture), reqCreateVm.CpuArchitecture) ||
+				    !Enum.IsDefined(typeof(SharedDefinitions.BootMode), reqCreateVm.BootMode)
+				   )
+				{
+					result = await SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
+					break;
+				}
+				
+				result = await _databaseService.CreateVmAsync(_username, reqCreateVm.Name, reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, reqCreateVm.BootMode);
+				
+				if (result == ExitCode.VmAlreadyExists)
+				{
+					result = await SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.VmAlreadyExists));
+					break;
+				}
+
+				if (result != ExitCode.Success)
+				{
+					result = await SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
+					break;				
+				}
+				
+				result = await SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success));
+				
+				break;
+			}
 				
 			default:
 			{

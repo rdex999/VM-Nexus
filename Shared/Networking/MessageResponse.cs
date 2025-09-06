@@ -84,6 +84,7 @@ public class MessageResponseCreateVm : MessageResponse
 	public enum Status
 	{
 		Success,
+		VmAlreadyExists,
 		Failure,
 	}
 }
