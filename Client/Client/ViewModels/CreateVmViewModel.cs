@@ -4,6 +4,7 @@ using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
+using Shared.Networking;
 
 namespace Client.ViewModels;
 
@@ -57,6 +58,12 @@ public partial class CreateVmViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private bool _createVmButtonIsEnabled = true;
+	
+	[ObservableProperty]
+	private string _vmCreationMessage = string.Empty;
+	
+	[ObservableProperty]
+	private bool _vmCreationMessageSuccessClass = true;
 	
 	public CreateVmViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
@@ -121,6 +128,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			VmNameErrorMessage = string.Empty;
 			isVmNameValid = true;
 		}
+		VmCreationMessage = string.Empty;
 		
 		CreateVmButtonIsEnabled = isVmNameValid && OsDriveSize != null && OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax;
 	}
@@ -128,5 +136,23 @@ public partial class CreateVmViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task CreateVirtualMachineAsync()
 	{
+		MessageResponseCreateVm.Status result = await ClientSvc.CreateVirtualMachineAsync(VmName, OperatingSystem, CpuArchitecture, BootMode);
+		if (result == MessageResponseCreateVm.Status.Success)
+		{
+			VmCreationMessageSuccessClass = true;
+			VmCreationMessage = "The virtual machine has been created successfully!";
+		} 
+		else if (result == MessageResponseCreateVm.Status.VmAlreadyExists)
+		{
+			VmCreationMessageSuccessClass = false;
+			VmCreationMessage = $"A virtual machine called \"{VmName}\" already exists.";
+		}
+		else
+		{
+			VmCreationMessageSuccessClass = false;
+			VmCreationMessage = "Could not create the virtual machine.";
+		}
+
+		CreateVmButtonIsEnabled = false;
 	}
 }

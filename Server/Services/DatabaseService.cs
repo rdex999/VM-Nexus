@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Konscious.Security.Cryptography;
 using Npgsql;
+using NpgsqlTypes;
 using Shared;
 
 namespace Server.Services;
@@ -219,9 +220,12 @@ public class DatabaseService
 	public async Task<ExitCode> CreateVmAsync(string username, string name, SharedDefinitions.OperatingSystem operatingSystem, 
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
+		/* TODO: Fix multiple database operations crash */
 		Task<bool> vmExistsTask = IsVmExistsAsync(username, name);
+		// await Task.WhenAll(vmExistsTask, userIdTask);
+		await vmExistsTask;
 		Task<int> userIdTask = GetUserIdAsync(username);
-		await Task.WhenAll(vmExistsTask, userIdTask);
+		await userIdTask;
 		
 		if (vmExistsTask.Result)
 		{
@@ -232,19 +236,20 @@ public class DatabaseService
 		{
 			return ExitCode.UserDoesntExist;
 		}
-		
+
+		int state = (int)SharedDefinitions.VmState.ShutDown;
 		int rows = await ExecuteNonQueryAsync($"""
 		                                      INSERT INTO virtual_machines (name, owner_id, operating_system, cpu_architecture, boot_mode, state) 
 		                                      	VALUES (@name, @owner_id, @operating_system, @cpu_architecture,  @boot_mode, @state)
 		                                      """,
 			new NpgsqlParameter("@name", name),
 			new NpgsqlParameter("@owner_id", userIdTask.Result),
-			new NpgsqlParameter("@operating_system", operatingSystem),
-			new NpgsqlParameter("@cpu_architecture", cpuArchitecture),
-			new NpgsqlParameter("@boot_mode", bootMode),
-			new NpgsqlParameter("@state", SharedDefinitions.VmState.ShutDown)
+			new NpgsqlParameter("@operating_system", (int)operatingSystem) { NpgsqlDbType = NpgsqlDbType.Integer },
+			new NpgsqlParameter("@cpu_architecture", (int)cpuArchitecture) { NpgsqlDbType = NpgsqlDbType.Integer },
+			new NpgsqlParameter("@boot_mode", (int)bootMode) { NpgsqlDbType = NpgsqlDbType.Integer },
+			new NpgsqlParameter("@state", state) { NpgsqlDbType = NpgsqlDbType.Integer }
 		);
-
+		
 		if (rows == 1)
 		{
 			return ExitCode.Success;
