@@ -184,9 +184,18 @@ public class DatabaseService
 		return dbPasswordHash.SequenceEqual(passwordHash);
 	}
 
+	/// <summary>
+	/// Get the ID of a user with the given username.
+	/// </summary>
+	/// <param name="username">The username of the user. username != null.</param>
+	/// <returns>The ID of the user, -1 on failure or if there is no user with the given username.</returns>
+	/// <remarks>
+	/// Precondition: Service connected to database. There should be a user with the given username. username != null. <br/>
+	/// Postcondition: On success, the ID of the user is returned. On failure, -1 is returned.
+	/// </remarks>
 	public async Task<int> GetUserId(string username)
 	{
-		var id = await ExecuteScalarAsync("SELECT id FROM users WHERE username = @username", new NpgsqlParameter("@username", username));
+		object? id = await ExecuteScalarAsync("SELECT id FROM users WHERE username = @username", new NpgsqlParameter("@username", username));
 		if (id == null)
 		{
 			return -1;
@@ -194,6 +203,50 @@ public class DatabaseService
 		
 		return (int)id;
 	}
+
+	/// <summary>
+	/// Creates a virtual machine in the database.
+	/// </summary>
+	/// <param name="username">The username of the owner user of the virtual machine. username != null.</param>
+	/// <param name="name">The name of the virtual machine. name != null.</param>
+	/// <param name="operatingSystem">The operating system of the virtual machine.</param>
+	/// <param name="cpuArchitecture">The CPU architecture (x86, x86-64, etc..) of the virtual machine.</param>
+	/// <param name="bootMode">The boot mode for the virtual machine. (UEFI or BIOS)</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given username must exist, there should not be a virtual machine with the given name under this user. (name is unique).
+	/// username != null &amp;&amp; name != null. <br/>
+	/// Postcondition: On success, a virtual machine with the given parameters is created. On failure, the returned exit code will indicate the error.
+	/// </remarks>
+	public async Task<ExitCode> CreateVmAsync(string username, string name, SharedDefinitions.OperatingSystem operatingSystem, 
+		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
+	{
+		int userId = await GetUserId(username);
+		if (userId == -1)
+		{
+			return ExitCode.UserDoesntExist;
+		}
+		
+		int rows = await ExecuteNonQueryAsync($"""
+		                                      INSERT INTO virtual_machines (name, owner_id, operating_system, cpu_architecture, boot_mode, state) 
+		                                      	VALUES (@name, @owner_id, @operating_system, @cpu_architecture,  @boot_mode, @state)
+		                                      """,
+			new NpgsqlParameter("@name", name),
+			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@operating_system", operatingSystem),
+			new NpgsqlParameter("@cpu_architecture", cpuArchitecture),
+			new NpgsqlParameter("@boot_mode", bootMode),
+			new NpgsqlParameter("@state", SharedDefinitions.VmState.ShutDown)
+		);
+
+		if (rows == 1)
+		{
+			return ExitCode.Success;
+		}
+		
+		return ExitCode.DatabaseOperationFailed;
+	}
+	
 
 	/// <summary>
 	/// The asynchronous version of the ExecuteNonQuery command.

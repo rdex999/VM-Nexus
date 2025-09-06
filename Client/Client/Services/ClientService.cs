@@ -154,17 +154,14 @@ public class ClientService : MessagingService
 	/// <param name="operatingSystem">The operating system of the new virtual machine. operatingSystem != null.</param>
 	/// <param name="cpuArchitecture">The CPU architecture to be used for the virtual machine. cpuArchitecture != null.</param>
 	/// <param name="bootMode">The boot mode - UEFI or BIOS. bootMode != null.</param>
-	/// <param name="osDriveType">The type of the main drive. (NVMe, SSD, etc..) osDriveType != null.</param>
-	/// <param name="osDriveSize">The size of the main drive, in MiB. osDriveSize != null.</param>
 	/// <returns>The result of the VM creation operation.</returns>
 	/// <remarks>
-	/// Precondition: Service fully initialized and connected to the server. User must be logged in. <br/>
+	/// Precondition: Service fully initialized and connected to the server. User must be logged in. name != null <br/>
 	/// Postcondition: On success, a new virtual machine is created and the returned value will indicate success. <br/>
 	/// On failure, returned value will indicate failure and a virtual machine is not created.
 	/// </remarks>
 	public async Task<MessageResponseCreateVm.Status> CreateVirtualMachineAsync(string name,
-		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, 
-		SharedDefinitions.DriveType osDriveType, int osDriveSize)
+		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(
 			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode));

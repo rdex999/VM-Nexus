@@ -12,4 +12,5 @@ public enum ExitCode
 	DatabaseStartupFailed,
 	DatabaseShutdownFailed,
 	DatabaseOperationFailed,
+	UserDoesntExist,
 }
