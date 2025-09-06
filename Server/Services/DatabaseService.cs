@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
@@ -274,6 +275,51 @@ public class DatabaseService
 		);
 		
 		return exists != null && (bool)exists;
+	}
+
+	/// <summary>
+	/// Get an array of general virtual machine descriptors of all virtual machines of the user.
+	/// </summary>
+	/// <param name="username">The username of the user to get the VMs of. username != null.</param>
+	/// <returns>
+	/// An array of general VM descriptors, describing the VMs of the user.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: Service connected to the database, a user with the given username exists. username != null. <br/>
+	/// Postcondition: On success, an array of general VM descriptors is returned. (might be empty, but not null) <br/>
+	/// On failure, null is returned.
+	/// </remarks>
+	public async Task<SharedDefinitions.VmGeneralDescriptor[]?> GetVmGeneralDescriptorsAsync(string username)
+	{
+		int userId = await GetUserIdAsync(username);
+		if (userId == -1)
+		{
+			return null;
+		}
+
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+			"SELECT name, operating_system, state FROM virtual_machines WHERE owner_id = @owner_id",
+			new NpgsqlParameter("@owner_id", userId)
+		);
+
+		if (!reader.Read())
+		{
+			return null;
+		}
+
+		List<SharedDefinitions.VmGeneralDescriptor> descriptors = new List<SharedDefinitions.VmGeneralDescriptor>();
+		do
+		{
+			SharedDefinitions.VmGeneralDescriptor descriptor = new SharedDefinitions.VmGeneralDescriptor(
+				reader.GetString(0),
+				(SharedDefinitions.OperatingSystem)reader.GetInt32(1),
+				(SharedDefinitions.VmState)reader.GetInt32(2)
+			);
+			
+			descriptors.Add(descriptor);
+		} while (reader.Read());
+		
+		return descriptors.ToArray();
 	}
 
 	/// <summary>

@@ -56,7 +56,7 @@ public sealed class ClientConnection : MessagingService
 			case MessageRequestCheckUsername reqCheckUsername:
 			{
 				bool usernameAvailable = !string.IsNullOrEmpty(reqCheckUsername.Username) && !await _databaseService.IsUserExistAsync(reqCheckUsername.Username);
-				result = await SendResponse(new MessageResponseCheckUsername(true, reqCheckUsername.Id, usernameAvailable));
+				result = await SendResponseAsync(new MessageResponseCheckUsername(true, reqCheckUsername.Id, usernameAvailable));
 				break;
 			}
 
@@ -66,13 +66,13 @@ public sealed class ClientConnection : MessagingService
 				    string.IsNullOrEmpty(reqCreateAccount.Email) ||
 				    string.IsNullOrEmpty(reqCreateAccount.Password)) 
 				{
-					result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty));
+					result = await SendResponseAsync(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty));
 					break;
 				}
 
 				if (!Common.IsValidEmail(reqCreateAccount.Email))
 				{
-					result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.InvalidEmail));
+					result = await SendResponseAsync(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.InvalidEmail));
 					break;
 				}
 				
@@ -95,7 +95,7 @@ public sealed class ClientConnection : MessagingService
 					status = MessageResponseCreateAccount.Status.UsernameNotAvailable;
 				}
 				
-				result = await SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, status));
+				result = await SendResponseAsync(new MessageResponseCreateAccount(true, reqCreateAccount.Id, status));
 				if (result == ExitCode.Success)
 				{
 					_isLoggedIn = true;
@@ -107,7 +107,7 @@ public sealed class ClientConnection : MessagingService
 			case MessageRequestLogin reqLogin:
 			{
 				bool validLogin = await _databaseService.IsValidLoginAsync(reqLogin.Username, reqLogin.Password);
-				result = await SendResponse(new MessageResponseLogin(true, reqLogin.Id, validLogin));
+				result = await SendResponseAsync(new MessageResponseLogin(true, reqLogin.Id, validLogin));
 				if (result == ExitCode.Success)
 				{
 					_isLoggedIn = validLogin;
@@ -123,11 +123,11 @@ public sealed class ClientConnection : MessagingService
 					_isLoggedIn = false;
 					_username = string.Empty;
 					await Task.Delay(50);		/* If i dont do this, the client gets a response timeout - like the client doesnt receive the response.. */
-					result = await SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
+					result = await SendResponseAsync(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
 				}
 				else
 				{
-					result = await SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.UserNotLoggedIn));
+					result = await SendResponseAsync(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.UserNotLoggedIn));
 				}
 
 				break;
@@ -141,7 +141,7 @@ public sealed class ClientConnection : MessagingService
 				    !Enum.IsDefined(typeof(SharedDefinitions.BootMode), reqCreateVm.BootMode)
 				   )
 				{
-					result = await SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
+					result = await SendResponseAsync(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
 					break;
 				}
 				
@@ -149,24 +149,28 @@ public sealed class ClientConnection : MessagingService
 				
 				if (result == ExitCode.VmAlreadyExists)
 				{
-					result = await SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.VmAlreadyExists));
+					result = await SendResponseAsync(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.VmAlreadyExists));
 					break;
 				}
 
 				if (result != ExitCode.Success)
 				{
-					result = await SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
+					result = await SendResponseAsync(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
 					break;				
 				}
 				
-				result = await SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success));
+				result = await SendResponseAsync(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success));
+				if (result != ExitCode.Success)
+				{
+					break;
+				}
 				
 				break;
 			}
 
 			case MessageRequestCheckVmExist reqCheckVmExist:
 			{
-				result = await SendResponse(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 
+				result = await SendResponseAsync(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 
 					_isLoggedIn && await _databaseService.IsVmExistsAsync(_username, reqCheckVmExist.Name))
 				);
 				break;

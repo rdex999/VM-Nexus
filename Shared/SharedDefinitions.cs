@@ -49,20 +49,16 @@ public static class SharedDefinitions
 		Bios
 	}
 
-	public class VmDescriptor
+	public class VmGeneralDescriptor
 	{
 		public string Name { get; }
 		public OperatingSystem OperatingSystem { get; }
-		public CpuArchitecture CpuArchitecture { get; }
-		public BootMode BootMode { get; }
 		public VmState State { get; }
 
-		public VmDescriptor(string name, OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, BootMode bootMode, VmState state)
+		public VmGeneralDescriptor(string name, OperatingSystem operatingSystem, VmState state)
 		{
 			Name = name;
 			OperatingSystem = operatingSystem;
-			CpuArchitecture = cpuArchitecture;
-			BootMode = bootMode;
 			State = state;
 		}
 	}

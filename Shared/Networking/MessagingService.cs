@@ -201,7 +201,7 @@ public class MessagingService
 	/// Postcondition: Response sent to the other side on success, exit code states success.
 	/// On failure, the response message is not sent, and the exit code indicates the error.
 	/// </remarks>
-	protected async Task<ExitCode> SendResponse(MessageResponse response)
+	protected async Task<ExitCode> SendResponseAsync(MessageResponse response)
 	{
 		CancellationTokenSource cts = new CancellationTokenSource();
 		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);

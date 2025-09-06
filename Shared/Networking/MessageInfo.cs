@@ -10,9 +10,9 @@ public class MessageInfo : Message
 
 public class MessageInfoVmList : MessageInfo	/* An updated list of virtual machines that the user has. */
 {
-	public SharedDefinitions.VmDescriptor[] VmDescriptors { get; }
+	public SharedDefinitions.VmGeneralDescriptor[] VmDescriptors { get; }
 
-	public MessageInfoVmList(bool generateGuid, SharedDefinitions.VmDescriptor[] vmDescriptors)
+	public MessageInfoVmList(bool generateGuid, SharedDefinitions.VmGeneralDescriptor[] vmDescriptors)
 		: base(generateGuid)
 	{
 		VmDescriptors = vmDescriptors;
