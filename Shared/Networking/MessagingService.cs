@@ -203,8 +203,6 @@ public class MessagingService
 	/// </remarks>
 	protected async Task<ExitCode> SendResponse(MessageResponse response)
 	{
-		
-		
 		CancellationTokenSource cts = new CancellationTokenSource();
 		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
 
@@ -221,6 +219,61 @@ public class MessagingService
 					{
 						/* Then need to send the request itself again, so return and exit from this function */
 						break;
+					}
+					cts.Token.ThrowIfCancellationRequested();
+				}
+			},  cts.Token);
+		}
+		catch (OperationCanceledException)
+		{
+			result = ExitCode.MessageSendingTimeout;
+		}
+		
+		cts.Dispose();
+
+		return result;
+	}
+
+	/// <summary>
+	/// Sends an info message to the other side (client/server)
+	/// </summary>
+	/// <param name="info">
+	/// The info message to send. info != null.
+	/// </param>
+	/// <returns>
+	/// An exit code indicating the result of the operation.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: Service must be fully initialized and connected, info != null. <br/>
+	/// Postcondition: Message info sent to the other side on success, exit code states success.
+	/// On failure, the info message is not sent, and the exit code indicates the error.
+	/// </remarks>
+	protected async Task<ExitCode> SendInfoAsync(MessageInfo info)
+	{
+		CancellationTokenSource cts = new CancellationTokenSource();
+		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
+
+		ExitCode result = await SendMessageAsync(info);
+		try
+		{
+			await Task.Run(async () =>
+			{
+				while (result != ExitCode.Success)
+				{
+					result = await SendMessageAsync(info);
+					
+					if (result == ExitCode.DisconnectedFromServer)
+					{
+						HandleSuddenDisconnection(cts.Token);
+						
+						/*
+						 * ClientService (client side) would connect to the server because HandleSuddenDisconnection will only return when connected.
+						 * ClientConnection (server side) on the other hand, would just dump the connection.
+						 */
+						if (!IsConnected())
+						{
+							break;
+						}
 					}
 					cts.Token.ThrowIfCancellationRequested();
 				}

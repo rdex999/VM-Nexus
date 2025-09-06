@@ -293,7 +293,6 @@ public class ClientService : MessagingService
 			}
 		}
 	}
-
 	
 	/// <summary>
 	/// Handles message info's from the server.
