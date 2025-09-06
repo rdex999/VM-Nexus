@@ -184,6 +184,17 @@ public class DatabaseService
 		return dbPasswordHash.SequenceEqual(passwordHash);
 	}
 
+	public async Task<int> GetUserId(string username)
+	{
+		var id = await ExecuteScalarAsync("SELECT id FROM users WHERE username = @username", new NpgsqlParameter("@username", username));
+		if (id == null)
+		{
+			return -1;
+		}
+		
+		return (int)id;
+	}
+
 	/// <summary>
 	/// The asynchronous version of the ExecuteNonQuery command.
 	/// Executes a Non-Query command (Something that doesnt search for stuff, like a DELETE or INSERT command)
