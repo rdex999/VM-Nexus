@@ -72,7 +72,7 @@ public partial class CreateVmViewModel : ViewModelBase
 
 	public void OperatingSystemChanged()
 	{
-		if (OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOs)
+		if (OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
 		{
 			_osDriveSizeMax = 128;
 			_osDriveSizeMin = 1;

@@ -226,9 +226,9 @@ public static class Common
 	public static string SeparateStringWords(string str)
 	{
 		string result = str;
-		for (int i = 0; i < result.Length; i++)
+		for (int i = 1; i < result.Length; i++)
 		{
-			if (result[i] >= 'A' && result[i] <= 'Z' && i != 0)
+			if (result[i] >= 'A' && result[i] <= 'Z' && !(result[i - 1] >= 'A' && result[i - 1] <= 'Z'))	/* If the current character is capital and the previous isnt */
 			{
 				result = result.Insert(i, " ");
 				++i;

@@ -6,7 +6,7 @@ namespace Client.ViewModels;
 
 public class HomeViewModel : ViewModelBase
 {
-	public ObservableCollection<VmItemTemplate> VMs { get; }
+	public ObservableCollection<VmItemTemplate> Vms { get; }
 
 	/// <summary>
 	/// Initializes a new instance of HomeViewModel.
@@ -24,28 +24,27 @@ public class HomeViewModel : ViewModelBase
 	public HomeViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
-		VMs = new ObservableCollection<VmItemTemplate>()
+		Vms = new ObservableCollection<VmItemTemplate>();
+		ClientSvc.VmListChanged += OnVmListChanged;
+	}
+
+	private void OnVmListChanged(object? sender, SharedDefinitions.VmGeneralDescriptor[] vms)
+	{
+		Vms.Clear();
+		foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
 		{
-			new  VmItemTemplate("My first VM", "Arch Linux"), 
-			new  VmItemTemplate("My second VM", "Manjaro Linux"),
-		};
+			Vms.Add(new VmItemTemplate(vm.Name, vm.OperatingSystem, vm.State));
+		}
 	}
 }
 
 public class VmItemTemplate
 {
-	public string Name { get; set; }
-	public string OperatingSystem { get; }
-	public SharedDefinitions.VmState Status { get; set; }
-	
-	/// <summary>
-	/// The status of the VM as a string.
-	/// </summary>
-	/// <remarks>
-	/// Precondition: No specific precondition. <br/>
-	/// Postcondition: A string representation with space-seperated words of the Status property is returned.
-	/// </remarks>
-	public string StatusString => Common.SeparateStringWords(Status.ToString());
+	public string Name { get; }
+	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
+	public string OperatingSystemString => Common.SeparateStringWords(OperatingSystem.ToString());
+	public SharedDefinitions.VmState State { get; }
+	public string StateString => Common.SeparateStringWords(State.ToString());
 
 	/// <summary>
 	/// Creates a new instance of a VmItemTemplate.
@@ -56,14 +55,17 @@ public class VmItemTemplate
 	/// <param name="operatingSystem">
 	/// The operating system of the VM. operatingSystem != null.
 	/// </param>
+	/// <param name="state">
+	/// The state of the VM. (shut down, running, etc..)
+	/// </param>
 	/// <remarks>
-	/// Precondition: name != null &amp;&amp; operatingSystem != null. <br/>
+	/// Precondition: name != null. <br/>
 	/// Postcondition: A new instance of VmItemTemplate is created.
 	/// </remarks>
-	public VmItemTemplate(string name, string operatingSystem)
+	public VmItemTemplate(string name, SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.VmState state)
 	{
 		Name = name;
 		OperatingSystem = operatingSystem;
-		Status = SharedDefinitions.VmState.ShutDown;
+		State = state;
 	}
 }

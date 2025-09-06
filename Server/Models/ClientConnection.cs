@@ -112,6 +112,14 @@ public sealed class ClientConnection : MessagingService
 				{
 					_isLoggedIn = validLogin;
 					_username = reqLogin.Username;
+
+					SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsAsync(_username);
+					if (vms == null)
+					{
+						break;
+					}
+
+					result = await SendInfoAsync(new MessageInfoVmList(true, vms));
 				}
 				break;
 			}
@@ -165,6 +173,13 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
+				SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsAsync(_username);
+				if (vms == null)
+				{
+					break;
+				}
+
+				result = await SendInfoAsync(new MessageInfoVmList(true, vms));
 				break;
 			}
 

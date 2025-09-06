@@ -36,7 +36,7 @@
 
 		<ScrollViewer AllowAutoHide="False">
 			<StackPanel>
-				<ListBox ItemsSource="{Binding VMs}" Background="Transparent">
+				<ListBox ItemsSource="{Binding Vms}" Background="Transparent">
 					<ListBox.Styles>
 
 						<Style Selector="ListBoxItem">
@@ -107,9 +107,9 @@
 
 									<Grid>
 										<StackPanel VerticalAlignment="Top" Spacing="5">
-											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding OperatingSystem}" />
+											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding OperatingSystemString}" />
 											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding Name}" />
-											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding StatusString}" FontWeight="Bold" />
+											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding StateString}" FontWeight="Bold" />
 										</StackPanel>
 
 										<StackPanel HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Bottom">

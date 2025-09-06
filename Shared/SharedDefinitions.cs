@@ -30,9 +30,9 @@ public static class SharedDefinitions
 	{
 		Ubuntu,
 		KaliLinux,
-		ParrotOs,
+		ParrotOS,
 		ManjaroLinux,
-		MiniCoffeeOs,
+		MiniCoffeeOS,
 	}
 
 	public enum VmState

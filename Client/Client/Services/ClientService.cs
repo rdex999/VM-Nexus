@@ -12,6 +12,7 @@ namespace Client.Services;
 public class ClientService : MessagingService
 {
 	public event EventHandler? Reconnected;
+	public event EventHandler<SharedDefinitions.VmGeneralDescriptor[]>? VmListChanged;
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -308,20 +309,16 @@ public class ClientService : MessagingService
 	{
 		await base.ProcessInfoAsync(info);
 		
-		ExitCode result = ExitCode.Success;
 		switch (info)
 		{
 			case MessageInfoVmList infoVmList:
 			{
-				break;
-			}
-		}
-
-		switch (result)
-		{
-			case ExitCode.DisconnectedFromServer:
-			{
-				HandleSuddenDisconnection();
+				/* The server might send this info before HomeViewModel subscribes to the event, so wait for a subscriber. */
+				while (VmListChanged == null || VmListChanged.GetInvocationList().Length < 1)
+				{
+					await Task.Delay(50);
+				}
+				VmListChanged?.Invoke(this, infoVmList.VmDescriptors);
 				break;
 			}
 		}
