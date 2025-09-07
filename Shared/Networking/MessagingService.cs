@@ -129,6 +129,14 @@ public class MessagingService
 		AfterDisconnection();
 	}
 
+	/// <summary>
+	/// Runs in the MessageSenderThread. Sends messages that arrive in the message queue by the order that they arrive in.
+	/// </summary>
+	/// <param name="token">The cancellation token - used for stopping the thread's execution. token != null.</param>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the other side. (server/client) token != null.<br/>
+	/// Postcondition: Returns when the cancellation token requires cancellation - communication is finished.
+	/// </remarks>
 	private void MessageSender(CancellationToken token)
 	{
 		while (!token.IsCancellationRequested)
@@ -204,13 +212,9 @@ public class MessagingService
 	/// <param name="response">
 	/// The response message to send. response != null.
 	/// </param>
-	/// <returns>
-	/// An exit code indicating the result of the operation.
-	/// </returns>
 	/// <remarks>
 	/// Precondition: Service must be fully initialized and connected, response != null. <br/>
-	/// Postcondition: Response sent to the other side on success, exit code states success.
-	/// On failure, the response message is not sent, and the exit code indicates the error.
+	/// Postcondition: Response sent to the other side on success. On failure, the response is not sent.
 	/// </remarks>
 	protected void SendResponse(MessageResponse response) => SendMessage(response);
 
@@ -229,7 +233,21 @@ public class MessagingService
 	/// On failure, the info message is not sent, and the exit code indicates the error.
 	/// </remarks>
 	protected void SendInfo(MessageInfo info) => SendMessage(info);
-	
+
+	/// <summary>
+	/// Enqueues a message in the message queue - the message will be sent. (Basically sends the message)
+	/// </summary>
+	/// <param name="message">The message to send. message != null.</param>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the other side. (server/client) message != null. <br/>
+	/// Postcondition: Message is in the messages queue. (And will be sent very soon)
+	/// </remarks>
+	private void SendMessage(Message message)
+	{
+		_messageQueue!.Enqueue(message);
+		_messageAvailable!.Set();
+	}
+
 	/// <summary>
 	/// Sends a message to the other side (client/server)
 	/// </summary>
@@ -259,12 +277,6 @@ public class MessagingService
 		
 		return result;
 	}
-
-	private void SendMessage(Message message)
-	{
-		_messageQueue!.Enqueue(message);
-		_messageAvailable!.Set();
-	}
 	
 	/// <summary>
 	/// The initial step of handling a request. Made specifically for the Communicate() method.
@@ -293,7 +305,20 @@ public class MessagingService
 		{
 		}
 	}
-
+	
+	/// <summary>
+	/// The initial step of handling an info message. Made specifically for the Communicate() method.
+	/// </summary>
+	/// <param name="info">The info message to process. info != null.</param>
+	/// <param name="token">Used for stopping the processing of the info message, as it can take time. token != null.</param>
+	/// <remarks>
+	/// Precondition: Caller should be the Communicate() method. <br/>
+	/// Service must be initialized and connected to the other side. <br/>
+	/// token != null &amp;&amp; info != null. <br/>
+	/// Postcondition: The info message was fully processed. <br/>
+	/// If the token requests' cancellation while processing the info message, <br/>
+	/// this method will return and the info message should be considered not handled/processed.
+	/// </remarks>
 	private async Task HandleInfoAsync(MessageInfo info, CancellationToken token)
 	{
 		try

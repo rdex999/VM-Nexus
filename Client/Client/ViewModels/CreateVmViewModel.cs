@@ -70,6 +70,13 @@ public partial class CreateVmViewModel : ViewModelBase
 	{
 	}
 
+	/// <summary>
+	/// Called when the operating system input field changes. (Called from the code-behind file)
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The operating system input field value has changed. <br/>
+	/// Postcondition: The virtual machines creation settings change accordingly.
+	/// </remarks>
 	public void OperatingSystemChanged()
 	{
 		if (OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
@@ -96,6 +103,13 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 	}
 
+	/// <summary>
+	/// Handles a change in the virtual machines creation settings. (disk size, etc)
+	/// </summary>
+	/// <remarks>
+	/// Precondition: A change in one or more of the VM's creation settings input field has happened. <br/>
+	/// Postcondition: Error messages are displayed if needed, UI updates accordingly.
+	/// </remarks>
 	public async Task VmCreationInfoChangedAsync()
 	{
 		if (OsDriveSize == null || OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin)
@@ -132,7 +146,15 @@ public partial class CreateVmViewModel : ViewModelBase
 		
 		CreateVmButtonIsEnabled = isVmNameValid && OsDriveSize != null && OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax;
 	}
-	
+
+	/// <summary>
+	/// Handles a click on the create VM button. Requests the server to create a virtual machine with the inputted settings.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked the create VM button. <br/>
+	/// Postcondition: On success, a new virtual machine is created and a success message is displayed. <br/>
+	/// On failure, the virtual machine is not created and an according error message is displayed.
+	/// </remarks>
 	[RelayCommand]
 	private async Task CreateVirtualMachineAsync()
 	{
