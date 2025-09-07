@@ -10,8 +10,11 @@ public class MessagingService
 	private CancellationTokenSource? _cts;
 	protected bool IsServiceInitialized;
 	private ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
+	protected Thread? MessageSenderThread;								/* Sends messages from the message queue, through the socket. */
+	private ConcurrentQueue<Message>? _messageQueue;
+	private ManualResetEventSlim? _messageAvailable;
 	
-	public event EventHandler<ExitCode> FailEvent;
+	public event EventHandler<ExitCode>? FailEvent;
 
 	/// <remarks>
 	/// Precondition: No specific preconditions. <br/>
@@ -35,6 +38,9 @@ public class MessagingService
 		_cts = new CancellationTokenSource();
 		CommunicationThread = new Thread(() => Communicate(_cts.Token));
 		_responses =  new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
+		MessageSenderThread = new Thread(() => MessageSender(_cts.Token));
+		_messageQueue = new ConcurrentQueue<Message>();
+		_messageAvailable = new ManualResetEventSlim(false);
 	}
 
 	/// <summary>
@@ -123,6 +129,32 @@ public class MessagingService
 		AfterDisconnection();
 	}
 
+	private void MessageSender(CancellationToken token)
+	{
+		while (!token.IsCancellationRequested)
+		{
+			try
+			{
+				_messageAvailable!.Wait(token);		/* Wait until there is a message available */
+				
+				/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
+				while (_messageQueue!.TryDequeue(out Message? message) && !token.IsCancellationRequested)		
+				{
+					SendMessageOnSocketAsync(message).Wait(token);
+				}
+
+				if (_messageQueue.IsEmpty)
+				{
+					_messageAvailable.Reset();
+				}
+			}
+			catch (Exception)
+			{
+				break;
+			}
+		}
+	}
+
 	/// <summary>
 	/// Sends a request to the other side (client/server) and waits for the response.
 	/// </summary>
@@ -141,29 +173,8 @@ public class MessagingService
 	/// </remarks>
 	protected async Task<(MessageResponse?, ExitCode)> SendRequestAsync(MessageRequest message)
 	{
-		/* The loop might take a while, so put it inside Task.Run and await it */
-		/* Use a cancellation for canceling the operation after 3 seconds if it didnt work */
-		CancellationTokenSource cts = new CancellationTokenSource();
-		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
-		try
-		{
-			await Task.Run( async () =>
-			{
-				ExitCode result;
-				do
-				{
-					result = await SendMessageAsync(message);
-					cts.Token.ThrowIfCancellationRequested();
-				} while (result != ExitCode.Success);
-			}, cts.Token);
-		}
-		catch (OperationCanceledException)	/* If three seconds have passed and the message wasnt sent, abort. */
-		{
-			return (null, ExitCode.MessageSendingTimeout);
-		}
-		cts.Dispose();
+		SendMessage(message);
 		
-		/* Here, the message was sent successfully */
 		TaskCompletionSource<MessageResponse> tcs = new TaskCompletionSource<MessageResponse>();
 		_responses[message.Id] = tcs;
 		
@@ -201,38 +212,7 @@ public class MessagingService
 	/// Postcondition: Response sent to the other side on success, exit code states success.
 	/// On failure, the response message is not sent, and the exit code indicates the error.
 	/// </remarks>
-	protected async Task<ExitCode> SendResponseAsync(MessageResponse response)
-	{
-		CancellationTokenSource cts = new CancellationTokenSource();
-		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
-
-		ExitCode result = await SendMessageAsync(response);
-		try
-		{
-			await Task.Run(async () =>
-			{
-				while (result != ExitCode.Success)
-				{
-					result = await SendMessageAsync(response);
-					
-					if (result == ExitCode.DisconnectedFromServer)
-					{
-						/* Then need to send the request itself again, so return and exit from this function */
-						break;
-					}
-					cts.Token.ThrowIfCancellationRequested();
-				}
-			},  cts.Token);
-		}
-		catch (OperationCanceledException)
-		{
-			result = ExitCode.MessageSendingTimeout;
-		}
-		
-		cts.Dispose();
-
-		return result;
-	}
+	protected void SendResponse(MessageResponse response) => SendMessage(response);
 
 	/// <summary>
 	/// Sends an info message to the other side (client/server)
@@ -248,47 +228,44 @@ public class MessagingService
 	/// Postcondition: Message info sent to the other side on success, exit code states success.
 	/// On failure, the info message is not sent, and the exit code indicates the error.
 	/// </remarks>
-	protected async Task<ExitCode> SendInfoAsync(MessageInfo info)
+	protected void SendInfo(MessageInfo info) => SendMessage(info);
+	
+	/// <summary>
+	/// Sends a message to the other side (client/server)
+	/// </summary>
+	/// <param name="message">
+	/// The message to send. message != null
+	/// </param>
+	/// <returns>
+	/// An ExitCode indicating the result of the operation.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: Service must be fully initialized and connected to the other side. message != null. <br/>
+	/// Postcondition: On success the message is fully sent, and the exit code indicates success. <br/>
+	/// On failure, the message should be considered as not sent, and the exit code will indicate the error.
+	/// </remarks>
+	private async Task<ExitCode> SendMessageOnSocketAsync(Message message)
 	{
-		CancellationTokenSource cts = new CancellationTokenSource();
-		cts.CancelAfter(SharedDefinitions.MessageTimeoutMilliseconds);
-
-		ExitCode result = await SendMessageAsync(info);
-		try
-		{
-			await Task.Run(async () =>
-			{
-				while (result != ExitCode.Success)
-				{
-					result = await SendMessageAsync(info);
-					
-					if (result == ExitCode.DisconnectedFromServer)
-					{
-						HandleSuddenDisconnection(cts.Token);
-						
-						/*
-						 * ClientService (client side) would connect to the server because HandleSuddenDisconnection will only return when connected.
-						 * ClientConnection (server side) on the other hand, would just dump the connection.
-						 */
-						if (!IsConnected())
-						{
-							break;
-						}
-					}
-					cts.Token.ThrowIfCancellationRequested();
-				}
-			},  cts.Token);
-		}
-		catch (OperationCanceledException)
-		{
-			result = ExitCode.MessageSendingTimeout;
-		}
+		ExitCode result;
 		
-		cts.Dispose();
-
+		byte[] bytes = Common.ToByteArrayWithType(message);
+		byte[] sizeInBytes = BitConverter.GetBytes(bytes.Length);
+		result = await SendBytesExactAsync(sizeInBytes);
+		
+		if (result != ExitCode.Success)
+			return result;
+		
+		result = await SendBytesExactAsync(bytes);
+		
 		return result;
 	}
 
+	private void SendMessage(Message message)
+	{
+		_messageQueue!.Enqueue(message);
+		_messageAvailable!.Set();
+	}
+	
 	/// <summary>
 	/// The initial step of handling a request. Made specifically for the Communicate() method.
 	/// </summary>
@@ -326,36 +303,6 @@ public class MessagingService
 		catch (OperationCanceledException)
 		{
 		}
-	}
-
-	/// <summary>
-	/// Sends a message to the other side (client/server)
-	/// </summary>
-	/// <param name="message">
-	/// The message to send. message != null
-	/// </param>
-	/// <returns>
-	/// An ExitCode indicating the result of the operation.
-	/// </returns>
-	/// <remarks>
-	/// Precondition: Service must be fully initialized and connected to the other side. message != null. <br/>
-	/// Postcondition: On success the message is fully sent, and the exit code indicates success. <br/>
-	/// On failure, the message should be considered as not sent, and the exit code will indicate the error.
-	/// </remarks>
-	private async Task<ExitCode> SendMessageAsync(Message message)
-	{
-		ExitCode result;
-		
-		byte[] bytes = Common.ToByteArrayWithType(message);
-		byte[] sizeInBytes = BitConverter.GetBytes(bytes.Length);
-		result = await SendBytesExactAsync(sizeInBytes);
-		
-		if (result != ExitCode.Success)
-			return result;
-		
-		result = await SendBytesExactAsync(bytes);
-		
-		return result;
 	}
 
 	/// <summary>

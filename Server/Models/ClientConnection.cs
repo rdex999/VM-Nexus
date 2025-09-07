@@ -9,7 +9,7 @@ namespace Server.Models;
 
 public sealed class ClientConnection : MessagingService
 {
-	public event EventHandler Disconnected;
+	public event EventHandler? Disconnected;
 	private bool _isLoggedIn = false;
 	private string _username = string.Empty;
 	private readonly DatabaseService _databaseService;
@@ -34,6 +34,7 @@ public sealed class ClientConnection : MessagingService
 		Initialize(socket);
 		IsServiceInitialized = true;
 		CommunicationThread!.Start();
+		MessageSenderThread!.Start();
 	}
 
 	/// <summary>
@@ -50,13 +51,13 @@ public sealed class ClientConnection : MessagingService
 	{
 		await base.ProcessRequestAsync(request);
 
-		ExitCode result;
+		ExitCode result = ExitCode.Success;
 		switch (request)
 		{
 			case MessageRequestCheckUsername reqCheckUsername:
 			{
 				bool usernameAvailable = !string.IsNullOrEmpty(reqCheckUsername.Username) && !await _databaseService.IsUserExistAsync(reqCheckUsername.Username);
-				result = await SendResponseAsync(new MessageResponseCheckUsername(true, reqCheckUsername.Id, usernameAvailable));
+				SendResponse(new MessageResponseCheckUsername(true, reqCheckUsername.Id, usernameAvailable));
 				break;
 			}
 
@@ -66,13 +67,13 @@ public sealed class ClientConnection : MessagingService
 				    string.IsNullOrEmpty(reqCreateAccount.Email) ||
 				    string.IsNullOrEmpty(reqCreateAccount.Password)) 
 				{
-					result = await SendResponseAsync(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty));
+					SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty));
 					break;
 				}
 
 				if (!Common.IsValidEmail(reqCreateAccount.Email))
 				{
-					result = await SendResponseAsync(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.InvalidEmail));
+					SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.InvalidEmail));
 					break;
 				}
 				
@@ -84,6 +85,8 @@ public sealed class ClientConnection : MessagingService
 					if (code == ExitCode.Success)
 					{
 						status = MessageResponseCreateAccount.Status.Success;
+						_isLoggedIn = true;
+						_username = reqCreateAccount.Username;
 					}
 					else
 					{
@@ -95,20 +98,15 @@ public sealed class ClientConnection : MessagingService
 					status = MessageResponseCreateAccount.Status.UsernameNotAvailable;
 				}
 				
-				result = await SendResponseAsync(new MessageResponseCreateAccount(true, reqCreateAccount.Id, status));
-				if (result == ExitCode.Success)
-				{
-					_isLoggedIn = true;
-					_username = reqCreateAccount.Username;
-				}
+				SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, status));
 				break;
 			}
 
 			case MessageRequestLogin reqLogin:
 			{
 				bool validLogin = await _databaseService.IsValidLoginAsync(reqLogin.Username, reqLogin.Password);
-				result = await SendResponseAsync(new MessageResponseLogin(true, reqLogin.Id, validLogin));
-				if (result == ExitCode.Success)
+				SendResponse(new MessageResponseLogin(true, reqLogin.Id, validLogin));
+				if (validLogin)
 				{
 					_isLoggedIn = validLogin;
 					_username = reqLogin.Username;
@@ -119,7 +117,7 @@ public sealed class ClientConnection : MessagingService
 						break;
 					}
 
-					result = await SendInfoAsync(new MessageInfoVmList(true, vms));
+					SendInfo(new MessageInfoVmList(true, vms));
 				}
 				break;
 			}
@@ -131,11 +129,11 @@ public sealed class ClientConnection : MessagingService
 					_isLoggedIn = false;
 					_username = string.Empty;
 					await Task.Delay(50);		/* If i dont do this, the client gets a response timeout - like the client doesnt receive the response.. */
-					result = await SendResponseAsync(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
+					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
 				}
 				else
 				{
-					result = await SendResponseAsync(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.UserNotLoggedIn));
+					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.UserNotLoggedIn));
 				}
 
 				break;
@@ -149,7 +147,7 @@ public sealed class ClientConnection : MessagingService
 				    !Enum.IsDefined(typeof(SharedDefinitions.BootMode), reqCreateVm.BootMode)
 				   )
 				{
-					result = await SendResponseAsync(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
+					SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
 					break;
 				}
 				
@@ -157,21 +155,17 @@ public sealed class ClientConnection : MessagingService
 				
 				if (result == ExitCode.VmAlreadyExists)
 				{
-					result = await SendResponseAsync(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.VmAlreadyExists));
+					SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.VmAlreadyExists));
 					break;
 				}
 
 				if (result != ExitCode.Success)
 				{
-					result = await SendResponseAsync(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
+					SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
 					break;				
 				}
 				
-				result = await SendResponseAsync(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success));
-				if (result != ExitCode.Success)
-				{
-					break;
-				}
+				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success));
 				
 				SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsAsync(_username);
 				if (vms == null)
@@ -179,13 +173,13 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				result = await SendInfoAsync(new MessageInfoVmList(true, vms));
+				SendInfo(new MessageInfoVmList(true, vms));
 				break;
 			}
 
 			case MessageRequestCheckVmExist reqCheckVmExist:
 			{
-				result = await SendResponseAsync(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 
+				SendResponse(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 
 					_isLoggedIn && await _databaseService.IsVmExistsAsync(_username, reqCheckVmExist.Name))
 				);
 				break;

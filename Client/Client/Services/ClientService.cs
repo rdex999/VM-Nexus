@@ -234,6 +234,11 @@ public class ClientService : MessagingService
 			CommunicationThread.Start();
 		}
 
+		if (!MessageSenderThread!.IsAlive)
+		{
+			MessageSenderThread.Start();
+		}
+
 		Reconnected?.Invoke(this, EventArgs.Empty);
 	}
 
