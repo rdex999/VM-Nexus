@@ -115,5 +115,6 @@ public class MessageResponseCreateDrive : MessageResponse
 		Success,
 		AlreadyExistsWithName,
 		InvalidSize,
+		Failure,
 	}
 }

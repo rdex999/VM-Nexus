@@ -166,9 +166,11 @@ public class ClientService : MessagingService
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(
 			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode));
-		
+
 		if (result != ExitCode.Success)
+		{
 			return MessageResponseCreateVm.Status.Failure;
+		}
 		
 		MessageResponseCreateVm resCreateVm = (MessageResponseCreateVm)response!;
 		return resCreateVm.Result;
@@ -187,6 +189,30 @@ public class ClientService : MessagingService
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCheckVmExist(true, name));
 		return result == ExitCode.Success && ((MessageResponseCheckVmExist)response!).Exists;
+	}
+
+	/// <summary>
+	/// Requests the server to create a drive with the given parameters.
+	/// </summary>
+	/// <param name="name">The name of the drive. Must be unique for the user. name != null.</param>
+	/// <param name="type">The type of drive. (NVMe, SSD, etc)</param>
+	/// <param name="size">The size of the drive in MiB. size >= 1.</param>
+	/// <param name="operatingSystem">The operating system to install on the drive.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. User is logged in. name != null &amp;&amp; size >= 1.<br/>
+	/// Postcondition: On success, the returned status indicates success and the drive is created. <br/>
+	/// On failure, the returned status will indicate the error and the drive is not created.
+	/// </remarks>
+	public async Task<MessageResponseCreateDrive.Status> CreateDriveAsync(
+		string name, SharedDefinitions.DriveType type, int size, SharedDefinitions.OperatingSystem operatingSystem)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
+		if (result != ExitCode.Success)
+		{
+			return MessageResponseCreateDrive.Status.Failure;
+		}
+		return ((MessageResponseCreateDrive)response!).Result;
 	}
 
 	/// <summary>

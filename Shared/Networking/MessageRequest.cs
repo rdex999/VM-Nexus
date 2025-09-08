@@ -85,17 +85,50 @@ public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a 
 public class MessageRequestCreateDrive : MessageRequest
 {
 	public string Name { get; }
-	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
 	public SharedDefinitions.DriveType Type { get; }
 	public int Size { get; }	/* The size of the drive - in MiB */
 	
-	public MessageRequestCreateDrive(bool generateGuid,  string name, SharedDefinitions.OperatingSystem operatingSystem, 
-		SharedDefinitions.DriveType type, int size)
+	/*
+	 * If other is selected - an operating system will not be installed on the drive.
+	 * If an operating system is selected, then the FilesystemType, PartitionTableType, Partitions properties are ignored.
+	 */
+	public SharedDefinitions.OperatingSystem OperatingSystem { get; }	
+	public SharedDefinitions.FilesystemType FilesystemType { get; }		/* Used only if no partition table is selected */
+	public SharedDefinitions.PartitionTableType PartitionTableType { get; }		/* When used, FilesystemType should be -1 (not used). */
+	public SharedDefinitions.PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
+	
+	public MessageRequestCreateDrive(bool generateGuid, string name, SharedDefinitions.DriveType type, int size, SharedDefinitions.OperatingSystem operatingSystem)
 		: base(generateGuid)
 	{
 		Name = name;
-		OperatingSystem = operatingSystem;
 		Type = type;
 		Size = size;
+		OperatingSystem = operatingSystem;
+		Partitions = [];
+		
+		FilesystemType = (SharedDefinitions.FilesystemType)(-1);
+		if (OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
+		{
+			FilesystemType = SharedDefinitions.FilesystemType.Fat16;
+			PartitionTableType = (SharedDefinitions.PartitionTableType)(-1);
+		}
+		else
+		{
+			FilesystemType = (SharedDefinitions.FilesystemType)(-1);
+			PartitionTableType = SharedDefinitions.PartitionTableType.Gpt;
+		}
+	}
+
+	public MessageRequestCreateDrive(bool generateGuid, string name, SharedDefinitions.DriveType type, int size,
+		SharedDefinitions.PartitionTableType partitionTableType, SharedDefinitions.PartitionDescriptor[] partitions)
+		: base(generateGuid)
+	{
+		Name = name;
+		Type = type;
+		Size = size;
+		PartitionTableType = partitionTableType;
+		Partitions = partitions;
+		FilesystemType = (SharedDefinitions.FilesystemType)(-1);
+		OperatingSystem = (SharedDefinitions.OperatingSystem)(-1);
 	}
 }
