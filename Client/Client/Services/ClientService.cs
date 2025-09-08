@@ -119,6 +119,13 @@ public class ClientService : MessagingService
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogin(true, username, password));
 		if (result != ExitCode.Success)
 			return null;
+
+
+		(MessageResponse? resCreateDrive, result) = await SendRequestAsync(
+			// new MessageRequestCreateDrive(true, "test_drive", SharedDefinitions.DriveType.Floppy, 20, SharedDefinitions.OperatingSystem.MiniCoffeeOS));
+			new MessageRequestCreateDrive(true, "test_drive", SharedDefinitions.DriveType.Floppy, 20,
+				SharedDefinitions.OperatingSystem.MiniCoffeeOS, (SharedDefinitions.FilesystemType)(-1),
+				(SharedDefinitions.PartitionTableType)(-1), []));
 		
 		MessageResponseLogin reqLogin = (MessageResponseLogin)response!;
 		return reqLogin.Accepted;
@@ -164,16 +171,15 @@ public class ClientService : MessagingService
 	public async Task<MessageResponseCreateVm.Status> CreateVirtualMachineAsync(string name,
 		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(
+		(MessageResponse? resCreateVm, ExitCode result) = await SendRequestAsync(
 			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode));
 
 		if (result != ExitCode.Success)
 		{
 			return MessageResponseCreateVm.Status.Failure;
 		}
-		
-		MessageResponseCreateVm resCreateVm = (MessageResponseCreateVm)response!;
-		return resCreateVm.Result;
+
+		return ((MessageResponseCreateVm)resCreateVm!).Result;
 	}
 	
 	/// <summary>
@@ -207,12 +213,13 @@ public class ClientService : MessagingService
 	public async Task<MessageResponseCreateDrive.Status> CreateDriveAsync(
 		string name, SharedDefinitions.DriveType type, int size, SharedDefinitions.OperatingSystem operatingSystem)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
-		if (result != ExitCode.Success)
-		{
-			return MessageResponseCreateDrive.Status.Failure;
-		}
-		return ((MessageResponseCreateDrive)response!).Result;
+		// (MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
+		// if (result != ExitCode.Success)
+		// {
+		// 	return MessageResponseCreateDrive.Status.Failure;
+		// }
+		// return ((MessageResponseCreateDrive)response!).Result;
+		return MessageResponseCreateDrive.Status.Success;
 	}
 
 	/// <summary>

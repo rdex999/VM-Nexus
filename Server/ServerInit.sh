@@ -3,6 +3,8 @@
 # This script initializes the server for the first time - no need to run this on each server startup.
 # Shell postgres login: sudo -u postgres psql postgres
 
+mkdir DiskImages
+
 if ! sudo -u postgres initdb --locale en_US.UTF-8 -D /var/lib/postgres/data
 then
   echo -e "initdb failed. Aborting."

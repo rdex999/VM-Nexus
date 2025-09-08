@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Server.Services;
@@ -187,12 +188,32 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateDrive reqCreateDrive:
 			{
-				if (!reqCreateDrive.IsValidRequest())
+				Debug.WriteLine("request to create a drive received.");
+				if (!reqCreateDrive.IsValidRequest() || !_isLoggedIn)
 				{
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 					break;
 				}
-				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure)); /* Temporary */
+
+				if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
+				{
+					Process process  = new Process()
+					{
+						StartInfo = new ProcessStartInfo()
+						{
+							FileName = "/bin/bash",
+							Arguments = $"-c \"make -C ../../../MiniCoffeeOS FDA=$(pwd)/../../../DiskImages/{_username}_{reqCreateDrive.Name}.img FDA_SIZE={reqCreateDrive.Size}\"",
+							RedirectStandardOutput = true,
+							UseShellExecute = false,
+						},
+					};
+					process.Start();
+					string output = await process.StandardOutput.ReadToEndAsync();
+					await process.WaitForExitAsync();
+					Debug.WriteLine(output);
+					process.Dispose();
+				}
+				
 				break;
 			}
 			

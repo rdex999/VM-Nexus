@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Shared.Networking;
 
 public class MessageRequest : Message
@@ -96,8 +98,10 @@ public class MessageRequestCreateDrive : MessageRequest
 	public SharedDefinitions.FilesystemType FilesystemType { get; }				/* Used only if no partition table is used. (PartitionTableType must be -1) */
 	public SharedDefinitions.PartitionTableType PartitionTableType { get; }		/* When used, FilesystemType should be -1 (not used). */
 	public SharedDefinitions.PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
-	
-	public MessageRequestCreateDrive(bool generateGuid, string name, SharedDefinitions.DriveType type, int size, SharedDefinitions.OperatingSystem operatingSystem)
+
+
+	public MessageRequestCreateDrive(bool generateGuid, string name, SharedDefinitions.DriveType type, int size,
+		SharedDefinitions.OperatingSystem operatingSystem)
 		: base(generateGuid)
 	{
 		Name = name;
@@ -107,18 +111,9 @@ public class MessageRequestCreateDrive : MessageRequest
 		Partitions = [];
 		
 		FilesystemType = (SharedDefinitions.FilesystemType)(-1);
-		if (OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
-		{
-			FilesystemType = SharedDefinitions.FilesystemType.Fat16;
-			PartitionTableType = (SharedDefinitions.PartitionTableType)(-1);
-		}
-		else
-		{
-			FilesystemType = (SharedDefinitions.FilesystemType)(-1);
-			PartitionTableType = SharedDefinitions.PartitionTableType.Gpt;
-		}
+		PartitionTableType = (SharedDefinitions.PartitionTableType)(-1);
 	}
-
+	
 	public MessageRequestCreateDrive(bool generateGuid, string name, SharedDefinitions.DriveType type, int size,
 		SharedDefinitions.PartitionTableType partitionTableType, SharedDefinitions.PartitionDescriptor[] partitions)
 		: base(generateGuid)
@@ -130,6 +125,21 @@ public class MessageRequestCreateDrive : MessageRequest
 		Partitions = partitions;
 		FilesystemType = (SharedDefinitions.FilesystemType)(-1);
 		OperatingSystem = (SharedDefinitions.OperatingSystem)(-1);
+	}
+
+	[JsonConstructor]
+	public MessageRequestCreateDrive(bool generateGuid, string name, SharedDefinitions.DriveType type, int size,
+		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.FilesystemType filesystemType,
+		SharedDefinitions.PartitionTableType partitionTableType, SharedDefinitions.PartitionDescriptor[] partitions)
+		: base(generateGuid)
+	{
+		Name = name;
+		Type = type;
+		Size = size;
+		OperatingSystem = operatingSystem;
+		FilesystemType = filesystemType;
+		PartitionTableType = partitionTableType;
+		Partitions = partitions;
 	}
 
 	public bool IsValidRequest()
