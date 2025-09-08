@@ -36,7 +36,6 @@ public static class SharedDefinitions
 	{
 		Mbr,
 		Gpt,
-		Other,
 	}
 	
 	public enum OperatingSystem

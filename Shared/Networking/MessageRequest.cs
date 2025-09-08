@@ -92,8 +92,8 @@ public class MessageRequestCreateDrive : MessageRequest
 	 * If other is selected - an operating system will not be installed on the drive.
 	 * If an operating system is selected, then the FilesystemType, PartitionTableType, Partitions properties are ignored.
 	 */
-	public SharedDefinitions.OperatingSystem OperatingSystem { get; }	
-	public SharedDefinitions.FilesystemType FilesystemType { get; }		/* Used only if no partition table is selected */
+	public SharedDefinitions.OperatingSystem OperatingSystem { get; }			/* Can be -1 for no operating system. */
+	public SharedDefinitions.FilesystemType FilesystemType { get; }				/* Used only if no partition table is used. (PartitionTableType must be -1) */
 	public SharedDefinitions.PartitionTableType PartitionTableType { get; }		/* When used, FilesystemType should be -1 (not used). */
 	public SharedDefinitions.PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
 	
@@ -130,5 +130,46 @@ public class MessageRequestCreateDrive : MessageRequest
 		Partitions = partitions;
 		FilesystemType = (SharedDefinitions.FilesystemType)(-1);
 		OperatingSystem = (SharedDefinitions.OperatingSystem)(-1);
+	}
+
+	public bool IsValidRequest()
+	{
+		if (string.IsNullOrEmpty(Name) || !Enum.IsDefined(typeof(SharedDefinitions.DriveType), Type) || Size < 1)
+		{
+			return false;
+		}
+
+		if (!Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), OperatingSystem) &&
+		    OperatingSystem != (SharedDefinitions.OperatingSystem)(-1))
+		{
+			return false;
+		}
+
+		if (Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), OperatingSystem) &&
+		    OperatingSystem != SharedDefinitions.OperatingSystem.Other)
+		{
+			if (FilesystemType != (SharedDefinitions.FilesystemType)(-1) ||
+			    PartitionTableType != (SharedDefinitions.PartitionTableType)(-1) || Partitions.Length != 0)
+			{
+				return false;
+			}
+		}
+		else if (OperatingSystem == SharedDefinitions.OperatingSystem.Other ||
+		         OperatingSystem == (SharedDefinitions.OperatingSystem)(-1))
+		{
+			if (Enum.IsDefined(typeof(SharedDefinitions.FilesystemType), FilesystemType) &&
+			    PartitionTableType != (SharedDefinitions.PartitionTableType)(-1))
+			{
+				return false;
+			}
+
+			if (Enum.IsDefined(typeof(SharedDefinitions.PartitionTableType), PartitionTableType) &&
+			    (FilesystemType != (SharedDefinitions.FilesystemType)(-1) || Partitions.Length == 0))
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 }

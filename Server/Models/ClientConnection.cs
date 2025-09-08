@@ -184,6 +184,17 @@ public sealed class ClientConnection : MessagingService
 				);
 				break;
 			}
+
+			case MessageRequestCreateDrive reqCreateDrive:
+			{
+				if (!reqCreateDrive.IsValidRequest())
+				{
+					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
+					break;
+				}
+				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure)); /* Temporary */
+				break;
+			}
 			
 			default:
 			{
