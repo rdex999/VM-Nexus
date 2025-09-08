@@ -119,13 +119,6 @@ public class ClientService : MessagingService
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogin(true, username, password));
 		if (result != ExitCode.Success)
 			return null;
-
-
-		(MessageResponse? resCreateDrive, result) = await SendRequestAsync(
-			// new MessageRequestCreateDrive(true, "test_drive", SharedDefinitions.DriveType.Floppy, 20, SharedDefinitions.OperatingSystem.MiniCoffeeOS));
-			new MessageRequestCreateDrive(true, "test_drive", SharedDefinitions.DriveType.Floppy, 20,
-				SharedDefinitions.OperatingSystem.MiniCoffeeOS, (SharedDefinitions.FilesystemType)(-1),
-				(SharedDefinitions.PartitionTableType)(-1), []));
 		
 		MessageResponseLogin reqLogin = (MessageResponseLogin)response!;
 		return reqLogin.Accepted;
@@ -213,13 +206,12 @@ public class ClientService : MessagingService
 	public async Task<MessageResponseCreateDrive.Status> CreateDriveAsync(
 		string name, SharedDefinitions.DriveType type, int size, SharedDefinitions.OperatingSystem operatingSystem)
 	{
-		// (MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
-		// if (result != ExitCode.Success)
-		// {
-		// 	return MessageResponseCreateDrive.Status.Failure;
-		// }
-		// return ((MessageResponseCreateDrive)response!).Result;
-		return MessageResponseCreateDrive.Status.Success;
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
+		if (result != ExitCode.Success)
+		{
+			return MessageResponseCreateDrive.Status.Failure;
+		}
+		return ((MessageResponseCreateDrive)response!).Result;
 	}
 
 	/// <summary>
