@@ -85,13 +85,16 @@ public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a 
 public class MessageRequestCreateDrive : MessageRequest
 {
 	public string Name { get; }
+	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
 	public SharedDefinitions.DriveType Type { get; }
 	public int Size { get; }	/* The size of the drive - in MiB */
 	
-	public MessageRequestCreateDrive(bool generateGuid,  string name, SharedDefinitions.DriveType type, int size)
+	public MessageRequestCreateDrive(bool generateGuid,  string name, SharedDefinitions.OperatingSystem operatingSystem, 
+		SharedDefinitions.DriveType type, int size)
 		: base(generateGuid)
 	{
 		Name = name;
+		OperatingSystem = operatingSystem;
 		Type = type;
 		Size = size;
 	}

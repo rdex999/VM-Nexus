@@ -32,7 +32,7 @@
 				<StackPanel>
 					<TextBox Watermark="Name" Classes="form" Classes.error="{Binding VmNameErrorClass}"
 					         Text="{Binding VmName}"
-					         TextChanged="VmCreationInfoChangedText" />
+					         TextChanged="VmCreationInfoChangedTextAsync" />
 
 					<TextBlock Classes="error" Text="{Binding VmNameErrorMessage}" />
 				</StackPanel>
@@ -66,6 +66,7 @@
 								</Button>
 							</Grid>
 						</ComboBoxItem>
+						<ComboBoxItem>Other</ComboBoxItem>
 					</ComboBox>
 				</Grid>
 
@@ -78,7 +79,7 @@
 					<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
 					          SelectedIndex="{Binding CpuArchitecture}"
 					          IsEnabled="{Binding CpuArchitectureIsEnabled}"
-					          SelectionChanged="VmCreationInfoChangedComboBox">
+					          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
 						<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
 						<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
 						<ComboBoxItem>ARM</ComboBoxItem>
@@ -91,7 +92,7 @@
 					<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
 					          SelectedIndex="{Binding BootMode}"
 					          IsEnabled="{Binding BootModeIsEnabled}"
-					          SelectionChanged="VmCreationInfoChangedComboBox">
+					          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
 						<ComboBoxItem>UEFI</ComboBoxItem>
 						<ComboBoxItem>BIOS</ComboBoxItem>
 					</ComboBox>
@@ -106,7 +107,7 @@
 					<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
 					          SelectedIndex="{Binding OsDriveType}"
 					          IsEnabled="{Binding OsDriveTypeIsEnabled}"
-					          SelectionChanged="VmCreationInfoChangedComboBox">
+					          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
 						<ComboBoxItem>NVMe (Non-Volatile Memory Express)</ComboBoxItem>
 						<ComboBoxItem>SSD (Solid State Drive)</ComboBoxItem>
 						<ComboBoxItem>HDD (Hard Disk Drive)</ComboBoxItem>
@@ -124,7 +125,7 @@
 
 						<NumericUpDown Grid.Column="1" VerticalAlignment="Center"
 						               Classes.error="{Binding OsDriveSizeErrorClass}"
-						               ValueChanged="VmCreationInfoChangedNumeric"
+						               ValueChanged="VmCreationInfoChangedNumericAsync"
 						               Value="{Binding OsDriveSize}"
 						               IsEnabled="{Binding OsDriveSizeIsEnabled}"
 						               Increment="1024" Width="180" />

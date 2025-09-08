@@ -112,7 +112,18 @@ public partial class CreateVmViewModel : ViewModelBase
 	/// </remarks>
 	public async Task VmCreationInfoChangedAsync()
 	{
-		if (OsDriveSize == null || OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin)
+		if (OperatingSystem == SharedDefinitions.OperatingSystem.Other)
+		{
+			OsDriveTypeIsEnabled = false;
+			OsDriveSizeIsEnabled = false;
+		}
+		else
+		{
+			OsDriveTypeIsEnabled = true;
+			OsDriveSizeIsEnabled = true;		
+		}
+		
+		if ((OsDriveSize == null || OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin) && OperatingSystem != SharedDefinitions.OperatingSystem.Other)
 		{
 			OsDriveSizeErrorClass = true;
 			OsDriveSizeErrorMessage =
@@ -144,7 +155,8 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 		VmCreationMessage = string.Empty;
 		
-		CreateVmButtonIsEnabled = isVmNameValid && OsDriveSize != null && OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax;
+		CreateVmButtonIsEnabled = isVmNameValid && OsDriveSize != null && 
+		                          ((OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax) || OperatingSystem == SharedDefinitions.OperatingSystem.Other);
 	}
 
 	/// <summary>

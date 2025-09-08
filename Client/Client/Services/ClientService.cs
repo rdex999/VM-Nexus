@@ -173,7 +173,16 @@ public class ClientService : MessagingService
 		MessageResponseCreateVm resCreateVm = (MessageResponseCreateVm)response!;
 		return resCreateVm.Result;
 	}
-
+	
+	/// <summary>
+	/// Check if the user has a VM which name is the given name.
+	/// </summary>
+	/// <param name="name">The name of the virtual machine to check for. name != null.</param>
+	/// <returns>True if the user has the VM, false otherwise or on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. The user is logged in. name != null. <br/>
+	/// Postcondition: Returns whether the user has a VM which name is the given name.
+	/// </remarks>
 	public async Task<bool> IsVmExistsAsync(string name)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCheckVmExist(true, name));

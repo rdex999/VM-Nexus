@@ -33,6 +33,7 @@ public static class SharedDefinitions
 		ParrotOS,
 		ManjaroLinux,
 		MiniCoffeeOS,
+		Other,
 	}
 
 	public enum VmState

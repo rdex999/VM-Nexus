@@ -41,7 +41,7 @@ public partial class CreateVmView : UserControl
 	/// Precondition: The user has changed one or more of the VM's creation settings input fields. <br/>
 	/// Postcondition: The changed is handled and the VM creation settings change accordingly.
 	/// </remarks>
-	private async void VmCreationInfoChangedAsync(object? sender, EventArgs e)
+	private async Task VmCreationInfoChangedAsync(object? sender, EventArgs e)
 	{
 		if (DataContext is CreateVmViewModel vm)
 		{
@@ -49,9 +49,9 @@ public partial class CreateVmView : UserControl
 		}	
 	}
 
-	private void VmCreationInfoChangedText(object? sender, TextChangedEventArgs e) => VmCreationInfoChangedAsync(sender, e);
+	private async void VmCreationInfoChangedTextAsync(object? sender, TextChangedEventArgs e) => await VmCreationInfoChangedAsync(sender, e);
 
-	private void VmCreationInfoChangedNumeric(object? sender, NumericUpDownValueChangedEventArgs e)
+	private async void VmCreationInfoChangedNumericAsync(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (DataContext is CreateVmViewModel vm)
 		{
@@ -61,7 +61,7 @@ public partial class CreateVmView : UserControl
 			 */
 			vm.OsDriveSize = (int?)e.NewValue;	
 		}
-		VmCreationInfoChangedAsync(sender, e);
+		await VmCreationInfoChangedAsync(sender, e);
 	}
-	private void VmCreationInfoChangedComboBox(object? sender, SelectionChangedEventArgs e) => VmCreationInfoChangedAsync(sender, e);
+	private async void VmCreationInfoChangedComboBoxAsync(object? sender, SelectionChangedEventArgs e) => await VmCreationInfoChangedAsync(sender, e);
 }

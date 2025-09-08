@@ -42,7 +42,18 @@ public class VmItemTemplate
 {
 	public string Name { get; }
 	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
-	public string OperatingSystemString => Common.SeparateStringWords(OperatingSystem.ToString());
+
+	public string OperatingSystemString
+	{
+		get
+		{
+			if (OperatingSystem == SharedDefinitions.OperatingSystem.Other)
+			{
+				return "Unknown OS";
+			}
+			return Common.SeparateStringWords(OperatingSystem.ToString());
+		}
+	}
 	public SharedDefinitions.VmState State { get; }
 	public string StateString => Common.SeparateStringWords(State.ToString());
 
