@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # This script initializes the server for the first time - no need to run this on each server startup.
+# Run the script when you are in the Server directory.
 # Shell postgres login: sudo -u postgres psql postgres
 
 mkdir DiskImages

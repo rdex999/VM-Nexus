@@ -201,16 +201,13 @@ public sealed class ClientConnection : MessagingService
 					{
 						StartInfo = new ProcessStartInfo()
 						{
-							FileName = "/bin/bash",
-							Arguments = $"-c \"make -C ../../../MiniCoffeeOS FDA=$(pwd)/../../../DiskImages/{_username}_{reqCreateDrive.Name}.img FDA_SIZE={reqCreateDrive.Size}\"",
-							RedirectStandardOutput = true,
-							UseShellExecute = false,
+							FileName = "/usr/bin/make",
+							Arguments = $" -C ../../../MiniCoffeeOS FDA=../DiskImages/{_username}_{reqCreateDrive.Name}.img FDA_SIZE={reqCreateDrive.Size}",
 						},
 					};
 					process.Start();
-					string output = await process.StandardOutput.ReadToEndAsync();
 					await process.WaitForExitAsync();
-					Debug.WriteLine(output);
+					int exitCode = process.ExitCode;
 					process.Dispose();
 				}
 				

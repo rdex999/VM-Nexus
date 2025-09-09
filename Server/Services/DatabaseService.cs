@@ -37,11 +37,11 @@ public class DatabaseService
 
 		ExecuteNonQuery($"""
 		                 CREATE TABLE IF NOT EXISTS users (
-		                 	id SERIAL PRIMARY KEY,
-		                 	username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
-		                 	email VARCHAR(254),
-		                 	password_hashed BYTEA, 
-		                 	password_salt BYTEA
+		                     id SERIAL PRIMARY KEY,
+		                     username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
+		                     email VARCHAR(254),
+		                     password_hashed BYTEA, 
+		                     password_salt BYTEA
 		                 )
 		                 """);
 
@@ -54,6 +54,16 @@ public class DatabaseService
 		                     cpu_architecture INT,
 		                     boot_mode INT,
 		                     state INT
+		                 )
+		                 """);
+
+		ExecuteNonQuery($"""
+		                 CREATE TABLE IF NOT EXISTS drives (
+		                     id SERIAL PRIMARY KEY,
+		                     name VARCHAR({SharedDefinitions.CredentialsMaxLength}),
+		                     owner_id INT REFERENCES users(id) ON DELETE CASCADE,
+		                     size INT,
+		                     type INT
 		                 )
 		                 """);
 	}
@@ -320,6 +330,51 @@ public class DatabaseService
 		} while (reader.Read());
 		
 		return descriptors.ToArray();
+	}
+
+	/// <summary>
+	/// Registers a drive in the database.
+	/// </summary>
+	/// <param name="username">The username of the user that will own the drive. username != null.</param>
+	/// <param name="name">The name of the drive. Must be unique per user. name != null.</param>
+	/// <param name="size">The size of the drive, in MiB. size >= 1.</param>
+	/// <param name="driveType">The type of drive. (NVMe, SSD, etc)</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A user exists with the given username. The user does not have a drive named by the given name. <br/>
+	/// username != null &amp;&amp; name != null &amp;&amp; size >= 1. <br/>
+	/// Postcondition: On success, the drive is registered in the database, and the returned exit code indicates success. <br/>
+	/// On failure, the drive is not registered in the database, and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> CreateDriveAsync(string username, string name, int size, SharedDefinitions.DriveType driveType)
+	{
+		if (size < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
+		
+		int userId = await GetUserIdAsync(username);
+		if (userId == -1)
+		{
+			return ExitCode.UserDoesntExist;
+		}
+		
+		int rowCount = await ExecuteNonQueryAsync($"""
+		                                           INSERT INTO drives (name, owner_id, size, type)
+		                                           		VALUES (@name, @owner_id, @size, @type)
+		                                           """,
+			new NpgsqlParameter("@name", name),
+			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@size", size) { NpgsqlDbType = NpgsqlDbType.Integer },
+			new NpgsqlParameter("@type", (int)driveType) { NpgsqlDbType = NpgsqlDbType.Integer }
+		);
+
+		if (rowCount == 1)
+		{
+			return ExitCode.Success;
+		}
+		
+		return ExitCode.DatabaseOperationFailed;
 	}
 
 	/// <summary>

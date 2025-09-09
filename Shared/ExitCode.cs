@@ -14,4 +14,5 @@ public enum ExitCode
 	DatabaseOperationFailed,
 	UserDoesntExist,
 	VmAlreadyExists,
+	InvalidParameter,
 }
