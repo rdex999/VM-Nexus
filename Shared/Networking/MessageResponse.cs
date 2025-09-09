@@ -38,6 +38,7 @@ public class MessageResponseCreateAccount : MessageResponse
 		Failure,
 		CredentialsCannotBeEmpty,
 		UsernameNotAvailable,
+		InvalidUsernameSyntax,
 		InvalidEmail
 	}
 }

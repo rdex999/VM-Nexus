@@ -223,6 +223,40 @@ public static class Common
 		return lastDomainStartIdx > domainStartIdx;		/* Means there is at least one dot - separating the domain name from the top-level domain (TLD) */
 	}
 
+	/// <summary>
+	/// Check if the given username is in correct syntax.
+	/// </summary>
+	/// <param name="username">The username to check the syntax of. username != null.</param>
+	/// <returns>True if the username is valid, fale otherwise.</returns>
+	/// <remarks>
+	/// Precondition: username != null. <br/>
+	/// Postcondition: Returns whether the given username is valid or not.
+	/// </remarks>
+	public static bool IsValidUsername(string username)
+	{
+		foreach (char c in username)
+		{
+			foreach (char invalidChar in SharedDefinitions.InvalidUsernameCharacters)
+			{
+				if (c == invalidChar)
+				{
+					return false;
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/// <summary>
+	/// Seperates words in a string by spaces. Words are indicated by their first letter being capital. (pascal/camel case)
+	/// </summary>
+	/// <param name="str">The string to separate the words in. str != null.</param>
+	/// <returns>A new space-seperated string.</returns>
+	/// <remarks>
+	/// Precondition: str != null. <br/>
+	/// Postcondition: A new space-seperated string is returned.
+	/// </remarks>
 	public static string SeparateStringWords(string str)
 	{
 		string result = str;

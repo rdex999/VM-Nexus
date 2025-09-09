@@ -103,13 +103,15 @@ public partial class CreateAccountViewModel : ViewModelBase
 	private async Task CreateAccountAsync()
 	{
 		AccountCreationFailedTextIsVisible = false;
+
+		string usernameTrimmed = Username.Trim();
 		
-		MessageResponseCreateAccount.Status status= await ClientSvc.CreateAccountAsync(Username, Email, Password);
+		MessageResponseCreateAccount.Status status= await ClientSvc.CreateAccountAsync(usernameTrimmed, Email.Trim(), Password);
 		switch (status)
 		{
 			case MessageResponseCreateAccount.Status.Success:
 			{
-				NavigationSvc.NavigateToView(new MainView() {  DataContext = new MainViewModel(NavigationSvc, ClientSvc, Username) });
+				NavigationSvc.NavigateToView(new MainView() {  DataContext = new MainViewModel(NavigationSvc, ClientSvc, usernameTrimmed) });
 				break;
 			}
 			case MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty:
@@ -120,7 +122,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 			}
 			case MessageResponseCreateAccount.Status.UsernameNotAvailable:
 			{
-				AccountCreationFailedText = $"Username \"{Username}\" is not available.";
+				AccountCreationFailedText = $"Username \"{usernameTrimmed}\" is not available.";
 				AccountCreationFailedTextIsVisible = true;
 				break;
 			}
@@ -144,7 +146,38 @@ public partial class CreateAccountViewModel : ViewModelBase
 	{
 		AccountCreationFailedTextIsVisible = false;
 
-		if (!string.IsNullOrEmpty(Username))
+		if (string.IsNullOrEmpty(Username))
+		{
+			UsernameAvailabilitySuccessClass = false;
+			UsernameAvailabilityErrorClass = true;
+			UsernameAvailabilityMessage = "Username must not be empty.";
+			CreateAccountIsEnabledSetup();
+			return;
+		}
+
+		string usernameTrimmed = Username.Trim();
+		
+		if (!Common.IsValidUsername(usernameTrimmed))
+		{
+			UsernameAvailabilityErrorClass = true;
+			UsernameAvailabilitySuccessClass = false;
+			
+			string invalidChars = string.Empty;
+			for(int i = 0; i < SharedDefinitions.InvalidUsernameCharacters.Length; i++)
+			{
+				invalidChars += SharedDefinitions.InvalidUsernameCharacters[i];
+				if (i == SharedDefinitions.InvalidUsernameCharacters.Length - 1)
+				{
+					invalidChars += '.';
+				}
+				else
+				{
+					invalidChars += ", ";
+				}
+			}
+			UsernameAvailabilityMessage = "Username cannot contain: " + invalidChars;
+		}
+		else
 		{
 			UsernameAvailabilitySuccessClass = false;
 			UsernameAvailabilityErrorClass = false;
@@ -157,28 +190,23 @@ public partial class CreateAccountViewModel : ViewModelBase
 			bool? usernameAvailable = null;
 			if (ClientSvc.IsConnected())	
 			{
-				usernameAvailable = await ClientSvc.IsUsernameAvailableAsync(Username);
+				usernameAvailable = await ClientSvc.IsUsernameAvailableAsync(usernameTrimmed);
 			}
 			
 			if (usernameAvailable.HasValue && usernameAvailable.Value)
 			{
 				UsernameAvailabilitySuccessClass = true;
 				UsernameAvailabilityErrorClass = false;
-				UsernameAvailabilityMessage = $"Username {Username} is available.";
+				UsernameAvailabilityMessage = $"Username {usernameTrimmed} is available.";
 			}
 			else if(usernameAvailable.HasValue && !usernameAvailable.Value)
 			{
 				UsernameAvailabilitySuccessClass = false;
 				UsernameAvailabilityErrorClass = true;
-				UsernameAvailabilityMessage = $"Username {Username} is not available.";
+				UsernameAvailabilityMessage = $"Username {usernameTrimmed} is not available.";
 			}
 		}
-		else
-		{
-			UsernameAvailabilitySuccessClass = false;
-			UsernameAvailabilityErrorClass = true;
-			UsernameAvailabilityMessage = "Username must not be empty.";
-		}
+
 		CreateAccountIsEnabledSetup();
 	}
 
@@ -300,7 +328,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 	/// </remarks>
 	private void CreateAccountIsEnabledSetup()
 	{
-		CreateAccountIsEnabled = !string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password) &&
+		CreateAccountIsEnabled = !string.IsNullOrEmpty(Username) && Common.IsValidUsername(Username) && !string.IsNullOrEmpty(Password) &&
 		                         Password == PasswordConfirm && ClientSvc.IsConnected() 
 		                         && UsernameAvailabilitySuccessClass;
 	}
