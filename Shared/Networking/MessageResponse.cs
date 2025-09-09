@@ -31,7 +31,12 @@ public class MessageResponseCreateAccount : MessageResponse
 	{ 
 		Result = result;
 	}
-	
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+	}
+
 	public enum Status
 	{
 		Success = 0,
@@ -63,6 +68,11 @@ public class MessageResponseLogout : MessageResponse
 	{
 		Result = result;
 	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+	}
 	
 	public enum Status
 	{
@@ -80,6 +90,11 @@ public class MessageResponseCreateVm : MessageResponse
 		: base(generateGuid, requestId)
 	{
 		Result = result;
+	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 	}
 
 	public enum Status
@@ -109,6 +124,11 @@ public class MessageResponseCreateDrive : MessageResponse
 		: base(generateGuid, requestId)
 	{
 		Result = result;
+	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 	}
 	
 	public enum Status

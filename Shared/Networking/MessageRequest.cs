@@ -17,6 +17,11 @@ public class MessageRequestCheckUsername : MessageRequest	/* Check if the provid
 	{
 		Username = username;
 	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && !string.IsNullOrEmpty(Username);
+	}
 }
 
 public class MessageRequestCreateAccount : MessageRequest
@@ -32,6 +37,11 @@ public class MessageRequestCreateAccount : MessageRequest
 		Email = email;
 		Password = password;
 	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && !string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(Password);
+	}
 }
 
 public class MessageRequestLogin : MessageRequest
@@ -44,6 +54,11 @@ public class MessageRequestLogin : MessageRequest
 	{
 		Username = username;
 		Password = password;
+	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && !string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password);
 	}
 }
 
@@ -71,6 +86,14 @@ public class MessageRequestCreateVm : MessageRequest
 		CpuArchitecture = cpuArchitecture;
 		BootMode = bootMode;
 	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && !string.IsNullOrEmpty(Name) &&
+		       Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), OperatingSystem) &&
+		       Enum.IsDefined(typeof(SharedDefinitions.CpuArchitecture), CpuArchitecture) &&
+		       Enum.IsDefined(typeof(SharedDefinitions.BootMode), BootMode);
+	}
 }
 
 public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a virtual machine with the given name */
@@ -81,6 +104,11 @@ public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a 
 		: base(generateGuid)
 	{
 		Name = name;
+	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && !string.IsNullOrEmpty(Name);
 	}
 }
 
@@ -142,9 +170,9 @@ public class MessageRequestCreateDrive : MessageRequest
 		Partitions = partitions;
 	}
 
-	public bool IsValidRequest()
+	public override bool IsValidMessage()
 	{
-		if (string.IsNullOrEmpty(Name) || !Enum.IsDefined(typeof(SharedDefinitions.DriveType), Type) || Size < 1)
+		if (!base.IsValidMessage() || string.IsNullOrEmpty(Name) || !Enum.IsDefined(typeof(SharedDefinitions.DriveType), Type) || Size < 1)
 		{
 			return false;
 		}

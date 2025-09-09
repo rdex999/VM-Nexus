@@ -199,7 +199,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateDrive reqCreateDrive:
 			{
-				if (!reqCreateDrive.IsValidRequest() || !_isLoggedIn)
+				if (!reqCreateDrive.IsValidMessage() || !_isLoggedIn)
 				{
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 					break;

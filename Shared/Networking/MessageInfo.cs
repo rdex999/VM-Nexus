@@ -17,4 +17,9 @@ public class MessageInfoVmList : MessageInfo	/* An updated list of virtual machi
 	{
 		VmDescriptors = vmDescriptors;
 	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && VmDescriptors != null;	/* Make sure its not null because receiving from a socket. */
+	}
 }

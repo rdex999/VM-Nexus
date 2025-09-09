@@ -9,4 +9,9 @@ public class Message
 		if (generateGuid)
 			Id = Guid.NewGuid();
 	}
+
+	public virtual bool IsValidMessage()
+	{
+		return true; 
+	}
 }
