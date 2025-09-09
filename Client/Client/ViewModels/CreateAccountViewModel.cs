@@ -126,6 +126,11 @@ public partial class CreateAccountViewModel : ViewModelBase
 				AccountCreationFailedTextIsVisible = true;
 				break;
 			}
+			case MessageResponseCreateAccount.Status.InvalidUsernameSyntax:
+			{
+				AccountCreationFailedText = "Invalid username syntax.";
+				break;
+			}
 			case MessageResponseCreateAccount.Status.Failure:
 			{
 				AccountCreationFailedText = "Account creation failed. Try again later.";

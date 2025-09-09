@@ -74,22 +74,31 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
+				if (!Common.IsValidUsername(reqCreateAccount.Username))
+				{
+					SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.InvalidUsernameSyntax));
+					break;
+				}
+
 				if (!Common.IsValidEmail(reqCreateAccount.Email))
 				{
 					SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.InvalidEmail));
 					break;
 				}
 				
-				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCreateAccount.Username);
+				string usernameTrimmed = reqCreateAccount.Username.Trim();
+				string emailTrimmed = reqCreateAccount.Email.Trim();
+				
+				bool usernameAvailable = !await _databaseService.IsUserExistAsync(usernameTrimmed);
 				MessageResponseCreateAccount.Status status;
 				if (usernameAvailable)
 				{
-					ExitCode code = await _databaseService.RegisterUserAsync(reqCreateAccount.Username, reqCreateAccount.Email, reqCreateAccount.Password);
+					ExitCode code = await _databaseService.RegisterUserAsync(usernameTrimmed, emailTrimmed, reqCreateAccount.Password);
 					if (code == ExitCode.Success)
 					{
 						status = MessageResponseCreateAccount.Status.Success;
 						_isLoggedIn = true;
-						_username = reqCreateAccount.Username;
+						_username = usernameTrimmed;
 					}
 					else
 					{
