@@ -113,13 +113,21 @@ public class MessagingService
 				}
 				case MessageRequest request:
 				{
+					if (!request.IsValidMessage())
+					{
+						SendResponse(new MessageResponseInvalidRequestData(true, request.Id));
+						break;
+					}
 					_ = HandleRequestAsync(request, token);
 					break;
 				}
 				
 				case MessageInfo info:
 				{
-					_ = HandleInfoAsync(info, token);
+					if (info.IsValidMessage())
+					{
+						_ = HandleInfoAsync(info, token);
+					}
 					break;
 				}
 			}
@@ -198,9 +206,15 @@ public class MessagingService
 			result = ExitCode.MessageSendingTimeout;
 		}
 
-		if (result != ExitCode.Success)
+		if (result != ExitCode.Success || response == null)
 		{
 			_responses.TryRemove(message.Id, out _);
+		}
+
+		if (!response!.IsValidMessage() || response is MessageResponseInvalidRequestData)
+		{
+			response = null;
+			result = ExitCode.InvalidMessageData;
 		}
 	
 		return (response, result);

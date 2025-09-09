@@ -119,11 +119,11 @@ public class MessageRequestCreateDrive : MessageRequest
 	public int Size { get; }	/* The size of the drive - in MiB */
 	
 	/*
-	 * If other is selected - an operating system will not be installed on the drive.
+	 * If other is selected or -1 - an operating system will not be installed on the drive.
 	 * If an operating system is selected, then the FilesystemType, PartitionTableType, Partitions properties are ignored.
 	 */
 	public SharedDefinitions.OperatingSystem OperatingSystem { get; }			/* Can be -1 for no operating system. */
-	public SharedDefinitions.FilesystemType FilesystemType { get; }				/* Used only if no partition table is used. (PartitionTableType must be -1) */
+	public SharedDefinitions.FilesystemType FilesystemType { get; }				/* Can be -1. Used only if no partition table is used. (PartitionTableType must be -1) */
 	public SharedDefinitions.PartitionTableType PartitionTableType { get; }		/* When used, FilesystemType should be -1 (not used). */
 	public SharedDefinitions.PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
 

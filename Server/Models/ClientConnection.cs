@@ -59,21 +59,13 @@ public sealed class ClientConnection : MessagingService
 		{
 			case MessageRequestCheckUsername reqCheckUsername:
 			{
-				bool usernameAvailable = !string.IsNullOrEmpty(reqCheckUsername.Username) && !await _databaseService.IsUserExistAsync(reqCheckUsername.Username);
+				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCheckUsername.Username.Trim());
 				SendResponse(new MessageResponseCheckUsername(true, reqCheckUsername.Id, usernameAvailable));
 				break;
 			}
 
 			case MessageRequestCreateAccount reqCreateAccount:
 			{
-				if (string.IsNullOrEmpty(reqCreateAccount.Username) || 
-				    string.IsNullOrEmpty(reqCreateAccount.Email) ||
-				    string.IsNullOrEmpty(reqCreateAccount.Password)) 
-				{
-					SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty));
-					break;
-				}
-
 				if (!Common.IsValidUsername(reqCreateAccount.Username))
 				{
 					SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.InvalidUsernameSyntax));
@@ -116,12 +108,13 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestLogin reqLogin:
 			{
-				bool validLogin = await _databaseService.IsValidLoginAsync(reqLogin.Username, reqLogin.Password);
+				string usernameTrimmed = reqLogin.Username.Trim();
+				bool validLogin = await _databaseService.IsValidLoginAsync(usernameTrimmed, reqLogin.Password);
 				SendResponse(new MessageResponseLogin(true, reqLogin.Id, validLogin));
 				if (validLogin)
 				{
 					_isLoggedIn = validLogin;
-					_username = reqLogin.Username;
+					_username = usernameTrimmed;
 
 					SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsAsync(_username);
 					if (vms == null)
@@ -140,7 +133,6 @@ public sealed class ClientConnection : MessagingService
 				{
 					_isLoggedIn = false;
 					_username = string.Empty;
-					await Task.Delay(50);		/* If i dont do this, the client gets a response timeout - like the client doesnt receive the response.. */
 					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
 				}
 				else
@@ -153,11 +145,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateVm reqCreateVm:
 			{
-				if (!_isLoggedIn || string.IsNullOrEmpty(reqCreateVm.Name) ||
-				    !Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), reqCreateVm.OperatingSystem) ||
-				    !Enum.IsDefined(typeof(SharedDefinitions.CpuArchitecture), reqCreateVm.CpuArchitecture) ||
-				    !Enum.IsDefined(typeof(SharedDefinitions.BootMode), reqCreateVm.BootMode)
-				   )
+				if (!_isLoggedIn)
 				{
 					SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
 					break;
@@ -199,7 +187,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateDrive reqCreateDrive:
 			{
-				if (!reqCreateDrive.IsValidMessage() || !_isLoggedIn)
+				if (!_isLoggedIn)
 				{
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 					break;

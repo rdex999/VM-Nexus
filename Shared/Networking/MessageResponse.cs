@@ -11,6 +11,14 @@ public class MessageResponse : Message
 	}
 }
 
+public class MessageResponseInvalidRequestData : MessageResponse	/* If the received request is invalid, this is the response. (haha) */
+{
+	public MessageResponseInvalidRequestData(bool generateGuid, Guid requestId)
+		: base(generateGuid, requestId)
+	{
+	}
+}
+
 public class MessageResponseCheckUsername : MessageResponse
 {
 	public bool Available { get; }
