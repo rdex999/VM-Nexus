@@ -404,6 +404,37 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Get the ID of a drive called name, owned by the given user.
+	/// </summary>
+	/// <param name="username">The username of the user to search the drive under. username != null.</param>
+	/// <param name="name">The name of the drive to search for. name != null.</param>
+	/// <returns>The ID of the drive on success, -1 on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user called by username exists. The given user has a drive called by name. username != null &amp;&amp; name != null. <br/>
+	/// Postcondition: On success, the ID of the drive is returned. On failure, -1 is returned.
+	/// </remarks>
+	public async Task<int> GetDriveIdAsync(string username, string name)
+	{
+		int userId = await GetUserIdAsync(username);
+		if (userId == -1)
+		{
+			return -1;
+		}
+		
+		object? id = await ExecuteScalarAsync("SELECT id FROM drives WHERE owner_id = @owner_id AND name = @name", 
+			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@name", name)
+		);
+		
+		if (id == null)
+		{
+			return -1;
+		}
+		
+		return (int)id;
+	}
+
+	/// <summary>
 	/// The asynchronous version of the ExecuteNonQuery command.
 	/// Executes a Non-Query command (Something that doesnt search for stuff, like a DELETE or INSERT command)
 	/// </summary>
