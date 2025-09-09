@@ -170,13 +170,35 @@ public partial class CreateVmViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task CreateVirtualMachineAsync()
 	{
-		MessageResponseCreateVm.Status result = await ClientSvc.CreateVirtualMachineAsync(VmName, OperatingSystem, CpuArchitecture, BootMode);
-		if (result == MessageResponseCreateVm.Status.Success)
+		Task<MessageResponseCreateVm.Status> taskCreateVm = ClientSvc.CreateVirtualMachineAsync(VmName, OperatingSystem, CpuArchitecture, BootMode);
+		Task<MessageResponseCreateDrive.Status> taskCreateDrive;
+
+		if (OperatingSystem == SharedDefinitions.OperatingSystem.Other)
 		{
+			throw new NotImplementedException();
+			await taskCreateVm;
+		}
+		else
+		{
+			if (OperatingSystem != SharedDefinitions.OperatingSystem.MiniCoffeeOS)	/* Temporary */
+			{
+				throw new NotImplementedException();
+			}
+		
+			/* TODO: Add a request to check if a drive exists with a given name - to make a unique name of the drive here. */
+			taskCreateDrive = ClientSvc.CreateDriveAsync($"{VmName}_{OperatingSystem.ToString()}", OsDriveType, OsDriveSize!.Value, OperatingSystem);
+			
+			await Task.WhenAll(taskCreateVm, taskCreateDrive);
+		}
+	
+		/* If Other is selected as the operating system - taskCreateDrive wont have a value. */
+		if (taskCreateVm.Result == MessageResponseCreateVm.Status.Success && 
+		    (OperatingSystem == SharedDefinitions.OperatingSystem.Other || taskCreateDrive.Result == MessageResponseCreateDrive.Status.Success))
+		{	
 			VmCreationMessageSuccessClass = true;
 			VmCreationMessage = "The virtual machine has been created successfully!";
 		} 
-		else if (result == MessageResponseCreateVm.Status.VmAlreadyExists)
+		else if (taskCreateVm.Result == MessageResponseCreateVm.Status.VmAlreadyExists)
 		{
 			VmCreationMessageSuccessClass = false;
 			VmCreationMessage = $"A virtual machine called \"{VmName}\" already exists.";
@@ -185,6 +207,19 @@ public partial class CreateVmViewModel : ViewModelBase
 		{
 			VmCreationMessageSuccessClass = false;
 			VmCreationMessage = "Could not create the virtual machine.";
+		}
+
+		if (taskCreateVm.Result == MessageResponseCreateVm.Status.Success &&
+		    OperatingSystem != SharedDefinitions.OperatingSystem.Other &&
+		    taskCreateDrive.Result != MessageResponseCreateDrive.Status.Success)
+		{
+			/* TODO: Delete the VM */
+		}
+		else if (taskCreateVm.Result != MessageResponseCreateVm.Status.Success &&
+		    OperatingSystem != SharedDefinitions.OperatingSystem.Other &&
+		    taskCreateDrive.Result == MessageResponseCreateDrive.Status.Success)
+		{
+			/* TODO: Delete the drive */
 		}
 
 		CreateVmButtonIsEnabled = false;

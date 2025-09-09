@@ -1,7 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.IO;
-using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Server.Services;
@@ -150,8 +148,8 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
 					break;
 				}
-				
-				result = await _databaseService.CreateVmAsync(_username, reqCreateVm.Name, reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, reqCreateVm.BootMode);
+			
+				result = await _databaseService.CreateVmAsync(_username, reqCreateVm.Name.Trim(), reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, reqCreateVm.BootMode);
 				
 				if (result == ExitCode.VmAlreadyExists)
 				{
@@ -180,7 +178,7 @@ public sealed class ClientConnection : MessagingService
 			case MessageRequestCheckVmExist reqCheckVmExist:
 			{
 				SendResponse(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 
-					_isLoggedIn && await _databaseService.IsVmExistsAsync(_username, reqCheckVmExist.Name))
+					_isLoggedIn && await _databaseService.IsVmExistsAsync(_username, reqCheckVmExist.Name.Trim()))
 				);
 				break;
 			}
@@ -192,14 +190,31 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 					break;
 				}
+				
+				string driveNameTrimmed = reqCreateDrive.Name.Trim();
 
-				if (await _databaseService.IsDriveExistsAsync(_username, reqCreateDrive.Name))
+				if (await _databaseService.IsDriveExistsAsync(_username, driveNameTrimmed))
 				{
 					SendResponse(new MessageResponseCreateDrive(true,  reqCreateDrive.Id, MessageResponseCreateDrive.Status.AlreadyExistsWithName));
 					break;
 				}
 
-				string diskImageName = $"{_username}_{reqCreateDrive.Name}.img";
+				result = await _databaseService.CreateDriveAsync(_username, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type);
+				if (result != ExitCode.Success)
+				{
+					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
+					break;				
+				}
+			
+				int driveId = await _databaseService.GetDriveIdAsync(_username, driveNameTrimmed);
+				if (driveId == -1)
+				{
+					await _databaseService.DeleteDriveAsync(_username, driveNameTrimmed);
+					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
+					break;			
+				}
+			
+				string diskImageName = $"{driveId}.img";
 				
 				/* TODO: Handle other drive creation scenarios (not only for MiniCoffeeOS) */
 				if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
@@ -219,6 +234,7 @@ public sealed class ClientConnection : MessagingService
 
 					if (exitCode != 0)
 					{
+						await _databaseService.DeleteDriveAsync(_username, driveNameTrimmed);
 						SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 						break;
 					}
@@ -229,15 +245,6 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 					break;
 				}
-				
-				result = await _databaseService.CreateDriveAsync(_username, reqCreateDrive.Name, reqCreateDrive.Size, reqCreateDrive.Type);
-				if (result != ExitCode.Success)
-				{
-					File.Delete($"../../../DiskImages/{diskImageName}");
-					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
-					break;
-				}
-				
 				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success));
 				break;
 			}

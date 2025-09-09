@@ -211,7 +211,7 @@ public class MessagingService
 			_responses.TryRemove(message.Id, out _);
 		}
 
-		if (!response!.IsValidMessage() || response is MessageResponseInvalidRequestData)
+		if (response != null && (!response.IsValidMessage() || response is MessageResponseInvalidRequestData))
 		{
 			response = null;
 			result = ExitCode.InvalidMessageData;
