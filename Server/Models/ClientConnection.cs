@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Server.Services;
@@ -188,13 +190,21 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateDrive reqCreateDrive:
 			{
-				Debug.WriteLine("request to create a drive received.");
 				if (!reqCreateDrive.IsValidRequest() || !_isLoggedIn)
 				{
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 					break;
 				}
 
+				if (await _databaseService.IsDriveExistsAsync(_username, reqCreateDrive.Name))
+				{
+					SendResponse(new MessageResponseCreateDrive(true,  reqCreateDrive.Id, MessageResponseCreateDrive.Status.AlreadyExistsWithName));
+					break;
+				}
+
+				string diskImageName = $"{_username}_{reqCreateDrive.Name}.img";
+				
+				/* TODO: Handle other drive creation scenarios (not only for MiniCoffeeOS) */
 				if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
 				{
 					Process process  = new Process()
@@ -202,15 +212,36 @@ public sealed class ClientConnection : MessagingService
 						StartInfo = new ProcessStartInfo()
 						{
 							FileName = "/usr/bin/make",
-							Arguments = $" -C ../../../MiniCoffeeOS FDA=../DiskImages/{_username}_{reqCreateDrive.Name}.img FDA_SIZE={reqCreateDrive.Size}",
+							Arguments = $" -C ../../../MiniCoffeeOS FDA=../DiskImages/{diskImageName} FDA_SIZE={reqCreateDrive.Size}",
 						},
 					};
 					process.Start();
 					await process.WaitForExitAsync();
 					int exitCode = process.ExitCode;
 					process.Dispose();
+
+					if (exitCode != 0)
+					{
+						SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
+						break;
+					}
+				}
+				else
+				{
+					/* Temporary */
+					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
+					break;
 				}
 				
+				result = await _databaseService.CreateDriveAsync(_username, reqCreateDrive.Name, reqCreateDrive.Size, reqCreateDrive.Type);
+				if (result != ExitCode.Success)
+				{
+					File.Delete($"../../../DiskImages/{diskImageName}");
+					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
+					break;
+				}
+				
+				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success));
 				break;
 			}
 			
