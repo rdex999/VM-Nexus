@@ -193,13 +193,13 @@ public sealed class ClientConnection : MessagingService
 				
 				string driveNameTrimmed = reqCreateDrive.Name.Trim();
 
-				if (await _databaseService.IsDriveExistsAsync(_username, driveNameTrimmed))
+				result = await _databaseService.CreateDriveAsync(_username, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type);
+				
+				if (result == ExitCode.DriveAlreadyExists)
 				{
 					SendResponse(new MessageResponseCreateDrive(true,  reqCreateDrive.Id, MessageResponseCreateDrive.Status.AlreadyExistsWithName));
-					break;
+					break;			
 				}
-
-				result = await _databaseService.CreateDriveAsync(_username, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type);
 				if (result != ExitCode.Success)
 				{
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));

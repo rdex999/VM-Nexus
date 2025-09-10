@@ -352,11 +352,19 @@ public class DatabaseService
 		{
 			return ExitCode.InvalidParameter;
 		}
+	
+		Task<int> userIdTask = GetUserIdAsync(username);
+		Task<bool> vmExistsTask = IsVmExistsAsync(username, name);
+		await Task.WhenAll(vmExistsTask, userIdTask);
 		
-		int userId = await GetUserIdAsync(username);
-		if (userId == -1)
+		if (userIdTask.Result == -1)
 		{
 			return ExitCode.UserDoesntExist;
+		}
+
+		if (vmExistsTask.Result)
+		{
+			return ExitCode.DriveAlreadyExists;
 		}
 		
 		int rowCount = await ExecuteNonQueryAsync($"""
@@ -364,7 +372,7 @@ public class DatabaseService
 		                                           		VALUES (@name, @owner_id, @size, @type)
 		                                           """,
 			new NpgsqlParameter("@name", name),
-			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@owner_id", userIdTask.Result),
 			new NpgsqlParameter("@size", size) { NpgsqlDbType = NpgsqlDbType.Integer },
 			new NpgsqlParameter("@type", (int)driveType) { NpgsqlDbType = NpgsqlDbType.Integer }
 		);
