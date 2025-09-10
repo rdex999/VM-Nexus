@@ -108,9 +108,7 @@
 					          SelectedIndex="{Binding OsDriveType}"
 					          IsEnabled="{Binding OsDriveTypeIsEnabled}"
 					          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
-						<ComboBoxItem>NVMe (Non-Volatile Memory Express)</ComboBoxItem>
-						<ComboBoxItem>SSD (Solid State Drive)</ComboBoxItem>
-						<ComboBoxItem>HDD (Hard Disk Drive)</ComboBoxItem>
+						<ComboBoxItem>Disk</ComboBoxItem>
 						<ComboBoxItem>CD-ROM</ComboBoxItem>
 						<ComboBoxItem>Floppy Drive</ComboBoxItem>
 					</ComboBox>

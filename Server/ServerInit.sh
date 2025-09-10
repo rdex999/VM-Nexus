@@ -4,7 +4,8 @@
 # Run the script when you are in the Server directory.
 # Shell postgres login: sudo -u postgres psql postgres
 
-mkdir DiskImages
+mkdir -p DiskImages
+mkdir -p OsDiskImages
 
 if ! sudo -u postgres initdb --locale en_US.UTF-8 -D /var/lib/postgres/data
 then

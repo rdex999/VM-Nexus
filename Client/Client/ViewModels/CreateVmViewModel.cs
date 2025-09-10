@@ -35,7 +35,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	private bool _bootModeIsEnabled = true;
 	
 	[ObservableProperty] 
-	private SharedDefinitions.DriveType _osDriveType = SharedDefinitions.DriveType.NVMe;
+	private SharedDefinitions.DriveType _osDriveType = SharedDefinitions.DriveType.Disk;
     	
 	[ObservableProperty]
 	private bool _osDriveTypeIsEnabled = true;
