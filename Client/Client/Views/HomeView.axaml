@@ -113,7 +113,7 @@
 										</StackPanel>
 
 										<StackPanel HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Bottom">
-											<Button HorizontalAlignment="Center">
+											<Button HorizontalAlignment="Center" Command="{Binding OpenClickCommand}">
 												<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Open</TextBlock>
 											</Button>
 

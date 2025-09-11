@@ -89,7 +89,7 @@
 
 			<Grid RowDefinitions="Auto, *">
 				<StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Background="#ffbdd5e0">
-					<ListBox ItemsSource="{Binding VmTabs}" Background="Transparent">
+					<ListBox ItemsSource="{Binding VmTabs}" Background="Transparent" SelectedItem="{Binding SelectedVmTab}">
 						<ListBox.Styles>
 							<Style Selector="ListBoxItem">
 								<Setter Property="Margin" Value="5" />

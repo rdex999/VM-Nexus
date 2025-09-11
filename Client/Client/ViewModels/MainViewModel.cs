@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -7,6 +8,7 @@ using Client.Services;
 using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Shared;
 using Shared.Networking;
 
 namespace Client.ViewModels;
@@ -18,6 +20,9 @@ public partial class MainViewModel : ViewModelBase
 	public ObservableCollection<SideMenuItemTemplate> SideMenuItems { get; }
 	
 	public ObservableCollection<VmTabTemplate> VmTabs { get; }
+	
+	[ObservableProperty]
+	private VmTabTemplate? _selectedVmTab;
 	
 	[ObservableProperty] 
 	private ViewModelBase _currentPageViewModel;
@@ -49,15 +54,18 @@ public partial class MainViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		AccountMenuTitle = $"Welcome, {username}.";
-		CurrentPageViewModel = new HomeViewModel(navigationSvc, clientSvc);
+		
+		
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
 			new SideMenuItemTemplate("Home", new HomeViewModel(NavigationSvc, ClientSvc), "HomeRegular"),
 			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(NavigationSvc,  ClientSvc), "AddRegular"),
 		};
 		CurrentSideMenuItem = SideMenuItems[0];
+		CurrentPageViewModel = SideMenuItems.First().ViewModel;
+		((HomeViewModel)CurrentPageViewModel).VmOpenClicked += OnVmOpenClicked;
 
-		VmTabs = new ObservableCollection<VmTabTemplate>() { new VmTabTemplate("My first VM"), new VmTabTemplate("My second VM") };
+		VmTabs = new ObservableCollection<VmTabTemplate>();
 
 		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
 		{
@@ -67,6 +75,34 @@ public partial class MainViewModel : ViewModelBase
 		{
 			MenuDisplayMode = SplitViewDisplayMode.CompactInline;
 		}
+	}
+
+	/// <summary>
+	/// Handles a click on one of the VMs Open button. If no open tab for the VM exists, create a new tab. If there is a tab, redirect to it.
+	/// </summary>
+	/// <param name="sender"></param>
+	/// <param name="descriptor">
+	/// A descriptor of the VM that the open button of was clicked. descriptor != null.
+	/// </param>
+	/// <remarks>
+	/// Precondition: User has clicked the Open button on one of its VMs. descriptor != null. <br/>
+	/// Postcondition: If no open tab for the VM exists, create a new tab. If exists, redirect to it.
+	/// </remarks>
+	private void OnVmOpenClicked(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	{
+		/* Check if a tab is already open for this VM */
+		foreach (VmTabTemplate vm in VmTabs)
+		{
+			if (vm.Name == descriptor.Name)		/* If found a that for this VM, redirect to it. */
+			{
+				SelectedVmTab = vm;
+				return;
+			}
+		}
+		
+		/* Here we know there is no open tab for this VM, so create one */
+		VmTabs.Add(new VmTabTemplate(descriptor.Name));
+		SelectedVmTab = VmTabs.Last();
 	}
 
 	/// <summary>

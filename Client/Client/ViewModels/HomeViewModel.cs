@@ -1,11 +1,16 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using Avalonia.Interactivity;
 using Client.Services;
+using CommunityToolkit.Mvvm.Input;
 using Shared;
 
 namespace Client.ViewModels;
 
 public class HomeViewModel : ViewModelBase
 {
+	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? VmOpenClicked;
 	public ObservableCollection<VmItemTemplate> Vms { get; }
 
 	/// <summary>
@@ -28,18 +33,41 @@ public class HomeViewModel : ViewModelBase
 		ClientSvc.VmListChanged += OnVmListChanged;
 	}
 
+	/// <summary>
+	/// Handles a change in the VMs. A change is, for example, that a new VM is available, or the state of one or more VMs has changed.
+	/// </summary>
+	/// <param name="sender"></param>
+	/// <param name="vms">An updated list of the users virtual machines. vms != null.</param>
+	/// <remarks>
+	/// Precondition: There was a change in the information of one or more of the users VMs, or some VMs were created/deleted. vms != null. <br/>
+	/// Postcondition: The change is handled, the virtual machines list is updated along with the UI.
+	/// </remarks>
 	private void OnVmListChanged(object? sender, SharedDefinitions.VmGeneralDescriptor[] vms)
 	{
 		Vms.Clear();
 		foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
 		{
 			Vms.Add(new VmItemTemplate(vm.Name, vm.OperatingSystem, vm.State));
+			Vms.Last().OpenClicked += OnVmOpenClicked;
 		}
+	}
+
+	/// <summary>
+	/// Handles a click on the Open button of one of the users VMs. Open a new tab for the VM. If a tab exists, redirect the user to it.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked the Open button on a VM. <br/>
+	/// Postcondition: A new tab is opened for the VM. If a tab for the VM is already open, the user will be redirected to it.
+	/// </remarks>
+	private void OnVmOpenClicked(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	{
+		VmOpenClicked?.Invoke(this, descriptor);
 	}
 }
 
-public class VmItemTemplate
+public partial class VmItemTemplate
 {
+	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? OpenClicked;
 	public string Name { get; }
 	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
 
@@ -78,5 +106,18 @@ public class VmItemTemplate
 		Name = name;
 		OperatingSystem = operatingSystem;
 		State = state;
+	}
+
+	/// <summary>
+	/// Handles opening the VM - opens a tab for the VM.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked the Open button on a VM. <br/>
+	/// Postcondition: A new tab is opened for the VM. If a tab for the VM is already open, the user will be redirected to it.
+	/// </remarks>
+	[RelayCommand]
+	private void OpenClick()
+	{
+		OpenClicked?.Invoke(this, new SharedDefinitions.VmGeneralDescriptor(Name, OperatingSystem, State));
 	}
 }
