@@ -103,6 +103,8 @@ public partial class MainViewModel : ViewModelBase
 		/* Here we know there is no open tab for this VM, so create one */
 		VmTabs.Add(new VmTabTemplate(descriptor.Name));
 		SelectedVmTab = VmTabs.Last();
+		SideMenuMode(true);
+		CurrentSideMenuItem = SideMenuItems[2];
 	}
 
 	/// <summary>
@@ -137,6 +139,12 @@ public partial class MainViewModel : ViewModelBase
 	{
 		if (value == null)
 			return;
+
+		if (SelectedVmTab == value)
+		{
+			CurrentSideMenuItem = SideMenuItems.First();	/* Redirect to home page. */
+			SideMenuMode(false);
+		}
 		
 		VmTabs.Remove(value);
 	}
@@ -158,6 +166,51 @@ public partial class MainViewModel : ViewModelBase
 		{
 			NavigationSvc.NavigateToView(new LoginView() { DataContext = new LoginViewModel(NavigationSvc, ClientSvc) });
 		}
+	}
+
+	/// <summary>
+	/// Change the mode of the side menu. Not extended is for when there is no selected VM tab, and extended is for when there is a tab selected.
+	/// The extended mode includes more side menu items, such as a screen view of the VM.
+	/// </summary>
+	/// <param name="extended">Whether to set the mode to extended (true) or not extended. (false)</param>
+	/// <remarks>
+	/// Precondition: The user has opened or selected a VM tab, or he has closed its currently selected tab. <br/>
+	/// Postcondition: The side menu has removed or added side menu items based on whether extended is true or false.
+	/// </remarks>
+	private void SideMenuMode(bool extended)
+	{
+		if ((extended && SideMenuItems.Count != 2) || (!extended && SideMenuItems.Count == 2))
+		{
+			return;
+		}
+
+		if (extended)
+		{
+			SideMenuItems.Add(new SideMenuItemTemplate("Screen", new VmScreenViewModel(NavigationSvc, ClientSvc), "DesktopRegular"));
+		}
+		else
+		{
+			SideMenuItems.RemoveAt(SideMenuItems.Count - 1);
+		}
+	}
+
+	/// <summary>
+	/// Called when the currently selected tab has changed. Enables the extended side menu and redirects to the VM screen view page.
+	/// </summary>
+	/// <param name="value">The new VM tab that was selected. value != null.</param>
+	/// <remarks>
+	/// Precondition: User has selected another tab. value != null. <br/>
+	/// Postcondition: The extended side menu is enabled (if not already) and the user is redirected to the VM screen view page.
+	/// </remarks>
+	partial void OnSelectedVmTabChanged(VmTabTemplate? value)
+	{
+		if (value == null)
+		{
+			return;
+		}
+		
+		SideMenuMode(true);
+		CurrentSideMenuItem = SideMenuItems[2];
 	}
 }
 
@@ -192,6 +245,7 @@ public partial class SideMenuItemTemplate : ObservableObject
 		Title = title;
 		ViewModel = viewModel;
 		IconKey = iconGeometry;
+		Icon = null;
 	}
 }
 

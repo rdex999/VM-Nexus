@@ -9,7 +9,7 @@
         <entry key="Client/Client/CustomControls/TemplatedControl1.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
         <entry key="Client/Client/Geometries.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
         <entry key="Client/Client/Resources/Colors.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
-        <entry key="Client/Client/Resources/Geometries.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
+        <entry key="Client/Client/Resources/Geometries.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Resources/Styles.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
         <entry key="Client/Client/Views/CreateAccountView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/CreateVm.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
@@ -20,6 +20,8 @@
         <entry key="Client/Client/Views/MainWindow.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/Styles.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
         <entry key="Client/Client/Views/TemplatedControl1.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
+        <entry key="Client/Client/Views/VmScreen.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
+        <entry key="Client/Client/Views/VmScreenView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Server/Resources/Geometries.axaml" value="Server/Server.csproj" />
         <entry key="Server/Views/MainWindow.axaml" value="Server/Server.csproj" />
       </map>

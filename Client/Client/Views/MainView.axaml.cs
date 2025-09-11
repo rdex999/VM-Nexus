@@ -35,6 +35,7 @@ public partial class MainView : UserControl
 		if (DataContext is MainViewModel viewModel)
 		{
 			viewModel.VmTabs.CollectionChanged += VmTabsOnCollectionChangedAsync;
+			viewModel.SideMenuItems.CollectionChanged += SideMenuItemsOnCollectionChanged;
 			
 			foreach (SideMenuItemTemplate sideMenuItem in viewModel.SideMenuItems)
 			{
@@ -48,12 +49,40 @@ public partial class MainView : UserControl
 			}
 		}
 	}
-	
+
+	/// <summary>
+	/// Handles a change in the side menu items - specifically, addition. Loads the icon geometry for the added items.
+	/// </summary>
+	/// <param name="sender"></param>
+	/// <param name="e">The type of change that has occured.</param>
+	/// <remarks>
+	/// Precondition: User has opened a VM tab or switched to another VM tab. <br/>
+	/// Postcondition: Necessary side menu items are added - their icon geometry is loaded.
+	/// </remarks>
+	private void SideMenuItemsOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+	{
+		if (e.Action != NotifyCollectionChangedAction.Add)
+		{
+			return;
+		}
+		
+		foreach (SideMenuItemTemplate sideMenuItem in e.NewItems!)
+		{
+			if (sideMenuItem.Icon == null && this.TryFindResource(sideMenuItem.IconKey, out object? resource) && resource != null)
+			{
+				if (resource is Geometry geometry)
+				{
+					sideMenuItem.Icon = geometry;
+				}
+			}
+		}
+	}
+
 	/// <summary>
 	/// Handles a change in the VM tabs. Adds an opening animation when opening a tab.
 	/// </summary>
 	/// <param name="sender"></param>
-	/// <param name="e">The type of change that has occurd.</param>
+	/// <param name="e">The type of change that has occured.</param>
 	/// <remarks>
 	/// Precondition: User has opened a tab. <br/>
 	/// Postcondition: Animation has run, the tab is closed.
