@@ -23,6 +23,9 @@ public partial class CreateVmViewModel : ViewModelBase
 	private SharedDefinitions.OperatingSystem _operatingSystem = SharedDefinitions.OperatingSystem.Ubuntu;
 	
 	[ObservableProperty]
+	private bool _osSetupMessageIsVisible = true;
+	
+	[ObservableProperty]
 	private SharedDefinitions.CpuArchitecture _cpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
 	
 	[ObservableProperty]
@@ -55,6 +58,9 @@ public partial class CreateVmViewModel : ViewModelBase
 	
 	[ObservableProperty] 
 	private string _osDriveSizeErrorMessage = string.Empty;
+	
+	[ObservableProperty]
+	private bool _osDriveSettingsIsVisible = true;
 	
 	[ObservableProperty]
 	private bool _createVmButtonIsEnabled = true;
@@ -90,16 +96,42 @@ public partial class CreateVmViewModel : ViewModelBase
 			BootMode = SharedDefinitions.BootMode.Bios;
 			BootModeIsEnabled = false;
 			
-			OsDriveType =  SharedDefinitions.DriveType.Floppy;
+			OsDriveType = SharedDefinitions.DriveType.Floppy;
 			OsDriveTypeIsEnabled = false;
+			OsDriveSizeIsEnabled = true;
+
+			OsSetupMessageIsVisible = false;
+
+			OsDriveSettingsIsVisible = true;
 		}
-		else
+		else if (OperatingSystem == SharedDefinitions.OperatingSystem.Other)
 		{
 			CpuArchitectureIsEnabled = true;
 			BootModeIsEnabled = true;
-			OsDriveTypeIsEnabled = true;
+			
+			OsDriveTypeIsEnabled = false;
+			OsDriveSizeIsEnabled = false;
+			OsSetupMessageIsVisible = false;
+			OsDriveSettingsIsVisible = false;
+		}
+		else
+		{
 			_osDriveSizeMax = 1024 * 256;
 			_osDriveSizeMin = 1024 * 4;
+		
+			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
+			CpuArchitectureIsEnabled = false;
+			
+			BootMode = SharedDefinitions.BootMode.Uefi;
+			BootModeIsEnabled = false;
+			
+			OsDriveType = SharedDefinitions.DriveType.Disk;
+			OsDriveTypeIsEnabled = false;
+			
+			OsDriveSizeIsEnabled = true;
+			OsSetupMessageIsVisible = true;
+
+			OsDriveSettingsIsVisible = true;
 		}
 	}
 
@@ -112,17 +144,6 @@ public partial class CreateVmViewModel : ViewModelBase
 	/// </remarks>
 	public async Task VmCreationInfoChangedAsync()
 	{
-		if (OperatingSystem == SharedDefinitions.OperatingSystem.Other)
-		{
-			OsDriveTypeIsEnabled = false;
-			OsDriveSizeIsEnabled = false;
-		}
-		else
-		{
-			OsDriveTypeIsEnabled = true;
-			OsDriveSizeIsEnabled = true;		
-		}
-		
 		if ((OsDriveSize == null || OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin) && OperatingSystem != SharedDefinitions.OperatingSystem.Other)
 		{
 			OsDriveSizeErrorClass = true;
