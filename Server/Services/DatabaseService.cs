@@ -66,6 +66,13 @@ public class DatabaseService
 		                     type INT
 		                 )
 		                 """);
+		
+		ExecuteNonQuery($"""
+		                 CREATE TABLE IF NOT EXISTS drive_connections (
+		                     drive_id INT REFERENCES drives(id) ON DELETE CASCADE,
+		                     vm_id INT REFERENCES virtual_machines(id) ON DELETE CASCADE
+		                 ) 
+		                 """);
 	}
 
 	/// <summary>
@@ -288,6 +295,37 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Get the ID of a virtual machine registered under the given user.
+	/// </summary>
+	/// <param name="username">The username of the user to search for the VM under. username != null.</param>
+	/// <param name="name">The name of the virtual machine. name != null.</param>
+	/// <returns>On success, the ID of the VM is returned. On failure, -1 is returned.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given username exists. The user has a VM called by the given name. <br/>
+	/// Postcondition: On success, the ID of the virtual machine is returned. On failure, -1 is returned.
+	/// </remarks>
+	public async Task<int> GetVmIdAsync(string username, string name)
+	{
+		int userId = await GetUserIdAsync(username);
+		if (userId == -1)
+		{
+			return -1;
+		}
+		
+		object? id = await ExecuteScalarAsync("SELECT id FROM virtual_machines WHERE owner_id = @owner_id AND name = @name", 
+			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@name", name)
+		);
+		
+		if (id == null)
+		{
+			return -1;
+		}
+		
+		return (int)id;
+	}
+
+	/// <summary>
 	/// Get an array of general virtual machine descriptors of all virtual machines of the user.
 	/// </summary>
 	/// <param name="username">The username of the user to get the VMs of. username != null.</param>
@@ -473,6 +511,87 @@ public class DatabaseService
 		}
 		
 		return ExitCode.DatabaseOperationFailed;
+	}
+
+	/// <summary>
+	/// Registers a drive-VM connection. (Means that when the VM starts, the drive will be connected to it.)
+	/// </summary>
+	/// <param name="username">The username on which to register the connection. username != null.</param>
+	/// <param name="driveName">The name of the drive to connect. driveName != null.</param>
+	/// <param name="vmName">The name of the virtual machine to connect the drive to. vmName != null.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given username exists, a drive with the given name exists,
+	/// a virtual machine with the given name exists, and there is no such drive connection that already exists. <br/>
+	/// username != null &amp;&amp; driveName != null &amp;&amp; vmName != null. <br/>
+	/// Postcondition: On success, the drive connection is registered and the returned exit code states success. <br/>
+	/// On failure, the connection is not registered and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> ConnectDriveAsync(string username, string driveName, string vmName)
+	{
+		Task<int> userIdTask = GetUserIdAsync(username);
+		Task<int> driveIdTask = GetDriveIdAsync(username, driveName);
+		Task<int> vmIdTask = GetVmIdAsync(username, vmName);
+		
+		await Task.WhenAll(userIdTask, driveIdTask, vmIdTask);
+
+		if (userIdTask.Result == -1)
+		{
+			return ExitCode.UserDoesntExist;
+		}
+		if (driveIdTask.Result == -1)
+		{
+			return ExitCode.DriveDoesntExist;
+		}
+		if (vmIdTask.Result == -1)
+		{
+			return ExitCode.VmDoesntExist;
+		}
+		if (await IsDriveConnectionExistsAsync(driveIdTask.Result, vmIdTask.Result))
+		{
+			return ExitCode.DriveAlreadyExists;
+		}
+
+		int rows = await ExecuteNonQueryAsync($"""
+		                                       INSERT INTO drive_connections (drive_id, vm_id)
+		                                       	VALUES (@drive_id, @vm_id)
+		                                       """,
+			new NpgsqlParameter("@drive_id", driveIdTask.Result),
+			new NpgsqlParameter("@vm_id", vmIdTask.Result)
+		);
+
+		if (rows == 1)
+		{
+			return ExitCode.Success;
+		}
+
+		return ExitCode.DatabaseOperationFailed;
+	}
+
+	/// <summary>
+	/// Checks if a drive connection between the given drive and the given VM exists.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to check. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine to check. vmId >= 1.</param>
+	/// <returns>True if the connection exists, false otherwise or on failure.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. A VM with the given ID exists. <br/>
+	/// Postcondition: On success, returned whether the drive connection exists. On failure, returns false.
+	/// </remarks>
+	public async Task<bool> IsDriveConnectionExistsAsync(int driveId, int vmId)
+	{
+		if (driveId < 1 || vmId < 1)
+		{
+			return false;
+		}
+
+		object? exists = await ExecuteScalarAsync(
+			$"SELECT EXISTS (SELECT 1 FROM drive_connections WHERE drive_id = @drive_id AND vm_id = @vm_id)",
+			new NpgsqlParameter("@drive_id", driveId),
+			new NpgsqlParameter("@vm_id", vmId)
+		);
+		
+		return exists != null && (bool)exists;
 	}
 
 	/// <summary>

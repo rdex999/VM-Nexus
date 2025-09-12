@@ -3,6 +3,7 @@ namespace Shared;
 public enum ExitCode
 {
 	Success = 0,
+	InvalidParameter,
 	ServerNoValidLocalhostIp,
 	ConnectionToServerFailed,
 	DisconnectedFromServer,
@@ -15,6 +16,8 @@ public enum ExitCode
 	DatabaseOperationFailed,
 	UserDoesntExist,
 	VmAlreadyExists,
+	VmDoesntExist,
 	DriveAlreadyExists,
-	InvalidParameter,
+	DriveDoesntExist,
+	DriveConnectionAlreadyExists,
 }
