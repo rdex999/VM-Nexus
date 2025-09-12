@@ -203,7 +203,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 		else
 		{
-			if (OperatingSystem != SharedDefinitions.OperatingSystem.MiniCoffeeOS)	/* Temporary */
+			if (OperatingSystem != SharedDefinitions.OperatingSystem.MiniCoffeeOS && OperatingSystem != SharedDefinitions.OperatingSystem.Ubuntu)	/* Temporary */
 			{
 				throw new NotImplementedException();
 			}

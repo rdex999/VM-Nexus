@@ -13,7 +13,7 @@
         <entry key="Client/Client/Resources/Styles.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
         <entry key="Client/Client/Views/CreateAccountView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/CreateVm.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
-        <entry key="Client/Client/Views/CreateVmView.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
+        <entry key="Client/Client/Views/CreateVmView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/HomeView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/LoginView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/MainView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />

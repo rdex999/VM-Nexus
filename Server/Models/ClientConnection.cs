@@ -1,7 +1,13 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Net.Sockets;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using DiscUtils.Partitions;
+using DiscUtils.Raw;
+using DiscUtils.Streams;
 using Server.Services;
 using Shared;
 using Shared.Networking;
@@ -15,6 +21,7 @@ public sealed class ClientConnection : MessagingService
 	private string _username = string.Empty;
 	private readonly DatabaseService _databaseService;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
+	private const string ServerRootDirectory = "../../../";
 
 	/// <summary>
 	/// Creates and initializes the ClientConnection object.
@@ -215,6 +222,8 @@ public sealed class ClientConnection : MessagingService
 				}
 			
 				string diskImageName = $"{driveId}.img";
+				string diskImagePath = ServerRootDirectory + "DiskImages/" + diskImageName;
+				long diskImageSize = (long)reqCreateDrive.Size * 1024 * 1024;		/* The size in bytes */
 				
 				/* TODO: Handle other drive creation scenarios (not only for MiniCoffeeOS) */
 				if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
@@ -234,10 +243,52 @@ public sealed class ClientConnection : MessagingService
 
 					if (exitCode != 0)
 					{
-						await _databaseService.DeleteDriveAsync(_username, driveNameTrimmed);
-						SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
-						break;
+						goto Failure;
 					}
+				}
+				else if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.Ubuntu)
+				{
+					// File.Copy(ServerRootDirectory + "OsDiskImages/ubuntu.raw", diskImagePath);
+					
+					/* This is faster than File.Copy */
+					Process? copyProc = Process.Start(new ProcessStartInfo()
+					{
+						FileName = "/bin/cp",
+						ArgumentList = { ServerRootDirectory + "OsDiskImages/ubuntu.raw", diskImagePath },
+						UseShellExecute = false,
+					});
+					await copyProc!.WaitForExitAsync();
+
+					if (copyProc.ExitCode != 0) goto Failure;
+					
+					await using (FileStream fsResize = new FileStream(diskImagePath, FileMode.Open, FileAccess.Write))
+					{
+						if (diskImageSize > fsResize.Length)
+						{
+							fsResize.SetLength(diskImageSize);
+							fsResize.Flush(true);
+						}
+					}
+
+					Process? sgdiskDeletePartProc = Process.Start(new ProcessStartInfo()
+					{
+						FileName = "/bin/sgdisk",
+						ArgumentList = { "--delete=2", diskImagePath },
+						UseShellExecute = false,
+					});
+					await sgdiskDeletePartProc!.WaitForExitAsync();
+
+					if (sgdiskDeletePartProc.ExitCode != 0) goto Failure;
+					
+					Process? sgdiskNewPartProc = Process.Start(new ProcessStartInfo()
+					{
+						FileName = "/bin/sgdisk",
+						ArgumentList = { "--largest-new=2", diskImagePath },
+						UseShellExecute = false,
+					});
+					await sgdiskNewPartProc!.WaitForExitAsync();
+
+					if (sgdiskNewPartProc.ExitCode != 0) goto Failure;
 				}
 				else
 				{
@@ -245,7 +296,14 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 					break;
 				}
+
 				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success));
+				break;
+				
+				Failure:
+				File.Delete(diskImagePath);
+				await _databaseService.DeleteDriveAsync(_username, driveNameTrimmed);
+				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 				break;
 			}
 
