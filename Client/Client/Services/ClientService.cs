@@ -215,6 +215,29 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Request to register a drive connection between the given drive and the given virtual machine.
+	/// </summary>
+	/// <param name="driveName">The name of the drive to connect. driveName != null.</param>
+	/// <param name="vmName">The name of the virtual machine to connect the drive to. vmName != null.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to server.
+	/// The user has a drive called by the given name, and a virtual machine called by the given name. <br/>
+	/// driveName != null &amp;&amp; vmName != null. <br/>
+	/// Postcondition: On success, the drive connection is registered and the returned status states success. <br/>
+	/// On failure, the drive connection is not registered and the returned status indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseConnectDrive.Status> ConnectDriveAsync(string driveName, string vmName)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnectDrive(true, driveName, vmName));
+		if (result != ExitCode.Success)
+		{
+			return MessageResponseConnectDrive.Status.Failure;
+		}
+		return ((MessageResponseConnectDrive)response!).Result;
+	}
+
+	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
 	/// </summary>
 	/// <param name="token">
