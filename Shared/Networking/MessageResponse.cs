@@ -146,3 +146,23 @@ public class MessageResponseCreateDrive : MessageResponse
 		Failure,
 	}
 }
+
+public class MessageResponseConnectDrive : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseConnectDrive(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		AlreadyConnected,
+		NoSuchDrive,
+		NoSuchVm,
+		Failure,
+	}
+}

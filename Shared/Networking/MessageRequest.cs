@@ -211,3 +211,16 @@ public class MessageRequestCreateDrive : MessageRequest
 		return true;
 	}
 }
+
+public class MessageRequestConnectDrive : MessageRequest	/* Request to mark the drive as connected to some VM. */
+{
+	public string DriveName { get; }
+	public string VmName { get; }
+	
+	public MessageRequestConnectDrive(bool generateGuid, string driveName, string vmName)
+		: base(generateGuid)
+	{
+		DriveName = driveName;
+		VmName = vmName;
+	}
+}
