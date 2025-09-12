@@ -161,8 +161,11 @@ public class MessageResponseConnectDrive : MessageResponse
 	{
 		Success,
 		AlreadyConnected,
-		NoSuchDrive,
-		NoSuchVm,
 		Failure,
+	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 	}
 }

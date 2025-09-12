@@ -248,6 +248,30 @@ public sealed class ClientConnection : MessagingService
 				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success));
 				break;
 			}
+
+			case MessageRequestConnectDrive reqConnectDrive:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, MessageResponseConnectDrive.Status.Failure));
+					break;
+				}
+
+				result = await _databaseService.ConnectDriveAsync(_username, reqConnectDrive.DriveName, reqConnectDrive.VmName);
+				
+				MessageResponseConnectDrive.Status status = MessageResponseConnectDrive.Status.Success;
+				if (result == ExitCode.DriveConnectionAlreadyExists)
+				{
+					status = MessageResponseConnectDrive.Status.AlreadyConnected;
+				}
+				else if (result != ExitCode.Success)
+				{
+					status = MessageResponseConnectDrive.Status.Failure;
+				}
+				
+				SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, status));
+				break;
+			}
 			
 			default:
 			{

@@ -223,4 +223,9 @@ public class MessageRequestConnectDrive : MessageRequest	/* Request to mark the 
 		DriveName = driveName;
 		VmName = vmName;
 	}
+
+	public override bool IsValidMessage()
+	{
+		return base.IsValidMessage() && !string.IsNullOrEmpty(DriveName) && !string.IsNullOrEmpty(VmName);
+	}
 }
