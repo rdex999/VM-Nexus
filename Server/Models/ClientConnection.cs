@@ -349,6 +349,16 @@ public sealed class ClientConnection : MessagingService
 				SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, status));
 				break;
 			}
+
+			case MessageRequestVmStartup reqVmStartup:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
+					break;
+				}
+				break;
+			}
 			
 			default:
 			{
