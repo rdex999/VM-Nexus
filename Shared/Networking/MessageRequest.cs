@@ -229,3 +229,14 @@ public class MessageRequestConnectDrive : MessageRequest	/* Request to mark the 
 		return base.IsValidMessage() && !string.IsNullOrEmpty(DriveName) && !string.IsNullOrEmpty(VmName);
 	}
 }
+
+public class MessageRequestVmStartup : MessageRequest
+{
+	public string VmName { get; }
+
+	public MessageRequestVmStartup(bool generateGuid, string vmName)
+		: base(generateGuid)
+	{
+		VmName = vmName;
+	}
+}

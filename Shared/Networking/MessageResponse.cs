@@ -169,3 +169,21 @@ public class MessageResponseConnectDrive : MessageResponse
 		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 	}
 }
+
+public class MessageResponseVmStartup : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseVmStartup(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		VmAlreadyRunning,
+		Failure,
+	}
+}
