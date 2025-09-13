@@ -246,15 +246,32 @@ public sealed class ClientConnection : MessagingService
 						goto Failure;
 					}
 				}
-				else if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.Ubuntu)
+				else if (reqCreateDrive.OperatingSystem != SharedDefinitions.OperatingSystem.Other)
 				{
-					// File.Copy(ServerRootDirectory + "OsDiskImages/ubuntu.raw", diskImagePath);
+					string osDiskImageName;
+					switch(reqCreateDrive.OperatingSystem)
+					{
+						case SharedDefinitions.OperatingSystem.Ubuntu: 
+							osDiskImageName = "Ubuntu.raw";
+							break;
+						case SharedDefinitions.OperatingSystem.FedoraLinux:
+							osDiskImageName = "Fedora.raw";
+							break;
+						case SharedDefinitions.OperatingSystem.KaliLinux:
+							osDiskImageName = "Kali.raw";
+							break;
+						case SharedDefinitions.OperatingSystem.ManjaroLinux:
+							osDiskImageName = "Manjaro.raw";
+							break;
+						default:
+							goto Failure;		/* This cant be reached because of the if statement above. Doing it for the C# compiler. */
+					}
 					
 					/* This is faster than File.Copy */
 					Process? copyProc = Process.Start(new ProcessStartInfo()
 					{
 						FileName = "/bin/cp",
-						ArgumentList = { ServerRootDirectory + "OsDiskImages/ubuntu.raw", diskImagePath },
+						ArgumentList = { ServerRootDirectory + "OsDiskImages/" + osDiskImageName, diskImagePath },
 						UseShellExecute = false,
 					});
 					await copyProc!.WaitForExitAsync();
@@ -266,24 +283,28 @@ public sealed class ClientConnection : MessagingService
 						if (diskImageSize > fsResize.Length)
 						{
 							fsResize.SetLength(diskImageSize);
-							fsResize.Flush(true);
+							// fsResize.Flush(true);
 						}
 					}
 
+					/* First partition is EFI, second is swap, third is root (ext4). */
+				
+					/* Delete the root partition (doesnt delete its content) because its ending sector is set to the old size. (we want to extend the partition) */
 					Process? sgdiskDeletePartProc = Process.Start(new ProcessStartInfo()
 					{
 						FileName = "/bin/sgdisk",
-						ArgumentList = { "--delete=2", diskImagePath },
+						ArgumentList = { "--delete=3", diskImagePath },
 						UseShellExecute = false,
 					});
 					await sgdiskDeletePartProc!.WaitForExitAsync();
 
 					if (sgdiskDeletePartProc.ExitCode != 0) goto Failure;
-					
+				
+					/* Create the root partition and make it occupy all available space */
 					Process? sgdiskNewPartProc = Process.Start(new ProcessStartInfo()
 					{
 						FileName = "/bin/sgdisk",
-						ArgumentList = { "--largest-new=2", diskImagePath },
+						ArgumentList = { "--largest-new=3", diskImagePath },
 						UseShellExecute = false,
 					});
 					await sgdiskNewPartProc!.WaitForExitAsync();
@@ -292,9 +313,7 @@ public sealed class ClientConnection : MessagingService
 				}
 				else
 				{
-					/* Temporary */
-					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
-					break;
+					goto Failure;	/* Temporary */
 				}
 
 				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success));

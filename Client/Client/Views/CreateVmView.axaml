@@ -43,9 +43,9 @@
 							<TextBlock VerticalAlignment="Center" Classes="form">Operating System</TextBlock>
 							<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="190"
 							          SelectedIndex="{Binding OperatingSystem}" SelectionChanged="OperatingSystemChangedAsync">
-								<ComboBoxItem>Ubuntu</ComboBoxItem>
-								<ComboBoxItem>Kali Linux</ComboBoxItem>
-								<ComboBoxItem>Parrot OS</ComboBoxItem>
+								<ComboBoxItem>Ubuntu 24.04</ComboBoxItem>
+								<ComboBoxItem>Fedora Linux 42</ComboBoxItem>
+								<ComboBoxItem>Kali Linux 2025.2</ComboBoxItem>
 								<ComboBoxItem>Manjaro Linux</ComboBoxItem>
 								<ComboBoxItem>
 									<Grid ColumnDefinitions="*, Auto">
@@ -72,9 +72,9 @@
 							</ComboBox>
 						</Grid>
 						<TextBlock TextWrapping="Wrap" IsVisible="{Binding OsSetupMessageIsVisible}">
-							Log in as setup_user.<LineBreak />
-							The password is "123" for both setup_user and root.<LineBreak />
-							Run the UserAccountSetup.sh script as root, and follow the instructions.
+							Log in as setup-user.<LineBreak/>
+							The password is "123" for both setup-user and root.<LineBreak/>
+							Run the Setup.sh script as root, and follow the instructions. Then log out, and log in as the new user.
 						</TextBlock>
 					</StackPanel>
 
