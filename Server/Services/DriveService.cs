@@ -43,4 +43,72 @@ public class DriveService
 	{
 		return await _databaseService.IsDriveExistsAsync(username, name);
 	}
+
+	/// <summary>
+	/// Get the filename (disk image filename) of a drive that is owned by the given user and named by the given name.
+	/// </summary>
+	/// <param name="username">The username of the user that owns the drive. username != null.</param>
+	/// <param name="name">The name of the drive. name != null.</param>
+	/// <returns>The filename of the drives disk image file. Returns null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given username must exist. The user owns a drive named by the given name.
+	/// username != null &amp;&amp; name != null. <br/>
+	/// Postcondition: On success, the filename of the drives disk image file is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<string?> GetDriveFilenameAsync(string username, string name)
+	{
+		int driveId = await GetDriveIdAsync(username, name);
+		if (driveId == -1)
+		{
+			return null;
+		}
+		
+		return GetDriveFilename(driveId);
+	}
+
+	/// <summary>
+	/// Get the file path (path to the disk image) of a drive that is owned by the given user and named by the given name. <br/>
+	/// Note: The file path is relative to the path of the final server executable
+	/// </summary>
+	/// <param name="username">The username of the user that owns the drive. username != null.</param>
+	/// <param name="name">The name of the drive. name != null.</param>
+	/// <returns>The file path of the drives disk image file. Returns null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given username must exist. The user owns a drive named by the given name.
+	/// username != null &amp;&amp; name != null. <br/>
+	/// Postcondition: On success, the file path of the drives disk image file is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<string?> GetDrivePathAsync(string username, string name)
+	{
+		int driveId = await GetDriveIdAsync(username, name);
+		if (driveId == -1)
+		{
+			return null;
+		}
+
+		return GetDrivePath(driveId);
+	}
+
+	/// <summary>
+	/// Get the filename of a drive (the drives disk image file) that the ID of is the given ID.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive. driveId >= 1.</param>
+	/// <returns>The filename of the disk image file of the drive.</returns>
+	/// <remarks>
+	/// Precondition: driveId >= 1. <br/>
+	/// Postcondition: The filename of the disk image file of the drive is returned.
+	/// </remarks>
+	public string GetDriveFilename(int driveId) => $"{driveId}.img";
+	
+	/// <summary>
+	/// Get the file path of a drive (the drives disk image file path) that the ID of is the given ID. <br/>
+	/// The file path is relative to the path of the final server executable.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive. driveId >= 1.</param>
+	/// <returns>The file path to the disk image file of the drive.</returns>
+	/// <remarks>
+	/// Precondition: driveId >= 1. <br/>
+	/// Postcondition: The file path to the disk image file of the drive is returned.
+	/// </remarks>
+	public string GetDrivePath(int driveId) => "../../../" + GetDriveFilename(driveId);
 }
