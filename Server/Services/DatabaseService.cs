@@ -350,13 +350,8 @@ public class DatabaseService
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
-		if (!reader.Read())
-		{
-			return null;
-		}
-
 		List<SharedDefinitions.VmGeneralDescriptor> descriptors = new List<SharedDefinitions.VmGeneralDescriptor>();
-		do
+		while(reader.Read())
 		{
 			SharedDefinitions.VmGeneralDescriptor descriptor = new SharedDefinitions.VmGeneralDescriptor(
 				reader.GetString(0),
@@ -365,9 +360,41 @@ public class DatabaseService
 			);
 			
 			descriptors.Add(descriptor);
-		} while (reader.Read());
-		
+		}
 		return descriptors.ToArray();
+	}
+
+	/// <summary>
+	/// Get the state of a virtual machine.
+	/// </summary>
+	/// <param name="username">The username of the user that owns the virtual machine. username != null</param>
+	/// <param name="vmName">The name of the virtual machine to check the state of. vmName != null.</param>
+	/// <returns>The state of the virtual machine, or -1 on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user exists with the given username. The user has a virtual machine with the given name.<br/>
+	/// username != null &amp;&amp; vmName != null <br/>
+	/// Postcondition: On success, the state of the virtual machine is returned. On failure, -1 is returned.
+	/// </remarks>
+	public async Task<SharedDefinitions.VmState> GetVmStateAsync(string username, string vmName)
+	{
+		int userId = await GetUserIdAsync(username);
+		if (userId == -1)
+		{
+			return (SharedDefinitions.VmState)(-1);
+		}
+
+		object? state = await ExecuteScalarAsync(
+			"SELECT state FROM virtual_machines WHERE owner_id = @owner_id AND name = @name",
+			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@name", vmName)
+		);
+
+		if (state == null)
+		{
+			return (SharedDefinitions.VmState)(-1);
+		}
+		
+		return (SharedDefinitions.VmState)state;
 	}
 
 	/// <summary>

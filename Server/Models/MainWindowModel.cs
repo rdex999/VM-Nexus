@@ -15,6 +15,7 @@ public class MainWindowModel
 	private CancellationTokenSource? _listenerCts;
 	private LinkedList<ClientConnection>? _clients;	
 	private DatabaseService? _databaseService;
+	private VirtualMachineService? _virtualMachineService;
 
 	/// <summary>
 	/// Starts the server.
@@ -39,6 +40,8 @@ public class MainWindowModel
 		{
 			return ExitCode.DatabaseStartupFailed;
 		}
+
+		_virtualMachineService = new VirtualMachineService(_databaseService);
 		
 		/* Socket initialization and listening */
 		IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());		/* Get local host ip addresses */
@@ -124,7 +127,7 @@ public class MainWindowModel
 			{
 				Socket clientSocket = socket.Accept();						/* There is a client in the queue, accept him */
 			
-				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService!);
+				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService!, _virtualMachineService!);
 				clientConnection.Disconnected += DisconnectedHandler;
 				_clients!.AddLast(clientConnection);
 			}

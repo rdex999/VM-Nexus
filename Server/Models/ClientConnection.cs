@@ -20,6 +20,7 @@ public sealed class ClientConnection : MessagingService
 	private bool _isLoggedIn = false;
 	private string _username = string.Empty;
 	private readonly DatabaseService _databaseService;
+	private readonly VirtualMachineService _virtualMachineService;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
 	private const string ServerRootDirectory = "../../../";
 
@@ -32,13 +33,18 @@ public sealed class ClientConnection : MessagingService
 	/// <param name="databaseService">
 	/// A reference to the database service. databaseService != null.
 	/// </param>
+	/// <param name="virtualMachineService">
+	/// A reference to the virtual machine service. virtualMachineService != null.
+	/// </param>
 	/// <remarks>
-	/// Precondition: Client has connected to the server. socket != null &amp;&amp; databaseService != null. <br/>
+	/// Precondition: Client has connected to the server.
+	/// socket != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null.<br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
-	public ClientConnection(Socket socket, DatabaseService databaseService)
+	public ClientConnection(Socket socket, DatabaseService databaseService, VirtualMachineService virtualMachineService)
 	{
 		_databaseService = databaseService;
+		_virtualMachineService = virtualMachineService;
 		Initialize(socket);
 		IsServiceInitialized = true;
 		CommunicationThread!.Start();
@@ -357,6 +363,19 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
 					break;
 				}
+				SharedDefinitions.VmState vmState = await _virtualMachineService.GetVmStateAsync(_username, reqVmStartup.VmName);
+				if (vmState == (SharedDefinitions.VmState)(-1))
+				{
+					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
+					break;
+				}
+
+				if (vmState == SharedDefinitions.VmState.Running)
+				{
+					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.VmAlreadyRunning));
+					break;				
+				}
+				
 				break;
 			}
 			
