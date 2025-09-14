@@ -162,7 +162,8 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 			
-				result = await _databaseService.CreateVmAsync(_username, reqCreateVm.Name.Trim(), reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, reqCreateVm.BootMode);
+				result = await _virtualMachineService.CreateVirtualMachineAsync(_username, reqCreateVm.Name.Trim(), 
+					reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, reqCreateVm.BootMode);
 				
 				if (result == ExitCode.VmAlreadyExists)
 				{
@@ -191,11 +192,34 @@ public sealed class ClientConnection : MessagingService
 			case MessageRequestCheckVmExist reqCheckVmExist:
 			{
 				SendResponse(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 
-					_isLoggedIn && await _databaseService.IsVmExistsAsync(_username, reqCheckVmExist.Name.Trim()))
+					_isLoggedIn && await _virtualMachineService.IsVmExistsAsync(_username, reqCheckVmExist.Name.Trim()))
 				);
 				break;
 			}
 
+			case MessageRequestVmStartup reqVmStartup:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
+					break;
+				}
+				SharedDefinitions.VmState vmState = await _virtualMachineService.GetVmStateAsync(_username, reqVmStartup.VmName);
+				if (vmState == (SharedDefinitions.VmState)(-1))
+				{
+					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
+					break;
+				}
+
+				if (vmState == SharedDefinitions.VmState.Running)
+				{
+					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.VmAlreadyRunning));
+					break;
+				}
+				
+				break;
+			}
+			
 			case MessageRequestCreateDrive reqCreateDrive:
 			{
 				if (!_isLoggedIn)
@@ -356,29 +380,6 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
-			case MessageRequestVmStartup reqVmStartup:
-			{
-				if (!_isLoggedIn)
-				{
-					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
-					break;
-				}
-				SharedDefinitions.VmState vmState = await _virtualMachineService.GetVmStateAsync(_username, reqVmStartup.VmName);
-				if (vmState == (SharedDefinitions.VmState)(-1))
-				{
-					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
-					break;
-				}
-
-				if (vmState == SharedDefinitions.VmState.Running)
-				{
-					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.VmAlreadyRunning));
-					break;				
-				}
-				
-				break;
-			}
-			
 			default:
 			{
 				result = ExitCode.Success;
