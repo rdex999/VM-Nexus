@@ -35,7 +35,8 @@ public class DatabaseService
 	{
 		try
 		{
-			Task crtUsers = ExecuteNonQueryAsync($"""
+			/* Because these tables depend upon each other, I can not create them at the same time. */
+			await ExecuteNonQueryAsync($"""
 			                                      CREATE TABLE IF NOT EXISTS users (
 			                                          id SERIAL PRIMARY KEY,
 			                                          username VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL, 
@@ -45,7 +46,7 @@ public class DatabaseService
 			                                      )
 			                                      """);
 
-			Task crtVirtualMachines = ExecuteNonQueryAsync($"""
+			await ExecuteNonQueryAsync($"""
 			                                                CREATE TABLE IF NOT EXISTS virtual_machines (
 			                                                    id SERIAL PRIMARY KEY,
 			                                                    name VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL,
@@ -57,7 +58,7 @@ public class DatabaseService
 			                                                )
 			                                                """);
 
-			Task crtDrives = ExecuteNonQueryAsync($"""
+			await ExecuteNonQueryAsync($"""
 			                                       CREATE TABLE IF NOT EXISTS drives (
 			                                           id SERIAL PRIMARY KEY,
 			                                           name VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL,
@@ -67,7 +68,7 @@ public class DatabaseService
 			                                       )
 			                                       """);
 
-			Task crtDriveConnections = ExecuteNonQueryAsync($"""
+			await ExecuteNonQueryAsync($"""
 			                                                 CREATE TABLE IF NOT EXISTS drive_connections (
 			                                                     drive_id INT NOT NULL REFERENCES drives(id) ON DELETE CASCADE,
 			                                                     vm_id INT NOT NULL REFERENCES virtual_machines(id) ON DELETE CASCADE,
@@ -75,7 +76,6 @@ public class DatabaseService
 			                                                 ) 
 			                                                 """);
 
-			await Task.WhenAll(crtUsers, crtVirtualMachines, crtDrives, crtDriveConnections);
 			return ExitCode.Success;
 		}
 		catch (Exception)

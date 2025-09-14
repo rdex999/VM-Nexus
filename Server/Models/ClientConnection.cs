@@ -1,13 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net.Sockets;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using DiscUtils.Partitions;
-using DiscUtils.Raw;
-using DiscUtils.Streams;
 using Server.Services;
 using Shared;
 using Shared.Networking;
@@ -21,6 +16,7 @@ public sealed class ClientConnection : MessagingService
 	private string _username = string.Empty;
 	private readonly DatabaseService _databaseService;
 	private readonly VirtualMachineService _virtualMachineService;
+	private readonly DriveService _driveService;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
 	private const string ServerRootDirectory = "../../../";
 
@@ -41,10 +37,11 @@ public sealed class ClientConnection : MessagingService
 	/// socket != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null.<br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
-	public ClientConnection(Socket socket, DatabaseService databaseService, VirtualMachineService virtualMachineService)
+	public ClientConnection(Socket socket, DatabaseService databaseService, VirtualMachineService virtualMachineService, DriveService driveService)
 	{
 		_databaseService = databaseService;
 		_virtualMachineService = virtualMachineService;
+		_driveService = driveService;
 		Initialize(socket);
 		IsServiceInitialized = true;
 		CommunicationThread!.Start();
@@ -230,127 +227,27 @@ public sealed class ClientConnection : MessagingService
 				
 				string driveNameTrimmed = reqCreateDrive.Name.Trim();
 
-				result = await _databaseService.CreateDriveAsync(_username, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type);
-				
-				if (result == ExitCode.DriveAlreadyExists)
+				if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.Other)
 				{
-					SendResponse(new MessageResponseCreateDrive(true,  reqCreateDrive.Id, MessageResponseCreateDrive.Status.AlreadyExistsWithName));
-					break;			
-				}
-				if (result != ExitCode.Success)
-				{
+					/* Temporary */
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
-					break;				
-				}
-			
-				int driveId = await _databaseService.GetDriveIdAsync(_username, driveNameTrimmed);
-				if (driveId == -1)
-				{
-					await _databaseService.DeleteDriveAsync(_username, driveNameTrimmed);
-					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
-					break;			
-				}
-			
-				string diskImageName = $"{driveId}.img";
-				string diskImagePath = ServerRootDirectory + "DiskImages/" + diskImageName;
-				long diskImageSize = (long)reqCreateDrive.Size * 1024 * 1024;		/* The size in bytes */
-				
-				if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
-				{
-					Process process  = new Process()
-					{
-						StartInfo = new ProcessStartInfo()
-						{
-							FileName = "/usr/bin/make",
-							Arguments = $" -C ../../../MiniCoffeeOS FDA=../DiskImages/{diskImageName} FDA_SIZE={reqCreateDrive.Size}",
-						},
-					};
-					process.Start();
-					await process.WaitForExitAsync();
-					int exitCode = process.ExitCode;
-					process.Dispose();
-
-					if (exitCode != 0)
-					{
-						goto Failure;
-					}
-				}
-				else if (reqCreateDrive.OperatingSystem != SharedDefinitions.OperatingSystem.Other)
-				{
-					string osDiskImageName;
-					switch(reqCreateDrive.OperatingSystem)
-					{
-						case SharedDefinitions.OperatingSystem.Ubuntu: 
-							osDiskImageName = "Ubuntu.raw";
-							break;
-						case SharedDefinitions.OperatingSystem.FedoraLinux:
-							osDiskImageName = "Fedora.raw";
-							break;
-						case SharedDefinitions.OperatingSystem.KaliLinux:
-							osDiskImageName = "Kali.raw";
-							break;
-						case SharedDefinitions.OperatingSystem.ManjaroLinux:
-							osDiskImageName = "Manjaro.raw";
-							break;
-						default:
-							goto Failure;		/* This cant be reached because of the if statement above. Doing it for the C# compiler. */
-					}
-					
-					/* This is faster than File.Copy */
-					Process? copyProc = Process.Start(new ProcessStartInfo()
-					{
-						FileName = "/bin/cp",
-						ArgumentList = { ServerRootDirectory + "OsDiskImages/" + osDiskImageName, diskImagePath },
-						UseShellExecute = false,
-					});
-					await copyProc!.WaitForExitAsync();
-
-					if (copyProc.ExitCode != 0) goto Failure;
-					
-					await using (FileStream fsResize = new FileStream(diskImagePath, FileMode.Open, FileAccess.Write))
-					{
-						if (diskImageSize > fsResize.Length)
-						{
-							fsResize.SetLength(diskImageSize);
-							// fsResize.Flush(true);
-						}
-					}
-
-					/* First partition is EFI, second is swap, third is root (ext4). */
-				
-					/* Delete the root partition (doesnt delete its content) because its ending sector is set to the old size. (we want to extend the partition) */
-					Process? sgdiskDeletePartProc = Process.Start(new ProcessStartInfo()
-					{
-						FileName = "/bin/sgdisk",
-						ArgumentList = { "--delete=3", diskImagePath },
-						UseShellExecute = false,
-					});
-					await sgdiskDeletePartProc!.WaitForExitAsync();
-
-					if (sgdiskDeletePartProc.ExitCode != 0) goto Failure;
-				
-					/* Create the root partition and make it occupy all available space */
-					Process? sgdiskNewPartProc = Process.Start(new ProcessStartInfo()
-					{
-						FileName = "/bin/sgdisk",
-						ArgumentList = { "--largest-new=3", diskImagePath },
-						UseShellExecute = false,
-					});
-					await sgdiskNewPartProc!.WaitForExitAsync();
-
-					if (sgdiskNewPartProc.ExitCode != 0) goto Failure;
 				}
 				else
 				{
-					goto Failure;	/* Temporary */
+					result = await _driveService.CreateOperatingSystemDriveAsync(_username, driveNameTrimmed, reqCreateDrive.OperatingSystem, reqCreateDrive.Size);
+				}
+				
+				if (result == ExitCode.DriveAlreadyExists)
+				{
+					SendResponse(new MessageResponseCreateDrive(true,  reqCreateDrive.Id, MessageResponseCreateDrive.Status.DriveAlreadyExists));
+					break;			
+				}
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success));
+					break;				
 				}
 
-				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success));
-				break;
-				
-				Failure:
-				File.Delete(diskImagePath);
-				await _databaseService.DeleteDriveAsync(_username, driveNameTrimmed);
 				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
 				break;
 			}
@@ -363,7 +260,8 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				result = await _databaseService.ConnectDriveAsync(_username, reqConnectDrive.DriveName, reqConnectDrive.VmName);
+				result = await _driveService.ConnectDriveAsync(_username, reqConnectDrive.DriveName.Trim(),
+					reqConnectDrive.VmName.Trim());
 				
 				MessageResponseConnectDrive.Status status = MessageResponseConnectDrive.Status.Success;
 				if (result == ExitCode.DriveConnectionAlreadyExists)

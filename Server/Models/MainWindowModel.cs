@@ -17,12 +17,14 @@ public class MainWindowModel
 	private LinkedList<ClientConnection> _clients;	
 	private DatabaseService _databaseService;
 	private VirtualMachineService _virtualMachineService;
+	private DriveService _driveService;
 
 	public MainWindowModel()
 	{
 		_clients = new LinkedList<ClientConnection>();
 		_databaseService = new DatabaseService();
 		_virtualMachineService = new VirtualMachineService(_databaseService);
+		_driveService = new DriveService(_databaseService);
 	}
 	
 	/// <summary>
@@ -124,7 +126,7 @@ public class MainWindowModel
 			{
 				Socket clientSocket = socket.Accept();						/* There is a client in the queue, accept him */
 			
-				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService, _virtualMachineService);
+				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService, _virtualMachineService, _driveService);
 				clientConnection.Disconnected += DisconnectedHandler;
 				_clients.AddLast(clientConnection);
 			}

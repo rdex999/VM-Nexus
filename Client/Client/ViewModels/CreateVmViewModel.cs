@@ -216,7 +216,7 @@ public partial class CreateVmViewModel : ViewModelBase
 
 			if (taskCreateVm.Result == MessageResponseCreateVm.Status.Success)
 			{
-				if (createDriveResult == MessageResponseCreateDrive.Status.AlreadyExistsWithName)
+				if (createDriveResult == MessageResponseCreateDrive.Status.DriveAlreadyExists)
 				{
 					/* Search for an available drive name and use it. */
 					int cnt = 0;
@@ -224,7 +224,7 @@ public partial class CreateVmViewModel : ViewModelBase
 					{
 						createDriveResult = await ClientSvc.CreateDriveAsync(driveName + "_" + cnt++, OsDriveType,
 							OsDriveSize!.Value, OperatingSystem);
-					} while (createDriveResult == MessageResponseCreateDrive.Status.AlreadyExistsWithName);
+					} while (createDriveResult == MessageResponseCreateDrive.Status.DriveAlreadyExists);
 				}
 				
 				if (createDriveResult == MessageResponseCreateDrive.Status.Success)

@@ -20,4 +20,5 @@ public enum ExitCode
 	DriveAlreadyExists,
 	DriveDoesntExist,
 	DriveConnectionAlreadyExists,
+	DiskImageCreationFailed,
 }

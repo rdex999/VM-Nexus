@@ -142,7 +142,7 @@ public class MessageResponseCreateDrive : MessageResponse
 	public enum Status
 	{
 		Success,
-		AlreadyExistsWithName,
+		DriveAlreadyExists,
 		Failure,
 	}
 }
