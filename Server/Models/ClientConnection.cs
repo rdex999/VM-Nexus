@@ -255,7 +255,6 @@ public sealed class ClientConnection : MessagingService
 				string diskImagePath = ServerRootDirectory + "DiskImages/" + diskImageName;
 				long diskImageSize = (long)reqCreateDrive.Size * 1024 * 1024;		/* The size in bytes */
 				
-				/* TODO: Handle other drive creation scenarios (not only for MiniCoffeeOS) */
 				if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
 				{
 					Process process  = new Process()
