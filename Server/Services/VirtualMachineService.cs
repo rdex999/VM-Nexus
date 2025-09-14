@@ -71,4 +71,24 @@ public class VirtualMachineService
 	{
 		return await _databaseService.IsVmExistsAsync(username, name);
 	}
+
+	public async Task<ExitCode> StartVirtualMachineAsync(string username, string name)
+	{
+		Task<bool> userExists = _databaseService.IsUserExistAsync(username);
+		Task<VirtualMachineDescriptor?> vmDescriptor = _databaseService.GetVmDescriptorAsync(username, name);
+		await Task.WhenAll(userExists, vmDescriptor);
+
+		if (!userExists.Result)
+		{
+			return ExitCode.UserDoesntExist;
+		}
+		if (vmDescriptor.Result == null)
+		{
+			return ExitCode.VmDoesntExist;
+		}
+	
+		
+		
+		return ExitCode.Success;
+	}
 }

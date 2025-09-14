@@ -4,11 +4,11 @@ namespace Server.VirtualMachines;
 
 public class VirtualMachineDescriptor
 {
-	public string Name;
-	public SharedDefinitions.OperatingSystem OperatingSystem;
-	public SharedDefinitions.CpuArchitecture CpuArchitecture;
-	public SharedDefinitions.BootMode BootMode;
-	public SharedDefinitions.VmState VmState;
+	public string Name { get; }
+	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
+	public SharedDefinitions.CpuArchitecture CpuArchitecture { get; }
+	public SharedDefinitions.BootMode BootMode { get; }
+	public SharedDefinitions.VmState VmState { get; }
 
 	public VirtualMachineDescriptor(string name, SharedDefinitions.OperatingSystem operatingSystem,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode,
