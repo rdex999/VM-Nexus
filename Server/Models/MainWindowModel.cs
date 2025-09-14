@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using Server.Services;
 using Shared;
 
@@ -13,10 +14,17 @@ public class MainWindowModel
 {
 	private Thread? _listener;
 	private CancellationTokenSource? _listenerCts;
-	private LinkedList<ClientConnection>? _clients;	
-	private DatabaseService? _databaseService;
-	private VirtualMachineService? _virtualMachineService;
+	private LinkedList<ClientConnection> _clients;	
+	private DatabaseService _databaseService;
+	private VirtualMachineService _virtualMachineService;
 
+	public MainWindowModel()
+	{
+		_clients = new LinkedList<ClientConnection>();
+		_databaseService = new DatabaseService();
+		_virtualMachineService = new VirtualMachineService(_databaseService);
+	}
+	
 	/// <summary>
 	/// Starts the server.
 	/// </summary>
@@ -28,20 +36,15 @@ public class MainWindowModel
 	/// Postcondition: On success, the returned exit code will indicate success, and the server will be running and listening for clients. <br/>
 	/// On failure, the returned exit code will indicate the error, and the server will not be running.
 	/// </remarks>
-	public ExitCode ServerStart()
+	public async Task<ExitCode> ServerStartAsync()
 	{
 		_listenerCts = new CancellationTokenSource();
 
-		try
+		ExitCode status = await _databaseService.InitializeAsync();
+		if(status != ExitCode.Success)
 		{
-			_databaseService = new DatabaseService();	
+			return status;
 		}
-		catch (Exception)
-		{
-			return ExitCode.DatabaseStartupFailed;
-		}
-
-		_virtualMachineService = new VirtualMachineService(_databaseService);
 		
 		/* Socket initialization and listening */
 		IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());		/* Get local host ip addresses */
@@ -87,19 +90,13 @@ public class MainWindowModel
 			_listener.Join();
 		}
 
-		if (_clients != null)
+		while (_clients.FirstOrDefault() != null)
 		{
-			while (_clients.FirstOrDefault() != null)
-			{
-				ClientConnection clientConnection = _clients.First();
-				clientConnection.Disconnect();
-			}
+			ClientConnection clientConnection = _clients.First();
+			clientConnection.Disconnect();
 		}
 
-		if (_databaseService != null)
-		{
-			_databaseService.Close();
-		}
+		_databaseService.Close();
 
 		return ExitCode.Success;
 	}
@@ -127,9 +124,9 @@ public class MainWindowModel
 			{
 				Socket clientSocket = socket.Accept();						/* There is a client in the queue, accept him */
 			
-				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService!, _virtualMachineService!);
+				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService, _virtualMachineService);
 				clientConnection.Disconnected += DisconnectedHandler;
-				_clients!.AddLast(clientConnection);
+				_clients.AddLast(clientConnection);
 			}
 		}
 		socket.Close();
@@ -154,7 +151,7 @@ public class MainWindowModel
 		if (client != null)
 		{
 			client.Disconnected -= DisconnectedHandler;
-			_clients!.Remove(client);
+			_clients.Remove(client);
 		}
 	}
 }

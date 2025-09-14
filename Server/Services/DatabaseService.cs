@@ -22,57 +22,63 @@ public class DatabaseService
 	private const int Argon2Threads = 2;
 	
 	/// <summary>
-	/// Creates the database service object and initializes a connection.
+	/// Initializes the database service and establishes a connection tp the database.
 	/// </summary>
 	/// <remarks>
 	/// Precondition: No specific precondition. <br/>
-	/// Postcondition: On success, the service is connected to the database and fully initialized. <br/>
-	/// On failure, an exception is raised. and the service should be considered as not initialized.
+	/// Postcondition: On success, the service is connected to the database and fully initialized, and the returned exit code indicates success. <br/>
+	/// On failure, the service is not initialized and the returned exit code indicates the failure.
 	/// </remarks>
-	public DatabaseService()
+	public async Task<ExitCode> InitializeAsync()
 	{
-		#if DEBUG
-			// ExecuteNonQuery("DROP TABLE IF EXISTS users;");
-		#endif
+		try
+		{
+			Task<int> crtUsers = ExecuteNonQueryAsync($"""
+			                                           CREATE TABLE IF NOT EXISTS users (
+			                                               id SERIAL PRIMARY KEY,
+			                                               username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
+			                                               email VARCHAR(254),
+			                                               password_hashed BYTEA, 
+			                                               password_salt BYTEA
+			                                           )
+			                                           """);
 
-		ExecuteNonQuery($"""
-		                 CREATE TABLE IF NOT EXISTS users (
-		                     id SERIAL PRIMARY KEY,
-		                     username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
-		                     email VARCHAR(254),
-		                     password_hashed BYTEA, 
-		                     password_salt BYTEA
-		                 )
-		                 """);
+			Task<int> crtVirtualMachines = ExecuteNonQueryAsync($"""
+			                                                     CREATE TABLE IF NOT EXISTS virtual_machines (
+			                                                         id SERIAL PRIMARY KEY,
+			                                                         name VARCHAR({SharedDefinitions.CredentialsMaxLength}),
+			                                                         owner_id INT REFERENCES users(id) ON DELETE CASCADE,
+			                                                         operating_system INT,
+			                                                         cpu_architecture INT,
+			                                                         boot_mode INT,
+			                                                         state INT
+			                                                     )
+			                                                     """);
 
-		ExecuteNonQuery($"""
-		                 CREATE TABLE IF NOT EXISTS virtual_machines (
-		                     id SERIAL PRIMARY KEY,
-		                     name VARCHAR({SharedDefinitions.CredentialsMaxLength}),
-		                     owner_id INT REFERENCES users(id) ON DELETE CASCADE,
-		                     operating_system INT,
-		                     cpu_architecture INT,
-		                     boot_mode INT,
-		                     state INT
-		                 )
-		                 """);
+			Task<int> crtDrives = ExecuteNonQueryAsync($"""
+			                                            CREATE TABLE IF NOT EXISTS drives (
+			                                                id SERIAL PRIMARY KEY,
+			                                                name VARCHAR({SharedDefinitions.CredentialsMaxLength}),
+			                                                owner_id INT REFERENCES users(id) ON DELETE CASCADE,
+			                                                size INT,
+			                                                type INT
+			                                            )
+			                                            """);
 
-		ExecuteNonQuery($"""
-		                 CREATE TABLE IF NOT EXISTS drives (
-		                     id SERIAL PRIMARY KEY,
-		                     name VARCHAR({SharedDefinitions.CredentialsMaxLength}),
-		                     owner_id INT REFERENCES users(id) ON DELETE CASCADE,
-		                     size INT,
-		                     type INT
-		                 )
-		                 """);
-		
-		ExecuteNonQuery($"""
-		                 CREATE TABLE IF NOT EXISTS drive_connections (
-		                     drive_id INT REFERENCES drives(id) ON DELETE CASCADE,
-		                     vm_id INT REFERENCES virtual_machines(id) ON DELETE CASCADE
-		                 ) 
-		                 """);
+			Task<int> crtDriveConnections = ExecuteNonQueryAsync($"""
+			                                                      CREATE TABLE IF NOT EXISTS drive_connections (
+			                                                          drive_id INT REFERENCES drives(id) ON DELETE CASCADE,
+			                                                          vm_id INT REFERENCES virtual_machines(id) ON DELETE CASCADE
+			                                                      ) 
+			                                                      """);
+
+			await Task.WhenAll(crtUsers, crtVirtualMachines, crtDrives, crtDriveConnections);
+			return ExitCode.Success;
+		}
+		catch (Exception)
+		{
+			return ExitCode.DatabaseStartupFailed;
+		}
 	}
 
 	/// <summary>

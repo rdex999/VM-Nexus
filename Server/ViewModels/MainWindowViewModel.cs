@@ -1,4 +1,5 @@
-﻿using Avalonia.Controls.ApplicationLifetimes;
+﻿using System.Threading.Tasks;
+using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Server.Models;
@@ -54,11 +55,11 @@ public partial class MainWindowViewModel : ViewModelBase
 	/// If the server fails to start/ shutdown, the server on/off toggle button will not change its toggle state.
 	/// </remarks>
 	[RelayCommand]
-	private void ServerStateToggleChanged(bool isToggled)
+	private async Task ServerStateToggleChangedAsync(bool isToggled)
 	{
 		if (isToggled)
 		{
-			ExitCode result = _mainWindowModel.ServerStart();
+			ExitCode result = await _mainWindowModel.ServerStartAsync();
 			if (result != ExitCode.Success)
 			{
 				/* TODO: Add logic to display error message */
