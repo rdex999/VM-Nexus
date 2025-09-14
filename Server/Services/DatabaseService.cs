@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Konscious.Security.Cryptography;
 using Npgsql;
 using NpgsqlTypes;
+using Server.Drives;
 using Server.VirtualMachines;
 using Shared;
 
@@ -34,44 +35,45 @@ public class DatabaseService
 	{
 		try
 		{
-			Task<int> crtUsers = ExecuteNonQueryAsync($"""
-			                                           CREATE TABLE IF NOT EXISTS users (
-			                                               id SERIAL PRIMARY KEY,
-			                                               username VARCHAR({SharedDefinitions.CredentialsMaxLength}), 
-			                                               email VARCHAR(254),
-			                                               password_hashed BYTEA, 
-			                                               password_salt BYTEA
-			                                           )
-			                                           """);
+			Task crtUsers = ExecuteNonQueryAsync($"""
+			                                      CREATE TABLE IF NOT EXISTS users (
+			                                          id SERIAL PRIMARY KEY,
+			                                          username VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL, 
+			                                          email VARCHAR(254) NOT NULL,
+			                                          password_hashed BYTEA NOT NULL, 
+			                                          password_salt BYTEA NOT NULL
+			                                      )
+			                                      """);
 
-			Task<int> crtVirtualMachines = ExecuteNonQueryAsync($"""
-			                                                     CREATE TABLE IF NOT EXISTS virtual_machines (
-			                                                         id SERIAL PRIMARY KEY,
-			                                                         name VARCHAR({SharedDefinitions.CredentialsMaxLength}),
-			                                                         owner_id INT REFERENCES users(id) ON DELETE CASCADE,
-			                                                         operating_system INT,
-			                                                         cpu_architecture INT,
-			                                                         boot_mode INT,
-			                                                         state INT
-			                                                     )
-			                                                     """);
+			Task crtVirtualMachines = ExecuteNonQueryAsync($"""
+			                                                CREATE TABLE IF NOT EXISTS virtual_machines (
+			                                                    id SERIAL PRIMARY KEY,
+			                                                    name VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL,
+			                                                    owner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			                                                    operating_system INT NOT NULL,
+			                                                    cpu_architecture INT NOT NULL,
+			                                                    boot_mode INT NOT NULL,
+			                                                    state INT NOT NULL
+			                                                )
+			                                                """);
 
-			Task<int> crtDrives = ExecuteNonQueryAsync($"""
-			                                            CREATE TABLE IF NOT EXISTS drives (
-			                                                id SERIAL PRIMARY KEY,
-			                                                name VARCHAR({SharedDefinitions.CredentialsMaxLength}),
-			                                                owner_id INT REFERENCES users(id) ON DELETE CASCADE,
-			                                                size INT,
-			                                                type INT
-			                                            )
-			                                            """);
+			Task crtDrives = ExecuteNonQueryAsync($"""
+			                                       CREATE TABLE IF NOT EXISTS drives (
+			                                           id SERIAL PRIMARY KEY,
+			                                           name VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL,
+			                                           owner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			                                           size INT NOT NULL,
+			                                           type INT NOT NULL
+			                                       )
+			                                       """);
 
-			Task<int> crtDriveConnections = ExecuteNonQueryAsync($"""
-			                                                      CREATE TABLE IF NOT EXISTS drive_connections (
-			                                                          drive_id INT REFERENCES drives(id) ON DELETE CASCADE,
-			                                                          vm_id INT REFERENCES virtual_machines(id) ON DELETE CASCADE
-			                                                      ) 
-			                                                      """);
+			Task crtDriveConnections = ExecuteNonQueryAsync($"""
+			                                                 CREATE TABLE IF NOT EXISTS drive_connections (
+			                                                     drive_id INT NOT NULL REFERENCES drives(id) ON DELETE CASCADE,
+			                                                     vm_id INT NOT NULL REFERENCES virtual_machines(id) ON DELETE CASCADE,
+			                                                     PRIMARY KEY (drive_id, vm_id)
+			                                                 ) 
+			                                                 """);
 
 			await Task.WhenAll(crtUsers, crtVirtualMachines, crtDrives, crtDriveConnections);
 			return ExitCode.Success;
@@ -664,6 +666,50 @@ public class DatabaseService
 		);
 		
 		return exists != null && (bool)exists;
+	}
+
+	/// <summary>
+	/// Get all drives associated with a virtual machine.
+	/// </summary>
+	/// <param name="username">The username of the user that owns the virtual machine. username != null.</param>
+	/// <param name="vmName">The name of the virtual machine that the drives are attached to. vmName != null.</param>
+	/// <returns>An array of drive descriptors, describing each drive that is connected to the virtual machine. Returns null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given username exists. The user has a virtual machine with the given name.
+	/// username != null &amp;&amp; vmName != null. <br/>
+	/// Postcondition: On success, an array of drive descriptors is returned, describing each drive that is connected to the virtual machine.
+	/// On failure, null is returned.
+	/// </remarks>
+	public async Task<DriveDescriptor[]?> GetVmDriveDescriptorsAsync(string username, string vmName)
+	{
+		int vmId = await GetVmIdAsync(username, vmName);
+		if (vmId == -1)
+		{
+			return null;
+		}
+
+		NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		                                                    SELECT d.id, d.name, d.size, d.type FROM drive_connections dc 
+		                                                        JOIN drives d ON d.id = dc.drive_id 
+		                                                    	WHERE dc.vm_id = @vm_id
+		                                                    """,
+			new NpgsqlParameter("@vm_id", vmId)
+		);
+		
+		List<DriveDescriptor> descriptors = new List<DriveDescriptor>();
+		while (await reader.ReadAsync())
+		{
+			DriveDescriptor descriptor = new DriveDescriptor(
+				reader.GetInt32(0),
+				reader.GetString(1),
+				reader.GetInt32(2),
+				(SharedDefinitions.DriveType)reader.GetInt32(3)
+			);
+			
+			descriptors.Add(descriptor);
+		}
+		
+		return descriptors.ToArray();
 	}
 
 	/// <summary>
