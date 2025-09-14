@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using Server.Drives;
 using Server.VirtualMachines;
 using Shared;
 
@@ -72,23 +74,60 @@ public class VirtualMachineService
 		return await _databaseService.IsVmExistsAsync(username, name);
 	}
 
-	public async Task<ExitCode> StartVirtualMachineAsync(string username, string name)
+	public async Task<ExitCode> StartVirtualMachineAsync(string username, string vmName)
 	{
 		Task<bool> userExists = _databaseService.IsUserExistAsync(username);
-		Task<VirtualMachineDescriptor?> vmDescriptor = _databaseService.GetVmDescriptorAsync(username, name);
-		await Task.WhenAll(userExists, vmDescriptor);
+		Task<VirtualMachineDescriptor?> vmDescriptor = _databaseService.GetVmDescriptorAsync(username, vmName);
+		Task<DriveDescriptor[]?> vmDriveDescriptors = _databaseService.GetVmDriveDescriptorsAsync(username, vmName);
+		await Task.WhenAll(userExists, vmDescriptor, vmDriveDescriptors);
 
 		if (!userExists.Result)
 		{
 			return ExitCode.UserDoesntExist;
 		}
-		if (vmDescriptor.Result == null)
+		if (vmDescriptor.Result == null || vmDriveDescriptors.Result == null)
 		{
 			return ExitCode.VmDoesntExist;
 		}
-	
-		
+
+		/* TODO: If the VM is sleeping, wake it up. */
+		if (vmDescriptor.Result.VmState == SharedDefinitions.VmState.Running)
+		{
+			return ExitCode.VmAlreadyRunning;
+		}
 		
 		return ExitCode.Success;
+	}
+
+	/// <summary>
+	/// Add a running virtual machine to the virtual machines dictionary.
+	/// </summary>
+	/// <param name="username">The username of the user that owns the virtual machine. username != null.</param>
+	/// <param name="vmName">The name of the virtual machine. vmName != null.</param>
+	/// <param name="vm">The virtual machine itself. vm != null.</param>
+	/// <exception cref="Exception">Should not get to this exception. Indicates incorrect usage of this function, or incorrect database usage.</exception>
+	/// <remarks>
+	/// Precondition: A user with the given username exists. The user has a virtual machine with the given name, the virtual machine is running.
+	/// The virtual machine does not exist in the virtual machines dictionary.<br/>
+	/// username != null &amp;&amp; vmName != null &amp;&amp; vm != null. <br/>
+	/// Postcondition: The virtual machine is added to the virtual machines dictionary.
+	/// </remarks>
+	private void AddRunningVirtualMachine(string username, string vmName, VirtualMachine vm)
+	{
+		ConcurrentDictionary<string, VirtualMachine> usersVms;
+		if (_runningVirtualMachines.TryGetValue(username, out ConcurrentDictionary<string, VirtualMachine>? value))
+		{
+			usersVms = value;
+		}
+		else
+		{
+			usersVms = new ConcurrentDictionary<string, VirtualMachine>();
+			_runningVirtualMachines.TryAdd(username, usersVms);
+		}
+
+		if (!usersVms.TryAdd(vmName, vm))
+		{
+			throw new Exception("This virtual machine is already running.");	/* Should not get to this. */
+		}
 	}
 }
