@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Konscious.Security.Cryptography;
 using Npgsql;
 using NpgsqlTypes;
+using Server.VirtualMachines;
 using Shared;
 
 namespace Server.Services;
@@ -357,7 +358,7 @@ public class DatabaseService
 		);
 
 		List<SharedDefinitions.VmGeneralDescriptor> descriptors = new List<SharedDefinitions.VmGeneralDescriptor>();
-		while(reader.Read())
+		while(await reader.ReadAsync())
 		{
 			SharedDefinitions.VmGeneralDescriptor descriptor = new SharedDefinitions.VmGeneralDescriptor(
 				reader.GetString(0),
@@ -401,6 +402,44 @@ public class DatabaseService
 		}
 		
 		return (SharedDefinitions.VmState)state;
+	}
+
+	/// <summary>
+	/// Get a descriptor of a virtual machines.
+	/// </summary>
+	/// <param name="username">The username of the user that owns the virtual machine. username != null.</param>
+	/// <param name="vmName">The name of the virtual machine to get the descriptor of. name != null.</param>
+	/// <returns>The descriptor of the virtual machine, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given username exists, the user has a VM with the given name. username != null &amp;&amp; vmName != null <br/>
+	/// Postcondition: On success, the descriptor of the virtual machine is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<VirtualMachineDescriptor?> GetVmDescriptorAsync(string username, string vmName)
+	{
+		int userId = await GetUserIdAsync(username);
+		if (userId == -1)
+		{
+			return null;
+		}
+
+		NpgsqlDataReader reader = await ExecuteReaderAsync(
+			"SELECT operating_system, cpu_architecture, boot_mode, state FROM virtual_machines WHERE owner_id = @owner_id AND name = @name LIMIT 1",
+			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@name", vmName)
+		);
+
+		if (!await reader.ReadAsync())
+		{
+			return null;
+		}
+		
+		return new VirtualMachineDescriptor(
+			vmName, 
+			(SharedDefinitions.OperatingSystem)reader.GetInt32(0), 
+			(SharedDefinitions.CpuArchitecture)reader.GetInt32(1),
+			(SharedDefinitions.BootMode)reader.GetInt32(2),
+			(SharedDefinitions.VmState)reader.GetInt32(3)
+		);
 	}
 
 	/// <summary>
