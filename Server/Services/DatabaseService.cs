@@ -521,26 +521,21 @@ public class DatabaseService
 	/// <summary>
 	/// Deletes the given drive from the database. (Not the disk image from the actual filesystem)
 	/// </summary>
-	/// <param name="userId">The ID of the user who owns the drive. userId >= 1.</param>
-	/// <param name="name">The name of the drive. name != null.</param>
+	/// <param name="id">The ID of the drive to delete. id >= 1.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: A user whos ID is the given ID - exists. The user has a drive which name is the given name.
-	/// userId >= 1 &amp;&amp; name != null. <br/>
+	/// Precondition: A drive with the given ID exists. id >= 1. <br/>
 	/// Postcondition: On success, the drive is deleted from the database and the returned exit code indicates success. <br/>
 	/// On failure, the drive is not deleted from the database and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> DeleteDriveAsync(int userId, string name)
+	public async Task<ExitCode> DeleteDriveAsync(int id)
 	{
-		if (userId < 1)
+		if (id < 1)
 		{
 			return ExitCode.InvalidParameter;
 		}
 		
-		int rows = await ExecuteNonQueryAsync("DELETE FROM drives WHERE owner_id = @owner_id AND name = @name",
-			new NpgsqlParameter("@owner_id", userId),
-			new NpgsqlParameter("@name", name)
-		);
+		int rows = await ExecuteNonQueryAsync("DELETE FROM drives WHERE id = @id", new NpgsqlParameter("@id", id));
 
 		if (rows >= 1)
 		{

@@ -12,12 +12,12 @@ public class VirtualMachineService
 	private DatabaseService _databaseService;
 	
 	/* By virtual machine ID's */
-	private ConcurrentDictionary<int, VirtualMachine> _runningVirtualMachines;
+	private ConcurrentDictionary<int, VirtualMachine> _aliveVirtualMachines;
 
 	public VirtualMachineService(DatabaseService databaseService)
 	{
 		_databaseService = databaseService;
-		_runningVirtualMachines = new ConcurrentDictionary<int, VirtualMachine>();
+		_aliveVirtualMachines = new ConcurrentDictionary<int, VirtualMachine>();
 	}
 
 	/// <summary>

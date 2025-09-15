@@ -71,7 +71,7 @@ public class DriveService
 
 			if (exitCode != 0)
 			{
-				await DeleteDriveAsync(userId, driveName);
+				await DeleteDriveAsync(driveId);
 				return ExitCode.DiskImageCreationFailed;
 			}
 		}
@@ -107,7 +107,7 @@ public class DriveService
 
 			if (copyProc.ExitCode != 0)
 			{
-				await DeleteDriveAsync(userId, driveName);
+				await DeleteDriveAsync(driveId);
 				return ExitCode.DiskImageCreationFailed;
 			}
 
@@ -133,7 +133,7 @@ public class DriveService
 
 			if (sgdiskDeletePartProc.ExitCode != 0)
 			{
-				await DeleteDriveAsync(userId, driveName);
+				await DeleteDriveAsync(driveId);
 				return ExitCode.DiskImageCreationFailed;
 			}
 
@@ -148,7 +148,7 @@ public class DriveService
 
 			if (sgdiskNewPartProc.ExitCode != 0)
 			{
-				await DeleteDriveAsync(userId, driveName);
+				await DeleteDriveAsync(driveId);
 				return ExitCode.DiskImageCreationFailed;
 			}
 		}
@@ -189,26 +189,18 @@ public class DriveService
 	/// <summary>
 	/// Deletes the given drive.
 	/// </summary>
-	/// <param name="userId">The ID of the user who owns the drive. userId >= 1.</param>
-	/// <param name="name">The name of the drive. name != null.</param>
+	/// <param name="id">The ID of the drive. id >= 1.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: A user whos ID is the given ID - exists. The user has a drive which name is the given name.
-	/// userId >= 1 &amp;&amp; name != null. <br/>
+	/// Precondition: A drive with the given ID exists. id >= 1. <br/>
 	/// Postcondition: On success, the drive is deleted and the returned exit code indicates success. <br/>
 	/// On failure, the drive is not deleted and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> DeleteDriveAsync(int userId, string name)
+	public async Task<ExitCode> DeleteDriveAsync(int id)
 	{
-		string? filePath = await GetDriveFilePathAsync(userId, name);
-		if (filePath == null)
-		{
-			return ExitCode.DriveDoesntExist;
-		}
-		
+		string filePath = GetDriveFilePath(id);
 		File.Delete(filePath);
-	
-		return await _databaseService.DeleteDriveAsync(userId, name);
+		return await _databaseService.DeleteDriveAsync(id);
 	}
 
 	/// <summary>
@@ -229,51 +221,6 @@ public class DriveService
 		return await _databaseService.ConnectDriveAsync(driveId, vmId);
 	}
 	
-	/// <summary>
-	/// Get the filename (disk image filename) of a drive that is owned by the given user and named by the given name.
-	/// </summary>
-	/// <param name="userId">The ID of the user that owns the drive. userId >= 1.</param>
-	/// <param name="name">The name of the drive. name != null.</param>
-	/// <returns>The filename of the drives disk image file. Returns null on failure.</returns>
-	/// <remarks>
-	/// Precondition: A user with the given ID must exist. The user owns a drive named by the given name.
-	/// userId >= 1 &amp;&amp; name != null. <br/>
-	/// Postcondition: On success, the filename of the drives disk image file is returned. On failure, null is returned.
-	/// </remarks>
-	public async Task<string?> GetDriveFileNameAsync(int userId, string name)
-	{
-		int driveId = await GetDriveIdAsync(userId, name);
-		if (driveId == -1)
-		{
-			return null;
-		}
-		
-		return GetDriveFileName(driveId);
-	}
-
-	/// <summary>
-	/// Get the file path (path to the disk image) of a drive that is owned by the given user and named by the given name. <br/>
-	/// Note: The file path is relative to the path of the final server executable
-	/// </summary>
-	/// <param name="userId">The ID of the user that owns the drive. userId >= 1.</param>
-	/// <param name="name">The name of the drive. name != null.</param>
-	/// <returns>The file path of the drives disk image file. Returns null on failure.</returns>
-	/// <remarks>
-	/// Precondition: A user with the given ID must exist. The user owns a drive named by the given name.
-	/// userId >= 1 &amp;&amp; name != null. <br/>
-	/// Postcondition: On success, the file path of the drives disk image file is returned. On failure, null is returned.
-	/// </remarks>
-	public async Task<string?> GetDriveFilePathAsync(int userId, string name)
-	{
-		int driveId = await GetDriveIdAsync(userId, name);
-		if (driveId == -1)
-		{
-			return null;
-		}
-
-		return GetDriveFilePath(driveId);
-	}
-
 	/// <summary>
 	/// Get the filename of a drive (the drives disk image file) that the ID of is the given ID.
 	/// </summary>
