@@ -47,7 +47,7 @@ public class HomeViewModel : ViewModelBase
 		Vms.Clear();
 		foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
 		{
-			Vms.Add(new VmItemTemplate(vm.Name, vm.OperatingSystem, vm.State));
+			Vms.Add(new VmItemTemplate(vm.Id, vm.Name, vm.OperatingSystem, vm.State));
 			Vms.Last().OpenClicked += OnVmOpenClicked;
 		}
 	}
@@ -68,6 +68,7 @@ public class HomeViewModel : ViewModelBase
 public partial class VmItemTemplate
 {
 	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? OpenClicked;
+	public int Id { get; }
 	public string Name { get; }
 	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
 
@@ -101,8 +102,9 @@ public partial class VmItemTemplate
 	/// Precondition: name != null. <br/>
 	/// Postcondition: A new instance of VmItemTemplate is created.
 	/// </remarks>
-	public VmItemTemplate(string name, SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.VmState state)
+	public VmItemTemplate(int id, string name, SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.VmState state)
 	{
+		Id = id;
 		Name = name;
 		OperatingSystem = operatingSystem;
 		State = state;
@@ -118,6 +120,6 @@ public partial class VmItemTemplate
 	[RelayCommand]
 	private void OpenClick()
 	{
-		OpenClicked?.Invoke(this, new SharedDefinitions.VmGeneralDescriptor(Name, OperatingSystem, State));
+		OpenClicked?.Invoke(this, new SharedDefinitions.VmGeneralDescriptor(Id, Name, OperatingSystem, State));
 	}
 }

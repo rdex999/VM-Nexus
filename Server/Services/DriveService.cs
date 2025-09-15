@@ -18,21 +18,22 @@ public class DriveService
 	/// <summary>
 	/// Create a drive of the given size (MiB) with the given operating system, under the given user.
 	/// </summary>
-	/// <param name="username">The username of the user under which to create the drive on. username != null.</param>
+	/// <param name="userId">The ID of the user under which to create the drive on. userId >= 1.</param>
 	/// <param name="driveName">The name of the new drive. driveName != null.</param>
 	/// <param name="operatingSystem">The operating system to install on the drive. operatingSystem != SharedDefinitions.OperatingSystem.Other.</param>
 	/// <param name="size">The size of the new drive in MiB. size >= 1.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username must exist. There must not be a drive named under the given name. <br/>
-	/// username != null &amp;&amp; driveName != null &amp;&amp; operatingSystem != SharedDefinitions.OperatingSystem.Other &amp;&amp; size >= 1. <br/>
+	/// Precondition: A user with the given ID must exist. There must not be a drive named under the given name. <br/>
+	/// userId >= 1 &amp;&amp; driveName != null &amp;&amp; operatingSystem != SharedDefinitions.OperatingSystem.Other &amp;&amp; size >= 1. <br/>
 	/// Postcondition: On success, the new drive is created and registered, and the returned exit code indicates success. <br/>
 	/// On failure, the drive is not created and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> CreateOperatingSystemDriveAsync(string username, string driveName,
+	public async Task<ExitCode> CreateOperatingSystemDriveAsync(int userId, string driveName,
 		SharedDefinitions.OperatingSystem operatingSystem, int size)
 	{
-		if (!Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), operatingSystem) || operatingSystem == SharedDefinitions.OperatingSystem.Other)
+		if (!Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), operatingSystem) ||
+		    operatingSystem == SharedDefinitions.OperatingSystem.Other || userId < 1 || size < 1)
 		{
 			return ExitCode.InvalidParameter;
 		}
@@ -41,13 +42,13 @@ public class DriveService
 			? SharedDefinitions.DriveType.Floppy
 			: SharedDefinitions.DriveType.Disk;
 		
-		ExitCode result = await _databaseService.CreateDriveAsync(username, driveName, size, driveType);
+		ExitCode result = await _databaseService.CreateDriveAsync(userId, driveName, size, driveType);
 		if (result != ExitCode.Success)
 		{
 			return result;
 		}
 
-		int driveId = await GetDriveIdAsync(username, driveName);	/* Just successfully created the drive - this must succeed. */
+		int driveId = await GetDriveIdAsync(userId, driveName);	/* Just successfully created the drive - this must succeed. */
 		string driveFileName = GetDriveFileName(driveId);
 		string driveFilePath = GetDriveFilePath(driveId);
 	
@@ -70,7 +71,7 @@ public class DriveService
 
 			if (exitCode != 0)
 			{
-				await DeleteDriveAsync(username, driveName);
+				await DeleteDriveAsync(userId, driveName);
 				return ExitCode.DiskImageCreationFailed;
 			}
 		}
@@ -106,7 +107,7 @@ public class DriveService
 
 			if (copyProc.ExitCode != 0)
 			{
-				await DeleteDriveAsync(username, driveName);
+				await DeleteDriveAsync(userId, driveName);
 				return ExitCode.DiskImageCreationFailed;
 			}
 
@@ -132,7 +133,7 @@ public class DriveService
 
 			if (sgdiskDeletePartProc.ExitCode != 0)
 			{
-				await DeleteDriveAsync(username, driveName);
+				await DeleteDriveAsync(userId, driveName);
 				return ExitCode.DiskImageCreationFailed;
 			}
 
@@ -147,7 +148,7 @@ public class DriveService
 
 			if (sgdiskNewPartProc.ExitCode != 0)
 			{
-				await DeleteDriveAsync(username, driveName);
+				await DeleteDriveAsync(userId, driveName);
 				return ExitCode.DiskImageCreationFailed;
 			}
 		}
@@ -158,48 +159,48 @@ public class DriveService
 	/// <summary>
 	/// Get the ID of a drive called name, owned by the given user.
 	/// </summary>
-	/// <param name="username">The username of the user to search the drive under. username != null.</param>
+	/// <param name="userId">The ID of the user to search the drive under. userId >= 1.</param>
 	/// <param name="name">The name of the drive to search for. name != null.</param>
 	/// <returns>The ID of the drive on success, -1 on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user called by username exists. The given user has a drive called by name. username != null &amp;&amp; name != null. <br/>
+	/// Precondition: A user called by username exists. The given user has a drive called by name. userId != null &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, the ID of the drive is returned. On failure, -1 is returned.
 	/// </remarks>
-	public async Task<int> GetDriveIdAsync(string username, string name)
+	public async Task<int> GetDriveIdAsync(int userId, string name)
 	{
-		return await _databaseService.GetDriveIdAsync(username, name);
+		return await _databaseService.GetDriveIdAsync(userId, name);
 	}
 
 	/// <summary>
 	/// Check if the given user has a drive called by name.
 	/// </summary>
-	/// <param name="username">The username of the user to search the drive on. username != null.</param>
+	/// <param name="userId">The ID of the user to search the drive on. userId >= 1.</param>
 	/// <param name="name">The name of the drive to search for. name != null.</param>
 	/// <returns>True if the drive exists, false if not or on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user which name is username must exist. username != null &amp;&amp; name != null. <br/>
+	/// Precondition: A user with the given ID must exist. userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: Returns whether a drive called by the given name exists under the given user. Returns false on failure.
 	/// </remarks>
-	public async Task<bool> IsDriveExistsAsync(string username, string name)
+	public async Task<bool> IsDriveExistsAsync(int userId, string name)
 	{
-		return await _databaseService.IsDriveExistsAsync(username, name);
+		return await _databaseService.IsDriveExistsAsync(userId, name);
 	}
 
 	/// <summary>
 	/// Deletes the given drive.
 	/// </summary>
-	/// <param name="username">The username of the user who owns the drive. username != null.</param>
+	/// <param name="userId">The ID of the user who owns the drive. userId >= 1.</param>
 	/// <param name="name">The name of the drive. name != null.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: A user whos username is the given username - exists. The user has a drive which name is the given name.
-	/// username != null &amp;&amp; name != null. <br/>
+	/// Precondition: A user whos ID is the given ID - exists. The user has a drive which name is the given name.
+	/// userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, the drive is deleted and the returned exit code indicates success. <br/>
 	/// On failure, the drive is not deleted and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> DeleteDriveAsync(string username, string name)
+	public async Task<ExitCode> DeleteDriveAsync(int userId, string name)
 	{
-		string? filePath = await GetDriveFilePathAsync(username, name);
+		string? filePath = await GetDriveFilePathAsync(userId, name);
 		if (filePath == null)
 		{
 			return ExitCode.DriveDoesntExist;
@@ -207,42 +208,41 @@ public class DriveService
 		
 		File.Delete(filePath);
 	
-		return await _databaseService.DeleteDriveAsync(username, name);
+		return await _databaseService.DeleteDriveAsync(userId, name);
 	}
 
 	/// <summary>
 	/// Registers a drive-VM connection. (Means that when the VM starts, the drive will be connected to it.)
 	/// </summary>
-	/// <param name="username">The username on which to register the connection. username != null.</param>
-	/// <param name="driveName">The name of the drive to connect. driveName != null.</param>
-	/// <param name="vmName">The name of the virtual machine to connect the drive to. vmName != null.</param>
+	/// <param name="driveId">The ID of the drive to connect. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine to connect the drive to. vmId >= 1.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username exists, a drive with the given name exists,
-	/// a virtual machine with the given name exists, and there is no such drive connection that already exists. <br/>
-	/// username != null &amp;&amp; driveName != null &amp;&amp; vmName != null. <br/>
+	/// Precondition: A drive with the given ID exists, a virtual machine with the given ID exists,
+	/// and there is no such drive connection that already exists. <br/>
+	/// driveId >= 1 &amp;&amp; vmId >= 1. <br/>
 	/// Postcondition: On success, the drive connection is registered and the returned exit code states success. <br/>
 	/// On failure, the connection is not registered and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> ConnectDriveAsync(string username, string driveName, string vmName)
+	public async Task<ExitCode> ConnectDriveAsync(int driveId, int vmId)
 	{
-		return await _databaseService.ConnectDriveAsync(username, driveName, vmName);
+		return await _databaseService.ConnectDriveAsync(driveId, vmId);
 	}
 	
 	/// <summary>
 	/// Get the filename (disk image filename) of a drive that is owned by the given user and named by the given name.
 	/// </summary>
-	/// <param name="username">The username of the user that owns the drive. username != null.</param>
+	/// <param name="userId">The ID of the user that owns the drive. userId >= 1.</param>
 	/// <param name="name">The name of the drive. name != null.</param>
 	/// <returns>The filename of the drives disk image file. Returns null on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username must exist. The user owns a drive named by the given name.
-	/// username != null &amp;&amp; name != null. <br/>
+	/// Precondition: A user with the given ID must exist. The user owns a drive named by the given name.
+	/// userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, the filename of the drives disk image file is returned. On failure, null is returned.
 	/// </remarks>
-	public async Task<string?> GetDriveFileNameAsync(string username, string name)
+	public async Task<string?> GetDriveFileNameAsync(int userId, string name)
 	{
-		int driveId = await GetDriveIdAsync(username, name);
+		int driveId = await GetDriveIdAsync(userId, name);
 		if (driveId == -1)
 		{
 			return null;
@@ -255,17 +255,17 @@ public class DriveService
 	/// Get the file path (path to the disk image) of a drive that is owned by the given user and named by the given name. <br/>
 	/// Note: The file path is relative to the path of the final server executable
 	/// </summary>
-	/// <param name="username">The username of the user that owns the drive. username != null.</param>
+	/// <param name="userId">The ID of the user that owns the drive. userId >= 1.</param>
 	/// <param name="name">The name of the drive. name != null.</param>
 	/// <returns>The file path of the drives disk image file. Returns null on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username must exist. The user owns a drive named by the given name.
-	/// username != null &amp;&amp; name != null. <br/>
+	/// Precondition: A user with the given ID must exist. The user owns a drive named by the given name.
+	/// userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, the file path of the drives disk image file is returned. On failure, null is returned.
 	/// </remarks>
-	public async Task<string?> GetDriveFilePathAsync(string username, string name)
+	public async Task<string?> GetDriveFilePathAsync(int userId, string name)
 	{
-		int driveId = await GetDriveIdAsync(username, name);
+		int driveId = await GetDriveIdAsync(userId, name);
 		if (driveId == -1)
 		{
 			return null;

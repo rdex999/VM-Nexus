@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Shared.Networking;
 
 public class MessageResponse : Message
@@ -93,17 +95,23 @@ public class MessageResponseLogout : MessageResponse
 public class MessageResponseCreateVm : MessageResponse
 {
 	public Status Result { get; }
-		
+	public int Id { get; }
+	
+	[JsonConstructor]
+	public MessageResponseCreateVm(bool generateGuid, Guid requestId, Status result, int id)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Id = id;
+	}
 	public MessageResponseCreateVm(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
+		Id = -1;
 	}
 
-	public override bool IsValidMessage()
-	{
-		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
-	}
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (Id >= 1 || Id == -1);
 
 	public enum Status
 	{
@@ -127,17 +135,23 @@ public class MessageResponseCheckVmExist : MessageResponse
 public class MessageResponseCreateDrive : MessageResponse
 {
 	public Status Result { get; }
+	public int Id { get; }		/* The ID of the new drive */
 
+	[JsonConstructor]
+	public MessageResponseCreateDrive(bool generateGuid, Guid requestId, Status result, int id)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Id = id;
+	}
 	public MessageResponseCreateDrive(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
+		Id = -1;
 	}
 
-	public override bool IsValidMessage()
-	{
-		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
-	}
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (Id >= 1 || Id == -1);
 	
 	public enum Status
 	{

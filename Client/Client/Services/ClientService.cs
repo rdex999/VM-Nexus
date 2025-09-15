@@ -149,7 +149,7 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
-	/// Sends a create VM request. Returns servers result.
+	/// Sends a create VM request.
 	/// </summary>
 	/// <param name="name">The name of the new virtual machine. name != null.</param>
 	/// <param name="operatingSystem">The operating system of the new virtual machine. operatingSystem != null.</param>
@@ -158,21 +158,21 @@ public class ClientService : MessagingService
 	/// <returns>The result of the VM creation operation.</returns>
 	/// <remarks>
 	/// Precondition: Service fully initialized and connected to the server. User must be logged in. name != null <br/>
-	/// Postcondition: On success, a new virtual machine is created and the returned value will indicate success. <br/>
-	/// On failure, returned value will indicate failure and a virtual machine is not created.
+	/// Postcondition: On success, a new virtual machine is created and the servers response is returned. <br/>
+	/// On networking failure, null is returned. On other failure, the servers response is returned.
 	/// </remarks>
-	public async Task<MessageResponseCreateVm.Status> CreateVirtualMachineAsync(string name,
+	public async Task<MessageResponseCreateVm?> CreateVirtualMachineAsync(string name,
 		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
-		(MessageResponse? resCreateVm, ExitCode result) = await SendRequestAsync(
+		(MessageResponse? response, ExitCode _) = await SendRequestAsync(
 			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode));
 
-		if (result != ExitCode.Success)
+		if (response == null)
 		{
-			return MessageResponseCreateVm.Status.Failure;
+			return null;
 		}
 
-		return ((MessageResponseCreateVm)resCreateVm!).Result;
+		return (MessageResponseCreateVm)response;
 	}
 	
 	/// <summary>
@@ -200,36 +200,36 @@ public class ClientService : MessagingService
 	/// <returns>A status indicating the result of the operation.</returns>
 	/// <remarks>
 	/// Precondition: Service fully initialized and connected to the server. User is logged in. name != null &amp;&amp; size >= 1.<br/>
-	/// Postcondition: On success, the returned status indicates success and the drive is created. <br/>
-	/// On failure, the returned status will indicate the error and the drive is not created.
+	/// Postcondition: On success, the drive is created and the servers response is returned. <br/>
+	/// On failure, if there was a networking failure, null is returned. On other failures, the servers response is returned.
 	/// </remarks>
-	public async Task<MessageResponseCreateDrive.Status> CreateDriveAsync(
+	public async Task<MessageResponseCreateDrive?> CreateDriveAsync(
 		string name, SharedDefinitions.DriveType type, int size, SharedDefinitions.OperatingSystem operatingSystem)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
-		if (result != ExitCode.Success)
+		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
+		if (response == null)
 		{
-			return MessageResponseCreateDrive.Status.Failure;
+			return null;
 		}
-		return ((MessageResponseCreateDrive)response!).Result;
+		return (MessageResponseCreateDrive)response;
 	}
 
 	/// <summary>
 	/// Request to register a drive connection between the given drive and the given virtual machine.
 	/// </summary>
-	/// <param name="driveName">The name of the drive to connect. driveName != null.</param>
-	/// <param name="vmName">The name of the virtual machine to connect the drive to. vmName != null.</param>
+	/// <param name="driveId">The ID of the drive to connect. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine to connect the drive to. vmId >= 1.</param>
 	/// <returns>A status indicating the result of the operation.</returns>
 	/// <remarks>
 	/// Precondition: Service fully initialized and connected to server.
-	/// The user has a drive called by the given name, and a virtual machine called by the given name. <br/>
-	/// driveName != null &amp;&amp; vmName != null. <br/>
+	/// The user has a drive with the given ID, and a virtual machine with the given ID. <br/>
+	/// driveId >= 1 &amp;&amp; vmId >= 1. <br/>
 	/// Postcondition: On success, the drive connection is registered and the returned status states success. <br/>
 	/// On failure, the drive connection is not registered and the returned status indicates the error.
 	/// </remarks>
-	public async Task<MessageResponseConnectDrive.Status> ConnectDriveAsync(string driveName, string vmName)
+	public async Task<MessageResponseConnectDrive.Status> ConnectDriveAsync(int driveId, int vmId)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnectDrive(true, driveName, vmName));
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnectDrive(true, driveId, vmId));
 		if (result != ExitCode.Success)
 		{
 			return MessageResponseConnectDrive.Status.Failure;

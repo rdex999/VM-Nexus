@@ -63,12 +63,14 @@ public static class SharedDefinitions
 
 	public class VmGeneralDescriptor
 	{
+		public int Id { get; }
 		public string Name { get; }
 		public OperatingSystem OperatingSystem { get; }
 		public VmState State { get; }
 
-		public VmGeneralDescriptor(string name, OperatingSystem operatingSystem, VmState state)
+		public VmGeneralDescriptor(int id, string name, OperatingSystem operatingSystem, VmState state)
 		{
+			Id = id;
 			Name = name;
 			OperatingSystem = operatingSystem;
 			State = state;

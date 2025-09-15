@@ -214,29 +214,28 @@ public class MessageRequestCreateDrive : MessageRequest
 
 public class MessageRequestConnectDrive : MessageRequest	/* Request to mark the drive as connected to some VM. */
 {
-	public string DriveName { get; }
-	public string VmName { get; }
+	public int DriveId { get; }
+	public int VmId { get; }
 	
-	public MessageRequestConnectDrive(bool generateGuid, string driveName, string vmName)
+	public MessageRequestConnectDrive(bool generateGuid, int driveId, int vmId)
 		: base(generateGuid)
 	{
-		DriveName = driveName;
-		VmName = vmName;
+		DriveId = driveId;
+		VmId = vmId;
 	}
 
-	public override bool IsValidMessage()
-	{
-		return base.IsValidMessage() && !string.IsNullOrEmpty(DriveName) && !string.IsNullOrEmpty(VmName);
-	}
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
 
 public class MessageRequestVmStartup : MessageRequest
 {
-	public string VmName { get; }
+	public int VmId { get; }
 
-	public MessageRequestVmStartup(bool generateGuid, string vmName)
+	public MessageRequestVmStartup(bool generateGuid, int vmId)
 		: base(generateGuid)
 	{
-		VmName = vmName;
+		VmId = vmId;
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }

@@ -227,7 +227,7 @@ public class DatabaseService
 	/// <summary>
 	/// Creates a virtual machine in the database.
 	/// </summary>
-	/// <param name="username">The username of the owner user of the virtual machine. username != null.</param>
+	/// <param name="userId">The ID of the owner user of the virtual machine. userId >= 1.</param>
 	/// <param name="name">The name of the virtual machine. name != null.</param>
 	/// <param name="operatingSystem">The operating system of the virtual machine.</param>
 	/// <param name="cpuArchitecture">The CPU architecture (x86, x86-64, etc..) of the virtual machine.</param>
@@ -239,21 +239,19 @@ public class DatabaseService
 	/// username != null &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, a virtual machine with the given parameters is created. On failure, the returned exit code will indicate the error.
 	/// </remarks>
-	public async Task<ExitCode> CreateVmAsync(string username, string name, SharedDefinitions.OperatingSystem operatingSystem, 
+	public async Task<ExitCode> CreateVmAsync(int userId, string name, SharedDefinitions.OperatingSystem operatingSystem, 
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
-		Task<bool> vmExistsTask = IsVmExistsAsync(username, name);
-		Task<int> userIdTask = GetUserIdAsync(username);
-		await Task.WhenAll(vmExistsTask, userIdTask);
+		if (userId < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
 		
-		if (vmExistsTask.Result)
+		bool vmExists = await IsVmExistsAsync(userId, name);
+		
+		if (vmExists)
 		{
 			return ExitCode.VmAlreadyExists;
-		}
-
-		if (userIdTask.Result == -1)
-		{
-			return ExitCode.UserDoesntExist;
 		}
 
 		int state = (int)SharedDefinitions.VmState.ShutDown;
@@ -262,7 +260,7 @@ public class DatabaseService
 		                                      	VALUES (@name, @owner_id, @operating_system, @cpu_architecture,  @boot_mode, @state)
 		                                      """,
 			new NpgsqlParameter("@name", name),
-			new NpgsqlParameter("@owner_id", userIdTask.Result),
+			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@operating_system", (int)operatingSystem) { NpgsqlDbType = NpgsqlDbType.Integer },
 			new NpgsqlParameter("@cpu_architecture", (int)cpuArchitecture) { NpgsqlDbType = NpgsqlDbType.Integer },
 			new NpgsqlParameter("@boot_mode", (int)bootMode) { NpgsqlDbType = NpgsqlDbType.Integer },
@@ -280,17 +278,16 @@ public class DatabaseService
 	/// <summary>
 	/// Checks if a virtual machine with the given name exists under a user with the given username.
 	/// </summary>
-	/// <param name="username">The username of the user to search for the VM under. username != null.</param>
+	/// <param name="userId">The ID of the user to search for the VM under. userId >= 1.</param>
 	/// <param name="name">The name of the virtual machine. name != null.</param>
 	/// <returns>True if the virtual machine exists, false otherwise.</returns>
 	/// <remarks>
-	/// Precondition: Service connected to database, a user with the given username must exist. username != null &amp;&amp; name != null. <br/>
+	/// Precondition: Service connected to database, a user with the given username must exist. userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: Returns true if the virtual machine exists, false if the virtual machine does not exist or on failure.
 	/// </remarks>
-	public async Task<bool> IsVmExistsAsync(string username, string name)
+	public async Task<bool> IsVmExistsAsync(int userId, string name)
 	{
-		int userId = await GetUserIdAsync(username);
-		if (userId == -1)
+		if (userId < 1)
 		{
 			return false;
 		}
@@ -306,17 +303,16 @@ public class DatabaseService
 	/// <summary>
 	/// Get the ID of a virtual machine registered under the given user.
 	/// </summary>
-	/// <param name="username">The username of the user to search for the VM under. username != null.</param>
+	/// <param name="userId">The ID of the user to search for the VM under. userId >= 1.</param>
 	/// <param name="name">The name of the virtual machine. name != null.</param>
 	/// <returns>On success, the ID of the VM is returned. On failure, -1 is returned.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username exists. The user has a VM called by the given name. <br/>
+	/// Precondition: A user with the given ID exists. The user has a VM called by the given name. userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, the ID of the virtual machine is returned. On failure, -1 is returned.
 	/// </remarks>
-	public async Task<int> GetVmIdAsync(string username, string name)
+	public async Task<int> GetVmIdAsync(int userId, string name)
 	{
-		int userId = await GetUserIdAsync(username);
-		if (userId == -1)
+		if (userId < 1)
 		{
 			return -1;
 		}
@@ -337,25 +333,19 @@ public class DatabaseService
 	/// <summary>
 	/// Get an array of general virtual machine descriptors of all virtual machines of the user.
 	/// </summary>
-	/// <param name="username">The username of the user to get the VMs of. username != null.</param>
+	/// <param name="userId">The ID of the user to get the VMs of. userId >= 1.</param>
 	/// <returns>
 	/// An array of general VM descriptors, describing the VMs of the user.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: Service connected to the database, a user with the given username exists. username != null. <br/>
+	/// Precondition: Service connected to the database, a user with the given username exists. userId >= 1. <br/>
 	/// Postcondition: On success, an array of general VM descriptors is returned. (might be empty, but not null) <br/>
 	/// On failure, null is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.VmGeneralDescriptor[]?> GetVmGeneralDescriptorsAsync(string username)
+	public async Task<SharedDefinitions.VmGeneralDescriptor[]?> GetVmGeneralDescriptorsAsync(int userId)
 	{
-		int userId = await GetUserIdAsync(username);
-		if (userId == -1)
-		{
-			return null;
-		}
-
 		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
-			"SELECT name, operating_system, state FROM virtual_machines WHERE owner_id = @owner_id",
+			"SELECT id, name, operating_system, state FROM virtual_machines WHERE owner_id = @owner_id",
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
@@ -363,9 +353,10 @@ public class DatabaseService
 		while(await reader.ReadAsync())
 		{
 			SharedDefinitions.VmGeneralDescriptor descriptor = new SharedDefinitions.VmGeneralDescriptor(
-				reader.GetString(0),
-				(SharedDefinitions.OperatingSystem)reader.GetInt32(1),
-				(SharedDefinitions.VmState)reader.GetInt32(2)
+				reader.GetInt32(0),
+				reader.GetString(1),
+				(SharedDefinitions.OperatingSystem)reader.GetInt32(2),
+				(SharedDefinitions.VmState)reader.GetInt32(3)
 			);
 			
 			descriptors.Add(descriptor);
@@ -376,26 +367,22 @@ public class DatabaseService
 	/// <summary>
 	/// Get the state of a virtual machine.
 	/// </summary>
-	/// <param name="username">The username of the user that owns the virtual machine. username != null</param>
-	/// <param name="vmName">The name of the virtual machine to check the state of. vmName != null.</param>
+	/// <param name="id">The ID of the virtual machine. id >= 1.</param>
 	/// <returns>The state of the virtual machine, or -1 on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user exists with the given username. The user has a virtual machine with the given name.<br/>
-	/// username != null &amp;&amp; vmName != null <br/>
+	/// Precondition: There is a virtual machine with the given ID. id >= 1.<br/>
 	/// Postcondition: On success, the state of the virtual machine is returned. On failure, -1 is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.VmState> GetVmStateAsync(string username, string vmName)
+	public async Task<SharedDefinitions.VmState> GetVmStateAsync(int id)
 	{
-		int userId = await GetUserIdAsync(username);
-		if (userId == -1)
+		if (id < 1)
 		{
 			return (SharedDefinitions.VmState)(-1);
 		}
 
 		object? state = await ExecuteScalarAsync(
-			"SELECT state FROM virtual_machines WHERE owner_id = @owner_id AND name = @name",
-			new NpgsqlParameter("@owner_id", userId),
-			new NpgsqlParameter("@name", vmName)
+			"SELECT state FROM virtual_machines WHERE id = @id",
+			new NpgsqlParameter("@id", id)
 		);
 
 		if (state == null)
@@ -409,25 +396,22 @@ public class DatabaseService
 	/// <summary>
 	/// Get a descriptor of a virtual machines.
 	/// </summary>
-	/// <param name="username">The username of the user that owns the virtual machine. username != null.</param>
-	/// <param name="vmName">The name of the virtual machine to get the descriptor of. name != null.</param>
+	/// <param name="vmId">The ID of the virtual machine to get the descriptor of. vmId >= 1.</param>
 	/// <returns>The descriptor of the virtual machine, or null on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username exists, the user has a VM with the given name. username != null &amp;&amp; vmName != null <br/>
+	/// Precondition: A virtual machine with the given ID exists. vmId >= 1. <br/>
 	/// Postcondition: On success, the descriptor of the virtual machine is returned. On failure, null is returned.
 	/// </remarks>
-	public async Task<VirtualMachineDescriptor?> GetVmDescriptorAsync(string username, string vmName)
+	public async Task<VirtualMachineDescriptor?> GetVmDescriptorAsync(int vmId)
 	{
-		int userId = await GetUserIdAsync(username);
-		if (userId == -1)
+		if (vmId < 1)
 		{
 			return null;
 		}
-
+		
 		NpgsqlDataReader reader = await ExecuteReaderAsync(
-			"SELECT operating_system, cpu_architecture, boot_mode, state FROM virtual_machines WHERE owner_id = @owner_id AND name = @name LIMIT 1",
-			new NpgsqlParameter("@owner_id", userId),
-			new NpgsqlParameter("@name", vmName)
+			"SELECT name, operating_system, cpu_architecture, boot_mode, state FROM virtual_machines WHERE id = @id LIMIT 1",
+			new NpgsqlParameter("@id", vmId)
 		);
 
 		if (!await reader.ReadAsync())
@@ -436,45 +420,37 @@ public class DatabaseService
 		}
 		
 		return new VirtualMachineDescriptor(
-			vmName, 
-			(SharedDefinitions.OperatingSystem)reader.GetInt32(0), 
-			(SharedDefinitions.CpuArchitecture)reader.GetInt32(1),
-			(SharedDefinitions.BootMode)reader.GetInt32(2),
-			(SharedDefinitions.VmState)reader.GetInt32(3)
+			vmId,
+			reader.GetString(0),
+			(SharedDefinitions.OperatingSystem)reader.GetInt32(1), 
+			(SharedDefinitions.CpuArchitecture)reader.GetInt32(2),
+			(SharedDefinitions.BootMode)reader.GetInt32(3),
+			(SharedDefinitions.VmState)reader.GetInt32(4)
 		);
 	}
 
 	/// <summary>
 	/// Registers a drive in the database.
 	/// </summary>
-	/// <param name="username">The username of the user that will own the drive. username != null.</param>
+	/// <param name="userId">The username of the user that will own the drive. userId >= 1.</param>
 	/// <param name="name">The name of the drive. Must be unique per user. name != null.</param>
 	/// <param name="size">The size of the drive, in MiB. size >= 1.</param>
 	/// <param name="driveType">The type of drive. (NVMe, SSD, etc)</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
 	/// Precondition: A user exists with the given username. The user does not have a drive named by the given name. <br/>
-	/// username != null &amp;&amp; name != null &amp;&amp; size >= 1. <br/>
+	/// userId >= 1 &amp;&amp; name != null &amp;&amp; size >= 1. <br/>
 	/// Postcondition: On success, the drive is registered in the database, and the returned exit code indicates success. <br/>
 	/// On failure, the drive is not registered in the database, and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> CreateDriveAsync(string username, string name, int size, SharedDefinitions.DriveType driveType)
+	public async Task<ExitCode> CreateDriveAsync(int userId, string name, int size, SharedDefinitions.DriveType driveType)
 	{
-		if (size < 1)
+		if (size < 1 || userId < 1)
 		{
 			return ExitCode.InvalidParameter;
 		}
 	
-		Task<int> userIdTask = GetUserIdAsync(username);
-		Task<bool> vmExistsTask = IsVmExistsAsync(username, name);
-		await Task.WhenAll(vmExistsTask, userIdTask);
-		
-		if (userIdTask.Result == -1)
-		{
-			return ExitCode.UserDoesntExist;
-		}
-
-		if (vmExistsTask.Result)
+		if (await IsDriveExistsAsync(userId, name))
 		{
 			return ExitCode.DriveAlreadyExists;
 		}
@@ -484,8 +460,8 @@ public class DatabaseService
 		                                           		VALUES (@name, @owner_id, @size, @type)
 		                                           """,
 			new NpgsqlParameter("@name", name),
-			new NpgsqlParameter("@owner_id", userIdTask.Result),
-			new NpgsqlParameter("@size", size) { NpgsqlDbType = NpgsqlDbType.Integer },
+			new NpgsqlParameter("@owner_id", userId),
+			new NpgsqlParameter("@size", size),
 			new NpgsqlParameter("@type", (int)driveType) { NpgsqlDbType = NpgsqlDbType.Integer }
 		);
 
@@ -500,21 +476,15 @@ public class DatabaseService
 	/// <summary>
 	/// Check if the given user has a drive called by name.
 	/// </summary>
-	/// <param name="username">The username of the user to search the drive on. username != null.</param>
+	/// <param name="userId">The ID of the user to search the drive on. userId >= 1.</param>
 	/// <param name="name">The name of the drive to search for. name != null.</param>
 	/// <returns>True if the drive exists, false if not or on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user which name is username must exist. username != null &amp;&amp; name != null. <br/>
+	/// Precondition: A user with the given ID must exist. userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: Returns whether a drive called by exists under the given user. Returns false on failure.
 	/// </remarks>
-	public async Task<bool> IsDriveExistsAsync(string username, string name)
+	public async Task<bool> IsDriveExistsAsync(int userId, string name)
 	{
-		int userId = await GetUserIdAsync(username);
-		if (userId == -1)
-		{
-			return false;
-		}
-		
 		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM drives WHERE owner_id = @owner_id AND name = @name)",
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
@@ -526,21 +496,15 @@ public class DatabaseService
 	/// <summary>
 	/// Get the ID of a drive called name, owned by the given user.
 	/// </summary>
-	/// <param name="username">The username of the user to search the drive under. username != null.</param>
+	/// <param name="userId">The ID of the user to search the drive under. userId >= 1.</param>
 	/// <param name="name">The name of the drive to search for. name != null.</param>
 	/// <returns>The ID of the drive on success, -1 on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user called by username exists. The given user has a drive called by name. username != null &amp;&amp; name != null. <br/>
+	/// Precondition: A user with the given ID exists. The given user has a drive called by name. userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, the ID of the drive is returned. On failure, -1 is returned.
 	/// </remarks>
-	public async Task<int> GetDriveIdAsync(string username, string name)
+	public async Task<int> GetDriveIdAsync(int userId, string name)
 	{
-		int userId = await GetUserIdAsync(username);
-		if (userId == -1)
-		{
-			return -1;
-		}
-		
 		object? id = await ExecuteScalarAsync("SELECT id FROM drives WHERE owner_id = @owner_id AND name = @name", 
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
@@ -557,23 +521,22 @@ public class DatabaseService
 	/// <summary>
 	/// Deletes the given drive from the database. (Not the disk image from the actual filesystem)
 	/// </summary>
-	/// <param name="username">The username of the user who owns the drive. username != null.</param>
+	/// <param name="userId">The ID of the user who owns the drive. userId >= 1.</param>
 	/// <param name="name">The name of the drive. name != null.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: A user whos username is the given username - exists. The user has a drive which name is the given name.
-	/// username != null &amp;&amp; name != null. <br/>
+	/// Precondition: A user whos ID is the given ID - exists. The user has a drive which name is the given name.
+	/// userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, the drive is deleted from the database and the returned exit code indicates success. <br/>
 	/// On failure, the drive is not deleted from the database and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> DeleteDriveAsync(string username, string name)
+	public async Task<ExitCode> DeleteDriveAsync(int userId, string name)
 	{
-		int userId = await GetUserIdAsync(username);
-		if (userId == -1)
+		if (userId < 1)
 		{
-			return ExitCode.UserDoesntExist;
+			return ExitCode.InvalidParameter;
 		}
-
+		
 		int rows = await ExecuteNonQueryAsync("DELETE FROM drives WHERE owner_id = @owner_id AND name = @name",
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
@@ -590,38 +553,24 @@ public class DatabaseService
 	/// <summary>
 	/// Registers a drive-VM connection. (Means that when the VM starts, the drive will be connected to it.)
 	/// </summary>
-	/// <param name="username">The username on which to register the connection. username != null.</param>
-	/// <param name="driveName">The name of the drive to connect. driveName != null.</param>
-	/// <param name="vmName">The name of the virtual machine to connect the drive to. vmName != null.</param>
+	/// <param name="driveId">The ID of the drive to connect. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine to connect the drive to. vmId >= 1.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username exists, a drive with the given name exists,
-	/// a virtual machine with the given name exists, and there is no such drive connection that already exists. <br/>
-	/// username != null &amp;&amp; driveName != null &amp;&amp; vmName != null. <br/>
+	/// Precondition: A drive with the given ID exists, a virtual machine with the given ID exists,
+	/// and there is no such drive connection that already exists. <br/>
+	/// driveId >= 1 &amp;&amp; vmId >= 1. <br/>
 	/// Postcondition: On success, the drive connection is registered and the returned exit code states success. <br/>
 	/// On failure, the connection is not registered and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> ConnectDriveAsync(string username, string driveName, string vmName)
+	public async Task<ExitCode> ConnectDriveAsync(int driveId, int vmId)
 	{
-		Task<int> userIdTask = GetUserIdAsync(username);
-		Task<int> driveIdTask = GetDriveIdAsync(username, driveName);
-		Task<int> vmIdTask = GetVmIdAsync(username, vmName);
+		if (driveId < 1 || vmId < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
 		
-		await Task.WhenAll(userIdTask, driveIdTask, vmIdTask);
-
-		if (userIdTask.Result == -1)
-		{
-			return ExitCode.UserDoesntExist;
-		}
-		if (driveIdTask.Result == -1)
-		{
-			return ExitCode.DriveDoesntExist;
-		}
-		if (vmIdTask.Result == -1)
-		{
-			return ExitCode.VmDoesntExist;
-		}
-		if (await IsDriveConnectionExistsAsync(driveIdTask.Result, vmIdTask.Result))
+		if (await IsDriveConnectionExistsAsync(driveId, vmId))
 		{
 			return ExitCode.DriveAlreadyExists;
 		}
@@ -630,8 +579,8 @@ public class DatabaseService
 		                                       INSERT INTO drive_connections (drive_id, vm_id)
 		                                       	VALUES (@drive_id, @vm_id)
 		                                       """,
-			new NpgsqlParameter("@drive_id", driveIdTask.Result),
-			new NpgsqlParameter("@vm_id", vmIdTask.Result)
+			new NpgsqlParameter("@drive_id", driveId),
+			new NpgsqlParameter("@vm_id", vmId)
 		);
 
 		if (rows == 1)
@@ -671,19 +620,16 @@ public class DatabaseService
 	/// <summary>
 	/// Get all drives associated with a virtual machine.
 	/// </summary>
-	/// <param name="username">The username of the user that owns the virtual machine. username != null.</param>
-	/// <param name="vmName">The name of the virtual machine that the drives are attached to. vmName != null.</param>
+	/// <param name="vmId">The ID of the virtual machine that the drives are attached to. vmId >= 1.</param>
 	/// <returns>An array of drive descriptors, describing each drive that is connected to the virtual machine. Returns null on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username exists. The user has a virtual machine with the given name.
-	/// username != null &amp;&amp; vmName != null. <br/>
+	/// Precondition: A user with the given username exists. The user has a virtual machine with the given name. vmId >= 1. <br/>
 	/// Postcondition: On success, an array of drive descriptors is returned, describing each drive that is connected to the virtual machine.
 	/// On failure, null is returned.
 	/// </remarks>
-	public async Task<DriveDescriptor[]?> GetVmDriveDescriptorsAsync(string username, string vmName)
+	public async Task<DriveDescriptor[]?> GetVmDriveDescriptorsAsync(int vmId)
 	{
-		int vmId = await GetVmIdAsync(username, vmName);
-		if (vmId == -1)
+		if (vmId < 1)
 		{
 			return null;
 		}

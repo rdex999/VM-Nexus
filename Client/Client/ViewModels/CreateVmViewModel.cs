@@ -193,7 +193,10 @@ public partial class CreateVmViewModel : ViewModelBase
 	{
 		string vmNameTrimmed = VmName.Trim();
 		bool createDrive = OperatingSystem != SharedDefinitions.OperatingSystem.Other;
-		Task<MessageResponseCreateVm.Status> taskCreateVm = ClientSvc.CreateVirtualMachineAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, BootMode);
+		Task<MessageResponseCreateVm?> taskCreateVm = ClientSvc.CreateVirtualMachineAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, BootMode);
+		Task<MessageResponseCreateDrive?> taskCreateDrive;
+		
+		MessageResponseCreateVm.Status createVmResult = MessageResponseCreateVm.Status.Failure;
 		MessageResponseCreateDrive.Status createDriveResult = MessageResponseCreateDrive.Status.Failure;
 		MessageResponseConnectDrive.Status connectDriveResult = MessageResponseConnectDrive.Status.Failure;
 
@@ -210,38 +213,48 @@ public partial class CreateVmViewModel : ViewModelBase
 		
 			string driveName = $"{vmNameTrimmed} - {OperatingSystem.ToString()}";
 			
-			Task<MessageResponseCreateDrive.Status> taskCreateDrive = ClientSvc.CreateDriveAsync(driveName, OsDriveType, OsDriveSize!.Value, OperatingSystem);
+			taskCreateDrive = ClientSvc.CreateDriveAsync(driveName, OsDriveType, OsDriveSize!.Value, OperatingSystem);
 			await Task.WhenAll(taskCreateVm, taskCreateDrive);
-			createDriveResult = taskCreateDrive.Result;
 
-			if (taskCreateVm.Result == MessageResponseCreateVm.Status.Success)
+			createVmResult = taskCreateVm.Result == null
+				? MessageResponseCreateVm.Status.Failure
+				: taskCreateVm.Result.Result;
+			
+			createDriveResult = taskCreateDrive.Result == null 
+				? MessageResponseCreateDrive.Status.Failure 
+				: taskCreateDrive.Result.Result;
+
+			if (createVmResult == MessageResponseCreateVm.Status.Success)
 			{
-				if (createDriveResult == MessageResponseCreateDrive.Status.DriveAlreadyExists)
+				/* Search for an available drive name and use it. */
+				int cnt = 0;
+				while (createDriveResult == MessageResponseCreateDrive.Status.DriveAlreadyExists)
 				{
-					/* Search for an available drive name and use it. */
-					int cnt = 0;
-					do
-					{
-						createDriveResult = await ClientSvc.CreateDriveAsync(driveName + "_" + cnt++, OsDriveType,
-							OsDriveSize!.Value, OperatingSystem);
-					} while (createDriveResult == MessageResponseCreateDrive.Status.DriveAlreadyExists);
+					taskCreateDrive = ClientSvc.CreateDriveAsync(driveName + "_" + cnt++, OsDriveType,
+						OsDriveSize!.Value, OperatingSystem);
+
+					await taskCreateDrive;
+
+					createDriveResult = taskCreateDrive.Result == null
+						? MessageResponseCreateDrive.Status.Failure
+						: taskCreateDrive.Result.Result;
 				}
-				
+
 				if (createDriveResult == MessageResponseCreateDrive.Status.Success)
 				{
-					connectDriveResult = await ClientSvc.ConnectDriveAsync(driveName, vmNameTrimmed);
+					connectDriveResult = await ClientSvc.ConnectDriveAsync(taskCreateDrive.Result!.Id, taskCreateVm.Result!.Id);
 				}
 			}
 		}
 	
 		/* If Other is selected as the operating system - taskCreateDrive wont have a value because we are not creating a drive. */
-		if (taskCreateVm.Result == MessageResponseCreateVm.Status.Success && 
+		if (createVmResult == MessageResponseCreateVm.Status.Success && 
 		    (!createDrive || (createDriveResult == MessageResponseCreateDrive.Status.Success && connectDriveResult == MessageResponseConnectDrive.Status.Success)))
 		{	
 			VmCreationMessageSuccessClass = true;
 			VmCreationMessage = "The virtual machine has been created successfully!";
 		} 
-		else if (taskCreateVm.Result == MessageResponseCreateVm.Status.VmAlreadyExists)
+		else if (createVmResult == MessageResponseCreateVm.Status.VmAlreadyExists)
 		{
 			VmCreationMessageSuccessClass = false;
 			VmCreationMessage = $"A virtual machine called \"{vmNameTrimmed}\" already exists.";
@@ -254,10 +267,10 @@ public partial class CreateVmViewModel : ViewModelBase
 
 		/* If something went wrong */
 		if (createDrive && (
-			    taskCreateVm.Result != MessageResponseCreateVm.Status.Success ||
-			    createDriveResult != MessageResponseCreateDrive.Status.Success || 
+			    createVmResult != MessageResponseCreateVm.Status.Success ||
+			    createDriveResult != MessageResponseCreateDrive.Status.Success ||
 			    connectDriveResult != MessageResponseConnectDrive.Status.Success)
-		    )
+		   )
 		{
 			/* One or more of the operations has failed - delete the ones that have succeeded. */
 			
@@ -271,7 +284,7 @@ public partial class CreateVmViewModel : ViewModelBase
 				/* TODO: Delete the drive */
 			}
 			
-			if (taskCreateVm.Result == MessageResponseCreateVm.Status.Success)
+			if (createVmResult == MessageResponseCreateVm.Status.Success)
 			{
 				/* TODO: Delete the VM */
 			}
