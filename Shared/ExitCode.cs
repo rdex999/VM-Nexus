@@ -18,6 +18,7 @@ public enum ExitCode
 	VmAlreadyExists,
 	VmDoesntExist,
 	VmAlreadyRunning,
+	VmStartupFailed,
 	DriveAlreadyExists,
 	DriveDoesntExist,
 	DriveConnectionAlreadyExists,

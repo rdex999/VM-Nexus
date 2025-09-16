@@ -99,6 +99,7 @@ public class MainWindowModel
 		}
 
 		_databaseService.Close();
+		_virtualMachineService.Close();
 
 		return ExitCode.Success;
 	}

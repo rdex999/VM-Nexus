@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using System.Xml.Linq;
+using libvirt;
 using Server.Drives;
 using Server.VirtualMachines;
 using Shared;
@@ -9,15 +11,23 @@ namespace Server.Services;
 
 public class VirtualMachineService
 {
-	private DatabaseService _databaseService;
+	private readonly DatabaseService _databaseService;
 	
 	/* By virtual machine ID's */
 	private ConcurrentDictionary<int, VirtualMachine> _aliveVirtualMachines;
+	private Connect _libvirtConnection;
 
 	public VirtualMachineService(DatabaseService databaseService)
 	{
 		_databaseService = databaseService;
 		_aliveVirtualMachines = new ConcurrentDictionary<int, VirtualMachine>();
+		_libvirtConnection = new Connect("qemu:///system");
+		_libvirtConnection.Open();
+	}
+
+	public void Close()
+	{
+		_libvirtConnection.Close();
 	}
 
 	/// <summary>
@@ -71,7 +81,7 @@ public class VirtualMachineService
 		return await _databaseService.IsVmExistsAsync(userId, name);
 	}
 
-	public async Task<ExitCode> StartVirtualMachineAsync(int vmId)
+	public async Task<ExitCode> PowerOnVirtualMachineAsync(int vmId)
 	{
 		if (vmId < 1)
 		{
@@ -86,12 +96,33 @@ public class VirtualMachineService
 		{
 			return ExitCode.VmDoesntExist;
 		}
-
+		
 		/* TODO: If the VM is sleeping, wake it up. */
 		if (vmDescriptor.Result.VmState == SharedDefinitions.VmState.Running)
 		{
 			return ExitCode.VmAlreadyRunning;
 		}
+		
+		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, vmId, vmDriveDescriptors.Result,
+			vmDescriptor.Result.CpuArchitecture, vmDescriptor.Result.BootMode);
+		
+		XDocument doc = virtualMachine.AsXmlDocument();
+		string xml = doc.ToString();
+
+		/* TESTING */
+		Domain domain;
+		try
+		{
+			domain = _libvirtConnection.CreateDomain(xml);
+		}
+		catch (Exception)
+		{
+			return ExitCode.VmStartupFailed;
+		}
+		
+		virtualMachine.PowerOn(domain);
+		virtualMachine.PowerOff();
+		domain.Destroy();
 		
 		return ExitCode.Success;
 	}
