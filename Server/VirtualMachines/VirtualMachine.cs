@@ -10,6 +10,7 @@ namespace Server.VirtualMachines;
 public class VirtualMachine
 {
 	private readonly DatabaseService _databaseService;
+	private readonly DriveService _driveService;
 	private Domain _domain = null!;
 	
 	private int _id;
@@ -17,19 +18,30 @@ public class VirtualMachine
 	private SharedDefinitions.CpuArchitecture _cpuArchitecture;
 	private SharedDefinitions.BootMode _bootMode;
 
-	public VirtualMachine(DatabaseService databaseService, int id, DriveDescriptor[] drives,
+	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, DriveDescriptor[] drives,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
 		_databaseService = databaseService;
+		_driveService = driveService;
 		_id = id;
 		_drives = drives;
 		_cpuArchitecture = cpuArchitecture;
 		_bootMode = bootMode;
 	}
 
-	public void PowerOn(Domain domain)
+	public ExitCode PowerOn(Connect libvirtConnection)
 	{
-		_domain = domain;
+		string xml = AsXmlDocument().ToString();
+		try
+		{
+			_domain = libvirtConnection.CreateDomain(xml);
+		}
+		catch (Exception)
+		{
+			return ExitCode.VmStartupFailed;
+		}
+
+		return ExitCode.Success;
 	}
 
 	public void PowerOff()
@@ -37,19 +49,19 @@ public class VirtualMachine
 		_domain.Shutdown();
 	}
 
-	public XDocument AsXmlDocument()
+	private XDocument AsXmlDocument()
 	{
 		string cpuArch = _cpuArchitecture switch
 		{
 			SharedDefinitions.CpuArchitecture.X86_64 => "x86_64",
-			SharedDefinitions.CpuArchitecture.X86 => "x86",
+			SharedDefinitions.CpuArchitecture.X86 => "x86_64",
 			SharedDefinitions.CpuArchitecture.Arm => "ARM",
 			_ => throw new ArgumentOutOfRangeException()
 		};
 		XElement os = new XElement("os",
 			new XElement("type", "hvm", 
 				new XAttribute("arch", cpuArch),
-				new XAttribute("machine", "pc-q35-10.1")
+				new XAttribute("machine", "pc-q35-10.0")
 			),
 			new XElement("boot", new XAttribute("dev", "cdrom")),
 			new XElement("boot", new XAttribute("dev", "hd")),
@@ -61,7 +73,7 @@ public class VirtualMachine
 
 		if (_bootMode == SharedDefinitions.BootMode.Bios)
 		{
-			os.Add(new XElement("smbios", new XAttribute("mode", "sysinfo")));
+			// os.Add(new XElement("smbios", new XAttribute("mode", "sysinfo")));
 		}
 		else if (_bootMode == SharedDefinitions.BootMode.Uefi)
 		{
@@ -73,6 +85,32 @@ public class VirtualMachine
 				)
 			);
 		}
+
+		XElement devices = new XElement("devices",
+			new XElement("input", new XAttribute("type", "mouse"), new XAttribute("bus", "ps2")),
+			new XElement("input", new XAttribute("type", "keyboard"), new XAttribute("bus", "ps2"))
+		);
+		
+		foreach (DriveDescriptor drive in _drives)
+		{
+			string driveFilePath = _driveService.GetDriveFilePath(drive.Id);
+			XElement disk = new XElement("disk",
+				new XAttribute("type", "file"),
+				new XAttribute("device", drive.Type == SharedDefinitions.DriveType.CDROM ? "cdrom" : "disk"),
+				new XElement("driver", new XAttribute("name", "qemu"), new XAttribute("type", "raw")),
+				new XElement("source", new XAttribute("file", driveFilePath)),
+				new XElement("target", 
+					new XAttribute("dev", drive.Type == SharedDefinitions.DriveType.CDROM ? "sda" : "vda"),
+					new XAttribute("bus", drive.Type == SharedDefinitions.DriveType.CDROM ? "sata" : "virtio")
+				)
+			);
+			if (drive.Type == SharedDefinitions.DriveType.CDROM)
+			{
+				disk.Add(new XElement("readonly"));
+			}
+			devices.Add(disk);
+		}
+		
 		
 		XDocument doc = new XDocument(
 			new XElement("domain", new XAttribute("type", "kvm"),
@@ -83,7 +121,8 @@ public class VirtualMachine
 					new XElement("acpi"),
 					new XElement("apic")
 				),
-				os
+				os,
+				devices
 			)
 		);
 		

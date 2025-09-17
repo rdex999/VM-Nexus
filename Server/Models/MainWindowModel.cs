@@ -23,8 +23,8 @@ public class MainWindowModel
 	{
 		_clients = new LinkedList<ClientConnection>();
 		_databaseService = new DatabaseService();
-		_virtualMachineService = new VirtualMachineService(_databaseService);
 		_driveService = new DriveService(_databaseService);
+		_virtualMachineService = new VirtualMachineService(_databaseService, _driveService);
 	}
 	
 	/// <summary>
@@ -65,6 +65,9 @@ public class MainWindowModel
 		
 		_listener = new Thread(() => ListenForClients(_listenerCts.Token, socket));
 		_listener.Start();
+
+		// ExitCode res = await _virtualMachineService.PowerOnVirtualMachineAsync(2);
+		
 		return ExitCode.Success;
 	}
 

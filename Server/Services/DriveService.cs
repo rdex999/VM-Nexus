@@ -9,6 +9,7 @@ namespace Server.Services;
 public class DriveService
 {
 	private DatabaseService _databaseService;
+	private const string ServerUsername = "rdex999";
 
 	public DriveService(DatabaseService databaseService)
 	{
@@ -61,7 +62,7 @@ public class DriveService
 				StartInfo = new ProcessStartInfo()
 				{
 					FileName = "/usr/bin/make",
-					Arguments = $" -C ../../../MiniCoffeeOS FDA=../DiskImages/{driveFileName} FDA_SIZE={size}",
+					Arguments = $" -C ../../../MiniCoffeeOS FDA={driveFilePath} FDA_SIZE={size}",
 				},
 			};
 			process.Start();
@@ -234,7 +235,7 @@ public class DriveService
 	
 	/// <summary>
 	/// Get the file path of a drive (the drives disk image file path) that the ID of is the given ID. <br/>
-	/// The file path is relative to the path of the final server executable.
+	/// The file path is relative to the root filesystem (starts with /).
 	/// </summary>
 	/// <param name="driveId">The ID of the drive. driveId >= 1.</param>
 	/// <returns>The file path to the disk image file of the drive.</returns>
@@ -242,5 +243,5 @@ public class DriveService
 	/// Precondition: driveId >= 1. <br/>
 	/// Postcondition: The file path to the disk image file of the drive is returned.
 	/// </remarks>
-	public string GetDriveFilePath(int driveId) => "../../../DiskImages/" + GetDriveFileName(driveId);
+	public string GetDriveFilePath(int driveId) => "/home/" + ServerUsername + "/.VM-Nexus/DiskImages/" + GetDriveFileName(driveId);
 }

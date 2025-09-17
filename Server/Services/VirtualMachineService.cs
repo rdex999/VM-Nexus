@@ -12,14 +12,16 @@ namespace Server.Services;
 public class VirtualMachineService
 {
 	private readonly DatabaseService _databaseService;
+	private readonly DriveService _driveService;
 	
 	/* By virtual machine ID's */
 	private ConcurrentDictionary<int, VirtualMachine> _aliveVirtualMachines;
 	private Connect _libvirtConnection;
 
-	public VirtualMachineService(DatabaseService databaseService)
+	public VirtualMachineService(DatabaseService databaseService, DriveService driveService)
 	{
 		_databaseService = databaseService;
+		_driveService = driveService;
 		_aliveVirtualMachines = new ConcurrentDictionary<int, VirtualMachine>();
 		_libvirtConnection = new Connect("qemu:///system");
 		_libvirtConnection.Open();
@@ -103,26 +105,16 @@ public class VirtualMachineService
 			return ExitCode.VmAlreadyRunning;
 		}
 		
-		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, vmId, vmDriveDescriptors.Result,
+		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, _driveService, vmId, vmDriveDescriptors.Result,
 			vmDescriptor.Result.CpuArchitecture, vmDescriptor.Result.BootMode);
 		
-		XDocument doc = virtualMachine.AsXmlDocument();
-		string xml = doc.ToString();
-
-		/* TESTING */
-		Domain domain;
-		try
+		ExitCode result = virtualMachine.PowerOn(_libvirtConnection);
+		if(result != ExitCode.Success)
 		{
-			domain = _libvirtConnection.CreateDomain(xml);
-		}
-		catch (Exception)
-		{
-			return ExitCode.VmStartupFailed;
+			return result;
 		}
 		
-		virtualMachine.PowerOn(domain);
-		virtualMachine.PowerOff();
-		domain.Destroy();
+		_aliveVirtualMachines.TryAdd(vmId, virtualMachine);
 		
 		return ExitCode.Success;
 	}
