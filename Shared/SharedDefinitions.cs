@@ -3,7 +3,7 @@
 public static class SharedDefinitions
 {
 	public const int ServerPort = 5000;
-	public const string ServerIp = "172.20.10.2"; /* local IP in network */
+	public const string ServerIp = "192.168.1.155"; /* local IP in network */
 
 	public const int MessageTimeoutMilliseconds = 3 * 60 * 1000;
 	public const int ConnectionDeniedRetryTimeout = 4000;

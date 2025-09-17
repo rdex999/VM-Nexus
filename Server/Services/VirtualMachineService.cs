@@ -105,8 +105,8 @@ public class VirtualMachineService
 			return ExitCode.VmAlreadyRunning;
 		}
 		
-		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, _driveService, vmId, vmDriveDescriptors.Result,
-			vmDescriptor.Result.CpuArchitecture, vmDescriptor.Result.BootMode);
+		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, _driveService, vmId, vmDescriptor.Result.OperatingSystem,
+			vmDescriptor.Result.CpuArchitecture, vmDescriptor.Result.BootMode, vmDriveDescriptors.Result);
 		
 		ExitCode result = virtualMachine.PowerOn(_libvirtConnection);
 		if(result != ExitCode.Success)

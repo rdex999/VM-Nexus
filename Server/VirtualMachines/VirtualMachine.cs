@@ -14,16 +14,18 @@ public class VirtualMachine
 	private Domain _domain = null!;
 	
 	private int _id;
-	private DriveDescriptor[] _drives;
+	private SharedDefinitions.OperatingSystem _operatingSystem;
 	private SharedDefinitions.CpuArchitecture _cpuArchitecture;
 	private SharedDefinitions.BootMode _bootMode;
+	private DriveDescriptor[] _drives;
 
-	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, DriveDescriptor[] drives,
-		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
+	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
+		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
 	{
 		_databaseService = databaseService;
 		_driveService = driveService;
 		_id = id;
+		_operatingSystem = operatingSystem;
 		_drives = drives;
 		_cpuArchitecture = cpuArchitecture;
 		_bootMode = bootMode;
@@ -54,7 +56,7 @@ public class VirtualMachine
 		string cpuArch = _cpuArchitecture switch
 		{
 			SharedDefinitions.CpuArchitecture.X86_64 => "x86_64",
-			SharedDefinitions.CpuArchitecture.X86 => "x86_64",
+			SharedDefinitions.CpuArchitecture.X86 => "i686",
 			SharedDefinitions.CpuArchitecture.Arm => "ARM",
 			_ => throw new ArgumentOutOfRangeException()
 		};
@@ -88,8 +90,28 @@ public class VirtualMachine
 
 		XElement devices = new XElement("devices",
 			new XElement("input", new XAttribute("type", "mouse"), new XAttribute("bus", "ps2")),
-			new XElement("input", new XAttribute("type", "keyboard"), new XAttribute("bus", "ps2"))
+			new XElement("input", new XAttribute("type", "keyboard"), new XAttribute("bus", "ps2")),
+			new XElement("graphics",
+				new XAttribute("type", "vnc"),
+				new XAttribute("port", "5900"),
+				new XAttribute("autoport", "yes")
+			)
 		);
+
+		if (_operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
+		{
+			devices.Add(new XElement("model", new XAttribute("type", "vga")));
+		}
+		else
+		{
+			devices.Add(new XElement("video",
+				new XElement("model", 
+					new XAttribute("type", "virtio"),
+					new XAttribute("heads", "1"),
+					new XAttribute("primary", "yes")
+				)
+			));
+		}
 		
 		foreach (DriveDescriptor drive in _drives)
 		{

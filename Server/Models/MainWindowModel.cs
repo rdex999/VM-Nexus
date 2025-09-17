@@ -66,7 +66,7 @@ public class MainWindowModel
 		_listener = new Thread(() => ListenForClients(_listenerCts.Token, socket));
 		_listener.Start();
 
-		// ExitCode res = await _virtualMachineService.PowerOnVirtualMachineAsync(2);
+		// ExitCode res = await _virtualMachineService.PowerOnVirtualMachineAsync(20);
 		
 		return ExitCode.Success;
 	}

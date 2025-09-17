@@ -9,7 +9,6 @@ namespace Server.Services;
 public class DriveService
 {
 	private DatabaseService _databaseService;
-	private const string ServerUsername = "rdex999";
 
 	public DriveService(DatabaseService databaseService)
 	{
@@ -101,7 +100,7 @@ public class DriveService
 			Process? copyProc = Process.Start(new ProcessStartInfo()
 			{
 				FileName = "/bin/cp",
-				ArgumentList = { "../../../OsDiskImages/" + osDiskImageName, driveFilePath },
+				ArgumentList = { GetVmNexusFolderPath() + "/OsDiskImages/" + osDiskImageName, driveFilePath },
 				UseShellExecute = false,
 			});
 			await copyProc!.WaitForExitAsync();
@@ -243,5 +242,7 @@ public class DriveService
 	/// Precondition: driveId >= 1. <br/>
 	/// Postcondition: The file path to the disk image file of the drive is returned.
 	/// </remarks>
-	public string GetDriveFilePath(int driveId) => "/home/" + ServerUsername + "/.VM-Nexus/DiskImages/" + GetDriveFileName(driveId);
+	public string GetDriveFilePath(int driveId) => GetVmNexusFolderPath() + "/DiskImages/" + GetDriveFileName(driveId);
+	
+	private string GetVmNexusFolderPath() => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/.VM-Nexus";
 }
