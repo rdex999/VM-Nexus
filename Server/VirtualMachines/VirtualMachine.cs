@@ -7,7 +7,9 @@ using System.Xml.Linq;
 using libvirt;
 using MarcusW.VncClient;
 using MarcusW.VncClient.Protocol.Implementation.Services.Transports;
+using MarcusW.VncClient.Protocol.SecurityTypes;
 using MarcusW.VncClient.Rendering;
+using MarcusW.VncClient.Security;
 using Microsoft.Extensions.Logging;
 using Server.Drives;
 using Server.Services;
@@ -65,23 +67,34 @@ public class VirtualMachine
 					Host = "127.0.0.1",
 					Port = 5900		/* Temporary */
 				},
-				AllowSharedConnection = false,
+				AllowSharedConnection = true,
 				ConnectTimeout = TimeSpan.FromSeconds(3),
 				RenderFlags = RenderFlags.Default,
-			}, new CancellationTokenSource(3000).Token);	/* Cancel after 3 seconds. */
+				AuthenticationHandler = new VirtualMachineVncAuthenticationHandler(),
+			}, new CancellationTokenSource(3000).Token);		/* Cancel after 3 seconds. */
 		}
 		catch (Exception)
 		{
 			/* TODO: Force shutdown the VM */
 			return ExitCode.VncConnectionFailed;
 		}
-		
+
 		return ExitCode.Success;
 	}
 
 	public void PowerOff()
 	{
 		_domain.Shutdown();
+	}
+
+	public void StartCaptureFrames()
+	{
+		_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(_rfbConnection.RemoteFramebufferFormat);
+	}
+
+	public void StopCaptureFrames()
+	{
+		_rfbConnection.RenderTarget = null;
 	}
 
 	private XDocument AsXmlDocument()
@@ -166,7 +179,6 @@ public class VirtualMachine
 			devices.Add(disk);
 		}
 		
-		
 		XDocument doc = new XDocument(
 			new XElement("domain", new XAttribute("type", "kvm"),
 				new XElement("name", _id.ToString()),
@@ -184,6 +196,19 @@ public class VirtualMachine
 		return doc;
 	}
 	
+	private class VirtualMachineVncAuthenticationHandler : IAuthenticationHandler
+	{
+		public async Task<TInput> ProvideAuthenticationInputAsync<TInput>(RfbConnection connection, ISecurityType securityType, IAuthenticationInputRequest<TInput> request)
+			where TInput : class, IAuthenticationInput
+		{
+			if (typeof(TInput) == typeof(PasswordAuthenticationInput))
+			{
+				return (TInput)Convert.ChangeType(new PasswordAuthenticationInput(string.Empty), typeof(TInput));
+			}
+			
+			throw new InvalidOperationException("The authentication input request is not supported by this authentication handler.");
+		}
+	}
 }
 
 public class VirtualMachineVncRenderTarget : IRenderTarget
@@ -192,6 +217,8 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	private readonly object _lock;
 	private Size _size;
 	private PixelFormat _pixelFormat;
+	private bool _grabbed = false;
+	private GCHandle? _framebufferHandle;
 
 	public VirtualMachineVncRenderTarget(PixelFormat pixelFormat)
 	{
@@ -202,6 +229,13 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	
 	public IFramebufferReference GrabFramebufferReference(Size size, IImmutableSet<Screen> layout)
 	{
+		if (_grabbed)
+		{
+			throw new InvalidOperationException("Framebuffer is already grabbed.");
+		}
+
+		_grabbed = true;
+		
 		lock (_lock)
 		{
 			if (_framebuffer == null || _size != size)
@@ -209,10 +243,19 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 				_size = size;
 				_framebuffer = new byte[_size.Width * _size.Height * _pixelFormat.BytesPerPixel];
 			}
-			
-			throw new NotImplementedException();
-			// return new FramebufferReference(_framebuffer, _size, _pixelFormat)
+
+			_framebufferHandle = GCHandle.Alloc(_framebuffer, GCHandleType.Pinned);
+			return new FramebufferReference(_framebufferHandle.Value.AddrOfPinnedObject(), _size, _pixelFormat)
+			{
+				Released = OnFramebufferReleased
+			};
 		}
+	}
+
+	private void OnFramebufferReleased(FramebufferReference framebufferReference)
+	{
+		_grabbed = false;
+		_framebufferHandle!.Value.Free();
 	}
 
 	private class FramebufferReference : IFramebufferReference
@@ -222,6 +265,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 		public PixelFormat Format { get; }
 		public double HorizontalDpi { get; set; }
 		public double VerticalDpi { get; set; }
+		public Action<FramebufferReference> Released { get; set; }
 
 		public FramebufferReference(IntPtr address, Size size, PixelFormat format)
 		{
@@ -232,7 +276,8 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 		
 		public void Dispose()
 		{
-			
+			Released?.Invoke(this);
 		}
 	}
 }
+
