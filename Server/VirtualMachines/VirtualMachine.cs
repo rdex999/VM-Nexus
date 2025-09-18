@@ -1,9 +1,18 @@
 using System;
+using System.Collections.Immutable;
+using System.Runtime.InteropServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 using libvirt;
+using MarcusW.VncClient;
+using MarcusW.VncClient.Protocol.Implementation.Services.Transports;
+using MarcusW.VncClient.Rendering;
+using Microsoft.Extensions.Logging;
 using Server.Drives;
 using Server.Services;
 using Shared;
+using Size = MarcusW.VncClient.Size;
 
 namespace Server.VirtualMachines;
 
@@ -18,6 +27,7 @@ public class VirtualMachine
 	private SharedDefinitions.CpuArchitecture _cpuArchitecture;
 	private SharedDefinitions.BootMode _bootMode;
 	private DriveDescriptor[] _drives;
+	private RfbConnection _rfbConnection;
 
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
@@ -31,7 +41,7 @@ public class VirtualMachine
 		_bootMode = bootMode;
 	}
 
-	public ExitCode PowerOn(Connect libvirtConnection)
+	public async Task<ExitCode> PowerOnAsync(Connect libvirtConnection)
 	{
 		string xml = AsXmlDocument().ToString();
 		try
@@ -42,7 +52,30 @@ public class VirtualMachine
 		{
 			return ExitCode.VmStartupFailed;
 		}
-
+	
+		var loggerFactory = new LoggerFactory();
+		VncClient vncClient = new VncClient(loggerFactory);
+			
+		try
+		{
+			_rfbConnection = await vncClient.ConnectAsync(new ConnectParameters()
+			{
+				TransportParameters = new TcpTransportParameters()
+				{
+					Host = "127.0.0.1",
+					Port = 5900		/* Temporary */
+				},
+				AllowSharedConnection = false,
+				ConnectTimeout = TimeSpan.FromSeconds(3),
+				RenderFlags = RenderFlags.Default,
+			}, new CancellationTokenSource(3000).Token);	/* Cancel after 3 seconds. */
+		}
+		catch (Exception)
+		{
+			/* TODO: Force shutdown the VM */
+			return ExitCode.VncConnectionFailed;
+		}
+		
 		return ExitCode.Success;
 	}
 
@@ -93,8 +126,8 @@ public class VirtualMachine
 			new XElement("input", new XAttribute("type", "keyboard"), new XAttribute("bus", "ps2")),
 			new XElement("graphics",
 				new XAttribute("type", "vnc"),
-				new XAttribute("port", "5900"),
-				new XAttribute("autoport", "yes")
+				new XAttribute("port", "5900")	/* Temporary */
+				// new XAttribute("autoport", "yes")
 			)
 		);
 
@@ -151,4 +184,55 @@ public class VirtualMachine
 		return doc;
 	}
 	
+}
+
+public class VirtualMachineVncRenderTarget : IRenderTarget
+{
+	private byte[]? _framebuffer;
+	private readonly object _lock;
+	private Size _size;
+	private PixelFormat _pixelFormat;
+
+	public VirtualMachineVncRenderTarget(PixelFormat pixelFormat)
+	{
+		_lock = new object();
+		_pixelFormat = pixelFormat;
+		_size = new Size(0, 0);
+	}
+	
+	public IFramebufferReference GrabFramebufferReference(Size size, IImmutableSet<Screen> layout)
+	{
+		lock (_lock)
+		{
+			if (_framebuffer == null || _size != size)
+			{
+				_size = size;
+				_framebuffer = new byte[_size.Width * _size.Height * _pixelFormat.BytesPerPixel];
+			}
+			
+			throw new NotImplementedException();
+			// return new FramebufferReference(_framebuffer, _size, _pixelFormat)
+		}
+	}
+
+	private class FramebufferReference : IFramebufferReference
+	{
+		public IntPtr Address { get; }
+		public Size Size { get; }
+		public PixelFormat Format { get; }
+		public double HorizontalDpi { get; set; }
+		public double VerticalDpi { get; set; }
+
+		public FramebufferReference(IntPtr address, Size size, PixelFormat format)
+		{
+			Address = address;
+			Size = size;
+			Format = format;
+		}
+		
+		public void Dispose()
+		{
+			
+		}
+	}
 }

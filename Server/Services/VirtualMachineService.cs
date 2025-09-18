@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using libvirt;
 using Server.Drives;
 using Server.VirtualMachines;
@@ -107,14 +106,28 @@ public class VirtualMachineService
 		
 		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, _driveService, vmId, vmDescriptor.Result.OperatingSystem,
 			vmDescriptor.Result.CpuArchitecture, vmDescriptor.Result.BootMode, vmDriveDescriptors.Result);
-		
-		ExitCode result = virtualMachine.PowerOn(_libvirtConnection);
-		if(result != ExitCode.Success)
+
+		bool addSuccess = false;
+		try
 		{
-			return result;
+			addSuccess = _aliveVirtualMachines.TryAdd(vmId, virtualMachine);
+		}
+		catch (Exception)
+		{
+			// ignored
+		}
+
+		if (!addSuccess)
+		{
+			return ExitCode.TooManyVmsRunning;	
 		}
 		
-		_aliveVirtualMachines.TryAdd(vmId, virtualMachine);
+		ExitCode result = await virtualMachine.PowerOnAsync(_libvirtConnection);
+		if(result != ExitCode.Success)
+		{
+			_aliveVirtualMachines.TryRemove(vmId, out _);
+			return result;
+		}
 		
 		return ExitCode.Success;
 	}

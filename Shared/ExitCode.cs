@@ -19,6 +19,8 @@ public enum ExitCode
 	VmDoesntExist,
 	VmAlreadyRunning,
 	VmStartupFailed,
+	TooManyVmsRunning,
+	VncConnectionFailed,
 	DriveAlreadyExists,
 	DriveDoesntExist,
 	DriveConnectionAlreadyExists,
