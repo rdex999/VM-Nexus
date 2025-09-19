@@ -265,7 +265,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 		public PixelFormat Format { get; }
 		public double HorizontalDpi { get; set; }
 		public double VerticalDpi { get; set; }
-		public Action<FramebufferReference> Released { get; set; }
+		public Action<FramebufferReference>? Released { get; set; }
 
 		public FramebufferReference(IntPtr address, Size size, PixelFormat format)
 		{

@@ -105,20 +105,22 @@
 										</LinearGradientBrush>
 									</Border.Background>
 
-									<Grid>
+									<Grid RowDefinitions="Auto, *, Auto">
 										<StackPanel VerticalAlignment="Top" Spacing="5">
 											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding OperatingSystemString}" />
 											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding Name}" />
 											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding StateString}" FontWeight="Bold" />
 										</StackPanel>
 
-										<StackPanel HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Bottom">
+										<TextBlock Grid.Row="1" Classes="error" Text="{Binding ErrorMessage}"/>
+										
+										<StackPanel Grid.Row="2" HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Bottom">
 											<Button HorizontalAlignment="Center" Command="{Binding OpenClickCommand}">
 												<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Open</TextBlock>
 											</Button>
 
 											<StackPanel Orientation="Horizontal" Spacing="10">
-												<Button Padding="8,5,8,6" Width="80">
+												<Button Padding="8,5,8,6" Width="80" Command="{Binding PowerOnClickCommand}">
 													<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Start</TextBlock>
 												</Button>
 

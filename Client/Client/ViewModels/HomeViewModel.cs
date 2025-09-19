@@ -1,10 +1,13 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Avalonia.Interactivity;
+using System.Threading.Tasks;
+using Avalonia.Threading;
 using Client.Services;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
+using Shared.Networking;
 
 namespace Client.ViewModels;
 
@@ -31,6 +34,7 @@ public class HomeViewModel : ViewModelBase
 	{
 		Vms = new ObservableCollection<VmItemTemplate>();
 		ClientSvc.VmListChanged += OnVmListChanged;
+		
 	}
 
 	/// <summary>
@@ -45,9 +49,10 @@ public class HomeViewModel : ViewModelBase
 	private void OnVmListChanged(object? sender, SharedDefinitions.VmGeneralDescriptor[] vms)
 	{
 		Vms.Clear();
+		Dispatcher.UIThread.InvokeAsync(() => { }).Wait();			/* Allow the UI thread to process any changes that were made. */
 		foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
 		{
-			Vms.Add(new VmItemTemplate(vm.Id, vm.Name, vm.OperatingSystem, vm.State));
+			Vms.Add(new VmItemTemplate(ClientSvc, vm.Id, vm.Name, vm.OperatingSystem, vm.State));
 			Vms.Last().OpenClicked += OnVmOpenClicked;
 		}
 	}
@@ -59,36 +64,60 @@ public class HomeViewModel : ViewModelBase
 	/// Precondition: User has clicked the Open button on a VM. <br/>
 	/// Postcondition: A new tab is opened for the VM. If a tab for the VM is already open, the user will be redirected to it.
 	/// </remarks>
-	private void OnVmOpenClicked(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	private void OnVmOpenClicked(SharedDefinitions.VmGeneralDescriptor descriptor)
 	{
 		VmOpenClicked?.Invoke(this, descriptor);
 	}
 }
 
-public partial class VmItemTemplate
+public partial class VmItemTemplate : ObservableObject
 {
-	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? OpenClicked;
+	public Action<SharedDefinitions.VmGeneralDescriptor>? OpenClicked;
 	public int Id { get; }
-	public string Name { get; }
-	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
 
-	public string OperatingSystemString
+	[ObservableProperty] 
+	private string _name;
+
+	private SharedDefinitions.OperatingSystem _operatingSystem;
+	public SharedDefinitions.OperatingSystem OperatingSystem
 	{
-		get
+		get => _operatingSystem;
+		private init
 		{
-			if (OperatingSystem == SharedDefinitions.OperatingSystem.Other)
-			{
-				return "Unknown OS";
-			}
-			return Common.SeparateStringWords(OperatingSystem.ToString());
+			_operatingSystem = value;
+			OperatingSystemString = _operatingSystem == SharedDefinitions.OperatingSystem.Other
+				? "Unknown OS"
+				: Common.SeparateStringWords(_operatingSystem.ToString());
 		}
 	}
-	public SharedDefinitions.VmState State { get; }
-	public string StateString => Common.SeparateStringWords(State.ToString());
+	
+	private readonly ClientService _clientService;
+
+	[ObservableProperty]
+	private string _operatingSystemString = string.Empty;
+
+	private SharedDefinitions.VmState _state;
+	public SharedDefinitions.VmState State
+	{
+		get => _state;
+		set
+		{
+			_state = value;
+			StateString = Common.SeparateStringWords(_state.ToString());
+		}
+	}
+
+	[ObservableProperty] 
+	private string _stateString = string.Empty;
+
+	[ObservableProperty]
+	private string _errorMessage = string.Empty;
 
 	/// <summary>
 	/// Creates a new instance of a VmItemTemplate.
 	/// </summary>
+	/// <param name="clientService">The client communication service. clientService != null.</param>
+	/// <param name="id">The ID of the virtual machine. id >= 1.</param>
 	/// <param name="name">
 	/// The name of the VM. name != null.
 	/// </param>
@@ -99,11 +128,13 @@ public partial class VmItemTemplate
 	/// The state of the VM. (shut down, running, etc..)
 	/// </param>
 	/// <remarks>
-	/// Precondition: name != null. <br/>
+	/// Precondition: clientService != null &amp;&amp; id >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: A new instance of VmItemTemplate is created.
 	/// </remarks>
-	public VmItemTemplate(int id, string name, SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.VmState state)
+	public VmItemTemplate(ClientService clientService, int id, string name,
+		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.VmState state)
 	{
+		_clientService = clientService;
 		Id = id;
 		Name = name;
 		OperatingSystem = operatingSystem;
@@ -118,8 +149,27 @@ public partial class VmItemTemplate
 	/// Postcondition: A new tab is opened for the VM. If a tab for the VM is already open, the user will be redirected to it.
 	/// </remarks>
 	[RelayCommand]
-	private void OpenClick()
+	private void OpenClick() => OpenClicked?.Invoke(new SharedDefinitions.VmGeneralDescriptor(Id, Name, OperatingSystem, State));
+
+	/// <summary>
+	/// Handles a click on the power on button. Attempts to power on the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked the power on button in a VM. User logged in and has power permissions for the VM.<br/>
+	/// Postcondition: On success, the VM is powered on. On failure, an error message is displayed.
+	/// </remarks>
+	[RelayCommand]
+	private async Task PowerOnClickAsync()
 	{
-		OpenClicked?.Invoke(this, new SharedDefinitions.VmGeneralDescriptor(Id, Name, OperatingSystem, State));
+		MessageResponseVmStartup.Status result = await _clientService.PowerOnVirtualMachineAsync(Id);
+		ErrorMessage = string.Empty;
+		if (result == MessageResponseVmStartup.Status.VmAlreadyRunning)
+		{
+			State = SharedDefinitions.VmState.Running;
+		} 
+		else if(result != MessageResponseVmStartup.Status.Success)
+		{
+			ErrorMessage = "VM startup failed.";
+		}
 	}
 }

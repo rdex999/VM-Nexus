@@ -198,18 +198,19 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
 					break;
 				}
-				
-				SharedDefinitions.VmState vmState = await _virtualMachineService.GetVmStateAsync(reqVmStartup.VmId);
-				if (vmState == (SharedDefinitions.VmState)(-1))
-				{
-					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
-					break;
-				}
 
-				if (vmState == SharedDefinitions.VmState.Running)
+				result = await _virtualMachineService.PowerOnVirtualMachineAsync(reqVmStartup.VmId);
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Success));
+				} 
+				else if (result == ExitCode.VmAlreadyRunning)
 				{
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.VmAlreadyRunning));
-					break;
+				}
+				else
+				{
+					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
 				}
 				
 				break;

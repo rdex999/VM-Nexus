@@ -238,6 +238,27 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests to power on a virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to power on. id >= 1.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server.
+	/// The user is logged in, and has power permissions for the VM with the given ID. id >= 1. <br/>
+	/// Postcondition: On success, the virtual machine is powered on (running) and the returned status indicates success. <br/>
+	/// On failure, the virtual machine is powered off and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseVmStartup.Status> PowerOnVirtualMachineAsync(int id)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmStartup(true, id));
+		if (result != ExitCode.Success)
+		{
+			return MessageResponseVmStartup.Status.Failure;
+		}
+		return ((MessageResponseVmStartup)response!).Result;
+	}
+
+	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
 	/// </summary>
 	/// <param name="token">
