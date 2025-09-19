@@ -314,15 +314,55 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	{
 		if (pixelFormat.BitsPerPixel == 32)
 		{
-			/* Can only be BGR32 or RGB32 */
+			/* Can be BGR32 or RGB32 or BGRA8888 or RGBA8888 */
+
+			if (pixelFormat.HasAlpha)
+			{
+				/* Can only be BGRA8888 or RGBA8888 */
+				
+				/* Check if BGRA8888 */
+				if (pixelFormat.AlphaShift == 24 && pixelFormat.RedShift == 16 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 0)
+				{
+					return Avalonia.Platform.PixelFormats.Bgra8888;
+				}
+
+				/* Check if RGBA8888 */
+				if (pixelFormat.RedShift == 0 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 16 && pixelFormat.AlphaShift == 24)
+				{
+					return Avalonia.Platform.PixelFormats.Rgba8888;
+				}			
+			}
+			else
+			{
+				/* Can only be BGR32 or RGB32 */
+				
+				/* Check if BGR32 */
+				if (pixelFormat.RedShift == 16 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 0)
+				{
+					return Avalonia.Platform.PixelFormats.Bgr32;
+				}
+
+				/* Check if RGB32 */
+				if (pixelFormat.RedShift == 0 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 16)
+				{
+					return Avalonia.Platform.PixelFormats.Rgb32;
+				}
+			}
+		} 
+		else if (pixelFormat.BitsPerPixel == 24)
+		{
+			/* Can only be BGR24 or RGB24 */
 			
-			/* Check if BGR32 */
+			/* Check if BGR24 */
 			if (pixelFormat.RedShift == 16 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 0)
 			{
-				return Avalonia.Platform.PixelFormats.Bgr32;
+				return Avalonia.Platform.PixelFormats.Bgr24;
 			}
-			
-			/* TODO: Check for other formats */
+
+			if (pixelFormat.RedShift == 0 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 16)
+			{
+				return Avalonia.Platform.PixelFormats.Rgb24;
+			}
 		}
 
 		return null;
