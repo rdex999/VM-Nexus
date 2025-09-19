@@ -201,3 +201,21 @@ public class MessageResponseVmStartup : MessageResponse
 		Failure,
 	}
 }
+
+public class MessageResponseVmScreenStream : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseVmScreenStream(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		AlreadyStreaming,
+		Failure,
+	}
+}

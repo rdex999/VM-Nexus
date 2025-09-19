@@ -8,4 +8,14 @@ public class VmScreenViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 	}
+
+	public void Focus()
+	{
+		
+	}
+	
+	public void Unfocus()
+	{
+		
+	}
 }

@@ -121,6 +121,15 @@ public partial class MainViewModel : ViewModelBase
 	{
 		if (value == null)
 			return;
+
+		if (CurrentPageViewModel is VmScreenViewModel && value.ViewModel is not VmScreenViewModel)
+		{
+			((VmScreenViewModel)CurrentPageViewModel).Unfocus();
+		}
+		else if (value.ViewModel is VmScreenViewModel && CurrentPageViewModel is not VmScreenViewModel)
+		{
+			((VmScreenViewModel)value.ViewModel).Focus();
+		}
 		
 		CurrentPageViewModel = value.ViewModel;
 	}
