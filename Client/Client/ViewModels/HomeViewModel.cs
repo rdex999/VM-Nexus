@@ -113,6 +113,11 @@ public partial class VmItemTemplate : ObservableObject
 	[ObservableProperty]
 	private string _errorMessage = string.Empty;
 
+	[ObservableProperty]
+	private bool _errorMessageIsVisible;
+
+	partial void OnErrorMessageChanged(string value) => ErrorMessageIsVisible = !string.IsNullOrEmpty(value);
+
 	/// <summary>
 	/// Creates a new instance of a VmItemTemplate.
 	/// </summary>
@@ -172,4 +177,14 @@ public partial class VmItemTemplate : ObservableObject
 			ErrorMessage = "VM startup failed.";
 		}
 	}
+
+	/// <summary>
+	/// Handles a click on the dismiss button on a VM error message. Hides the error message.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked the dismiss button on a VM error message. <br/>
+	/// Postcondition: Error message is hidden.
+	/// </remarks>
+	[RelayCommand]
+	private void ErrorMessageDismiss() => ErrorMessage = string.Empty;
 }

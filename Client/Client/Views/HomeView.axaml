@@ -112,7 +112,13 @@
 											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding StateString}" FontWeight="Bold" />
 										</StackPanel>
 
-										<TextBlock Grid.Row="1" Classes="error" Text="{Binding ErrorMessage}"/>
+										<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20" IsVisible="{Binding ErrorMessageIsVisible}">
+											<TextBlock Classes="error" Text="{Binding ErrorMessage}" VerticalAlignment="Center"/>
+											
+											<Button Command="{Binding ErrorMessageDismissCommand}" Background="Transparent" VerticalAlignment="Center">
+												<PathIcon Data="{StaticResource DismissRegular}" Width="10" Height="10"/>
+											</Button>
+										</StackPanel>
 										
 										<StackPanel Grid.Row="2" HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Bottom">
 											<Button HorizontalAlignment="Center" Command="{Binding OpenClickCommand}">
