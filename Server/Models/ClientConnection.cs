@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Server.Services;
+using Server.VirtualMachines;
 using Shared;
 using Shared.Networking;
 
@@ -229,7 +230,7 @@ public sealed class ClientConnection : MessagingService
 				{
 					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Success));
 				} 
-				else if (result == ExitCode.VmScreenScreenAlreadyRunning)
+				else if (result == ExitCode.VmScreenStreamAlreadyRunning)
 				{
 					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.AlreadyStreaming));
 				}
@@ -336,7 +337,7 @@ public sealed class ClientConnection : MessagingService
 		}
 	}
 
-	private void OnVmNewFrame(byte[] framebuffer)
+	private void OnVmNewFrame(VirtualMachineFrame framebuffer)
 	{
 		
 	}

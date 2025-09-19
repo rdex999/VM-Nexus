@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using libvirt;
 using MarcusW.VncClient;
+using MarcusW.VncClient.Protocol.Implementation.MessageTypes.Outgoing;
 using MarcusW.VncClient.Protocol.Implementation.Services.Transports;
+using MarcusW.VncClient.Protocol.MessageTypes;
 using MarcusW.VncClient.Protocol.SecurityTypes;
 using MarcusW.VncClient.Rendering;
 using MarcusW.VncClient.Security;
@@ -87,14 +89,21 @@ public class VirtualMachine
 		_domain.Shutdown();
 	}
 
-	public ExitCode StartScreenStream(Action<byte[]> callback)
+	public ExitCode StartScreenStream(Action<VirtualMachineFrame> callback)
 	{
 		if (IsScreenStreamRunning())
 		{
-			return ExitCode.VmScreenScreenAlreadyRunning;
+			return ExitCode.VmScreenStreamAlreadyRunning;
 		}
-	
-		_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(_rfbConnection.RemoteFramebufferFormat, callback);
+
+		try
+		{
+			_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(_id, _rfbConnection.RemoteFramebufferFormat, callback);
+		}
+		catch (Exception)
+		{
+			return ExitCode.VmScreenStreamUnsupportedPixelFormat;
+		}
 		
 		return ExitCode.Success;
 	}
@@ -222,20 +231,30 @@ public class VirtualMachine
 
 public class VirtualMachineVncRenderTarget : IRenderTarget
 {
+	private int _vmId;
 	private byte[]? _framebuffer;
 	private readonly object _lock;
 	private Size _size;
 	private PixelFormat _pixelFormat;
+	private Avalonia.Platform.PixelFormat _avaloniaPixelFormat;
 	private bool _grabbed = false;
 	private GCHandle? _framebufferHandle;
-	private Action<byte[]> _onNewFrame;
+	private Action<VirtualMachineFrame> _onNewFrame;
 
-	public VirtualMachineVncRenderTarget(PixelFormat pixelFormat, Action<byte[]> onNewFrame)
+	public VirtualMachineVncRenderTarget(int vmId, PixelFormat pixelFormat, Action<VirtualMachineFrame> onNewFrame)
 	{
+		_vmId = vmId;
 		_pixelFormat = pixelFormat;
 		_onNewFrame = onNewFrame;
 		_lock = new object();
 		_size = new Size(0, 0);
+		
+		Avalonia.Platform.PixelFormat? avaloniaPixelFormat = AvaloniaPixelFormatFromMarcusW(pixelFormat);
+		if (avaloniaPixelFormat == null)
+		{
+			throw new InvalidOperationException("Unsupported pixel format.");
+		}
+		_avaloniaPixelFormat = avaloniaPixelFormat.Value;
 	}
 	
 	public IFramebufferReference GrabFramebufferReference(Size size, IImmutableSet<Screen> layout)
@@ -267,7 +286,9 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	{
 		_grabbed = false;
 		_framebufferHandle!.Value.Free();
-		_onNewFrame.Invoke(_framebuffer!);
+	
+		_onNewFrame.Invoke(new VirtualMachineFrame(_vmId, _avaloniaPixelFormat,
+			new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
 	}
 
 	private class FramebufferReference : IFramebufferReference
@@ -287,6 +308,24 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 		}
 		
 		public void Dispose() => Released?.Invoke(this);
+	}
+
+	public static Avalonia.Platform.PixelFormat? AvaloniaPixelFormatFromMarcusW(PixelFormat pixelFormat)
+	{
+		if (pixelFormat.BitsPerPixel == 32)
+		{
+			/* Can only be BGR32 or RGB32 */
+			
+			/* Check if BGR32 */
+			if (pixelFormat.RedShift == 16 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 0)
+			{
+				return Avalonia.Platform.PixelFormats.Bgr32;
+			}
+			
+			/* TODO: Check for other formats */
+		}
+
+		return null;
 	}
 }
 

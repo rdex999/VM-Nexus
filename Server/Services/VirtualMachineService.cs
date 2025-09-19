@@ -153,7 +153,7 @@ public class VirtualMachineService
 	/// Postcondition: On success, the stream is started and the returned exit code indicates success. <br/>
 	/// On failure, the stream is not started and the returned exit code indicates the error.
 	/// </remarks>
-	public ExitCode StartScreenStream(int id, Action<byte[]> callback)
+	public ExitCode StartScreenStream(int id, Action<VirtualMachineFrame> callback)
 	{
 		if (id < 1)
 		{
