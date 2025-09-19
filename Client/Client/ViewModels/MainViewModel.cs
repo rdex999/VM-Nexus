@@ -93,7 +93,7 @@ public partial class MainViewModel : ViewModelBase
 		/* Check if a tab is already open for this VM */
 		foreach (VmTabTemplate vm in VmTabs)
 		{
-			if (vm.Name == descriptor.Name)		/* If found a that for this VM, redirect to it. */
+			if (vm.Descriptor.Id == descriptor.Id)		/* If found a that for this VM, redirect to it. */
 			{
 				SelectedVmTab = vm;
 				return;
@@ -101,7 +101,7 @@ public partial class MainViewModel : ViewModelBase
 		}
 		
 		/* Here we know there is no open tab for this VM, so create one */
-		VmTabs.Add(new VmTabTemplate(descriptor.Name));
+		VmTabs.Add(new VmTabTemplate(descriptor));
 		SelectedVmTab = VmTabs.Last();
 		SideMenuMode(true);
 		CurrentSideMenuItem = SideMenuItems[2];
@@ -128,7 +128,7 @@ public partial class MainViewModel : ViewModelBase
 		}
 		else if (value.ViewModel is VmScreenViewModel && CurrentPageViewModel is not VmScreenViewModel)
 		{
-			((VmScreenViewModel)value.ViewModel).Focus();
+			_ = ((VmScreenViewModel)value.ViewModel).FocusAsync();
 		}
 		
 		CurrentPageViewModel = value.ViewModel;
@@ -220,6 +220,7 @@ public partial class MainViewModel : ViewModelBase
 		
 		SideMenuMode(true);
 		CurrentSideMenuItem = SideMenuItems[2];
+		_ = ((VmScreenViewModel)CurrentPageViewModel).SwitchVirtualMachineAsync(value.Descriptor);
 	}
 }
 
@@ -260,10 +261,10 @@ public partial class SideMenuItemTemplate : ObservableObject
 
 public class VmTabTemplate
 {
-	public string Name { get; }
+	public SharedDefinitions.VmGeneralDescriptor Descriptor { get; }
 
-	public VmTabTemplate(string name)
+	public VmTabTemplate(SharedDefinitions.VmGeneralDescriptor descriptor)
 	{
-		Name = name;
+		Descriptor = descriptor;
 	}
 }

@@ -259,6 +259,26 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests a video stream of the screen of the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to get a video stream of. id >= 1.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. User is logged in, and has viewing permissions for the given VM. id >= 1. <br/>
+	/// Postcondition: On success, a video stream of the virtual machine's screen is sent, and the returned status indicates success. <br/>
+	/// On failure, the video stream will not be sent and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseVmScreenStream.Status> VirtualMachineStartScreenStreamAsync(int id)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmScreenStream(true, id));
+		if (result != ExitCode.Success)
+		{
+			return MessageResponseVmScreenStream.Status.Failure;
+		}
+		return ((MessageResponseVmScreenStream)response!).Result;	
+	}
+
+	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
 	/// </summary>
 	/// <param name="token">

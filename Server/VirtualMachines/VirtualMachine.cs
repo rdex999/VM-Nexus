@@ -284,11 +284,12 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 
 	private void OnFramebufferReleased(FramebufferReference framebufferReference)
 	{
-		_grabbed = false;
 		_framebufferHandle!.Value.Free();
 	
 		_onNewFrame.Invoke(new VirtualMachineFrame(_vmId, _avaloniaPixelFormat,
 			new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
+		
+		_grabbed = false;
 	}
 
 	private class FramebufferReference : IFramebufferReference

@@ -4,6 +4,7 @@ public enum ExitCode
 {
 	Success = 0,
 	InvalidParameter,
+	CallOnInvalidCondition,
 	ServerNoValidLocalhostIp,
 	ConnectionToServerFailed,
 	DisconnectedFromServer,
@@ -21,6 +22,7 @@ public enum ExitCode
 	VmStartupFailed,
 	VmIsShutDown,
 	VmScreenStreamAlreadyRunning,
+	VmScreenStreamStartFailed,
 	VmScreenStreamUnsupportedPixelFormat,
 	TooManyVmsRunning,
 	VncConnectionFailed,
