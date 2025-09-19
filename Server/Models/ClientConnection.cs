@@ -215,6 +215,31 @@ public sealed class ClientConnection : MessagingService
 				
 				break;
 			}
+
+			case MessageRequestVmScreenStream reqVmScreenStream:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Failure));
+					break;
+				}
+				
+				result = _virtualMachineService.StartScreenStream(reqVmScreenStream.VmId, OnVmNewFrame);
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Success));
+				} 
+				else if (result == ExitCode.VmScreenScreenAlreadyRunning)
+				{
+					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.AlreadyStreaming));
+				}
+				else
+				{
+					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Failure));
+				}
+				
+				break;
+			}
 			
 			case MessageRequestCreateDrive reqCreateDrive:
 			{
@@ -309,5 +334,10 @@ public sealed class ClientConnection : MessagingService
 			Disconnect();
 			Disconnected?.Invoke(this, EventArgs.Empty);
 		}
+	}
+
+	private void OnVmNewFrame(byte[] framebuffer)
+	{
+		
 	}
 }

@@ -87,15 +87,24 @@ public class VirtualMachine
 		_domain.Shutdown();
 	}
 
-	public void StartCaptureFrames()
+	public ExitCode StartScreenStream(Action<byte[]> callback)
 	{
-		_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(_rfbConnection.RemoteFramebufferFormat);
+		if (IsScreenStreamRunning())
+		{
+			return ExitCode.VmScreenScreenAlreadyRunning;
+		}
+	
+		_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(_rfbConnection.RemoteFramebufferFormat, callback);
+		
+		return ExitCode.Success;
 	}
 
-	public void StopCaptureFrames()
+	public void StopScreenStream()
 	{
 		_rfbConnection.RenderTarget = null;
 	}
+	
+	public bool IsScreenStreamRunning() => _rfbConnection.RenderTarget != null;
 
 	private XDocument AsXmlDocument()
 	{
@@ -219,11 +228,13 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	private PixelFormat _pixelFormat;
 	private bool _grabbed = false;
 	private GCHandle? _framebufferHandle;
+	private Action<byte[]> _onNewFrame;
 
-	public VirtualMachineVncRenderTarget(PixelFormat pixelFormat)
+	public VirtualMachineVncRenderTarget(PixelFormat pixelFormat, Action<byte[]> onNewFrame)
 	{
-		_lock = new object();
 		_pixelFormat = pixelFormat;
+		_onNewFrame = onNewFrame;
+		_lock = new object();
 		_size = new Size(0, 0);
 	}
 	
@@ -256,6 +267,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	{
 		_grabbed = false;
 		_framebufferHandle!.Value.Free();
+		_onNewFrame.Invoke(_framebuffer!);
 	}
 
 	private class FramebufferReference : IFramebufferReference
@@ -274,10 +286,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 			Format = format;
 		}
 		
-		public void Dispose()
-		{
-			Released?.Invoke(this);
-		}
+		public void Dispose() => Released?.Invoke(this);
 	}
 }
 
