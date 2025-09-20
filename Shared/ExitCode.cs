@@ -25,6 +25,7 @@ public enum ExitCode
 	VmScreenStreamNotRunning,
 	VmScreenStreamAlreadyRunning,
 	VmScreenStreamStartFailed,
+	VmScreenStreamStopFailed,
 	VmScreenStreamUnsupportedPixelFormat,
 	TooManyVmsRunning,
 	VncConnectionFailed,

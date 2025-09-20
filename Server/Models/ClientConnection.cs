@@ -340,8 +340,18 @@ public sealed class ClientConnection : MessagingService
 		}
 	}
 
+	/// <summary>
+	/// Handles a new frame of the screen of a virtual machine. Sends it to the client.
+	/// </summary>
+	/// <param name="frame">The new frame. frame != null.</param>
+	/// <remarks>
+	/// Precondition: A new frame of a virtual machine was received. The user is logged in, and has watch permissions for the virtual machine. frame != null. <br/>
+	/// Postcondition: The frame is sent to the client. If the user is not logged in or doesn't have watch permissions, the frame is not sent.
+	/// </remarks>
 	private void OnVmNewFrame(VirtualMachineFrame frame)
 	{
+		if (!_isLoggedIn) return;
+		
 		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, new byte[frame.Framebuffer.Length]);
 		frame.Framebuffer.CopyTo(frameMessage.Framebuffer, 0);
 		SendInfo(frameMessage);

@@ -282,9 +282,8 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 
 	private void OnFramebufferReleased(FramebufferReference framebufferReference)
 	{
-		_onNewFrame.Invoke(new VirtualMachineFrame(_vmId, new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
-		
 		_framebufferHandle!.Value.Free();
+		_onNewFrame.Invoke(new VirtualMachineFrame(_vmId, new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
 		_grabbed = false;
 	}
 

@@ -6,5 +6,6 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.VmScreenView"
              x:DataType="vm:VmScreenViewModel">
-	Welcome to Avalonia!
+
+	<Image Name="VmScreenImage" Source="{Binding VmScreenBitmap}"/>
 </UserControl>
