@@ -88,25 +88,22 @@ public class VirtualMachine
 		_domain.Shutdown();
 	}
 
-	public ExitCode StartScreenStream(Action<VirtualMachineFrame> callback, out Shared.PixelFormat? pixelFormat)
+	public ExitCode StartScreenStream()
 	{
-		pixelFormat = null;
 		if (IsScreenStreamRunning())
 		{
-			pixelFormat = ((VirtualMachineVncRenderTarget)_rfbConnection.RenderTarget!).UniPixelFormat;
 			return ExitCode.VmScreenStreamAlreadyRunning;
 		}
 
 		try
 		{
-			_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(_id, _rfbConnection.RemoteFramebufferFormat, callback);
-			pixelFormat = ((VirtualMachineVncRenderTarget)_rfbConnection.RenderTarget).UniPixelFormat;
+			_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(_id, _rfbConnection.RemoteFramebufferFormat);
 		}
 		catch (Exception)
 		{
 			return ExitCode.VmScreenStreamUnsupportedPixelFormat;
 		}
-		
+			
 		return ExitCode.Success;
 	}
 
@@ -114,8 +111,42 @@ public class VirtualMachine
 	{
 		_rfbConnection.RenderTarget = null;
 	}
+
+	public bool IsScreenStreamRunning() => GetRenderTarget() != null;
 	
-	public bool IsScreenStreamRunning() => _rfbConnection.RenderTarget != null;
+	public ExitCode SubscribeToNewFrameReceived(EventHandler<VirtualMachineFrame> handler)
+	{
+		if (GetRenderTarget() == null)
+		{
+			return ExitCode.VmScreenStreamNotRunning;
+		}
+	
+		GetRenderTarget()!.NewFrameReceived += handler;
+		
+		return ExitCode.Success;
+	}
+
+	public ExitCode UnsubscribeFromNewFrameReceived(EventHandler<VirtualMachineFrame> handler)
+	{
+		if (GetRenderTarget() == null)
+		{
+			return ExitCode.VmScreenStreamNotRunning;
+		}
+	
+		GetRenderTarget()!.NewFrameReceived -= handler;
+		
+		return ExitCode.Success;	
+	}
+
+	public Shared.PixelFormat? GetScreenStreamPixelFormat()
+	{
+		if (!IsScreenStreamRunning())
+		{
+			return null;
+		}
+
+		return GetRenderTarget()!.UniPixelFormat;
+	}
 
 	private XDocument AsXmlDocument()
 	{
@@ -215,6 +246,8 @@ public class VirtualMachine
 		
 		return doc;
 	}
+
+	private VirtualMachineVncRenderTarget? GetRenderTarget() => (VirtualMachineVncRenderTarget?)_rfbConnection.RenderTarget;
 	
 	private class VirtualMachineVncAuthenticationHandler : IAuthenticationHandler
 	{
@@ -233,6 +266,7 @@ public class VirtualMachine
 
 public class VirtualMachineVncRenderTarget : IRenderTarget
 {
+	public event EventHandler<VirtualMachineFrame>? NewFrameReceived;
 	private int _vmId;
 	private byte[]? _framebuffer;
 	private readonly object _lock;
@@ -241,16 +275,14 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	public Shared.PixelFormat UniPixelFormat { get; }		/* Universal pixel format */
 	private bool _grabbed = false;
 	private GCHandle? _framebufferHandle;
-	private Action<VirtualMachineFrame> _onNewFrame;
 
-	public VirtualMachineVncRenderTarget(int vmId, PixelFormat pixelFormat, Action<VirtualMachineFrame> onNewFrame)
+	public VirtualMachineVncRenderTarget(int vmId, PixelFormat pixelFormat)
 	{
 		_vmId = vmId;
 		_pixelFormat = pixelFormat;
 		UniPixelFormat = new Shared.PixelFormat(_pixelFormat.BitsPerPixel, _pixelFormat.HasAlpha, _pixelFormat.RedShift,
 			_pixelFormat.GreenShift, _pixelFormat.BlueShift, _pixelFormat.AlphaShift);
 		
-		_onNewFrame = onNewFrame;
 		_lock = new object();
 		_size = new Size(0, 0);
 	}
@@ -283,7 +315,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	private void OnFramebufferReleased(FramebufferReference framebufferReference)
 	{
 		_framebufferHandle!.Value.Free();
-		_onNewFrame.Invoke(new VirtualMachineFrame(_vmId, new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
+		NewFrameReceived?.Invoke(this, new VirtualMachineFrame(_vmId, new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
 		_grabbed = false;
 	}
 

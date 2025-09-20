@@ -227,15 +227,24 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				Shared.PixelFormat? pixelFormat;
-				result = _virtualMachineService.StartScreenStream(reqVmScreenStream.VmId, OnVmNewFrame, out pixelFormat);
+				result = _virtualMachineService.StartScreenStream(reqVmScreenStream.VmId);
 				if (result == ExitCode.Success)
 				{
-					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Success, pixelFormat!));
+					Shared.PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqVmScreenStream.VmId)!;
+					result = _virtualMachineService.SubscribeToVmNewFrameReceived(reqVmScreenStream.VmId, OnVmNewFrame);
+					if (result == ExitCode.Success)
+					{
+						SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Success, pixelFormat));
+					}
+					else
+					{
+						SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Failure));
+					}
 				} 
 				else if (result == ExitCode.VmScreenStreamAlreadyRunning)
 				{
-					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.AlreadyStreaming, pixelFormat!));
+					Shared.PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqVmScreenStream.VmId)!;
+					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.AlreadyStreaming, pixelFormat));
 				}
 				else
 				{
@@ -343,12 +352,13 @@ public sealed class ClientConnection : MessagingService
 	/// <summary>
 	/// Handles a new frame of the screen of a virtual machine. Sends it to the client.
 	/// </summary>
+	/// <param name="sender">Unused.</param>
 	/// <param name="frame">The new frame. frame != null.</param>
 	/// <remarks>
 	/// Precondition: A new frame of a virtual machine was received. The user is logged in, and has watch permissions for the virtual machine. frame != null. <br/>
 	/// Postcondition: The frame is sent to the client. If the user is not logged in or doesn't have watch permissions, the frame is not sent.
 	/// </remarks>
-	private void OnVmNewFrame(VirtualMachineFrame frame)
+	private void OnVmNewFrame(object? sender, VirtualMachineFrame frame)
 	{
 		if (!_isLoggedIn) return;
 		

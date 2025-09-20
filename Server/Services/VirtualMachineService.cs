@@ -146,17 +146,14 @@ public class VirtualMachineService
 	/// Start streaming the screen of the virtual machine. Handle each new frame in the given callback.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine. id >= 1.</param>
-	/// <param name="callback">The callback function that will be called on each new frame. callback != null.</param>
-	/// <param name="pixelFormat">The used pixel format on the received frames. Will be set to null on failure, in which case the exit code indicates the error.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: A virtual machine with the given ID exists, and its alive. (not shut down) id >= 1 &amp;&amp; callback != null <br/>
+	/// Precondition: A virtual machine with the given ID exists, and its alive. (not shut down) id >= 1.<br/>
 	/// Postcondition: On success, the stream is started, the used pixel format is written to pixelFormat, and the returned exit code indicates success. <br/>
 	/// On failure, the stream is not started, pixelFormat is set to null, and the returned exit code indicates the error.
 	/// </remarks>
-	public ExitCode StartScreenStream(int id, Action<VirtualMachineFrame> callback, out PixelFormat? pixelFormat)
+	public ExitCode StartScreenStream(int id)
 	{
-		pixelFormat = null;
 		if (id < 1)
 		{
 			return ExitCode.InvalidParameter;
@@ -164,9 +161,59 @@ public class VirtualMachineService
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
-			return virtualMachine.StartScreenStream(callback, out pixelFormat);
+			return virtualMachine.StartScreenStream();
 		}
 		
 		return ExitCode.VmIsShutDown;
+	}
+
+	/// <summary>
+	/// Subscribes the given handler to the event of receiving a new frame of the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to subscribe to. id >= 1.</param>
+	/// <param name="handler">The event handler to subscribe. handler != null</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: There is a virtual machine with the given ID, and the virtual machine is alive. id >= 1 &amp;&amp; handler != null. <br/>
+	/// Postcondition: On success, the given handler is registered and will receive new frames. <br/>
+	/// On failure, the handler is not subscribed and the returned exit code will indicate the error.
+	/// </remarks>
+	public ExitCode SubscribeToVmNewFrameReceived(int id, EventHandler<VirtualMachineFrame> handler)
+	{
+		if (id < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			return virtualMachine.SubscribeToNewFrameReceived(handler);
+		}
+
+		return ExitCode.VmIsShutDown;
+	}
+
+	/// <summary>
+	/// Get the pixel format used in a virtual machines' screen stream.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to get the screen stream pixel format of. id >= 1.</param>
+	/// <returns>The used pixel format, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: There is a virtual machine with the given ID, and it is not shut down. id >= 1. <br/>
+	/// Postcondition: On success, the used pixel format is returned. On failure, null is returned.
+	/// </remarks>
+	public PixelFormat? GetScreenStreamPixelFormat(int id)
+	{
+		if (id < 1)
+		{
+			return null;
+		}
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			return virtualMachine.GetScreenStreamPixelFormat();
+		}
+
+		return null;
 	}
 }
