@@ -28,21 +28,18 @@ public class MessageInfoVmList : MessageInfo	/* An updated list of virtual machi
 public class MessageInfoVmScreenFrame : MessageInfo
 {
 	public int VmId { get; }
-	public PixelFormat PixelFormat { get; }
 	public Size Size { get; }
 	public byte[] Framebuffer { get; }
 
-	public MessageInfoVmScreenFrame(bool generateGuid, int vmId, PixelFormat pixelFormat, Size size, byte[] framebuffer)
+	public MessageInfoVmScreenFrame(bool generateGuid, int vmId, Size size, byte[] framebuffer)
 		: base(generateGuid)
 	{
 		VmId = vmId;
-		PixelFormat = pixelFormat;
 		Size = size;
 		Framebuffer = framebuffer;
 	}
 	
-	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && PixelFormat != null && 
-	                                         Enum.IsDefined(typeof(PixelFormat.PixelFormatType), PixelFormat.Type) && 
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 &&
 	                                         Size != null && Size.Width > 0 && Size.Height > 0 && 
 	                                         Framebuffer != null && Framebuffer.Length > 0;
 }

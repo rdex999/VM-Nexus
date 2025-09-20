@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 using Client.Services;
 using Shared;
 using Shared.Networking;
+using PixelFormat = Avalonia.Platform.PixelFormat;
 
 namespace Client.ViewModels;
 
@@ -9,10 +10,20 @@ public class VmScreenViewModel : ViewModelBase
 {
 	private bool _streamRunning = false;
 	private SharedDefinitions.VmGeneralDescriptor? _vmDescriptor = null;
+	private PixelFormat? _pixelFormat = null;
 	
 	public VmScreenViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
+		ClientSvc.VmScreenFrameReceived += OnVmScreenFrameReceived;
+	}
+
+	private void OnVmScreenFrameReceived(object? sender, MessageInfoVmScreenFrame frame)
+	{
+		if (!_streamRunning || _vmDescriptor == null || frame.VmId != _vmDescriptor.Id || _pixelFormat == null)
+		{
+			return;
+		}
 	}
 
 	public async Task<ExitCode> FocusAsync()
@@ -73,18 +84,27 @@ public class VmScreenViewModel : ViewModelBase
 			return ExitCode.CallOnInvalidCondition;
 		}
 		
-		MessageResponseVmScreenStream.Status result = await ClientSvc.VirtualMachineStartScreenStreamAsync(_vmDescriptor!.Id);
-		
-		_streamRunning = result == MessageResponseVmScreenStream.Status.Success || result == MessageResponseVmScreenStream.Status.AlreadyStreaming;
+		MessageResponseVmScreenStream? response = await ClientSvc.VirtualMachineStartScreenStreamAsync(_vmDescriptor!.Id);
 
-		if (result == MessageResponseVmScreenStream.Status.Success)
+		if (response == null)
 		{
-			return ExitCode.Success;
+			_streamRunning = false;
+			return ExitCode.MessageNotReceived;
 		}
-
-		if (result == MessageResponseVmScreenStream.Status.AlreadyStreaming)
+		
+		if (response.Result == MessageResponseVmScreenStream.Status.Success || response.Result == MessageResponseVmScreenStream.Status.AlreadyStreaming)
 		{
-			return ExitCode.VmScreenStreamAlreadyRunning;
+			_streamRunning = true;
+
+			PixelFormat? pixelFormat = response.PixelFormat!.AsAvaloniaPixelFormat();
+			if (pixelFormat == null)
+			{
+				return ExitCode.VmScreenStreamUnsupportedPixelFormat;
+			}
+
+			_pixelFormat = pixelFormat.Value;
+			
+			return ExitCode.Success;
 		}
 
 		return ExitCode.VmScreenStreamStartFailed;

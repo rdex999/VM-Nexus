@@ -21,6 +21,20 @@ public class PixelFormat
 		}
 	}
 
+	public Avalonia.Platform.PixelFormat? AsAvaloniaPixelFormat()
+	{
+		return Type switch
+		{
+			PixelFormatType.Bgra8888	=> Avalonia.Platform.PixelFormats.Bgra8888,
+			PixelFormatType.Rgba8888	=> Avalonia.Platform.PixelFormats.Rgba8888,
+			PixelFormatType.Bgr32		=> Avalonia.Platform.PixelFormats.Bgr32,
+			PixelFormatType.Rgb32		=> Avalonia.Platform.PixelFormats.Rgb32,
+			PixelFormatType.Bgr24		=> Avalonia.Platform.PixelFormats.Bgr24,
+			PixelFormatType.Rgb24		=> Avalonia.Platform.PixelFormats.Rgb24,
+			_ => null
+		};
+	}
+
 	private PixelFormatType PixelFormatTypeFromData(int bitsPerPixel, bool hasAlpha, int redShift, int greenShift, int blueShift, int alphaShift)
 	{
 		if (bitsPerPixel == 32)

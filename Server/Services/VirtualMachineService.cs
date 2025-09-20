@@ -147,14 +147,16 @@ public class VirtualMachineService
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine. id >= 1.</param>
 	/// <param name="callback">The callback function that will be called on each new frame. callback != null.</param>
+	/// <param name="pixelFormat">The used pixel format on the received frames. Will be set to null on failure, in which case the exit code indicates the error.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
 	/// Precondition: A virtual machine with the given ID exists, and its alive. (not shut down) id >= 1 &amp;&amp; callback != null <br/>
-	/// Postcondition: On success, the stream is started and the returned exit code indicates success. <br/>
-	/// On failure, the stream is not started and the returned exit code indicates the error.
+	/// Postcondition: On success, the stream is started, the used pixel format is written to pixelFormat, and the returned exit code indicates success. <br/>
+	/// On failure, the stream is not started, pixelFormat is set to null, and the returned exit code indicates the error.
 	/// </remarks>
-	public ExitCode StartScreenStream(int id, Action<VirtualMachineFrame> callback)
+	public ExitCode StartScreenStream(int id, Action<VirtualMachineFrame> callback, out PixelFormat? pixelFormat)
 	{
+		pixelFormat = null;
 		if (id < 1)
 		{
 			return ExitCode.InvalidParameter;
@@ -162,7 +164,7 @@ public class VirtualMachineService
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
-			return virtualMachine.StartScreenStream(callback);
+			return virtualMachine.StartScreenStream(callback, out pixelFormat);
 		}
 		
 		return ExitCode.VmIsShutDown;

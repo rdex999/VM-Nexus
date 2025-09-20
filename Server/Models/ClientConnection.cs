@@ -226,15 +226,16 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Failure));
 					break;
 				}
-				
-				result = _virtualMachineService.StartScreenStream(reqVmScreenStream.VmId, OnVmNewFrame);
+
+				Shared.PixelFormat? pixelFormat;
+				result = _virtualMachineService.StartScreenStream(reqVmScreenStream.VmId, OnVmNewFrame, out pixelFormat);
 				if (result == ExitCode.Success)
 				{
-					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Success));
+					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Success, pixelFormat!));
 				} 
 				else if (result == ExitCode.VmScreenStreamAlreadyRunning)
 				{
-					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.AlreadyStreaming));
+					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.AlreadyStreaming, pixelFormat!));
 				}
 				else
 				{
@@ -341,9 +342,7 @@ public sealed class ClientConnection : MessagingService
 
 	private void OnVmNewFrame(VirtualMachineFrame frame)
 	{
-		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.PixelFormat,
-			frame.Size, new byte[frame.Framebuffer.Length]);
-
+		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, new byte[frame.Framebuffer.Length]);
 		frame.Framebuffer.CopyTo(frameMessage.Framebuffer, 0);
 		SendInfo(frameMessage);
 	}

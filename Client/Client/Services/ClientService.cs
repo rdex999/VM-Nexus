@@ -3,8 +3,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Platform;
 using Shared;
 using Shared.Networking;
+using PixelFormat = Avalonia.Platform.PixelFormat;
 
 namespace Client.Services;
 
@@ -13,6 +15,7 @@ public class ClientService : MessagingService
 {
 	public event EventHandler? Reconnected;
 	public event EventHandler<SharedDefinitions.VmGeneralDescriptor[]>? VmListChanged;
+	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -262,20 +265,21 @@ public class ClientService : MessagingService
 	/// Requests a video stream of the screen of the given virtual machine.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to get a video stream of. id >= 1.</param>
-	/// <returns>A status indicating the result of the operation.</returns>
+	/// <returns>The servers' response. On networking failure, null is returned.</returns>
 	/// <remarks>
 	/// Precondition: Service fully initialized and connected to the server. User is logged in, and has viewing permissions for the given VM. id >= 1. <br/>
-	/// Postcondition: On success, a video stream of the virtual machine's screen is sent, and the returned status indicates success. <br/>
-	/// On failure, the video stream will not be sent and the returned exit code indicates the error.
+	/// Postcondition: On success, a video stream of the virtual machine's screen is sent, and the servers' response is returned. <br/>
+	/// On failure, the video stream will not be sent and null is returned.
 	/// </remarks>
-	public async Task<MessageResponseVmScreenStream.Status> VirtualMachineStartScreenStreamAsync(int id)
+	public async Task<MessageResponseVmScreenStream?> VirtualMachineStartScreenStreamAsync(int id)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmScreenStream(true, id));
 		if (result != ExitCode.Success)
 		{
-			return MessageResponseVmScreenStream.Status.Failure;
+			return null;
 		}
-		return ((MessageResponseVmScreenStream)response!).Result;	
+
+		return (MessageResponseVmScreenStream)response!;
 	}
 
 	/// <summary>
@@ -427,6 +431,7 @@ public class ClientService : MessagingService
 
 			case MessageInfoVmScreenFrame infoVmScreenFrame:
 			{
+				VmScreenFrameReceived?.Invoke(this, infoVmScreenFrame);
 				break;
 			}
 		}

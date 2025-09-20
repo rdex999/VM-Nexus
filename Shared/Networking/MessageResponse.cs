@@ -200,16 +200,28 @@ public class MessageResponseVmStartup : MessageResponse
 		VmAlreadyRunning,
 		Failure,
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
 public class MessageResponseVmScreenStream : MessageResponse
 {
 	public Status Result { get; }
+	public PixelFormat? PixelFormat { get; }
 
+	[JsonConstructor]
+	public MessageResponseVmScreenStream(bool generateGuid, Guid requestId, Status result, PixelFormat pixelFormat)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		PixelFormat = pixelFormat;
+	}
+	
 	public MessageResponseVmScreenStream(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
+		PixelFormat = null;
 	}
 	
 	public enum Status
@@ -218,4 +230,7 @@ public class MessageResponseVmScreenStream : MessageResponse
 		AlreadyStreaming,
 		Failure,
 	}
+	
+	public override bool IsValidMessage() =>  base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && 
+	                                          (PixelFormat == null || Enum.IsDefined(typeof(PixelFormat.PixelFormatType), PixelFormat.Type));
 }

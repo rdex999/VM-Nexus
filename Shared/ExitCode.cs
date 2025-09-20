@@ -11,6 +11,7 @@ public enum ExitCode
 	MessageSendingTimeout,
 	MessageReceivingTimeout,
 	MessageReceivedCorrupted,
+	MessageNotReceived,
 	InvalidMessageData,
 	DatabaseStartupFailed,
 	DatabaseShutdownFailed,

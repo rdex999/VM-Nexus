@@ -88,16 +88,19 @@ public class VirtualMachine
 		_domain.Shutdown();
 	}
 
-	public ExitCode StartScreenStream(Action<VirtualMachineFrame> callback)
+	public ExitCode StartScreenStream(Action<VirtualMachineFrame> callback, out Shared.PixelFormat? pixelFormat)
 	{
+		pixelFormat = null;
 		if (IsScreenStreamRunning())
 		{
+			pixelFormat = ((VirtualMachineVncRenderTarget)_rfbConnection.RenderTarget!).UniPixelFormat;
 			return ExitCode.VmScreenStreamAlreadyRunning;
 		}
 
 		try
 		{
 			_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(_id, _rfbConnection.RemoteFramebufferFormat, callback);
+			pixelFormat = ((VirtualMachineVncRenderTarget)_rfbConnection.RenderTarget).UniPixelFormat;
 		}
 		catch (Exception)
 		{
@@ -235,7 +238,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	private readonly object _lock;
 	private Size _size;
 	private PixelFormat _pixelFormat;
-	private Shared.PixelFormat _uniPixelFormat;		/* Universal pixel format */
+	public Shared.PixelFormat UniPixelFormat { get; }		/* Universal pixel format */
 	private bool _grabbed = false;
 	private GCHandle? _framebufferHandle;
 	private Action<VirtualMachineFrame> _onNewFrame;
@@ -244,7 +247,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	{
 		_vmId = vmId;
 		_pixelFormat = pixelFormat;
-		_uniPixelFormat = new Shared.PixelFormat(_pixelFormat.BitsPerPixel, _pixelFormat.HasAlpha, _pixelFormat.RedShift,
+		UniPixelFormat = new Shared.PixelFormat(_pixelFormat.BitsPerPixel, _pixelFormat.HasAlpha, _pixelFormat.RedShift,
 			_pixelFormat.GreenShift, _pixelFormat.BlueShift, _pixelFormat.AlphaShift);
 		
 		_onNewFrame = onNewFrame;
@@ -279,8 +282,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 
 	private void OnFramebufferReleased(FramebufferReference framebufferReference)
 	{
-		_onNewFrame.Invoke(new VirtualMachineFrame(_vmId, _uniPixelFormat,
-			new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
+		_onNewFrame.Invoke(new VirtualMachineFrame(_vmId, new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
 		
 		_framebufferHandle!.Value.Free();
 		_grabbed = false;
