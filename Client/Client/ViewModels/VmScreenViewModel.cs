@@ -24,11 +24,11 @@ public class VmScreenViewModel : ViewModelBase
 		return ExitCode.Success;
 	}
 	
-	public void Unfocus()
+	public async Task UnfocusAsync()
 	{
 		if (_streamRunning)
 		{
-			EndStream();
+			await EndStreamAsync();
 		}
 	}
 
@@ -41,16 +41,21 @@ public class VmScreenViewModel : ViewModelBase
 	
 		bool wasStreamRunning = _streamRunning;
 		bool isInitialDescSet = _vmDescriptor == null;
-		
+
+		Task<ExitCode>? endStreamTask = null;
 		if (_streamRunning)
 		{
-			EndStream();
+			endStreamTask = EndStreamAsync();
 		}
 		_vmDescriptor = vmDescriptor;
 
-		if (wasStreamRunning || isInitialDescSet)
+		if (isInitialDescSet)
 		{
 			return await StartStreamAsync();
+		}
+		if (wasStreamRunning)
+		{
+			return (await Task.WhenAll(endStreamTask!, StartStreamAsync()))[1];		/* Return the result of StartStreamAsync */
 		}
 
 		return ExitCode.Success;
@@ -85,8 +90,22 @@ public class VmScreenViewModel : ViewModelBase
 		return ExitCode.VmScreenStreamStartFailed;
 	}
 	
-	private void EndStream()
+	private async Task<ExitCode> EndStreamAsync()
 	{
+		if (!_streamRunning)
+		{
+			return ExitCode.VmScreenStreamNotRunning;
+		}
+
+		if (_vmDescriptor == null)
+		{
+			return ExitCode.CallOnInvalidCondition;
+		}
+		
+		/* TODO: Send an end screen stream request here */
+		
 		_streamRunning = false;
+
+		return ExitCode.Success;
 	}
 }

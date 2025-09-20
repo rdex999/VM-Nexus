@@ -124,7 +124,7 @@ public partial class MainViewModel : ViewModelBase
 
 		if (CurrentPageViewModel is VmScreenViewModel && value.ViewModel is not VmScreenViewModel)
 		{
-			((VmScreenViewModel)CurrentPageViewModel).Unfocus();
+			_ = ((VmScreenViewModel)CurrentPageViewModel).UnfocusAsync();
 		}
 		else if (value.ViewModel is VmScreenViewModel && CurrentPageViewModel is not VmScreenViewModel)
 		{

@@ -1,3 +1,6 @@
+using System.Drawing;
+using Avalonia.Platform;
+
 namespace Shared.Networking;
 
 public class MessageInfo : Message
@@ -21,5 +24,22 @@ public class MessageInfoVmList : MessageInfo	/* An updated list of virtual machi
 	public override bool IsValidMessage()
 	{
 		return base.IsValidMessage() && VmDescriptors != null;	/* Make sure its not null because receiving from a socket. */
+	}
+}
+
+public class MessageInfoVmScreenFrame : MessageInfo
+{
+	public int VmId { get; }
+	public PixelFormat PixelFormat { get; }
+	public Size Size { get; }
+	public byte[] Framebuffer { get; }
+
+	public MessageInfoVmScreenFrame(bool generateGuid, int vmId, PixelFormat format, Size size, byte[] framebuffer)
+		: base(generateGuid)
+	{
+		VmId = vmId;
+		PixelFormat = format;
+		Size = size;
+		Framebuffer = framebuffer;
 	}
 }
