@@ -424,6 +424,11 @@ public class ClientService : MessagingService
 				VmListChanged?.Invoke(this, infoVmList.VmDescriptors);
 				break;
 			}
+
+			case MessageInfoVmScreenFrame infoVmScreenFrame:
+			{
+				break;
+			}
 		}
 	}
 

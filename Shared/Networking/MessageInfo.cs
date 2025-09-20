@@ -1,6 +1,4 @@
 using System.Drawing;
-using Avalonia.Platform;
-
 namespace Shared.Networking;
 
 public class MessageInfo : Message
@@ -34,12 +32,17 @@ public class MessageInfoVmScreenFrame : MessageInfo
 	public Size Size { get; }
 	public byte[] Framebuffer { get; }
 
-	public MessageInfoVmScreenFrame(bool generateGuid, int vmId, PixelFormat format, Size size, byte[] framebuffer)
+	public MessageInfoVmScreenFrame(bool generateGuid, int vmId, PixelFormat pixelFormat, Size size, byte[] framebuffer)
 		: base(generateGuid)
 	{
 		VmId = vmId;
-		PixelFormat = format;
+		PixelFormat = pixelFormat;
 		Size = size;
 		Framebuffer = framebuffer;
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && PixelFormat != null && 
+	                                         Enum.IsDefined(typeof(PixelFormat.PixelFormatType), PixelFormat.Type) && 
+	                                         Size != null && Size.Width > 0 && Size.Height > 0 && 
+	                                         Framebuffer != null && Framebuffer.Length > 0;
 }

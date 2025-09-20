@@ -6,9 +6,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using libvirt;
 using MarcusW.VncClient;
-using MarcusW.VncClient.Protocol.Implementation.MessageTypes.Outgoing;
 using MarcusW.VncClient.Protocol.Implementation.Services.Transports;
-using MarcusW.VncClient.Protocol.MessageTypes;
 using MarcusW.VncClient.Protocol.SecurityTypes;
 using MarcusW.VncClient.Rendering;
 using MarcusW.VncClient.Security;
@@ -16,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Server.Drives;
 using Server.Services;
 using Shared;
+using PixelFormat = MarcusW.VncClient.PixelFormat;
 using Size = MarcusW.VncClient.Size;
 
 namespace Server.VirtualMachines;
@@ -236,7 +235,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	private readonly object _lock;
 	private Size _size;
 	private PixelFormat _pixelFormat;
-	private Avalonia.Platform.PixelFormat _avaloniaPixelFormat;
+	private Shared.PixelFormat _uniPixelFormat;		/* Universal pixel format */
 	private bool _grabbed = false;
 	private GCHandle? _framebufferHandle;
 	private Action<VirtualMachineFrame> _onNewFrame;
@@ -245,16 +244,12 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	{
 		_vmId = vmId;
 		_pixelFormat = pixelFormat;
+		_uniPixelFormat = new Shared.PixelFormat(_pixelFormat.BitsPerPixel, _pixelFormat.HasAlpha, _pixelFormat.RedShift,
+			_pixelFormat.GreenShift, _pixelFormat.BlueShift, _pixelFormat.AlphaShift);
+		
 		_onNewFrame = onNewFrame;
 		_lock = new object();
 		_size = new Size(0, 0);
-		
-		Avalonia.Platform.PixelFormat? avaloniaPixelFormat = AvaloniaPixelFormatFromMarcusW(pixelFormat);
-		if (avaloniaPixelFormat == null)
-		{
-			throw new InvalidOperationException("Unsupported pixel format.");
-		}
-		_avaloniaPixelFormat = avaloniaPixelFormat.Value;
 	}
 	
 	public IFramebufferReference GrabFramebufferReference(Size size, IImmutableSet<Screen> layout)
@@ -284,11 +279,10 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 
 	private void OnFramebufferReleased(FramebufferReference framebufferReference)
 	{
-		_framebufferHandle!.Value.Free();
-	
-		_onNewFrame.Invoke(new VirtualMachineFrame(_vmId, _avaloniaPixelFormat,
+		_onNewFrame.Invoke(new VirtualMachineFrame(_vmId, _uniPixelFormat,
 			new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
 		
+		_framebufferHandle!.Value.Free();
 		_grabbed = false;
 	}
 
@@ -309,64 +303,6 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 		}
 		
 		public void Dispose() => Released?.Invoke(this);
-	}
-
-	public static Avalonia.Platform.PixelFormat? AvaloniaPixelFormatFromMarcusW(PixelFormat pixelFormat)
-	{
-		if (pixelFormat.BitsPerPixel == 32)
-		{
-			/* Can be BGR32 or RGB32 or BGRA8888 or RGBA8888 */
-
-			if (pixelFormat.HasAlpha)
-			{
-				/* Can only be BGRA8888 or RGBA8888 */
-				
-				/* Check if BGRA8888 */
-				if (pixelFormat.AlphaShift == 24 && pixelFormat.RedShift == 16 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 0)
-				{
-					return Avalonia.Platform.PixelFormats.Bgra8888;
-				}
-
-				/* Check if RGBA8888 */
-				if (pixelFormat.RedShift == 0 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 16 && pixelFormat.AlphaShift == 24)
-				{
-					return Avalonia.Platform.PixelFormats.Rgba8888;
-				}			
-			}
-			else
-			{
-				/* Can only be BGR32 or RGB32 */
-				
-				/* Check if BGR32 */
-				if (pixelFormat.RedShift == 16 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 0)
-				{
-					return Avalonia.Platform.PixelFormats.Bgr32;
-				}
-
-				/* Check if RGB32 */
-				if (pixelFormat.RedShift == 0 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 16)
-				{
-					return Avalonia.Platform.PixelFormats.Rgb32;
-				}
-			}
-		} 
-		else if (pixelFormat.BitsPerPixel == 24)
-		{
-			/* Can only be BGR24 or RGB24 */
-			
-			/* Check if BGR24 */
-			if (pixelFormat.RedShift == 16 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 0)
-			{
-				return Avalonia.Platform.PixelFormats.Bgr24;
-			}
-
-			if (pixelFormat.RedShift == 0 && pixelFormat.GreenShift == 8 && pixelFormat.BlueShift == 16)
-			{
-				return Avalonia.Platform.PixelFormats.Rgb24;
-			}
-		}
-
-		return null;
 	}
 }
 

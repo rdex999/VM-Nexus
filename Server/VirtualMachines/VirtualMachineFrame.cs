@@ -1,4 +1,4 @@
-using Avalonia.Platform;
+using Shared;
 using Size = System.Drawing.Size;
 
 namespace Server.VirtualMachines;

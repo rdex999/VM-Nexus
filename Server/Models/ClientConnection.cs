@@ -3,10 +3,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Avalonia.Platform;
 using Server.Services;
 using Server.VirtualMachines;
 using Shared;
 using Shared.Networking;
+using PixelFormat = MarcusW.VncClient.PixelFormat;
 
 namespace Server.Models;
 
@@ -337,8 +339,12 @@ public sealed class ClientConnection : MessagingService
 		}
 	}
 
-	private void OnVmNewFrame(VirtualMachineFrame framebuffer)
+	private void OnVmNewFrame(VirtualMachineFrame frame)
 	{
-		
+		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.PixelFormat,
+			frame.Size, new byte[frame.Framebuffer.Length]);
+
+		frame.Framebuffer.CopyTo(frameMessage.Framebuffer, 0);
+		SendInfo(frameMessage);
 	}
 }
