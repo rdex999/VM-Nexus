@@ -51,7 +51,6 @@ public static class SharedDefinitions
 	{
 		ShutDown,
 		Running,
-		Sleeping,
 		Hibernated,
 	}
 

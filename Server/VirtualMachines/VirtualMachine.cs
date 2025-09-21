@@ -22,16 +22,19 @@ namespace Server.VirtualMachines;
 
 public class VirtualMachine
 {
+	public event EventHandler<int>? PoweredOff;
+	public event EventHandler<int>? Crashed;
+	
 	private readonly DatabaseService _databaseService;
 	private readonly DriveService _driveService;
 	private Domain _domain = null!;
-	
+	private RfbConnection _rfbConnection;
+	private CancellationTokenSource _cts;
 	private int _id;
 	private SharedDefinitions.OperatingSystem _operatingSystem;
 	private SharedDefinitions.CpuArchitecture _cpuArchitecture;
 	private SharedDefinitions.BootMode _bootMode;
 	private DriveDescriptor[] _drives;
-	private RfbConnection _rfbConnection;
 
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
@@ -43,6 +46,8 @@ public class VirtualMachine
 		_drives = drives;
 		_cpuArchitecture = cpuArchitecture;
 		_bootMode = bootMode;
+		
+		_cts = new CancellationTokenSource();
 	}
 
 	public async Task<ExitCode> PowerOnAsync(Connect libvirtConnection)
@@ -81,6 +86,8 @@ public class VirtualMachine
 			return ExitCode.VncConnectionFailed;
 		}
 
+		_ = StateInformerAsync();
+		
 		return ExitCode.Success;
 	}
 
@@ -171,6 +178,55 @@ public class VirtualMachine
 	private void StopScreenStream()
 	{
 		_rfbConnection.RenderTarget = null;
+	}
+
+	private async Task StateInformerAsync()
+	{
+		virDomainState lastState = GetState();
+		while (!_cts.IsCancellationRequested)
+		{
+			virDomainState currentState = GetState();
+			if (currentState != lastState)
+			{
+				switch (currentState)
+				{
+					case virDomainState.VIR_DOMAIN_SHUTOFF:		/* Machine is shut off. */
+					case virDomainState.VIR_DOMAIN_SHUTDOWN:	/* Machine is being shut down (libvirts definition - not exactly accurate. Runs when the VM is shut down.) */
+					{
+						PoweredOff?.Invoke(this, _id);
+						return;
+					}
+					case virDomainState.VIR_DOMAIN_CRASHED:
+					{
+						Crashed?.Invoke(this, _id);
+						return;
+					}
+				}
+
+				lastState = currentState;
+			}
+			
+			try
+			{
+				await Task.Delay(200, _cts.Token);
+			}
+			catch (OperationCanceledException)
+			{
+				break;
+			}
+		}
+	}
+
+	private virDomainState GetState()
+	{
+		try
+		{
+			return _domain.Info.State;
+		}
+		catch (LibvirtException)
+		{
+			return virDomainState.VIR_DOMAIN_SHUTOFF;
+		}
 	}
 	
 	private XDocument AsXmlDocument()
