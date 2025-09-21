@@ -281,6 +281,27 @@ public class ClientService : MessagingService
 
 		return (MessageResponseVmScreenStreamStart)response!;
 	}
+	
+	/// <summary>
+	/// Requests to stop the  video stream of the screen of the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to stop the video stream of. id >= 1.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. User is logged in. id >= 1. <br/>
+	/// Postcondition: On success, the video stream of the virtual machine's screen is stopped. <br/>
+	/// On failure, the video stream continues, (if it was running) and the returned status will indicate the error.
+	/// </remarks>
+	public async Task<MessageResponseVmScreenStreamStop.Status> VirtualMachineStopScreenStreamAsync(int id)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmScreenStreamStop(true, id));
+		if (result != ExitCode.Success)
+		{
+			return MessageResponseVmScreenStreamStop.Status.Failure;
+		}
+
+		return ((MessageResponseVmScreenStreamStop)response!).Result;
+	}
 
 	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.

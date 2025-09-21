@@ -108,6 +108,7 @@ public partial class VmScreenViewModel : ViewModelBase
 
 		_streamRunning = false;
 		_vmDescriptor = vmDescriptor;
+		VmScreenBitmap = null;
 
 		return await StartStreamAsync();
 	}
@@ -181,10 +182,18 @@ public partial class VmScreenViewModel : ViewModelBase
 			return ExitCode.CallOnInvalidCondition;
 		}
 		
-		/* TODO: Send an end screen stream request here */
-		
 		_streamRunning = false;
+		MessageResponseVmScreenStreamStop.Status result = await ClientSvc.VirtualMachineStopScreenStreamAsync(_vmDescriptor!.Id);
+		if (result == MessageResponseVmScreenStreamStop.Status.Success)
+		{
+			return ExitCode.Success;
+		}
 
-		return ExitCode.Success;
+		if (result == MessageResponseVmScreenStreamStop.Status.StreamNotRunning)
+		{
+			return ExitCode.VmScreenStreamNotRunning;
+		}
+		
+		return ExitCode.VmScreenStreamStopFailed;
 	}
 }

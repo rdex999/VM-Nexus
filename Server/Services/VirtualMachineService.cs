@@ -195,6 +195,31 @@ public class VirtualMachineService
 	}
 
 	/// <summary>
+	/// Enqueue a message to receive a fully updated frame.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to enqueue the message in. id >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists, and it is alive. id >= 1. <br/>
+	/// Postcondition: On success, a message for getting a full frame is enqueued in the virtual machines' VNC message queue. <br/>
+	/// On failure, the message is not queued and the returned exit code indicates the error.
+	/// </remarks>
+	public ExitCode EnqueueGetFullFrame(int id)
+	{
+		if (id < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			return virtualMachine.EnqueueGetFullFrame();
+		}
+		
+		return ExitCode.VmIsShutDown;
+	}
+	
+	/// <summary>
 	/// Get the pixel format used in a virtual machines' screen stream.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to get the screen stream pixel format of. id >= 1.</param>

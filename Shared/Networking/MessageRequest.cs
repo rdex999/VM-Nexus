@@ -260,4 +260,6 @@ public class MessageRequestVmScreenStreamStop : MessageRequest
 	{
 		VmId = vmId;
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }

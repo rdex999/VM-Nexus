@@ -22,7 +22,8 @@ public sealed class ClientConnection : MessagingService
 	private readonly DriveService _driveService;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
 	private const string ServerRootDirectory = "../../../";
-	private bool _isScreenStreamRunning = false;
+
+	private int _screenStreamVmId = -1;
 
 	/// <summary>
 	/// Creates and initializes the ClientConnection object.
@@ -229,11 +230,17 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				if (_isScreenStreamRunning)
+				if (_screenStreamVmId != -1)
 				{
-					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id, 
-						MessageResponseVmScreenStreamStart.Status.AlreadyStreaming));
-					break;
+					if (_screenStreamVmId == reqScreenStreamStart.VmId)
+					{
+						SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
+							MessageResponseVmScreenStreamStart.Status.AlreadyStreaming));
+						break;
+					}
+
+					_virtualMachineService.UnsubscribeFromVmNewFrameReceived(_screenStreamVmId, OnVmNewFrame);
+					_screenStreamVmId = -1;
 				}
 				
 				result = _virtualMachineService.SubscribeToVmNewFrameReceived(reqScreenStreamStart.VmId, OnVmNewFrame);
@@ -243,8 +250,11 @@ public sealed class ClientConnection : MessagingService
 					
 					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
 						MessageResponseVmScreenStreamStart.Status.Success, pixelFormat));
+
+					await Task.Delay(250);		/* Need this delay, or else the client doesn't receive the full frame. */
 					
-					_isScreenStreamRunning = true;
+					_screenStreamVmId = reqScreenStreamStart.VmId;
+					_virtualMachineService.EnqueueGetFullFrame(reqScreenStreamStart.VmId);
 				} 
 				else 
 				{
@@ -263,7 +273,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				if (!_isScreenStreamRunning)
+				if (_screenStreamVmId == -1)
 				{
 					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.StreamNotRunning));
 					break;
@@ -273,12 +283,12 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.Success));
-					_isScreenStreamRunning = false;
+					_screenStreamVmId = -1;
 				} 
 				else if (result == ExitCode.VmScreenStreamNotRunning)	/* Should not happen. Doing it for safety. */
 				{
 					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.StreamNotRunning));
-					_isScreenStreamRunning = false;
+					_screenStreamVmId = -1;
 				}
 				else
 				{
@@ -393,7 +403,7 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	private void OnVmNewFrame(object? sender, VirtualMachineFrame frame)
 	{
-		if (!_isLoggedIn || !_isScreenStreamRunning) return;
+		if (!_isLoggedIn || _screenStreamVmId != frame.VmId) return;
 		
 		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, new byte[frame.Framebuffer.Length]);
 		frame.Framebuffer.CopyTo(frameMessage.Framebuffer, 0);

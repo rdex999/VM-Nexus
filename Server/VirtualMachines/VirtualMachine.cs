@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using libvirt;
 using MarcusW.VncClient;
+using MarcusW.VncClient.Protocol.Implementation.MessageTypes.Outgoing;
 using MarcusW.VncClient.Protocol.Implementation.Services.Transports;
 using MarcusW.VncClient.Protocol.SecurityTypes;
 using MarcusW.VncClient.Rendering;
@@ -122,6 +123,20 @@ public class VirtualMachine
 		}
 		
 		return ExitCode.Success;	
+	}
+
+	public ExitCode EnqueueGetFullFrame()
+	{
+		if (!IsScreenStreamRunning())
+		{
+			return ExitCode.VmScreenStreamNotRunning;
+		}
+			
+		_rfbConnection.EnqueueMessage(
+			new FramebufferUpdateRequestMessage(false, new Rectangle(0, 0, GetRenderTarget()!.ScreenSize.Width, GetRenderTarget()!.ScreenSize.Height))
+		);
+		
+		return ExitCode.Success;
 	}
 
 	public Shared.PixelFormat? GetScreenStreamPixelFormat()
@@ -280,7 +295,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	private int _vmId;
 	private byte[]? _framebuffer;
 	private readonly object _lock;
-	private Size _size;
+	public Size ScreenSize { get; private set; }
 	private PixelFormat _pixelFormat;
 	public Shared.PixelFormat UniPixelFormat { get; }		/* Universal pixel format */
 	private bool _grabbed = false;
@@ -294,7 +309,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 			_pixelFormat.GreenShift, _pixelFormat.BlueShift, _pixelFormat.AlphaShift);
 		
 		_lock = new object();
-		_size = new Size(0, 0);
+		ScreenSize = new Size(0, 0);
 	}
 	
 	public IFramebufferReference GrabFramebufferReference(Size size, IImmutableSet<Screen> layout)
@@ -308,14 +323,14 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 		
 		lock (_lock)
 		{
-			if (_framebuffer == null || _size != size)
+			if (_framebuffer == null || ScreenSize != size)
 			{
-				_size = size;
-				_framebuffer = new byte[_size.Width * _size.Height * _pixelFormat.BytesPerPixel];
+				ScreenSize = size;
+				_framebuffer = new byte[ScreenSize.Width * ScreenSize.Height * _pixelFormat.BytesPerPixel];
 			}
 
 			_framebufferHandle = GCHandle.Alloc(_framebuffer, GCHandleType.Pinned);
-			return new FramebufferReference(_framebufferHandle.Value.AddrOfPinnedObject(), _size, _pixelFormat)
+			return new FramebufferReference(_framebufferHandle.Value.AddrOfPinnedObject(), ScreenSize, _pixelFormat)
 			{
 				Released = OnFramebufferReleased
 			};
@@ -335,7 +350,7 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	private void OnFramebufferReleased(FramebufferReference framebufferReference)
 	{
 		_framebufferHandle!.Value.Free();
-		NewFrameReceived?.Invoke(this, new VirtualMachineFrame(_vmId, new System.Drawing.Size(_size.Width, _size.Height), _framebuffer!));
+		NewFrameReceived?.Invoke(this, new VirtualMachineFrame(_vmId, new System.Drawing.Size(ScreenSize.Width, ScreenSize.Height), _framebuffer!));
 		_grabbed = false;
 	}
 

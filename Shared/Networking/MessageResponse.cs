@@ -251,4 +251,6 @@ public class MessageResponseVmScreenStreamStop : MessageResponse
 		StreamNotRunning,
 		Failure,
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
