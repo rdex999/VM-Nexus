@@ -133,7 +133,7 @@ public partial class VmScreenViewModel : ViewModelBase
 			return ExitCode.CallOnInvalidCondition;
 		}
 		
-		MessageResponseVmScreenStream? response = await ClientSvc.VirtualMachineStartScreenStreamAsync(_vmDescriptor!.Id);
+		MessageResponseVmScreenStreamStart? response = await ClientSvc.VirtualMachineStartScreenStreamAsync(_vmDescriptor!.Id);
 
 		if (response == null)
 		{
@@ -141,7 +141,7 @@ public partial class VmScreenViewModel : ViewModelBase
 			return ExitCode.MessageNotReceived;
 		}
 		
-		if (response.Result == MessageResponseVmScreenStream.Status.Success || response.Result == MessageResponseVmScreenStream.Status.AlreadyStreaming)
+		if (response.Result == MessageResponseVmScreenStreamStart.Status.Success || response.Result == MessageResponseVmScreenStreamStart.Status.AlreadyStreaming)
 		{
 			_streamRunning = true;
 

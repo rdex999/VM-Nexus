@@ -204,20 +204,20 @@ public class MessageResponseVmStartup : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
-public class MessageResponseVmScreenStream : MessageResponse
+public class MessageResponseVmScreenStreamStart : MessageResponse
 {
 	public Status Result { get; }
 	public PixelFormat? PixelFormat { get; }
 
 	[JsonConstructor]
-	public MessageResponseVmScreenStream(bool generateGuid, Guid requestId, Status result, PixelFormat pixelFormat)
+	public MessageResponseVmScreenStreamStart(bool generateGuid, Guid requestId, Status result, PixelFormat pixelFormat)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
 		PixelFormat = pixelFormat;
 	}
 	
-	public MessageResponseVmScreenStream(bool generateGuid, Guid requestId, Status result)
+	public MessageResponseVmScreenStreamStart(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
@@ -233,4 +233,22 @@ public class MessageResponseVmScreenStream : MessageResponse
 	
 	public override bool IsValidMessage() =>  base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && 
 	                                          (PixelFormat == null || Enum.IsDefined(typeof(PixelFormat.PixelFormatType), PixelFormat.Type));
+}
+
+public class MessageResponseVmScreenStreamStop : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseVmScreenStreamStop(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+
+	public enum Status
+	{
+		Success,
+		StreamNotRunning,
+		Failure,
+	}
 }

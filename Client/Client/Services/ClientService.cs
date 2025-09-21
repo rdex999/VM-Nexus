@@ -271,15 +271,15 @@ public class ClientService : MessagingService
 	/// Postcondition: On success, a video stream of the virtual machine's screen is sent, and the servers' response is returned. <br/>
 	/// On failure, the video stream will not be sent and null is returned.
 	/// </remarks>
-	public async Task<MessageResponseVmScreenStream?> VirtualMachineStartScreenStreamAsync(int id)
+	public async Task<MessageResponseVmScreenStreamStart?> VirtualMachineStartScreenStreamAsync(int id)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmScreenStream(true, id));
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmScreenStreamStart(true, id));
 		if (result != ExitCode.Success)
 		{
 			return null;
 		}
 
-		return (MessageResponseVmScreenStream)response!;
+		return (MessageResponseVmScreenStreamStart)response!;
 	}
 
 	/// <summary>

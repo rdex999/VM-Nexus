@@ -219,11 +219,11 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
-			case MessageRequestVmScreenStream reqVmScreenStream:
+			case MessageRequestVmScreenStreamStart reqVmScreenStream:
 			{
 				if (!_isLoggedIn)
 				{
-					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Failure));
+					SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.Failure));
 					break;
 				}
 
@@ -234,21 +234,21 @@ public sealed class ClientConnection : MessagingService
 					result = _virtualMachineService.SubscribeToVmNewFrameReceived(reqVmScreenStream.VmId, OnVmNewFrame);
 					if (result == ExitCode.Success)
 					{
-						SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Success, pixelFormat));
+						SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.Success, pixelFormat));
 					}
 					else
 					{
-						SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Failure));
+						SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.Failure));
 					}
 				} 
 				else if (result == ExitCode.VmScreenStreamAlreadyRunning)
 				{
 					Shared.PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqVmScreenStream.VmId)!;
-					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.AlreadyStreaming, pixelFormat));
+					SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.AlreadyStreaming, pixelFormat));
 				}
 				else
 				{
-					SendResponse(new MessageResponseVmScreenStream(true, reqVmScreenStream.Id, MessageResponseVmScreenStream.Status.Failure));
+					SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.Failure));
 				}
 				
 				break;
