@@ -22,6 +22,7 @@ public sealed class ClientConnection : MessagingService
 	private readonly DriveService _driveService;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
 	private const string ServerRootDirectory = "../../../";
+	private bool _isScreenStreamRunning = false;
 
 	/// <summary>
 	/// Creates and initializes the ClientConnection object.
@@ -219,38 +220,70 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
-			case MessageRequestVmScreenStreamStart reqVmScreenStream:
+			case MessageRequestVmScreenStreamStart reqScreenStreamStart:
 			{
 				if (!_isLoggedIn)
 				{
-					SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.Failure));
+					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id, 
+						MessageResponseVmScreenStreamStart.Status.Failure));
 					break;
 				}
 
-				result = _virtualMachineService.StartScreenStream(reqVmScreenStream.VmId);
+				if (_isScreenStreamRunning)
+				{
+					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id, 
+						MessageResponseVmScreenStreamStart.Status.AlreadyStreaming));
+					break;
+				}
+				
+				result = _virtualMachineService.SubscribeToVmNewFrameReceived(reqScreenStreamStart.VmId, OnVmNewFrame);
 				if (result == ExitCode.Success)
 				{
-					Shared.PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqVmScreenStream.VmId)!;
-					result = _virtualMachineService.SubscribeToVmNewFrameReceived(reqVmScreenStream.VmId, OnVmNewFrame);
-					if (result == ExitCode.Success)
-					{
-						SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.Success, pixelFormat));
-					}
-					else
-					{
-						SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.Failure));
-					}
+					Shared.PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqScreenStreamStart.VmId)!;
+					
+					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
+						MessageResponseVmScreenStreamStart.Status.Success, pixelFormat));
+					
+					_isScreenStreamRunning = true;
 				} 
-				else if (result == ExitCode.VmScreenStreamAlreadyRunning)
+				else 
 				{
-					Shared.PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqVmScreenStream.VmId)!;
-					SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.AlreadyStreaming, pixelFormat));
+					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id, 
+						MessageResponseVmScreenStreamStart.Status.Failure));
+				}
+				
+				break;
+			}
+
+			case MessageRequestVmScreenStreamStop reqScreenStreamStop:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.Failure));
+					break;
+				}
+
+				if (!_isScreenStreamRunning)
+				{
+					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.StreamNotRunning));
+					break;
+				}
+				
+				result = _virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqScreenStreamStop.VmId, OnVmNewFrame);
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.Success));
+					_isScreenStreamRunning = false;
+				} 
+				else if (result == ExitCode.VmScreenStreamNotRunning)	/* Should not happen. Doing it for safety. */
+				{
+					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.StreamNotRunning));
+					_isScreenStreamRunning = false;
 				}
 				else
 				{
-					SendResponse(new MessageResponseVmScreenStreamStart(true, reqVmScreenStream.Id, MessageResponseVmScreenStreamStart.Status.Failure));
+					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.Failure));
 				}
-				
 				break;
 			}
 			
@@ -360,7 +393,7 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	private void OnVmNewFrame(object? sender, VirtualMachineFrame frame)
 	{
-		if (!_isLoggedIn) return;
+		if (!_isLoggedIn || !_isScreenStreamRunning) return;
 		
 		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, new byte[frame.Framebuffer.Length]);
 		frame.Framebuffer.CopyTo(frameMessage.Framebuffer, 0);

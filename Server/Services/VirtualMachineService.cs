@@ -143,31 +143,6 @@ public class VirtualMachineService
 	}
 
 	/// <summary>
-	/// Start streaming the screen of the virtual machine. Handle each new frame in the given callback.
-	/// </summary>
-	/// <param name="id">The ID of the virtual machine. id >= 1.</param>
-	/// <returns>An exit code indicating the result of the operation.</returns>
-	/// <remarks>
-	/// Precondition: A virtual machine with the given ID exists, and its alive. (not shut down) id >= 1.<br/>
-	/// Postcondition: On success, the stream is started, the used pixel format is written to pixelFormat, and the returned exit code indicates success. <br/>
-	/// On failure, the stream is not started, pixelFormat is set to null, and the returned exit code indicates the error.
-	/// </remarks>
-	public ExitCode StartScreenStream(int id)
-	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
-
-		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
-		{
-			return virtualMachine.StartScreenStream();
-		}
-		
-		return ExitCode.VmIsShutDown;
-	}
-
-	/// <summary>
 	/// Subscribes the given handler to the event of receiving a new frame of the given virtual machine.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to subscribe to. id >= 1.</param>
@@ -190,6 +165,32 @@ public class VirtualMachineService
 			return virtualMachine.SubscribeToNewFrameReceived(handler);
 		}
 
+		return ExitCode.VmIsShutDown;
+	}
+
+	/// <summary>
+	/// Unsubscribe from the event of receiving a new frame from the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to unsubscribe from. id >= 1.</param>
+	/// <param name="handler">The event handler that was subscribed. handler != null.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: There is a virtual machine with the given ID, and it is not shutdown. id >= 1 &amp;&amp; handler != null <br/>
+	/// Postcondition: On success, the handler is unsubscribed and will not receive new frame events. <br/>
+	/// On failure, the event is not unsubscribed and the returned exit code will indicate the error.
+	/// </remarks>
+	public ExitCode UnsubscribeFromVmNewFrameReceived(int id, EventHandler<VirtualMachineFrame> handler)
+	{
+		if (id < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			return virtualMachine.UnsubscribeFromNewFrameReceived(handler);
+		}
+		
 		return ExitCode.VmIsShutDown;
 	}
 

@@ -88,7 +88,53 @@ public class VirtualMachine
 		_domain.Shutdown();
 	}
 
-	public ExitCode StartScreenStream()
+	public bool IsScreenStreamRunning() => GetRenderTarget() != null;
+	
+	public ExitCode SubscribeToNewFrameReceived(EventHandler<VirtualMachineFrame> handler)
+	{
+		if (!IsScreenStreamRunning())
+		{
+			ExitCode result = StartScreenStream();
+
+			if (result != ExitCode.Success)
+			{
+				return result;
+			}
+		}
+	
+		GetRenderTarget()!.NewFrameReceived += handler;
+		
+		return ExitCode.Success;
+	}
+
+	public ExitCode UnsubscribeFromNewFrameReceived(EventHandler<VirtualMachineFrame> handler)
+	{
+		if (!IsScreenStreamRunning())
+		{
+			return ExitCode.VmScreenStreamNotRunning;
+		}
+	
+		GetRenderTarget()!.NewFrameReceived -= handler;
+
+		if (!GetRenderTarget()!.HasNewFrameReceivedSubscribers())
+		{
+			StopScreenStream();
+		}
+		
+		return ExitCode.Success;	
+	}
+
+	public Shared.PixelFormat? GetScreenStreamPixelFormat()
+	{
+		if (!IsScreenStreamRunning())
+		{
+			return null;
+		}
+
+		return GetRenderTarget()!.UniPixelFormat;
+	}
+
+	private ExitCode StartScreenStream()
 	{
 		if (IsScreenStreamRunning())
 		{
@@ -107,47 +153,11 @@ public class VirtualMachine
 		return ExitCode.Success;
 	}
 
-	public void StopScreenStream()
+	private void StopScreenStream()
 	{
 		_rfbConnection.RenderTarget = null;
 	}
-
-	public bool IsScreenStreamRunning() => GetRenderTarget() != null;
 	
-	public ExitCode SubscribeToNewFrameReceived(EventHandler<VirtualMachineFrame> handler)
-	{
-		if (GetRenderTarget() == null)
-		{
-			return ExitCode.VmScreenStreamNotRunning;
-		}
-	
-		GetRenderTarget()!.NewFrameReceived += handler;
-		
-		return ExitCode.Success;
-	}
-
-	public ExitCode UnsubscribeFromNewFrameReceived(EventHandler<VirtualMachineFrame> handler)
-	{
-		if (GetRenderTarget() == null)
-		{
-			return ExitCode.VmScreenStreamNotRunning;
-		}
-	
-		GetRenderTarget()!.NewFrameReceived -= handler;
-		
-		return ExitCode.Success;	
-	}
-
-	public Shared.PixelFormat? GetScreenStreamPixelFormat()
-	{
-		if (!IsScreenStreamRunning())
-		{
-			return null;
-		}
-
-		return GetRenderTarget()!.UniPixelFormat;
-	}
-
 	private XDocument AsXmlDocument()
 	{
 		string cpuArch = _cpuArchitecture switch
@@ -310,6 +320,16 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 				Released = OnFramebufferReleased
 			};
 		}
+	}
+
+	public bool HasNewFrameReceivedSubscribers()
+	{
+		if (NewFrameReceived == null)
+		{
+			return false;
+		}
+		
+		return NewFrameReceived.GetInvocationList().Length > 0;
 	}
 
 	private void OnFramebufferReleased(FramebufferReference framebufferReference)
