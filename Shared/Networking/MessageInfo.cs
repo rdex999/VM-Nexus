@@ -43,3 +43,16 @@ public class MessageInfoVmScreenFrame : MessageInfo
 	                                         Size != null && Size.Width > 0 && Size.Height > 0 && 
 	                                         Framebuffer != null && Framebuffer.Length > 0;
 }
+
+public class MessageInfoVirtualMachineData : MessageInfo
+{
+	public SharedDefinitions.VmGeneralDescriptor Descriptor { get; }
+
+	public MessageInfoVirtualMachineData(bool generateGuid, SharedDefinitions.VmGeneralDescriptor descriptor)
+		: base(generateGuid)
+	{
+		Descriptor = descriptor;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Descriptor != null;
+}
