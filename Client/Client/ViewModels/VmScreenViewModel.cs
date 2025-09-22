@@ -16,7 +16,8 @@ namespace Client.ViewModels;
 public partial class VmScreenViewModel : ViewModelBase
 {
 	public Action? NewFrameReceived;
-	
+
+	private bool _isFocused = false;
 	private bool _streamRunning = false;
 	private SharedDefinitions.VmGeneralDescriptor? _vmDescriptor = null;
 	private PixelFormat? _pixelFormat = null;
@@ -28,32 +29,7 @@ public partial class VmScreenViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		ClientSvc.VmScreenFrameReceived += OnVmScreenFrameReceived;
-	}
-
-	/// <summary>
-	/// Runs when a new frame of a virtual machine is received.
-	/// </summary>
-	/// <param name="sender">Unused</param>
-	/// <param name="frame">The frame that was received. frame != null.</param>
-	/// <remarks>
-	/// Precondition: A new frame of the screen of a virtual machine has been received. frame != null. <br/>
-	/// Postcondition: The frame is rendered on the screen.
-	/// </remarks>
-	private void OnVmScreenFrameReceived(object? sender, MessageInfoVmScreenFrame frame)
-	{
-		if (!_streamRunning || _vmDescriptor == null || frame.VmId != _vmDescriptor.Id || _pixelFormat == null)
-		{
-			return;
-		}
-
-		if (VmScreenBitmap == null || VmScreenBitmap.PixelSize.Width * VmScreenBitmap.PixelSize.Height != frame.Size.Width * frame.Size.Height)
-		{
-			VmScreenBitmap = new WriteableBitmap(new PixelSize(frame.Size.Width, frame.Size.Height), new Vector(96, 96), _pixelFormat);
-		}
-
-		using ILockedFramebuffer buffer = VmScreenBitmap.Lock();
-		Marshal.Copy(frame.Framebuffer, 0, buffer.Address, frame.Size.Width * frame.Size.Height * (_pixelFormat.Value.BitsPerPixel / 8));
-		Dispatcher.UIThread.Invoke(NewFrameReceived!);
+		ClientSvc.VmDataUpdated += OnVmDataUpdated;
 	}
 
 	/// <summary>
@@ -66,7 +42,8 @@ public partial class VmScreenViewModel : ViewModelBase
 	/// </remarks>
 	public async Task<ExitCode> FocusAsync()
 	{
-		if (!_streamRunning && _vmDescriptor != null)
+		_isFocused = true;
+		if (!_streamRunning && _vmDescriptor != null && _vmDescriptor.State == SharedDefinitions.VmState.Running)
 		{
 			return await StartStreamAsync();
 		}
@@ -82,6 +59,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	/// </remarks>
 	public async Task UnfocusAsync()
 	{
+		_isFocused = false;
 		if (_streamRunning)
 		{
 			await EndStreamAsync();
@@ -110,7 +88,12 @@ public partial class VmScreenViewModel : ViewModelBase
 		_vmDescriptor = vmDescriptor;
 		VmScreenBitmap = null;
 
-		return await StartStreamAsync();
+		if (_vmDescriptor.State == SharedDefinitions.VmState.Running)
+		{
+			return await StartStreamAsync();
+		}
+
+		return ExitCode.Success;
 	}
 
 	/// <summary>
@@ -118,7 +101,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	/// </summary>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: There is a virtual machine configured, (_vmDescriptor != null) and no stream is running. <br/>
+	/// Precondition: There is a virtual machine configured, (_vmDescriptor != null) no stream is running, and the virtual machine is running. <br/>
 	/// Postcondition: On success, a new stream of the virtual machines' screen is started, and the returned exit code indicates success. <br/>
 	/// On failure, the stream is not started and the returned exit code indicates the error.
 	/// </remarks>
@@ -132,6 +115,11 @@ public partial class VmScreenViewModel : ViewModelBase
 		if (_vmDescriptor == null)
 		{
 			return ExitCode.CallOnInvalidCondition;
+		}
+
+		if (_vmDescriptor.State == SharedDefinitions.VmState.ShutDown)
+		{
+			return ExitCode.VmIsShutDown;
 		}
 		
 		MessageResponseVmScreenStreamStart? response = await ClientSvc.VirtualMachineStartScreenStreamAsync(_vmDescriptor!.Id);
@@ -195,5 +183,64 @@ public partial class VmScreenViewModel : ViewModelBase
 		}
 		
 		return ExitCode.VmScreenStreamStopFailed;
+	}
+	
+	/// <summary>
+	/// Runs when a new frame of a virtual machine is received.
+	/// </summary>
+	/// <param name="sender">Unused</param>
+	/// <param name="frame">The frame that was received. frame != null.</param>
+	/// <remarks>
+	/// Precondition: A new frame of the screen of a virtual machine has been received. frame != null. <br/>
+	/// Postcondition: The frame is rendered on the screen.
+	/// </remarks>
+	private void OnVmScreenFrameReceived(object? sender, MessageInfoVmScreenFrame frame)
+	{
+		if (!_streamRunning || _vmDescriptor == null || frame.VmId != _vmDescriptor.Id || _pixelFormat == null)
+		{
+			return;
+		}
+
+		if (VmScreenBitmap == null || VmScreenBitmap.PixelSize.Width * VmScreenBitmap.PixelSize.Height != frame.Size.Width * frame.Size.Height)
+		{
+			VmScreenBitmap = new WriteableBitmap(new PixelSize(frame.Size.Width, frame.Size.Height), new Vector(96, 96), _pixelFormat);
+		}
+
+		using ILockedFramebuffer buffer = VmScreenBitmap.Lock();
+		Marshal.Copy(frame.Framebuffer, 0, buffer.Address, frame.Size.Width * frame.Size.Height * (_pixelFormat.Value.BitsPerPixel / 8));
+		Dispatcher.UIThread.Invoke(NewFrameReceived!);
+	}
+	
+	/// <summary>
+	/// Handles a data update of a virtual machine.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="descriptor">The descriptor of the virtual machine that was updated, and its new data. descriptor != null.</param>
+	/// <remarks>
+	/// Precondition: Data of a virtual machine was updated. descriptor != null. <br/>
+	/// Postcondition: Data change is handled, streams stopped/resumed if needed.
+	/// </remarks>
+	private void OnVmDataUpdated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	{
+		if (_vmDescriptor == null || _vmDescriptor.Id != descriptor.Id)
+		{
+			return;
+		}
+
+		SharedDefinitions.VmGeneralDescriptor oldDescriptor = _vmDescriptor;
+		_vmDescriptor = descriptor;
+		
+		if (oldDescriptor.State != _vmDescriptor.State && _isFocused)
+		{
+			if (_vmDescriptor.State == SharedDefinitions.VmState.Running)
+			{
+				_ = StartStreamAsync();
+			}
+			else if (_vmDescriptor.State == SharedDefinitions.VmState.ShutDown)
+			{
+				_ = EndStreamAsync();
+				/* TODO: Display message saying VM is shutdown. */
+			}
+		}
 	}
 }

@@ -207,7 +207,16 @@ public sealed class ClientConnection : MessagingService
 				result = await _virtualMachineService.PowerOnVirtualMachineAsync(reqVmStartup.VmId);
 				if (result == ExitCode.Success)
 				{
+					SharedDefinitions.VmGeneralDescriptor? descriptor = await _databaseService.GetVmGeneralDescriptorAsync(reqVmStartup.VmId);
+					if (descriptor == null)
+					{
+						SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
+						/* TODO: Power off the virtual machine */
+						break;
+					}
+					
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Success));
+					SendInfo(new MessageInfoVirtualMachineData(true, descriptor));
 				} 
 				else if (result == ExitCode.VmAlreadyRunning)
 				{
