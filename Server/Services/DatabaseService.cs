@@ -342,7 +342,7 @@ public class DatabaseService
 	/// Postcondition: On success, an array of general VM descriptors is returned. (might be empty, but not null) <br/>
 	/// On failure, null is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.VmGeneralDescriptor[]?> GetVmGeneralDescriptorsAsync(int userId)
+	public async Task<SharedDefinitions.VmGeneralDescriptor[]?> GetVmGeneralDescriptorsOfUserAsync(int userId)
 	{
 		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
 			"SELECT id, name, operating_system, state FROM virtual_machines WHERE owner_id = @owner_id",
@@ -362,6 +362,41 @@ public class DatabaseService
 			descriptors.Add(descriptor);
 		}
 		return descriptors.ToArray();
+	}
+
+	/// <summary>
+	/// Get a general descriptor of the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to get the general descriptor of. id >= 1.</param>
+	/// <returns>The general descriptor of the virtual machine, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists. id >= 1. <br/>
+	/// Postcondition: On success, a general descriptor of the virtual machine is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<SharedDefinitions.VmGeneralDescriptor?> GetVmGeneralDescriptorAsync(int id)
+	{
+		if (id < 1)
+		{
+			return null;
+		}
+		
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT name, operating_system, state FROM virtual_machines WHERE id = @id",
+			new NpgsqlParameter("@id", id)
+		);
+		
+		SharedDefinitions.VmGeneralDescriptor? descriptor = null;
+
+		if (await reader.ReadAsync())
+		{
+			descriptor = new SharedDefinitions.VmGeneralDescriptor(
+				id,
+				reader.GetString(0),
+				(SharedDefinitions.OperatingSystem)reader.GetInt32(1),
+				(SharedDefinitions.VmState)reader.GetInt32(2)
+			);
+		}
+
+		return descriptor;
 	}
 
 	/// <summary>

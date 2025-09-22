@@ -87,8 +87,8 @@ public class VirtualMachine
 		}
 
 		_ = StateInformerAsync();
-		
-		return ExitCode.Success;
+	
+		return await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.Running);
 	}
 
 	public void PowerOff()
@@ -193,11 +193,13 @@ public class VirtualMachine
 					case virDomainState.VIR_DOMAIN_SHUTOFF:		/* Machine is shut off. */
 					case virDomainState.VIR_DOMAIN_SHUTDOWN:	/* Machine is being shut down (libvirts definition - not exactly accurate. Runs when the VM is shut down.) */
 					{
+						await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.ShutDown);
 						PoweredOff?.Invoke(this, _id);
 						return;
 					}
 					case virDomainState.VIR_DOMAIN_CRASHED:
 					{
+						await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.ShutDown);
 						Crashed?.Invoke(this, _id);
 						return;
 					}
