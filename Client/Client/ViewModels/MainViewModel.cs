@@ -54,6 +54,7 @@ public partial class MainViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
+		ClientSvc.VmPoweredOff += OnVmPoweredOff;
 		
 		AccountMenuTitle = $"Welcome, {username}.";
 		
@@ -225,13 +226,13 @@ public partial class MainViewModel : ViewModelBase
 	}
 
 	/// <summary>
-	/// Handles a change in a virtual machines data.
+	/// Handles the event of the virtual machine being powered on.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="id">The ID of the virtual machine of which the data was updated. id >= 1.</param>
+	/// <param name="id">The ID of the virtual machine that was powered on. id >= 1.</param>
 	/// <remarks>
 	/// Precondition: The virtual machine was powered on. id >= 1. <br/>
-	/// Postcondition: The data change is handled.
+	/// Postcondition: Tabs updated accordingly.
 	/// </remarks>
 	private void OnVmPoweredOn(object? sender, int id)
 	{
@@ -240,6 +241,27 @@ public partial class MainViewModel : ViewModelBase
 			if (tab.Descriptor.Id == id)
 			{
 				tab.Descriptor.State = SharedDefinitions.VmState.Running;
+				return;
+			}
+		}
+	}
+	
+	/// <summary>
+	/// Handles the event of the virtual machine being shut down
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine that was shut down. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine was shut down. id >= 1. <br/>
+	/// Postcondition: Tabs updated accordingly.
+	/// </remarks>
+	private void OnVmPoweredOff(object? sender, int id)
+	{
+		foreach (VmTabTemplate tab in VmTabs)
+		{
+			if (tab.Descriptor.Id == id)
+			{
+				tab.Descriptor.State = SharedDefinitions.VmState.ShutDown;
 				return;
 			}
 		}
