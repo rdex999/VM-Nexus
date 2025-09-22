@@ -56,3 +56,16 @@ public class MessageInfoVmPoweredOn : MessageInfo
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
+
+public class MessageInfoVmPoweredOff : MessageInfo
+{
+	public int VmId { get; }
+
+	public MessageInfoVmPoweredOff(bool generateGuid, int vmId)
+		: base(generateGuid)
+	{
+		VmId = vmId;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
+}

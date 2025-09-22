@@ -432,5 +432,8 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	private void OnVirtualMachinePoweredOff(object? sender, int id)
 	{
+		if (!_isLoggedIn || id < 1) return;
+		
+		SendInfo(new MessageInfoVmPoweredOff(true, id));
 	}
 }

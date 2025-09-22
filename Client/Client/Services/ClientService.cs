@@ -17,6 +17,7 @@ public class ClientService : MessagingService
 	public event EventHandler<SharedDefinitions.VmGeneralDescriptor[]>? VmListChanged;
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
 	public event EventHandler<int>? VmPoweredOn;
+	public event EventHandler<int>? VmPoweredOff;
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -450,16 +451,19 @@ public class ClientService : MessagingService
 				VmListChanged?.Invoke(this, infoVmList.VmDescriptors);
 				break;
 			}
-
 			case MessageInfoVmScreenFrame infoVmScreenFrame:
 			{
 				VmScreenFrameReceived?.Invoke(this, infoVmScreenFrame);
 				break;
 			}
-
 			case MessageInfoVmPoweredOn infoVirtualMachineData:
 			{
 				VmPoweredOn?.Invoke(this, infoVirtualMachineData.VmId);
+				break;
+			}
+			case MessageInfoVmPoweredOff infoVmPoweredOff:
+			{
+				VmPoweredOff?.Invoke(this, infoVmPoweredOff.VmId);
 				break;
 			}
 		}

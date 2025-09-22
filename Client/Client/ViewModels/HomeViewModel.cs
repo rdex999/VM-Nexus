@@ -160,6 +160,7 @@ public partial class VmItemTemplate : ObservableObject
 		OperatingSystem = operatingSystem;
 		State = state;
 		_clientService.VmPoweredOn += OnVmPoweredOn;
+		_clientService.VmPoweredOff += OnVmPoweredOff;
 	}
 	
 	/// <summary>
@@ -184,6 +185,28 @@ public partial class VmItemTemplate : ObservableObject
 		});
 	}
 
+	/// <summary>
+	/// Handles a change in a virtual machines data.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine of which the data was updated. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: The virtual machine was powered on. id >= 1. <br/>
+	/// Postcondition: The data change is handled.
+	/// </remarks>
+	private void OnVmPoweredOff(object? sender, int id)
+	{
+		if (Id != id)
+		{
+			return;
+		}
+
+		Dispatcher.UIThread.Post(() =>
+		{
+			State = SharedDefinitions.VmState.ShutDown;
+		});
+	}
+	
 	/// <summary>
 	/// Handles opening the VM - opens a tab for the VM.
 	/// </summary>
