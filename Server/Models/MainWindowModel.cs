@@ -80,7 +80,7 @@ public class MainWindowModel
 	/// Postcondition: On success, the returned exit code will indicate success, and the server will be shut down. <br/>
 	/// On failure, the returned exit code will indicate the error, and the server will keep running.
 	/// </remarks>
-	public ExitCode ServerStop()
+	public async Task<ExitCode> ServerStopAsync()
 	{
 		if (_listenerCts != null)
 		{
@@ -99,8 +99,8 @@ public class MainWindowModel
 			clientConnection.Disconnect();
 		}
 
+		await _virtualMachineService.CloseAsync();
 		_databaseService.Close();
-		_virtualMachineService.Close();
 
 		return ExitCode.Success;
 	}

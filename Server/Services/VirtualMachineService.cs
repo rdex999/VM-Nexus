@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using libvirt;
 using Server.Drives;
@@ -14,8 +15,8 @@ public class VirtualMachineService
 	private readonly DriveService _driveService;
 	
 	/* By virtual machine ID's */
-	private ConcurrentDictionary<int, VirtualMachine> _aliveVirtualMachines;
-	private Connect _libvirtConnection;
+	private readonly ConcurrentDictionary<int, VirtualMachine> _aliveVirtualMachines;
+	private readonly Connect _libvirtConnection;
 
 	public VirtualMachineService(DatabaseService databaseService, DriveService driveService)
 	{
@@ -26,8 +27,22 @@ public class VirtualMachineService
 		_libvirtConnection.Open();
 	}
 
-	public void Close()
+	/// <summary>
+	/// Closes the service. Attempts a graceful shutdown for all running virtual machines, after the timeout, they are destroyed.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The service is initialized and running. Closing it is needed. <br/>
+	/// Postcondition: Service uninitialized.
+	/// </remarks>
+	public async Task CloseAsync()
 	{
+		List<Task> vmsCloseTask = new List<Task>();
+		foreach ((int _, VirtualMachine virtualMachine) in _aliveVirtualMachines)
+		{
+			vmsCloseTask.Add(virtualMachine.CloseAsync());
+		}
+		await Task.WhenAll(vmsCloseTask);
+		
 		_libvirtConnection.Close();
 	}
 

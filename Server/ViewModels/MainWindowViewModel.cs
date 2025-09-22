@@ -39,7 +39,7 @@ public partial class MainWindowViewModel : ViewModelBase
 	{
 		if (ServerStateIsChecked)
 		{
-			_mainWindowModel.ServerStop();
+			Task.Run(async () => await _mainWindowModel.ServerStopAsync()).Wait();		/* Run on the thread pool, not blocking main/UI thread. */
 		}
 	}
 	
@@ -68,7 +68,7 @@ public partial class MainWindowViewModel : ViewModelBase
 		}
 		else
 		{
-			ExitCode result = _mainWindowModel.ServerStop();
+			ExitCode result = await _mainWindowModel.ServerStopAsync();
 			if (result != ExitCode.Success)
 			{
 				/* TODO: Add logic to display error message */
