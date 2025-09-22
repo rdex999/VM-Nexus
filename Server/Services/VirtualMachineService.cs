@@ -153,6 +153,9 @@ public class VirtualMachineService
 			_aliveVirtualMachines.TryRemove(id, out _);
 			return result;
 		}
+
+		virtualMachine.PoweredOff += OnVirtualMachineEnd;
+		virtualMachine.Crashed += OnVirtualMachineEnd;
 		
 		return ExitCode.Success;
 	}
@@ -283,5 +286,21 @@ public class VirtualMachineService
 		}
 
 		return null;
+	}
+
+	/// <summary>
+	/// Handles the end of a virtual machine. (powered off or crashed)
+	/// </summary>
+	/// <param name="sender">unused.</param>
+	/// <param name="id">The ID of the virtual machine that ended. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine has ended. (that is, powered off or crashed) id >= 1. <br/>
+	/// Postcondition: The virtual machine is removed from the running virtual machines dictionary, and its resources are freed.
+	/// </remarks>
+	private void OnVirtualMachineEnd(object? sender, int id)
+	{
+		if (!_aliveVirtualMachines.TryRemove(id, out VirtualMachine? virtualMachine)) return;
+		
+		_ = virtualMachine.CloseAsync();
 	}
 }
