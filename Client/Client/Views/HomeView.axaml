@@ -109,7 +109,7 @@
 										<StackPanel VerticalAlignment="Top" Spacing="5">
 											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding OperatingSystemString}" />
 											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding Name}" />
-											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding StateString}" FontWeight="Bold" />
+											<TextBlock FontSize="16" Foreground="{Binding StateColor}" Text="{Binding StateString}" FontWeight="Bold"/>
 										</StackPanel>
 
 										<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20" IsVisible="{Binding ErrorMessageIsVisible}">

@@ -2,6 +2,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -34,7 +35,6 @@ public class HomeViewModel : ViewModelBase
 	{
 		Vms = new ObservableCollection<VmItemTemplate>();
 		ClientSvc.VmListChanged += OnVmListChanged;
-		
 	}
 
 	/// <summary>
@@ -52,8 +52,12 @@ public class HomeViewModel : ViewModelBase
 		Dispatcher.UIThread.InvokeAsync(() => { }).Wait();			/* Allow the UI thread to process any changes that were made. */
 		foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
 		{
-			Vms.Add(new VmItemTemplate(ClientSvc, vm.Id, vm.Name, vm.OperatingSystem, vm.State));
-			Vms.Last().OpenClicked += OnVmOpenClicked;
+			Dispatcher.UIThread.Invoke(() =>
+			{
+				VmItemTemplate template = new VmItemTemplate(ClientSvc, vm.Id, vm.Name, vm.OperatingSystem, vm.State);
+				template.OpenClicked += OnVmOpenClicked;
+				Vms.Add(template);
+			});
 		}
 	}
 
@@ -82,7 +86,7 @@ public partial class VmItemTemplate : ObservableObject
 	public SharedDefinitions.OperatingSystem OperatingSystem
 	{
 		get => _operatingSystem;
-		private init
+		private set
 		{
 			_operatingSystem = value;
 			OperatingSystemString = _operatingSystem == SharedDefinitions.OperatingSystem.Other
@@ -104,6 +108,14 @@ public partial class VmItemTemplate : ObservableObject
 		{
 			_state = value;
 			StateString = Common.SeparateStringWords(_state.ToString());
+			if (_state == SharedDefinitions.VmState.ShutDown)
+			{
+				StateColor = new SolidColorBrush(Color.FromRgb(0x4F, 0x5B, 0x5B));
+			}
+			else if (_state == SharedDefinitions.VmState.Running)
+			{
+				StateColor = new SolidColorBrush(Color.FromRgb(0x6B, 0xE5, 0x78)); /* 6be578 */
+			}
 		}
 	}
 
@@ -115,6 +127,9 @@ public partial class VmItemTemplate : ObservableObject
 
 	[ObservableProperty]
 	private bool _errorMessageIsVisible;
+
+	[ObservableProperty] 
+	private Brush _stateColor;
 
 	partial void OnErrorMessageChanged(string value) => ErrorMessageIsVisible = !string.IsNullOrEmpty(value);
 
@@ -144,6 +159,31 @@ public partial class VmItemTemplate : ObservableObject
 		Name = name;
 		OperatingSystem = operatingSystem;
 		State = state;
+		_clientService.VmDataUpdated += OnVmDataUpdated;
+	}
+	
+	/// <summary>
+	/// Handles a change in a virtual machines data.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="descriptor">The descriptor of the virtual machine of which the data was updated. descriptor != null.</param>
+	/// <remarks>
+	/// Precondition: The data of a virtual machine was updated. descriptor != null. <br/>
+	/// Postcondition: The data change is handled.
+	/// </remarks>
+	private void OnVmDataUpdated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	{
+		if (Id != descriptor.Id)
+		{
+			return;
+		}
+
+		Dispatcher.UIThread.Post(() =>
+		{
+			Name = descriptor.Name;
+			OperatingSystem = descriptor.OperatingSystem;
+			State = descriptor.State;
+		});
 	}
 
 	/// <summary>
