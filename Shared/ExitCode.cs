@@ -21,6 +21,8 @@ public enum ExitCode
 	VmDoesntExist,
 	VmAlreadyRunning,
 	VmStartupFailed,
+	VmShutdownTimeout,
+	VmCrashed,
 	VmIsShutDown,
 	VmScreenStreamNotRunning,
 	VmScreenStreamAlreadyRunning,

@@ -24,6 +24,9 @@ public class VirtualMachine
 {
 	public event EventHandler<int>? PoweredOff;
 	public event EventHandler<int>? Crashed;
+	public TaskCompletionSource<virDomainState> PoweredOffTcs = new TaskCompletionSource<virDomainState>();		/* Returns the new state - powered off, crashed */
+	
+	public readonly TimeSpan PowerOffTimeout = TimeSpan.FromMinutes(1);
 	
 	private readonly DatabaseService _databaseService;
 	private readonly DriveService _driveService;
@@ -87,13 +90,33 @@ public class VirtualMachine
 		}
 
 		_ = StateInformerAsync();
-	
+
 		return await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.Running);
 	}
 
-	public void PowerOff()
+	public async Task<ExitCode> PowerOffAsync()
 	{
 		_domain.Shutdown();
+
+		try
+		{
+			virDomainState state = await PoweredOffTcs.Task.WaitAsync(PowerOffTimeout);
+			if (state == virDomainState.VIR_DOMAIN_CRASHED)
+			{
+				return ExitCode.VmCrashed;
+			}
+
+			return ExitCode.Success;
+		}
+		catch (OperationCanceledException)
+		{
+			return ExitCode.VmShutdownTimeout;
+		}
+	}
+
+	public void Destroy()
+	{
+		_domain.Destroy();
 	}
 
 	public bool IsScreenStreamRunning() => GetRenderTarget() != null;
@@ -194,12 +217,14 @@ public class VirtualMachine
 					case virDomainState.VIR_DOMAIN_SHUTDOWN:	/* Machine is being shut down (libvirts definition - not exactly accurate. Runs when the VM is shut down.) */
 					{
 						await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.ShutDown);
+						PoweredOffTcs.SetResult(currentState);
 						PoweredOff?.Invoke(this, _id);
 						return;
 					}
 					case virDomainState.VIR_DOMAIN_CRASHED:
 					{
 						await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.ShutDown);
+						PoweredOffTcs.SetResult(currentState);
 						Crashed?.Invoke(this, _id);
 						return;
 					}
