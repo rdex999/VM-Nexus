@@ -435,5 +435,10 @@ public sealed class ClientConnection : MessagingService
 		if (!_isLoggedIn || id < 1) return;
 		
 		SendInfo(new MessageInfoVmPoweredOff(true, id));
+
+		if (id == _screenStreamVmId)
+		{
+			_screenStreamVmId = -1;
+		}
 	}
 }

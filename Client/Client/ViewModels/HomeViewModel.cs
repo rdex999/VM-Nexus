@@ -164,13 +164,13 @@ public partial class VmItemTemplate : ObservableObject
 	}
 	
 	/// <summary>
-	/// Handles a change in a virtual machines data.
+	/// Handles the event of the virtual machine being powered on.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="id">The ID of the virtual machine of which the data was updated. id >= 1.</param>
+	/// <param name="id">The ID of the virtual machine that was powered on. id >= 1.</param>
 	/// <remarks>
 	/// Precondition: The virtual machine was powered on. id >= 1. <br/>
-	/// Postcondition: The data change is handled.
+	/// Postcondition: Event is handled, UI updates accordingly.
 	/// </remarks>
 	private void OnVmPoweredOn(object? sender, int id)
 	{
@@ -186,13 +186,13 @@ public partial class VmItemTemplate : ObservableObject
 	}
 
 	/// <summary>
-	/// Handles a change in a virtual machines data.
+	/// Handles the event of the virtual machine being powered off.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="id">The ID of the virtual machine of which the data was updated. id >= 1.</param>
+	/// <param name="id">The ID of the virtual machine that was powered off. id >= 1.</param>
 	/// <remarks>
-	/// Precondition: The virtual machine was powered on. id >= 1. <br/>
-	/// Postcondition: The data change is handled.
+	/// Precondition: The virtual machine was powered off. id >= 1. <br/>
+	/// Postcondition: Event is handled, UI updates accordingly.
 	/// </remarks>
 	private void OnVmPoweredOff(object? sender, int id)
 	{

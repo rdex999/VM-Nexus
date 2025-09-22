@@ -30,6 +30,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	{
 		ClientSvc.VmScreenFrameReceived += OnVmScreenFrameReceived;
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
+		ClientSvc.VmPoweredOff += OnVmPoweredOff;
 	}
 
 	/// <summary>
@@ -211,14 +212,15 @@ public partial class VmScreenViewModel : ViewModelBase
 		Dispatcher.UIThread.Invoke(NewFrameReceived!);
 	}
 
+
 	/// <summary>
-	/// Handles a change in a virtual machines data.
+	/// Handles the event of the virtual machine being powered on.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="id">The ID of the virtual machine of which the data was updated. id >= 1.</param>
+	/// <param name="id">The ID of the virtual machine that was powered on. id >= 1.</param>
 	/// <remarks>
 	/// Precondition: The virtual machine was powered on. id >= 1. <br/>
-	/// Postcondition: The data change is handled.
+	/// Postcondition: Event is handled, screen stream started if needed.
 	/// </remarks>
 	private void OnVmPoweredOn(object? sender, int id)
 	{
@@ -232,6 +234,31 @@ public partial class VmScreenViewModel : ViewModelBase
 		if (_isFocused)
 		{
 			_ = StartStreamAsync();
+		}
+	}
+	
+	/// <summary>
+	/// Handles the event of the virtual machine being powered off.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine that was powered off. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: The virtual machine was powered off. id >= 1. <br/>
+	/// Postcondition: Event is handled, screen stream stopped if needed.
+	/// </remarks>
+	private void OnVmPoweredOff(object? sender, int id)
+	{
+		if (_vmDescriptor == null || _vmDescriptor.Id != id)
+		{
+			return;
+		}
+
+		_vmDescriptor.State = SharedDefinitions.VmState.ShutDown;
+		
+		if (_streamRunning)
+		{
+			_streamRunning = false;
+			VmScreenBitmap = null;
 		}
 	}
 }
