@@ -131,6 +131,15 @@ public sealed class ClientConnection : MessagingService
 					}
 
 					SendInfo(new MessageInfoVmList(true, vms));
+
+					foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
+					{
+						if (vm.State == SharedDefinitions.VmState.Running)
+						{
+							_virtualMachineService.SubscribeToVmPoweredOff(vm.Id, OnVirtualMachinePoweredOff);
+							_virtualMachineService.SubscribeToVmCrashed(vm.Id, OnVirtualMachineCrashed);
+						}
+					}
 				}
 				break;
 			}
@@ -435,6 +444,27 @@ public sealed class ClientConnection : MessagingService
 		if (!_isLoggedIn || id < 1) return;
 		
 		SendInfo(new MessageInfoVmPoweredOff(true, id));
+
+		if (id == _screenStreamVmId)
+		{
+			_screenStreamVmId = -1;
+		}
+	}
+	
+	/// <summary>
+	/// Handles the event of a virtual machine crashing
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine that was shut down. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine has crashed. id >= 1. <br/>
+	/// Postcondition: The event is handled, client receives information if needed.
+	/// </remarks>
+	private void OnVirtualMachineCrashed(object? sender, int id)
+	{
+		if (!_isLoggedIn || id < 1) return;
+		
+		/* TODO: Send info vm crashed */
 
 		if (id == _screenStreamVmId)
 		{
