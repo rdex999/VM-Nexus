@@ -240,6 +240,19 @@ public class MessageRequestVmStartup : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+public class MessageRequestVmShutdown : MessageRequest
+{
+	public int VmId { get; }
+
+	public MessageRequestVmShutdown(bool generateGuid, int vmId)
+		: base(generateGuid)
+	{
+		VmId = vmId;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
+}
+
 public class MessageRequestVmScreenStreamStart : MessageRequest		/* Request to send a video stream of the screen of a virtual machine (through MessageInfo) */
 {
 	public int VmId { get; }
