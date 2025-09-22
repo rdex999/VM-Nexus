@@ -53,8 +53,9 @@ public partial class MainViewModel : ViewModelBase
 	public MainViewModel(NavigationService navigationSvc, ClientService clientSvc, string username)
 		: base(navigationSvc, clientSvc)
 	{
-		AccountMenuTitle = $"Welcome, {username}.";
+		ClientSvc.VmDataUpdated += OnVmDataUpdated;
 		
+		AccountMenuTitle = $"Welcome, {username}.";
 		
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
@@ -76,7 +77,7 @@ public partial class MainViewModel : ViewModelBase
 			MenuDisplayMode = SplitViewDisplayMode.CompactInline;
 		}
 	}
-
+	
 	/// <summary>
 	/// Handles a click on one of the VMs Open button. If no open tab for the VM exists, create a new tab. If there is a tab, redirect to it.
 	/// </summary>
@@ -222,6 +223,27 @@ public partial class MainViewModel : ViewModelBase
 		CurrentSideMenuItem = SideMenuItems[2];
 		_ = ((VmScreenViewModel)CurrentPageViewModel).SwitchVirtualMachineAsync(value.Descriptor);
 	}
+
+	/// <summary>
+	/// Handles a change in a virtual machines data.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="descriptor">The descriptor of the virtual machine of which the data was updated. descriptor != null.</param>
+	/// <remarks>
+	/// Precondition: The data of a virtual machine was updated. descriptor != null. <br/>
+	/// Postcondition: The data change is handled.
+	/// </remarks>
+	private void OnVmDataUpdated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	{
+		foreach (VmTabTemplate tab in VmTabs)
+		{
+			if (tab.Descriptor.Id == descriptor.Id)
+			{
+				tab.Descriptor = descriptor;
+				return;
+			}
+		}
+	}
 }
 
 public partial class SideMenuItemTemplate : ObservableObject
@@ -261,7 +283,7 @@ public partial class SideMenuItemTemplate : ObservableObject
 
 public class VmTabTemplate
 {
-	public SharedDefinitions.VmGeneralDescriptor Descriptor { get; }
+	public SharedDefinitions.VmGeneralDescriptor Descriptor { get; set; }
 
 	public VmTabTemplate(SharedDefinitions.VmGeneralDescriptor descriptor)
 	{
