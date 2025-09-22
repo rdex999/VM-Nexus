@@ -114,7 +114,7 @@ public partial class VmItemTemplate : ObservableObject
 			}
 			else if (_state == SharedDefinitions.VmState.Running)
 			{
-				StateColor = new SolidColorBrush(Color.FromRgb(0x6B, 0xE5, 0x78)); /* 6be578 */
+				StateColor = new SolidColorBrush(Color.FromRgb(0x6B, 0xE5, 0x78));
 			}
 		}
 	}
@@ -161,6 +161,7 @@ public partial class VmItemTemplate : ObservableObject
 		State = state;
 		_clientService.VmPoweredOn += OnVmPoweredOn;
 		_clientService.VmPoweredOff += OnVmPoweredOff;
+		_clientService.VmCrashed += OnVmCrashed;
 	}
 	
 	/// <summary>
@@ -205,6 +206,30 @@ public partial class VmItemTemplate : ObservableObject
 		{
 			State = SharedDefinitions.VmState.ShutDown;
 		});
+	}
+	
+	/// <summary>
+	/// Handles the event of the virtual machine crashing
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine that has crashed. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: The virtual machine has crashed. id >= 1. <br/>
+	/// Postcondition: Event is handled, UI updates accordingly.
+	/// </remarks>
+	private void OnVmCrashed(object? sender, int id)
+	{
+		if (Id != id)
+		{
+			return;
+		}
+
+		Dispatcher.UIThread.Post(() =>
+		{
+			State = SharedDefinitions.VmState.ShutDown;
+			ErrorMessage = "The VM has crashed.";
+		});
+
 	}
 	
 	/// <summary>

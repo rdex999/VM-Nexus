@@ -55,6 +55,7 @@ public partial class MainViewModel : ViewModelBase
 	{
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		ClientSvc.VmPoweredOff += OnVmPoweredOff;
+		ClientSvc.VmCrashed += OnVmCrashed;
 		
 		AccountMenuTitle = $"Welcome, {username}.";
 		
@@ -266,6 +267,17 @@ public partial class MainViewModel : ViewModelBase
 			}
 		}
 	}
+
+	/// <summary>
+	/// Handles the event of the virtual machine crashing
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine that has crashed. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine has crashed. id >= 1. <br/>
+	/// Postcondition: Tabs updated accordingly.
+	/// </remarks>
+	private void OnVmCrashed(object? sender, int id) => OnVmPoweredOff(sender, id);
 }
 
 public partial class SideMenuItemTemplate : ObservableObject

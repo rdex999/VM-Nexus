@@ -18,6 +18,7 @@ public class ClientService : MessagingService
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
 	public event EventHandler<int>? VmPoweredOn;
 	public event EventHandler<int>? VmPoweredOff;
+	public event EventHandler<int>? VmCrashed;
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -464,6 +465,11 @@ public class ClientService : MessagingService
 			case MessageInfoVmPoweredOff infoVmPoweredOff:
 			{
 				VmPoweredOff?.Invoke(this, infoVmPoweredOff.VmId);
+				break;
+			}
+			case MessageInfoVmCrashed infoVmCrashed:
+			{
+				VmCrashed?.Invoke(this, infoVmCrashed.VmId);
 				break;
 			}
 		}

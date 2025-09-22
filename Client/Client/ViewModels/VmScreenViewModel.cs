@@ -31,6 +31,7 @@ public partial class VmScreenViewModel : ViewModelBase
 		ClientSvc.VmScreenFrameReceived += OnVmScreenFrameReceived;
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		ClientSvc.VmPoweredOff += OnVmPoweredOff;
+		ClientSvc.VmCrashed += OnVmCrashed;
 	}
 
 	/// <summary>
@@ -260,5 +261,26 @@ public partial class VmScreenViewModel : ViewModelBase
 			_streamRunning = false;
 			VmScreenBitmap = null;
 		}
+	}
+	
+	/// <summary>
+	/// Handles the event of the virtual machine crashing
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine that has crashed. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: The virtual machine has crashed. id >= 1. <br/>
+	/// Postcondition: Event is handled, screen stream stopped if needed.
+	/// </remarks>
+	private void OnVmCrashed(object? sender, int id)
+	{
+		if (_vmDescriptor == null || _vmDescriptor.Id != id)
+		{
+			return;
+		}
+
+		OnVmPoweredOff(sender, id);
+		
+		/* TODO: Display a message */
 	}
 }
