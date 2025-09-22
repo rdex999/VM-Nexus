@@ -394,6 +394,37 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Updates the state of the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to update the state of. id >= 1.</param>
+	/// <param name="state">The new state to set the virtual machine to.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: There is a virtual machine with the given ID, and the given state is different than the old one. id >= 1. <br/>
+	/// Postcondition: On success, the state is updated and the returned exit code indicates success. <br/>
+	/// On failure, the state is not updated and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> SetVmStateAsync(int id, SharedDefinitions.VmState state)
+	{
+		if (id < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
+
+		int rows = await ExecuteNonQueryAsync("UPDATE virtual_machines SET state = @state WHERE id = @id",
+			new NpgsqlParameter("@state", (int)state) { NpgsqlDbType = NpgsqlDbType.Integer },
+			new NpgsqlParameter("@id", id)
+		);
+		
+		if(rows == 1)
+		{
+			return ExitCode.Success;
+		}
+
+		return ExitCode.VmDoesntExist;
+	}
+
+	/// <summary>
 	/// Get a descriptor of a virtual machines.
 	/// </summary>
 	/// <param name="vmId">The ID of the virtual machine to get the descriptor of. vmId >= 1.</param>
