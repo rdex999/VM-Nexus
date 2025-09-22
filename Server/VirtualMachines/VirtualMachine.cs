@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Immutable;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -77,10 +78,21 @@ public class VirtualMachine
 		{
 			return ExitCode.VmStartupFailed;
 		}
-	
+		
+		XDocument xmlDoc = XDocument.Parse(_domain.Xml);
+		XElement? devices = xmlDoc.Descendants("devices").FirstOrDefault();
+		if (devices == null) return ExitCode.VmStartupFailed;
+		
+		XElement? graphics = devices.Descendants("graphics").FirstOrDefault();
+		if (graphics == null) return ExitCode.VmStartupFailed;
+		
+		XAttribute? vncPortAttr = graphics.Attributes("port").FirstOrDefault();
+		if (vncPortAttr == null) return ExitCode.VmStartupFailed;
+		
+		if (!int.TryParse(vncPortAttr.Value, out var vncPort) || vncPort < 0 || vncPort > 65535) return ExitCode.VmStartupFailed;
+
 		var loggerFactory = new LoggerFactory();
 		VncClient vncClient = new VncClient(loggerFactory);
-			
 		try
 		{
 			_rfbConnection = await vncClient.ConnectAsync(new ConnectParameters()
@@ -88,7 +100,7 @@ public class VirtualMachine
 				TransportParameters = new TcpTransportParameters()
 				{
 					Host = "127.0.0.1",
-					Port = 5900		/* Temporary */
+					Port = vncPort
 				},
 				AllowSharedConnection = true,
 				ConnectTimeout = TimeSpan.FromSeconds(3),
@@ -98,7 +110,8 @@ public class VirtualMachine
 		}
 		catch (Exception)
 		{
-			/* TODO: Force shutdown the VM */
+			_ = StateInformerAsync();
+			await PowerOffAndDestroyOnTimeout();
 			return ExitCode.VncConnectionFailed;
 		}
 
@@ -331,8 +344,8 @@ public class VirtualMachine
 			new XElement("input", new XAttribute("type", "keyboard"), new XAttribute("bus", "ps2")),
 			new XElement("graphics",
 				new XAttribute("type", "vnc"),
-				new XAttribute("port", "5900")	/* Temporary */
-				// new XAttribute("autoport", "yes")
+				new XAttribute("autoport", "yes")
+				// new XAttribute("port", "5900")	/* Temporary */
 			)
 		);
 
