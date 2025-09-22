@@ -265,6 +265,28 @@ public partial class VmItemTemplate : ObservableObject
 	}
 
 	/// <summary>
+	/// Handles a click on the power off button. Attempts to power off the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the power off button. User is logged in and has power permissions for the virtual machine. <br/>
+	/// Postcondition: On success, the virtual machine is powered off. On failure, an error message is displayed.
+	/// </remarks>
+	[RelayCommand]
+	private async Task PowerOffClickAsync()
+	{
+		MessageResponseVmShutdown.Status result = await _clientService.PowerOffVirtualMachineAsync(Id);
+		ErrorMessage = string.Empty;
+		if (result == MessageResponseVmShutdown.Status.VmIsShutDown)
+		{
+			State = SharedDefinitions.VmState.ShutDown;
+		}
+		else if (result != MessageResponseVmShutdown.Status.Success)
+		{
+			ErrorMessage = "VM shutdown failed.";
+		}
+	}
+
+	/// <summary>
 	/// Handles a click on the dismiss button on a VM error message. Hides the error message.
 	/// </summary>
 	/// <remarks>

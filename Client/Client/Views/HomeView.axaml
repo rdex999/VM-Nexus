@@ -130,7 +130,7 @@
 													<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Start</TextBlock>
 												</Button>
 
-												<Button>
+												<Button Command="{Binding PowerOffClickCommand}">
 													<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Power Off</TextBlock>
 												</Button>
 											</StackPanel>

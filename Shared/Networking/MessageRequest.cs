@@ -262,6 +262,8 @@ public class MessageRequestVmScreenStreamStart : MessageRequest		/* Request to s
 	{
 		VmId = vmId;
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
 public class MessageRequestVmScreenStreamStop : MessageRequest
