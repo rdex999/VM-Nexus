@@ -53,7 +53,7 @@ public partial class MainViewModel : ViewModelBase
 	public MainViewModel(NavigationService navigationSvc, ClientService clientSvc, string username)
 		: base(navigationSvc, clientSvc)
 	{
-		ClientSvc.VmDataUpdated += OnVmDataUpdated;
+		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		
 		AccountMenuTitle = $"Welcome, {username}.";
 		
@@ -228,18 +228,18 @@ public partial class MainViewModel : ViewModelBase
 	/// Handles a change in a virtual machines data.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="descriptor">The descriptor of the virtual machine of which the data was updated. descriptor != null.</param>
+	/// <param name="id">The ID of the virtual machine of which the data was updated. id >= 1.</param>
 	/// <remarks>
-	/// Precondition: The data of a virtual machine was updated. descriptor != null. <br/>
+	/// Precondition: The virtual machine was powered on. id >= 1. <br/>
 	/// Postcondition: The data change is handled.
 	/// </remarks>
-	private void OnVmDataUpdated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	private void OnVmPoweredOn(object? sender, int id)
 	{
 		foreach (VmTabTemplate tab in VmTabs)
 		{
-			if (tab.Descriptor.Id == descriptor.Id)
+			if (tab.Descriptor.Id == id)
 			{
-				tab.Descriptor = descriptor;
+				tab.Descriptor.State = SharedDefinitions.VmState.Running;
 				return;
 			}
 		}

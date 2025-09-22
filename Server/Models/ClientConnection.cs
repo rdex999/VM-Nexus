@@ -216,7 +216,7 @@ public sealed class ClientConnection : MessagingService
 					}
 					
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Success));
-					SendInfo(new MessageInfoVirtualMachineData(true, descriptor));
+					SendInfo(new MessageInfoVmPoweredOn(true, reqVmStartup.VmId));
 				} 
 				else if (result == ExitCode.VmAlreadyRunning)
 				{

@@ -44,18 +44,15 @@ public class MessageInfoVmScreenFrame : MessageInfo
 	                                         Framebuffer != null && Framebuffer.Length > 0;
 }
 
-public class MessageInfoVirtualMachineData : MessageInfo	/* "data update" means, for example, a change in the virtual machines' state */
+public class MessageInfoVmPoweredOn : MessageInfo
 {
-	public SharedDefinitions.VmGeneralDescriptor Descriptor { get; }
+	public int VmId { get; }
 
-	public MessageInfoVirtualMachineData(bool generateGuid, SharedDefinitions.VmGeneralDescriptor descriptor)
+	public MessageInfoVmPoweredOn(bool generateGuid, int vmId)
 		: base(generateGuid)
 	{
-		Descriptor = descriptor;
+		VmId = vmId;
 	}
 	
-	public override bool IsValidMessage() => base.IsValidMessage() && Descriptor != null &&
-	                                         Descriptor.Id >= 1 && !string.IsNullOrEmpty(Descriptor.Name) &&
-	                                         Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), Descriptor.OperatingSystem) &&
-	                                         Enum.IsDefined(typeof(SharedDefinitions.VmState), Descriptor.State);
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }

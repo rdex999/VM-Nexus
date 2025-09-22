@@ -29,7 +29,7 @@ public partial class VmScreenViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		ClientSvc.VmScreenFrameReceived += OnVmScreenFrameReceived;
-		ClientSvc.VmDataUpdated += OnVmDataUpdated;
+		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 	}
 
 	/// <summary>
@@ -210,37 +210,28 @@ public partial class VmScreenViewModel : ViewModelBase
 		Marshal.Copy(frame.Framebuffer, 0, buffer.Address, frame.Size.Width * frame.Size.Height * (_pixelFormat.Value.BitsPerPixel / 8));
 		Dispatcher.UIThread.Invoke(NewFrameReceived!);
 	}
-	
+
 	/// <summary>
-	/// Handles a data update of a virtual machine.
+	/// Handles a change in a virtual machines data.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="descriptor">The descriptor of the virtual machine that was updated, and its new data. descriptor != null.</param>
+	/// <param name="id">The ID of the virtual machine of which the data was updated. id >= 1.</param>
 	/// <remarks>
-	/// Precondition: Data of a virtual machine was updated. descriptor != null. <br/>
-	/// Postcondition: Data change is handled, streams stopped/resumed if needed.
+	/// Precondition: The virtual machine was powered on. id >= 1. <br/>
+	/// Postcondition: The data change is handled.
 	/// </remarks>
-	private void OnVmDataUpdated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	private void OnVmPoweredOn(object? sender, int id)
 	{
-		if (_vmDescriptor == null || _vmDescriptor.Id != descriptor.Id)
+		if (_vmDescriptor == null || _vmDescriptor.Id != id)
 		{
 			return;
 		}
 
-		SharedDefinitions.VmGeneralDescriptor oldDescriptor = _vmDescriptor;
-		_vmDescriptor = descriptor;
-		
-		if (oldDescriptor.State != _vmDescriptor.State && _isFocused)
+		_vmDescriptor.State = SharedDefinitions.VmState.Running;
+
+		if (_isFocused)
 		{
-			if (_vmDescriptor.State == SharedDefinitions.VmState.Running)
-			{
-				_ = StartStreamAsync();
-			}
-			else if (_vmDescriptor.State == SharedDefinitions.VmState.ShutDown)
-			{
-				_ = EndStreamAsync();
-				/* TODO: Display message saying VM is shutdown. */
-			}
+			_ = StartStreamAsync();
 		}
 	}
 }
