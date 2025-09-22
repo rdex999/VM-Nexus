@@ -217,6 +217,8 @@ public sealed class ClientConnection : MessagingService
 					
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Success));
 					SendInfo(new MessageInfoVmPoweredOn(true, reqVmStartup.VmId));
+					
+					_virtualMachineService.SubscribeToVmPoweredOff(reqVmStartup.VmId, OnVirtualMachinePoweredOff);
 				} 
 				else if (result == ExitCode.VmAlreadyRunning)
 				{
@@ -417,5 +419,18 @@ public sealed class ClientConnection : MessagingService
 		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, new byte[frame.Framebuffer.Length]);
 		frame.Framebuffer.CopyTo(frameMessage.Framebuffer, 0);
 		SendInfo(frameMessage);
+	}
+	
+	/// <summary>
+	/// Handles the event of a virtual machine being shut down.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine that was shut down. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine has been powered off. id >= 1. <br/>
+	/// Postcondition: The event is handled, client receives information if needed.
+	/// </remarks>
+	private void OnVirtualMachinePoweredOff(object? sender, int id)
+	{
 	}
 }
