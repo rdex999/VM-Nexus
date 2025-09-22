@@ -241,6 +241,37 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestVmShutdown reqVmShutdown:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.Failure));
+				}
+				
+				Task<ExitCode> task = _virtualMachineService.PowerOffVirtualMachineAsync(reqVmShutdown.VmId);
+				if (task.IsCompleted)
+				{
+					if (task.Result == ExitCode.Success)
+					{
+						SendResponse(new MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.Success));
+					}
+					else if (task.Result == ExitCode.VmIsShutDown)
+					{
+						SendResponse(new MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.VmIsShutDown));
+					}
+					else
+					{
+						SendResponse(new MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.Failure));
+					}
+				}
+				else
+				{
+					SendResponse(new  MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.Success));
+				}
+				
+				break;
+			}
+
 			case MessageRequestVmScreenStreamStart reqScreenStreamStart:
 			{
 				if (!_isLoggedIn)

@@ -216,7 +216,7 @@ public class MessageResponseVmShutdown : MessageResponse
 	
 	public enum Status
 	{
-		Success,
+		Success,		/* Means that a shutdown signal was sent to the virtual machine. Doesn't mean its shutdown. */
 		VmIsShutDown,
 		Failure,
 	}

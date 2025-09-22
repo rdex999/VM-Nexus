@@ -161,6 +161,31 @@ public class VirtualMachineService
 	}
 
 	/// <summary>
+	/// Powers off the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to power off. id >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists, and it is running. id >= 1. <br/>
+	/// Postcondition: On success, the virtual machine is powered off and the returned exit code indicates success. <br/>
+	/// On failure, the virtual machine remains in its previous state, and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> PowerOffVirtualMachineAsync(int id)
+	{
+		if (id < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
+
+		if (!_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			return ExitCode.VmIsShutDown;
+		}
+
+		return await virtualMachine.PowerOffAsync();
+	}
+
+	/// <summary>
 	/// Subscribes the given handler to the event of receiving a new frame of the given virtual machine.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to subscribe to. id >= 1.</param>
