@@ -24,20 +24,20 @@ public class VirtualMachine
 {
 	public event EventHandler<int>? PoweredOff;
 	public event EventHandler<int>? Crashed;
-	public TaskCompletionSource<virDomainState> PoweredOffTcs = new TaskCompletionSource<virDomainState>();		/* Returns the new state - powered off, crashed */
+	public readonly TaskCompletionSource<virDomainState> PoweredOffTcs = new TaskCompletionSource<virDomainState>();		/* Returns the new state - powered off, crashed */
 	
-	public readonly TimeSpan PowerOffTimeout = TimeSpan.FromMinutes(1);
+	public static readonly TimeSpan PowerOffTimeout = TimeSpan.FromMinutes(1);
 	
 	private readonly DatabaseService _databaseService;
 	private readonly DriveService _driveService;
 	private Domain _domain = null!;
 	private RfbConnection _rfbConnection;
-	private CancellationTokenSource _cts;
-	private int _id;
-	private SharedDefinitions.OperatingSystem _operatingSystem;
-	private SharedDefinitions.CpuArchitecture _cpuArchitecture;
-	private SharedDefinitions.BootMode _bootMode;
-	private DriveDescriptor[] _drives;
+	private readonly CancellationTokenSource _cts;
+	private readonly int _id;
+	private readonly SharedDefinitions.OperatingSystem _operatingSystem;
+	private readonly SharedDefinitions.CpuArchitecture _cpuArchitecture;
+	private readonly SharedDefinitions.BootMode _bootMode;
+	private readonly DriveDescriptor[] _drives;
 
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
@@ -53,6 +53,19 @@ public class VirtualMachine
 		_cts = new CancellationTokenSource();
 	}
 
+	public async Task CloseAsync()
+	{
+		if (GetVmState() == SharedDefinitions.VmState.Running)
+		{
+			await PowerOffAndDestroyOnTimeout();
+		}
+		_cts.Cancel();
+		_cts.Dispose();
+		
+		await _rfbConnection.CloseAsync();
+		_rfbConnection.Dispose();
+	}
+	
 	public async Task<ExitCode> PowerOnAsync(Connect libvirtConnection)
 	{
 		string xml = AsXmlDocument().ToString();
@@ -112,6 +125,17 @@ public class VirtualMachine
 		{
 			return ExitCode.VmShutdownTimeout;
 		}
+	}
+
+	public async Task<ExitCode> PowerOffAndDestroyOnTimeout()
+	{
+		ExitCode result = await PowerOffAsync();
+		if (result == ExitCode.VmShutdownTimeout)
+		{
+			Destroy();
+			return ExitCode.VmShutdownTimeout;
+		}
+		return result;
 	}
 
 	public void Destroy()
@@ -244,6 +268,15 @@ public class VirtualMachine
 		}
 	}
 
+	public SharedDefinitions.VmState GetVmState()
+	{
+		return GetState() switch
+		{
+			virDomainState.VIR_DOMAIN_CRASHED or virDomainState.VIR_DOMAIN_SHUTDOWN or virDomainState.VIR_DOMAIN_SHUTOFF => SharedDefinitions.VmState.ShutDown,
+			_ => SharedDefinitions.VmState.Running,
+		};
+	}
+	
 	private virDomainState GetState()
 	{
 		try
