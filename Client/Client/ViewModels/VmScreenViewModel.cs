@@ -2,6 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -16,6 +17,7 @@ namespace Client.ViewModels;
 public partial class VmScreenViewModel : ViewModelBase
 {
 	public Action? NewFrameReceived;
+	public Action<int, int>? VmFramebufferSizeChanged;
 
 	private bool _isFocused = false;
 	private bool _streamRunning = false;
@@ -205,6 +207,7 @@ public partial class VmScreenViewModel : ViewModelBase
 
 		if (VmScreenBitmap == null || VmScreenBitmap.PixelSize.Width * VmScreenBitmap.PixelSize.Height != frame.Size.Width * frame.Size.Height)
 		{
+			VmFramebufferSizeChanged?.Invoke(frame.Size.Width, frame.Size.Height);
 			VmScreenBitmap = new WriteableBitmap(new PixelSize(frame.Size.Width, frame.Size.Height), new Vector(96, 96), _pixelFormat);
 		}
 
@@ -282,5 +285,21 @@ public partial class VmScreenViewModel : ViewModelBase
 		OnVmPoweredOff(sender, id);
 		
 		/* TODO: Display a message */
+	}
+
+	/// <summary>
+	/// Handles a pointer (mouse) move.
+	/// </summary>
+	/// <param name="x">The pointer position X component on the screen of the virtual machine, in pixels. Must be in valid range.</param>
+	/// <param name="y">The pointer position Y component on the screen of the virtual machine, in pixels. Must be in valid range.</param>
+	/// <remarks>
+	/// Precondition: The mouse has moved on the screen of the virtual machine. x and y must be in valid screen range. <br/>
+	/// Postcondition: The move is handled, the server is informed.
+	/// </remarks>
+	public void OnVmScreenPointerMoved(int x, int y)
+	{
+		if (!_streamRunning) return;
+		
+		
 	}
 }
