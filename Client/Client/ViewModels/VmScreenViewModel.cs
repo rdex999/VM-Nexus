@@ -1,8 +1,8 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -23,7 +23,9 @@ public partial class VmScreenViewModel : ViewModelBase
 	private bool _streamRunning = false;
 	private SharedDefinitions.VmGeneralDescriptor? _vmDescriptor = null;
 	private PixelFormat? _pixelFormat = null;
-
+	private Stopwatch _pointerMovementStopwatch = new Stopwatch();
+	private const int PointerMovementHz = 60;
+	
 	[ObservableProperty] 
 	private WriteableBitmap? _vmScreenBitmap = null;
 	
@@ -299,7 +301,13 @@ public partial class VmScreenViewModel : ViewModelBase
 	public void OnVmScreenPointerMoved(int x, int y)
 	{
 		if (!_streamRunning) return;
-		
-		
+
+		if (!_pointerMovementStopwatch.IsRunning ||
+		    _pointerMovementStopwatch.Elapsed.TotalMilliseconds >= (1.0 / PointerMovementHz) * 1000.0)
+		{
+			_pointerMovementStopwatch.Restart();
+			
+			/* TODO: Send info to server. */
+		}
 	}
 }

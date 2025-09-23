@@ -82,3 +82,18 @@ public class MessageInfoVmCrashed : MessageInfo
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
+
+public class MessageInfoPointerMoved : MessageInfo
+{
+	public int VmId { get; }
+	public Point Position { get; }
+
+	public MessageInfoPointerMoved(bool generateGuid, int vmId, Point position)
+		: base(generateGuid)
+	{
+		VmId = vmId;
+		Position = position;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Position.X >= 0 && Position.Y >= 0;
+}
