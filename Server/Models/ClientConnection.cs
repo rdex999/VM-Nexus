@@ -301,8 +301,6 @@ public sealed class ClientConnection : MessagingService
 					
 					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
 						MessageResponseVmScreenStreamStart.Status.Success, pixelFormat));
-
-					await Task.Delay(250);		/* Need this delay, or else the client doesn't receive the full frame. */
 					
 					_screenStreamVmId = reqScreenStreamStart.VmId;
 					_virtualMachineService.EnqueueGetFullFrame(reqScreenStreamStart.VmId);

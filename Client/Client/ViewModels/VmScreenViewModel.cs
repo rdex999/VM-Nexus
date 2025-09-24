@@ -24,8 +24,8 @@ public partial class VmScreenViewModel : ViewModelBase
 	private bool _streamRunning = false;
 	private SharedDefinitions.VmGeneralDescriptor? _vmDescriptor = null;
 	private PixelFormat? _pixelFormat = null;
-	private Stopwatch _pointerMovementStopwatch = new Stopwatch();
-	private const int PointerMovementHz = 60;
+	private readonly Stopwatch _pointerMovementStopwatch = new Stopwatch();
+	private const int PointerMovementHz = 30;
 	
 	[ObservableProperty] 
 	private WriteableBitmap? _vmScreenBitmap = null;

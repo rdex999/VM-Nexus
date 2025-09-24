@@ -187,11 +187,6 @@ public class VirtualMachine
 	
 		GetRenderTarget()!.NewFrameReceived -= handler;
 
-		if (!GetRenderTarget()!.HasNewFrameReceivedSubscribers())
-		{
-			StopScreenStream();
-		}
-		
 		return ExitCode.Success;	
 	}
 
@@ -208,9 +203,22 @@ public class VirtualMachine
 	{
 		if (pressedButtons == _pointerPressedButtons) return;
 		
-		_pointerPressedButtons = pressedButtons;
+		_pointerPressedButtons = pressedButtons & ~(
+			(int)SharedDefinitions.MouseButtons.WheelUp		| (int)SharedDefinitions.MouseButtons.WheelDown |
+			(int)SharedDefinitions.MouseButtons.WheelLeft	| (int)SharedDefinitions.MouseButtons.WheelRight
+		);
+		
+		/*
+		 * If the mouse stayed at the same position but the wheel is still scrolling, VNC will ignore it. (because the buttons didn't actually change)
+		 * So I send the pointer message, then send it again without mouse wheel buttons.
+		 * When the mouse wheel is constantly scrolling, it will be sent with mouse will then without, repeating as long as the wheel scrolls.
+		 * This results in VNC actually seeing the mouse wheel scroll event, and responding to it.
+		 */
 		_rfbConnection.EnqueueMessage(
 			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)pressedButtons)
+		);
+		_rfbConnection.EnqueueMessage(
+			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons)
 		);
 	}
 
@@ -243,10 +251,7 @@ public class VirtualMachine
 		return ExitCode.Success;
 	}
 
-	private void StopScreenStream()
-	{
-		_rfbConnection.RenderTarget = null;
-	}
+	private void StopScreenStream() => _rfbConnection.RenderTarget = null;
 
 	private async Task StateInformerAsync()
 	{

@@ -1,5 +1,4 @@
 using System;
-using System.Drawing;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -150,9 +149,29 @@ public partial class VmScreenView : UserControl
 	/// Postcondition: The event is handled. The view model is informed.
 	/// </returns>
 	private void OnPointerReleased(object? sender, PointerReleasedEventArgs e) => OnPointerButtonEvent(sender, e);
-	
+
+	/// <summary>
+	/// Handles a mouse wheel scroll.
+	/// </summary>
+	/// <param name="sender">The control that the mouse has scrolled upon. sender != null.</param>
+	/// <param name="e">The event arguments for this event. e != null.</param>
+	/// <remarks>
+	/// Precondition: The mouse wheel has been scrolled. sender != null &amp;&amp; e != null. <br/>
+	/// Postcondition: The event is handled, the view model is informed.
+	/// </remarks>
 	private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
 	{
-		throw new NotImplementedException();
+		if(DataContext is not VmScreenViewModel vm) return;
+		
+		Point position = PointerPositionToPixels(sender, e);
+		int pressed = PressedButtonsFromPointerEvent(e);
+
+		pressed |= e.Delta.Y > 0 ? (int)SharedDefinitions.MouseButtons.WheelUp		: 0;
+		pressed |= e.Delta.Y < 0 ? (int)SharedDefinitions.MouseButtons.WheelDown	: 0;
+		
+		pressed |= e.Delta.X > 0 ? (int)SharedDefinitions.MouseButtons.WheelRight	: 0;
+		pressed |= e.Delta.X < 0 ? (int)SharedDefinitions.MouseButtons.WheelLeft	: 0;
+	
+		vm.OnVmScreenPointerButtonEvent(position, pressed);
 	}
 }
