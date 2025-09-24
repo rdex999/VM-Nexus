@@ -443,7 +443,15 @@ public sealed class ClientConnection : MessagingService
 		{
 			case MessageInfoPointerMoved infoPointerMoved:
 			{
+				if (!_isLoggedIn) break;
 				result = _virtualMachineService.EnqueuePointerMovement(infoPointerMoved.VmId, infoPointerMoved.Position);
+				break;
+			}
+			case MessageInfoPointerButtonEvent infoPointerButtonEvent:
+			{
+				if (!_isLoggedIn) break;
+				result = _virtualMachineService.EnqueuePointerButtonEvent(infoPointerButtonEvent.VmId,
+					infoPointerButtonEvent.Position, infoPointerButtonEvent.PressedButtons);
 				break;
 			}
 		}

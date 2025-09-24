@@ -41,6 +41,7 @@ public class VirtualMachine
 	private readonly SharedDefinitions.CpuArchitecture _cpuArchitecture;
 	private readonly SharedDefinitions.BootMode _bootMode;
 	private readonly DriveDescriptor[] _drives;
+	private int _pointerPressedButtons = (int)SharedDefinitions.MouseButtons.None;
 
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
@@ -200,8 +201,18 @@ public class VirtualMachine
 	);
 
 	public void EnqueuePointerMovement(Point position) => _rfbConnection.EnqueueMessage(
-		new PointerEventMessage(new Position(position.X, position.Y), MouseButtons.None)
+		new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons)
 	);
+
+	public void EnqueuePointerButtonEvent(Point position, int pressedButtons)
+	{
+		if (pressedButtons == _pointerPressedButtons) return;
+		
+		_pointerPressedButtons = pressedButtons;
+		_rfbConnection.EnqueueMessage(
+			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)pressedButtons)
+		);
+	}
 
 	public Shared.PixelFormat? GetScreenStreamPixelFormat()
 	{

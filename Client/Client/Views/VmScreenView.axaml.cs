@@ -92,6 +92,25 @@ public partial class VmScreenView : UserControl
 	}
 
 	/// <summary>
+	/// Get pressed pointer button flags from a pointer event.
+	/// </summary>
+	/// <param name="e">The pointer event arguments. Contains information on which buttons are pressed. e != null.</param>
+	/// <returns>Flags indicating which pointer buttons are currently pressed. See SharedDefinitions.MouseButtons.</returns>
+	/// <remarks>
+	/// Precondition: e != null. <br/>
+	/// Postcondition: An integer (flags) representing the currently pressed pointer buttons is returned.
+	/// </remarks>
+	private int PressedButtonsFromPointerEvent(PointerEventArgs e)
+	{
+		int pressed = (int)SharedDefinitions.MouseButtons.None;
+		pressed |= e.Properties.IsLeftButtonPressed		? (int)SharedDefinitions.MouseButtons.Left		: 0;
+		pressed |= e.Properties.IsRightButtonPressed	? (int)SharedDefinitions.MouseButtons.Right		: 0;
+		pressed |= e.Properties.IsMiddleButtonPressed	? (int)SharedDefinitions.MouseButtons.Middle	: 0;	
+		
+		return pressed;
+	}
+	
+	/// <summary>
 	/// Handles a pointer button press/release.
 	/// </summary>
 	/// <param name="sender">The control that the mouse was clicked/released upon. sender != null.</param>
@@ -104,12 +123,8 @@ public partial class VmScreenView : UserControl
 	{
 		if(DataContext is not VmScreenViewModel vm) return;
 		
-		int pressed = (int)SharedDefinitions.MouseButtons.None;
-		pressed |= e.Properties.IsLeftButtonPressed		? (int)SharedDefinitions.MouseButtons.Left		: 0;
-		pressed |= e.Properties.IsRightButtonPressed	? (int)SharedDefinitions.MouseButtons.Right		: 0;
-		pressed |= e.Properties.IsMiddleButtonPressed	? (int)SharedDefinitions.MouseButtons.Middle	: 0;
-		
 		Point position = PointerPositionToPixels(sender, e);
+		int pressed = PressedButtonsFromPointerEvent(e);
 		
 		vm.OnVmScreenPointerButtonEvent(position, pressed);
 	}

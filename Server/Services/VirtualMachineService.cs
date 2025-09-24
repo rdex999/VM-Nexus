@@ -341,6 +341,31 @@ public class VirtualMachineService
 		
 		return ExitCode.VmIsShutDown;
 	}
+
+	/// <summary>
+	/// Enqueue a pointer button event in the virtual machines' message queue.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to enqueue the message id. id >= 1.</param>
+	/// <param name="position">The current pointer position on the screen of the virtual machine. Must be in valid range. position != null.</param>
+	/// <param name="pressedButtons">The currently pressed pointer buttons.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: The state of one or more of the pointers buttons has changed, the virtual machine needs to be notified about it. <br/>
+	/// position must be in valid range. id >= 1 &amp;&amp; position != null. <br/>
+	/// Postcondition: The pointer button event is enqueued in the virtual machines' message queue.
+	/// </remarks>
+	public ExitCode EnqueuePointerButtonEvent(int id, Point position, int pressedButtons)
+	{
+		if (id < 1) return ExitCode.InvalidParameter;
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			virtualMachine.EnqueuePointerButtonEvent(position, pressedButtons);
+			return ExitCode.Success;
+		}
+		
+		return ExitCode.VmIsShutDown;
+	}
 	
 	/// <summary>
 	/// Get the pixel format used in a virtual machines' screen stream.
