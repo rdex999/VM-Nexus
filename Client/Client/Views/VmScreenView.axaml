@@ -7,10 +7,12 @@
              x:Class="Client.Views.VmScreenView"
              x:DataType="vm:VmScreenViewModel">
 
-	<Image Name="VmScreenImage" Source="{Binding VmScreenBitmap}" 
+	<Image Name="VmScreenImage" Source="{Binding VmScreenBitmap}" Focusable="True"
 	       SizeChanged="OnVmScreenSizeChanged"
 	       PointerMoved="OnPointerMoved"
 	       PointerPressed="OnPointerPressed"
 	       PointerReleased="OnPointerReleased"
-	       PointerWheelChanged="OnPointerWheelChanged"/>
+	       PointerWheelChanged="OnPointerWheelChanged"
+	       KeyDown="OnKeyDown"
+	       KeyUp="OnKeyUp"/>
 </UserControl>

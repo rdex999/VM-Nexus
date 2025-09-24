@@ -174,4 +174,43 @@ public partial class VmScreenView : UserControl
 	
 		vm.OnVmScreenPointerButtonEvent(position, pressed);
 	}
+
+	/// <summary>
+	/// Handles a keyboard key down event on the virtual machines' screen.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="e">The event arguments. e != null.</param>
+	/// <remarks>
+	/// Precondition: A keyboard key was pressed upon the virtual machines' screen. e != null. <br/>
+	/// Postcondition: The event is handled, the view model is informed.
+	/// </remarks>
+	private void OnKeyDown(object? sender, KeyEventArgs e)
+	{
+		if(DataContext is not VmScreenViewModel vm) return;
+		e.Handled = true;
+
+		if (e.KeyModifiers.HasFlag(KeyModifiers.Meta))
+		{
+			vm.OnVmScreenKeyEvent(PhysicalKey.MetaLeft, true);
+		}
+		
+		vm.OnVmScreenKeyEvent(e.PhysicalKey, true);
+	}
+
+	/// <summary>
+	/// Handles a keyboard key up event on the virtual machines' screen.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="e">The event arguments. e != null.</param>
+	/// <remarks>
+	/// Precondition: A keyboard key was released upon the virtual machines' screen. e != null. <br/>
+	/// Postcondition: The event is handled, the view model is informed.
+	/// </remarks>
+	private void OnKeyUp(object? sender, KeyEventArgs e)
+	{
+		if(DataContext is not VmScreenViewModel vm) return;
+		e.Handled = true;
+		
+		vm.OnVmScreenKeyEvent(e.PhysicalKey, false);
+	}
 }

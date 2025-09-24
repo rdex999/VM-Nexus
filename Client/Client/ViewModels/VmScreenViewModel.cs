@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -325,5 +326,11 @@ public partial class VmScreenViewModel : ViewModelBase
 		if (!_streamRunning || _vmDescriptor == null) return;
 		
 		ClientSvc.NotifyPointerButtonEvent(_vmDescriptor.Id, position, pressed);
+	}
+
+	public void OnVmScreenKeyEvent(PhysicalKey key, bool keyDown)
+	{
+		if (!_streamRunning || _vmDescriptor == null) return;
+
 	}
 }
