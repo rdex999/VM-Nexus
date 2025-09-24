@@ -341,6 +341,20 @@ public class ClientService : MessagingService
 		SendInfo(new MessageInfoPointerMoved(true, id, position));
 
 	/// <summary>
+	/// Notifies the server of pointer buttons press/release event. <br/>
+	/// Sends information about which mouse buttons are currently pressed.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine on which the pointer was clicked/released. id >= 1.</param>
+	/// <param name="position">The current position of the pointer on the virtual machines screen. Must be in valid range.</param>
+	/// <param name="pressedButtons">Flags for which buttons were pressed - See SharedDefinitions.MouseButtons.</param>
+	/// <remarks>
+	/// Precondition: The pointer was clicked/released upon the screen of a virtual machine. position must be in valid range. id >= 1. <br/>
+	/// Postcondition: The pointer press/release evet is handled.
+	/// </remarks>
+	public void NotifyPointerButtonEvent(int id, Point position, int pressedButtons) =>
+		SendInfo(new MessageInfoPointerButtonEvent(true, id, position, pressedButtons));
+
+	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
 	/// </summary>
 	/// <param name="token">

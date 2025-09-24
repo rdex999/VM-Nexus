@@ -324,6 +324,6 @@ public partial class VmScreenViewModel : ViewModelBase
 	{
 		if (!_streamRunning || _vmDescriptor == null) return;
 		
-		/* TODO: Inform server */
+		ClientSvc.NotifyPointerButtonEvent(_vmDescriptor.Id, position, pressed);
 	}
 }

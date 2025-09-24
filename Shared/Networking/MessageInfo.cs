@@ -97,3 +97,20 @@ public class MessageInfoPointerMoved : MessageInfo
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Position.X >= 0 && Position.Y >= 0;
 }
+
+public class MessageInfoPointerButtonEvent : MessageInfo
+{
+	public int VmId { get; }
+	public Point Position { get; }
+	public int PressedButtons { get; }		/* Flags - from SharedDefinitions.MouseButtons. */
+
+	public MessageInfoPointerButtonEvent(bool generateGuid, int vmId, Point position, int pressedButtons)
+		: base(generateGuid)
+	{
+		VmId = vmId;
+		Position = position;
+		PressedButtons = pressedButtons;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Position.X >= 0 && Position.Y >= 0;
+}
