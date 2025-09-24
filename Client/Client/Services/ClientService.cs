@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Avalonia.Input;
 using Avalonia.Platform;
 using Shared;
 using Shared.Networking;
@@ -335,7 +336,7 @@ public class ClientService : MessagingService
 	/// <param name="position">The new pointer position on the virtual machines' screen. position != null.</param>
 	/// <remarks>
 	/// Precondition: The pointer has moved upon the screen of a virtual machine. id >= 1 &amp;&amp; position != null. <br/>
-	/// Postcondition: The server is notified of the pointer movement.
+	/// Postcondition: The server is notified of the event.
 	/// </remarks>
 	public void NotifyPointerMovement(int id, Point position) =>
 		SendInfo(new MessageInfoPointerMoved(true, id, position));
@@ -349,11 +350,24 @@ public class ClientService : MessagingService
 	/// <param name="pressedButtons">Flags for which buttons were pressed - See SharedDefinitions.MouseButtons.</param>
 	/// <remarks>
 	/// Precondition: The pointer was clicked/released upon the screen of a virtual machine. position must be in valid range. id >= 1. <br/>
-	/// Postcondition: The pointer press/release evet is handled.
+	/// Postcondition: The server is notified of the event.
 	/// </remarks>
 	public void NotifyPointerButtonEvent(int id, Point position, int pressedButtons) =>
 		SendInfo(new MessageInfoPointerButtonEvent(true, id, position, pressedButtons));
 
+	/// <summary>
+	/// Notifies the server of a keyboard key event (pressed/released) on a virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine on which the the key was pressed/released. id >= 1.</param>
+	/// <param name="key">The key that was pressed/released.</param>
+	/// <param name="pressed">Indicates whether the key was pressed or released (true=pressed, false=released).</param>
+	/// <remarks>
+	/// Precondition: A keyboard key was pressed or released upon the screen of a virtual machine. id >= 1. <br/>
+	/// Postcondition: The server is notified of the event.
+	/// </remarks>
+	public void NotifyKeyboardKeyEvent(int id, PhysicalKey key, bool pressed) =>
+		SendInfo(new MessageInfoKeyboardKeyEvent(true, id, key, pressed));
+	
 	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
 	/// </summary>

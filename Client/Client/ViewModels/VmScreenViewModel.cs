@@ -331,6 +331,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	public void OnVmScreenKeyEvent(PhysicalKey key, bool keyDown)
 	{
 		if (!_streamRunning || _vmDescriptor == null) return;
-
+		
+		ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, keyDown);
 	}
 }

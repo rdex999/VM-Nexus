@@ -1,4 +1,6 @@
 using System.Drawing;
+using Avalonia.Input;
+
 namespace Shared.Networking;
 
 public class MessageInfo : Message
@@ -113,4 +115,21 @@ public class MessageInfoPointerButtonEvent : MessageInfo
 	}
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Position.X >= 0 && Position.Y >= 0;
+}
+
+public class MessageInfoKeyboardKeyEvent : MessageInfo
+{
+	public int VmId { get; }
+	public PhysicalKey Key { get; }
+	public bool KeyDown { get; }
+
+	public MessageInfoKeyboardKeyEvent(bool generateGuid, int vmId, PhysicalKey key, bool keyDown)
+		: base(generateGuid)
+	{
+		VmId = vmId;
+		Key = key;
+		KeyDown = keyDown;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Enum.IsDefined(typeof(PhysicalKey), Key);
 }
