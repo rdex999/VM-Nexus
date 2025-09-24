@@ -4,6 +4,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Client.ViewModels;
+using Shared;
 using Point = System.Drawing.Point;
 using Size = Avalonia.Size;
 
@@ -90,16 +91,51 @@ public partial class VmScreenView : UserControl
 		vm.OnVmScreenPointerMoved(position);
 	}
 
-	private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
+	/// <summary>
+	/// Handles a pointer button press/release.
+	/// </summary>
+	/// <param name="sender">The control that the mouse was clicked/released upon. sender != null.</param>
+	/// <param name="e">The event arguments for this event. e != null.</param>
+	/// <returns>
+	/// Precondition: One or more of the pointers buttons have been pressed or released. sender != null &amp;&amp; e != null. <br/>
+	/// Postcondition: The event is handled. The view model is informed.
+	/// </returns>
+	private void OnPointerButtonEvent(object? sender, PointerEventArgs e)
 	{
-		throw new NotImplementedException();
+		if(DataContext is not VmScreenViewModel vm) return;
+		
+		int pressed = (int)SharedDefinitions.MouseButtons.None;
+		pressed |= e.Properties.IsLeftButtonPressed		? (int)SharedDefinitions.MouseButtons.Left		: 0;
+		pressed |= e.Properties.IsRightButtonPressed	? (int)SharedDefinitions.MouseButtons.Right		: 0;
+		pressed |= e.Properties.IsMiddleButtonPressed	? (int)SharedDefinitions.MouseButtons.Middle	: 0;
+		
+		Point position = PointerPositionToPixels(sender, e);
+		
+		vm.OnVmScreenPointerButtonEvent(position, pressed);
 	}
 
-	private void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
-	{
-		throw new NotImplementedException();
-	}
-
+	/// <summary>
+	/// Handles a pointer button press.
+	/// </summary>
+	/// <param name="sender">The control that the mouse was clicked upon. sender != null.</param>
+	/// <param name="e">The event arguments for this event. e != null.</param>
+	/// <returns>
+	/// Precondition: One or more of the pointers buttons have been pressed. sender != null &amp;&amp; e != null. <br/>
+	/// Postcondition: The event is handled. The view model is informed.
+	/// </returns>
+	private void OnPointerPressed(object? sender, PointerPressedEventArgs e) => OnPointerButtonEvent(sender, e);
+	
+	/// <summary>
+	/// Handles a pointer button release.
+	/// </summary>
+	/// <param name="sender">The control that the mouse was released upon. sender != null.</param>
+	/// <param name="e">The event arguments for this event. e != null.</param>
+	/// <returns>
+	/// Precondition: One or more of the pointers buttons have been released. sender != null &amp;&amp; e != null. <br/>
+	/// Postcondition: The event is handled. The view model is informed.
+	/// </returns>
+	private void OnPointerReleased(object? sender, PointerReleasedEventArgs e) => OnPointerButtonEvent(sender, e);
+	
 	private void OnPointerWheelChanged(object? sender, PointerWheelEventArgs e)
 	{
 		throw new NotImplementedException();

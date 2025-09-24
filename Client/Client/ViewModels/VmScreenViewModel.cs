@@ -310,4 +310,20 @@ public partial class VmScreenViewModel : ViewModelBase
 			ClientSvc.NotifyPointerMovement(_vmDescriptor.Id, position);
 		}
 	}
+
+	/// <summary>
+	/// Handles a pointer (mouse) button press/release event.
+	/// </summary>
+	/// <param name="position">The pointer position on the screen of the virtual machine, in pixels. Components must be in valid range. position != null.</param>
+	/// <param name="pressed">The mouse buttons that are pressed. Defined by SharedDefinitions.MouseButtons</param>
+	/// <remarks>
+	/// Precondition: One or more of the mouses buttons have been pressed or released. position must be in valid range. position != null. <br/>
+	/// Postcondition: The press/release is handled, the server is informed.
+	/// </remarks>
+	public void OnVmScreenPointerButtonEvent(Point position, int pressed)
+	{
+		if (!_streamRunning || _vmDescriptor == null) return;
+		
+		/* TODO: Inform server */
+	}
 }
