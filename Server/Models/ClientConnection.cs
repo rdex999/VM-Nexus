@@ -452,6 +452,13 @@ public sealed class ClientConnection : MessagingService
 					infoPointerButtonEvent.Position, infoPointerButtonEvent.PressedButtons);
 				break;
 			}
+			case MessageInfoKeyboardKeyEvent infoKeyboardKeyEvent:
+			{
+				if (!_isLoggedIn) break;
+				result = _virtualMachineService.EnqueueKeyboardKeyEvent(infoKeyboardKeyEvent.VmId,
+					infoKeyboardKeyEvent.Key, infoKeyboardKeyEvent.KeyDown);
+				break;
+			}
 		}
 		
 		switch (result)

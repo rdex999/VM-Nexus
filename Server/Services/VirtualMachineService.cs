@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading.Tasks;
+using Avalonia.Input;
 using libvirt;
 using Server.Drives;
 using Server.VirtualMachines;
@@ -361,6 +362,30 @@ public class VirtualMachineService
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
 			virtualMachine.EnqueuePointerButtonEvent(position, pressedButtons);
+			return ExitCode.Success;
+		}
+		
+		return ExitCode.VmIsShutDown;
+	}
+
+	/// <summary>
+	/// Enqueue a keyboard key event in the virtual machines' message queue.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to enqueue the message id. id >= 1.</param>
+	/// <param name="key">The key that the was pressed or released.</param>
+	/// <param name="pressed">Whether the key was pressed or released. (true=pressed, false=released)</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: The state of a keyboard key has changed. (was pressed or released) There is a running virtual machine with the given ID. id >= 1. <br/>
+	/// Postcondition: The keyboard key event is enqueued in the virtual machines' message queue.
+	/// </remarks>
+	public ExitCode EnqueueKeyboardKeyEvent(int id, PhysicalKey key, bool pressed)
+	{
+		if (id < 1) return ExitCode.InvalidParameter;
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			virtualMachine.EnqueueKeyboardKeyEvent(key, pressed);
 			return ExitCode.Success;
 		}
 		

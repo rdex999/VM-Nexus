@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -27,6 +28,9 @@ public partial class VmScreenViewModel : ViewModelBase
 	private PixelFormat? _pixelFormat = null;
 	private readonly Stopwatch _pointerMovementStopwatch = new Stopwatch();
 	private const int PointerMovementHz = 30;
+	public bool CapsLockOn = false;
+	public bool NumLockOn = false;
+	public bool ScrollLockOn = false;
 	
 	[ObservableProperty] 
 	private WriteableBitmap? _vmScreenBitmap = null;
@@ -328,10 +332,44 @@ public partial class VmScreenViewModel : ViewModelBase
 		ClientSvc.NotifyPointerButtonEvent(_vmDescriptor.Id, position, pressed);
 	}
 
+	/// <summary>
+	/// Handles a keyboard key event. (Key pressed or released)
+	/// </summary>
+	/// <param name="key">The key that was pressed/released.</param>
+	/// <param name="keyDown">Indicates whether the key is pressed or released.</param>
+	/// <remarks>
+	/// Precondition: A key was pressed/released upon the screen of a virtual machine. <br/>
+	/// Postcondition: The key event is handled, the server is informed.
+	/// </remarks>
 	public void OnVmScreenKeyEvent(PhysicalKey key, bool keyDown)
 	{
 		if (!_streamRunning || _vmDescriptor == null) return;
-		
-		ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, keyDown);
+
+		switch (key)
+		{
+			case PhysicalKey.CapsLock:
+			{
+				if(keyDown) ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, !CapsLockOn);
+				CapsLockOn ^= true;
+				break;
+			}
+			case PhysicalKey.NumLock:
+			{
+				if(keyDown) ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, !NumLockOn);
+				NumLockOn ^= true;
+				break;
+			}
+			case PhysicalKey.ScrollLock:
+			{
+				if(keyDown) ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, !ScrollLockOn);
+				ScrollLockOn ^= true;
+				break;
+			}
+			default:
+			{
+				ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, keyDown);
+				break;
+			}
+		}
 	}
 }

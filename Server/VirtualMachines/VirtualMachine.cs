@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Drawing;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Avalonia.Input;
 using libvirt;
 using MarcusW.VncClient;
 using MarcusW.VncClient.Protocol.Implementation.MessageTypes.Outgoing;
@@ -222,6 +224,14 @@ public class VirtualMachine
 		);
 	}
 
+	public void EnqueueKeyboardKeyEvent(PhysicalKey key, bool pressed)
+	{
+		if (PhysicalKeyToKeySymbol.TryGetValue(key, out KeySymbol keySymbol))
+		{
+			_rfbConnection.EnqueueMessage(new KeyEventMessage(pressed, keySymbol));
+		}
+	}
+
 	public Shared.PixelFormat? GetScreenStreamPixelFormat()
 	{
 		if (!IsScreenStreamRunning())
@@ -430,6 +440,118 @@ public class VirtualMachine
 			throw new InvalidOperationException("The authentication input request is not supported by this authentication handler.");
 		}
 	}
+	
+	private static readonly Dictionary<PhysicalKey, KeySymbol> PhysicalKeyToKeySymbol = new()
+	{
+		// Writing System Keys
+		{ PhysicalKey.Backquote, KeySymbol.grave }, // `~
+		{ PhysicalKey.Backslash, KeySymbol.backslash }, // \|
+		{ PhysicalKey.BracketLeft, KeySymbol.bracketleft }, // [{
+		{ PhysicalKey.BracketRight, KeySymbol.bracketright }, // ]}
+		{ PhysicalKey.Comma, KeySymbol.comma }, // ,<
+		{ PhysicalKey.Digit0, KeySymbol.XK_0 }, // 0)
+		{ PhysicalKey.Digit1, KeySymbol.XK_1 }, // 1!
+		{ PhysicalKey.Digit2, KeySymbol.XK_2 }, // 2@
+		{ PhysicalKey.Digit3, KeySymbol.XK_3 }, // 3#
+		{ PhysicalKey.Digit4, KeySymbol.XK_4 }, // 4$
+		{ PhysicalKey.Digit5, KeySymbol.XK_5 }, // 5%
+		{ PhysicalKey.Digit6, KeySymbol.XK_6 }, // 6^
+		{ PhysicalKey.Digit7, KeySymbol.XK_7 }, // 7&
+		{ PhysicalKey.Digit8, KeySymbol.XK_8 }, // 8*
+		{ PhysicalKey.Digit9, KeySymbol.XK_9 }, // 9(
+		{ PhysicalKey.Equal, KeySymbol.equal }, // =+
+		{ PhysicalKey.IntlBackslash, KeySymbol.backslash }, // UK/ISO extra backslash key
+		{ PhysicalKey.IntlRo, KeySymbol.kana_RO }, // Japanese Ro key
+		{ PhysicalKey.IntlYen, KeySymbol.yen }, // Japanese Yen
+		{ PhysicalKey.A, KeySymbol.a }, { PhysicalKey.B, KeySymbol.b }, { PhysicalKey.C, KeySymbol.c },
+		{ PhysicalKey.D, KeySymbol.d }, { PhysicalKey.E, KeySymbol.e }, { PhysicalKey.F, KeySymbol.f },
+		{ PhysicalKey.G, KeySymbol.g }, { PhysicalKey.H, KeySymbol.h }, { PhysicalKey.I, KeySymbol.i },
+		{ PhysicalKey.J, KeySymbol.j }, { PhysicalKey.K, KeySymbol.k }, { PhysicalKey.L, KeySymbol.l },
+		{ PhysicalKey.M, KeySymbol.m }, { PhysicalKey.N, KeySymbol.n }, { PhysicalKey.O, KeySymbol.o },
+		{ PhysicalKey.P, KeySymbol.p }, { PhysicalKey.Q, KeySymbol.q }, { PhysicalKey.R, KeySymbol.r },
+		{ PhysicalKey.S, KeySymbol.s }, { PhysicalKey.T, KeySymbol.t }, { PhysicalKey.U, KeySymbol.u },
+		{ PhysicalKey.V, KeySymbol.v }, { PhysicalKey.W, KeySymbol.w }, { PhysicalKey.X, KeySymbol.x },
+		{ PhysicalKey.Y, KeySymbol.y }, { PhysicalKey.Z, KeySymbol.z },
+		{ PhysicalKey.Minus, KeySymbol.minus }, // -_
+		{ PhysicalKey.Period, KeySymbol.period }, // .>
+		{ PhysicalKey.Quote, KeySymbol.apostrophe }, // '"
+		{ PhysicalKey.Semicolon, KeySymbol.semicolon }, // ;:
+		{ PhysicalKey.Slash, KeySymbol.slash }, // /?
+
+		// Functional keys
+		{ PhysicalKey.AltLeft, KeySymbol.Alt_L },
+		{ PhysicalKey.AltRight, KeySymbol.Alt_R },
+		{ PhysicalKey.Backspace, KeySymbol.BackSpace },
+		{ PhysicalKey.CapsLock, KeySymbol.Caps_Lock },
+		{ PhysicalKey.ContextMenu, KeySymbol.Menu }, 
+		{ PhysicalKey.ControlLeft, KeySymbol.Control_L },
+		{ PhysicalKey.ControlRight, KeySymbol.Control_R },
+		{ PhysicalKey.Enter, KeySymbol.Return },
+		{ PhysicalKey.MetaLeft, KeySymbol.Super_L }, // Windows/Command key
+		{ PhysicalKey.MetaRight, KeySymbol.Super_R },
+		{ PhysicalKey.ShiftLeft, KeySymbol.Shift_L },
+		{ PhysicalKey.ShiftRight, KeySymbol.Shift_R },
+		{ PhysicalKey.Space, KeySymbol.space },
+		{ PhysicalKey.Tab, KeySymbol.Tab },
+		{ PhysicalKey.Escape, KeySymbol.Escape },
+
+		// Control Pad
+		{ PhysicalKey.Delete, KeySymbol.Delete },
+		{ PhysicalKey.End, KeySymbol.End },
+		{ PhysicalKey.Help, KeySymbol.Help },
+		{ PhysicalKey.Home, KeySymbol.Home },
+		{ PhysicalKey.Insert, KeySymbol.Insert },
+		{ PhysicalKey.PageDown, KeySymbol.Next },
+		{ PhysicalKey.PageUp, KeySymbol.Prior },
+
+		// Arrow Pad
+		{ PhysicalKey.ArrowDown, KeySymbol.Down },
+		{ PhysicalKey.ArrowLeft, KeySymbol.Left },
+		{ PhysicalKey.ArrowRight, KeySymbol.Right },
+		{ PhysicalKey.ArrowUp, KeySymbol.Up },
+
+		// Numeric Keypad
+		{ PhysicalKey.NumLock, KeySymbol.Num_Lock },
+		{ PhysicalKey.NumPad0, KeySymbol.KP_0 },
+		{ PhysicalKey.NumPad1, KeySymbol.KP_1 },
+		{ PhysicalKey.NumPad2, KeySymbol.KP_2 },
+		{ PhysicalKey.NumPad3, KeySymbol.KP_3 },
+		{ PhysicalKey.NumPad4, KeySymbol.KP_4 },
+		{ PhysicalKey.NumPad5, KeySymbol.KP_5 },
+		{ PhysicalKey.NumPad6, KeySymbol.KP_6 },
+		{ PhysicalKey.NumPad7, KeySymbol.KP_7 },
+		{ PhysicalKey.NumPad8, KeySymbol.KP_8 },
+		{ PhysicalKey.NumPad9, KeySymbol.KP_9 },
+		{ PhysicalKey.NumPadAdd, KeySymbol.KP_Add },
+		{ PhysicalKey.NumPadClear, KeySymbol.KP_Begin },
+		{ PhysicalKey.NumPadComma, KeySymbol.KP_Separator },
+		{ PhysicalKey.NumPadDecimal, KeySymbol.KP_Decimal },
+		{ PhysicalKey.NumPadDivide, KeySymbol.KP_Divide },
+		{ PhysicalKey.NumPadEnter, KeySymbol.KP_Enter },
+		{ PhysicalKey.NumPadEqual, KeySymbol.KP_Equal },
+		{ PhysicalKey.NumPadMultiply, KeySymbol.KP_Multiply },
+		// { PhysicalKey.NumPadParenLeft, KeySymbol.VoidSymbol }, // Not in your enum
+		// { PhysicalKey.NumPadParenRight, KeySymbol.VoidSymbol },
+		{ PhysicalKey.NumPadSubtract, KeySymbol.KP_Subtract },
+
+		// Function keys
+		{ PhysicalKey.F1, KeySymbol.F1 }, { PhysicalKey.F2, KeySymbol.F2 },
+		{ PhysicalKey.F3, KeySymbol.F3 }, { PhysicalKey.F4, KeySymbol.F4 },
+		{ PhysicalKey.F5, KeySymbol.F5 }, { PhysicalKey.F6, KeySymbol.F6 },
+		{ PhysicalKey.F7, KeySymbol.F7 }, { PhysicalKey.F8, KeySymbol.F8 },
+		{ PhysicalKey.F9, KeySymbol.F9 }, { PhysicalKey.F10, KeySymbol.F10 },
+		{ PhysicalKey.F11, KeySymbol.F11 }, { PhysicalKey.F12, KeySymbol.F12 },
+		{ PhysicalKey.F13, KeySymbol.F13 }, { PhysicalKey.F14, KeySymbol.F14 },
+		{ PhysicalKey.F15, KeySymbol.F15 }, { PhysicalKey.F16, KeySymbol.F16 },
+		{ PhysicalKey.F17, KeySymbol.F17 }, { PhysicalKey.F18, KeySymbol.F18 },
+		{ PhysicalKey.F19, KeySymbol.F19 }, { PhysicalKey.F20, KeySymbol.F20 },
+		{ PhysicalKey.F21, KeySymbol.F21 }, { PhysicalKey.F22, KeySymbol.F22 },
+		{ PhysicalKey.F23, KeySymbol.F23 }, { PhysicalKey.F24, KeySymbol.F24 },
+
+		{ PhysicalKey.PrintScreen, KeySymbol.Print },
+		{ PhysicalKey.ScrollLock, KeySymbol.Scroll_Lock },
+		{ PhysicalKey.Pause, KeySymbol.Pause },
+	};
 }
 
 public class VirtualMachineVncRenderTarget : IRenderTarget

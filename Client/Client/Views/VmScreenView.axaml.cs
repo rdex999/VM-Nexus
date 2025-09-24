@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -189,12 +190,14 @@ public partial class VmScreenView : UserControl
 		if(DataContext is not VmScreenViewModel vm) return;
 		e.Handled = true;
 
-		if (e.KeyModifiers.HasFlag(KeyModifiers.Meta))
+		if (e.PhysicalKey == PhysicalKey.ControlLeft && e.KeyModifiers.HasFlag(KeyModifiers.Meta))
 		{
 			vm.OnVmScreenKeyEvent(PhysicalKey.MetaLeft, true);
 		}
-		
-		vm.OnVmScreenKeyEvent(e.PhysicalKey, true);
+		else
+		{
+			vm.OnVmScreenKeyEvent(e.PhysicalKey, true);
+		}
 	}
 
 	/// <summary>
