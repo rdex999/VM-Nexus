@@ -426,6 +426,39 @@ public sealed class ClientConnection : MessagingService
 	}
 
 	/// <summary>
+	/// Processes message info from the client.
+	/// </summary>
+	/// <param name="info">The sent message info that should be processed. info != null.</param>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the client. <br/>
+	/// A message of info type was received - should be processed. info != null. <br/>
+	/// Postcondition: Info is considered processed.
+	/// </remarks>
+	protected override async Task ProcessInfoAsync(MessageInfo info)
+	{
+		await base.ProcessInfoAsync(info);
+
+		ExitCode result = ExitCode.Success;
+		switch (info)
+		{
+			case MessageInfoPointerMoved infoPointerMoved:
+			{
+				result = _virtualMachineService.EnqueuePointerMovement(infoPointerMoved.VmId, infoPointerMoved.Position);
+				break;
+			}
+		}
+		
+		switch (result)
+		{
+			case ExitCode.DisconnectedFromServer:
+			{
+				HandleSuddenDisconnection();
+				break;
+			}
+		}
+	}
+
+	/// <summary>
 	/// Handles what happens after a disconnection. (sudden or regular disconnection)
 	/// </summary>
 	/// <remarks>

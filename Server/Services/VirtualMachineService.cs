@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Threading.Tasks;
 using libvirt;
 using Server.Drives;
@@ -311,7 +312,31 @@ public class VirtualMachineService
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
-			return virtualMachine.EnqueueGetFullFrame();
+			virtualMachine.EnqueueGetFullFrame();
+			return ExitCode.Success;
+		}
+		
+		return ExitCode.VmIsShutDown;
+	}
+
+	/// <summary>
+	/// Enqueue a pointer movement message in the virtual machines' message queue.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to enqueue the message in. id >= 1.</param>
+	/// <param name="position">The new pointer position. Must be in valid range. position != null.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: The pointer has moved, the virtual machine needs to be notified about it. id >= 1 &amp;&amp; position != null. <br/>
+	/// Postcondition: The pointer movement message in enqueued in the virtual machines' message queue.
+	/// </remarks>
+	public ExitCode EnqueuePointerMovement(int id, Point position)
+	{
+		if (id < 1) return ExitCode.InvalidParameter;
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			virtualMachine.EnqueuePointerMovement(position);
+			return ExitCode.Success;
 		}
 		
 		return ExitCode.VmIsShutDown;

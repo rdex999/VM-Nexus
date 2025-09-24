@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Immutable;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -17,6 +18,7 @@ using Server.Drives;
 using Server.Services;
 using Shared;
 using PixelFormat = MarcusW.VncClient.PixelFormat;
+using Rectangle = MarcusW.VncClient.Rectangle;
 using Size = MarcusW.VncClient.Size;
 
 namespace Server.VirtualMachines;
@@ -192,19 +194,14 @@ public class VirtualMachine
 		return ExitCode.Success;	
 	}
 
-	public ExitCode EnqueueGetFullFrame()
-	{
-		if (!IsScreenStreamRunning())
-		{
-			return ExitCode.VmScreenStreamNotRunning;
-		}
-			
-		_rfbConnection.EnqueueMessage(
-			new FramebufferUpdateRequestMessage(false, new Rectangle(0, 0, GetRenderTarget()!.ScreenSize.Width, GetRenderTarget()!.ScreenSize.Height))
-		);
-		
-		return ExitCode.Success;
-	}
+	public void EnqueueGetFullFrame() => _rfbConnection.EnqueueMessage(
+		new FramebufferUpdateRequestMessage(false,
+			new Rectangle(0, 0, GetRenderTarget()!.ScreenSize.Width, GetRenderTarget()!.ScreenSize.Height))
+	);
+
+	public void EnqueuePointerMovement(Point position) => _rfbConnection.EnqueueMessage(
+		new PointerEventMessage(new Position(position.X, position.Y), MouseButtons.None)
+	);
 
 	public Shared.PixelFormat? GetScreenStreamPixelFormat()
 	{
@@ -340,8 +337,9 @@ public class VirtualMachine
 		}
 
 		XElement devices = new XElement("devices",
-			new XElement("input", new XAttribute("type", "mouse"), new XAttribute("bus", "ps2")),
 			new XElement("input", new XAttribute("type", "keyboard"), new XAttribute("bus", "ps2")),
+			new XElement("input", new XAttribute("type", "mouse"), new XAttribute("bus", "ps2")),
+			new XElement("input", new XAttribute("type", "tablet"), new XAttribute("bus", "virtio")),
 			new XElement("graphics",
 				new XAttribute("type", "vnc"),
 				new XAttribute("autoport", "yes")
