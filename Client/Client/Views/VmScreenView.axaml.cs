@@ -1,8 +1,11 @@
 using System;
+using System.Drawing;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Client.ViewModels;
+using Point = System.Drawing.Point;
+using Size = Avalonia.Size;
 
 namespace Client.Views;
 
@@ -30,16 +33,17 @@ public partial class VmScreenView : UserControl
 	/// </summary>
 	/// <param name="x">The X component of the DIP mouse position. must be in valid range.</param>
 	/// <param name="y">The Y component of the DIP mouse position. must be in valid range.</param>
-	/// <param name="pixelX">The outputted X component of the pixel mouse position.</param>
-	/// <param name="pixelY">The outputted Y component of the pixel mouse position.</param>
+	/// <returns>The pixel mouse position.</returns>
 	/// <remarks>
 	/// Precondition: A conversion of a DIP mouse position to pixel mouse position is needed. x and y must be in valid range. <br/>
 	/// Postcondition: The X and Y pixel positions are written to pixelX and pixelY respectively.
 	/// </remarks>
-	private void PointerPositionToPixels(double x, double y, out int pixelX, out int pixelY)
+	private Point PointerPositionToPixels(double x, double y)
 	{
-		pixelX = (int)Math.Round(_vmFramebufferSize.Width * (x / _vmScreenSize.Width));
-		pixelY = (int)Math.Round(_vmFramebufferSize.Height * (y / _vmScreenSize.Height));
+		int pixelX = (int)Math.Round(_vmFramebufferSize.Width * (x / _vmScreenSize.Width));
+		int pixelY = (int)Math.Round(_vmFramebufferSize.Height * (y / _vmScreenSize.Height));
+		
+		return new Point(pixelX, pixelY);
 	}
 
 	/// <summary>
@@ -47,16 +51,15 @@ public partial class VmScreenView : UserControl
 	/// </summary>
 	/// <param name="sender">The control that sent the pointer event. sender != null.</param>
 	/// <param name="e">The pointer event arguments. e != null</param>
-	/// <param name="pixelX">The outputted X component of the pixel mouse position.</param>
-	/// <param name="pixelY">The outputted Y component of the pixel mouse position.</param>
+	/// <returns>The pixel mouse position.</returns>
 	/// <remarks>
 	/// Precondition: A conversion of a DIP mouse position to pixel mouse position is needed. sender != null &amp;&amp; e != null. <br/>
 	/// Postcondition: The X and Y pixel positions are written to pixelX and pixelY respectively.
 	/// </remarks>
-	private void PointerPositionToPixels(object? sender, PointerEventArgs e, out int pixelX, out int pixelY)
+	private Point PointerPositionToPixels(object? sender, PointerEventArgs e)
 	{
 		PointerPoint pointerPoint = e.GetCurrentPoint(sender as Control);
-		PointerPositionToPixels(pointerPoint.Position.X, pointerPoint.Position.Y, out pixelX, out pixelY);
+		return PointerPositionToPixels(pointerPoint.Position.X, pointerPoint.Position.Y);
 	}
 
 	/// <summary>
@@ -83,8 +86,8 @@ public partial class VmScreenView : UserControl
 	{
 		if(DataContext is not VmScreenViewModel vm) return;
 
-		PointerPositionToPixels(sender, e, out int x, out int y);
-		vm.OnVmScreenPointerMoved(x, y);
+		Point position = PointerPositionToPixels(sender, e);
+		vm.OnVmScreenPointerMoved(position);
 	}
 
 	private void OnPointerPressed(object? sender, PointerPressedEventArgs e)

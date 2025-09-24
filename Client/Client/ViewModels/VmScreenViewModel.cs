@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Shared;
 using Shared.Networking;
 using PixelFormat = Avalonia.Platform.PixelFormat;
+using Point = System.Drawing.Point;
 
 namespace Client.ViewModels;
 
@@ -292,22 +293,21 @@ public partial class VmScreenViewModel : ViewModelBase
 	/// <summary>
 	/// Handles a pointer (mouse) move.
 	/// </summary>
-	/// <param name="x">The pointer position X component on the screen of the virtual machine, in pixels. Must be in valid range.</param>
-	/// <param name="y">The pointer position Y component on the screen of the virtual machine, in pixels. Must be in valid range.</param>
+	/// <param name="position">The pointer position on the screen of the virtual machine, in pixels. Components must be in valid range. position != null.</param>
 	/// <remarks>
-	/// Precondition: The mouse has moved on the screen of the virtual machine. x and y must be in valid screen range. <br/>
+	/// Precondition: The mouse has moved on the screen of the virtual machine. position must be in valid range. position != null. <br/>
 	/// Postcondition: The move is handled, the server is informed.
 	/// </remarks>
-	public void OnVmScreenPointerMoved(int x, int y)
+	public void OnVmScreenPointerMoved(Point position)
 	{
-		if (!_streamRunning) return;
+		if (!_streamRunning || _vmDescriptor == null) return;
 
 		if (!_pointerMovementStopwatch.IsRunning ||
 		    _pointerMovementStopwatch.Elapsed.TotalMilliseconds >= (1.0 / PointerMovementHz) * 1000.0)
 		{
 			_pointerMovementStopwatch.Restart();
 			
-			/* TODO: Send info to server. */
+			ClientSvc.NotifyPointerMovement(_vmDescriptor.Id, position);
 		}
 	}
 }

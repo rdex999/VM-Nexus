@@ -1,4 +1,5 @@
 using System;
+using System.Drawing;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
@@ -326,6 +327,18 @@ public class ClientService : MessagingService
 
 		return ((MessageResponseVmScreenStreamStop)response!).Result;
 	}
+
+	/// <summary>
+	/// Notify the server of a pointer movement on a virtual machines' screen.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine on which the pointer has moved. id >= 1.</param>
+	/// <param name="position">The new pointer position on the virtual machines' screen. position != null.</param>
+	/// <remarks>
+	/// Precondition: The pointer has moved upon the screen of a virtual machine. id >= 1 &amp;&amp; position != null. <br/>
+	/// Postcondition: The server is notified of the pointer movement.
+	/// </remarks>
+	public void NotifyPointerMovement(int id, Point position) =>
+		SendInfo(new MessageInfoPointerMoved(true, id, position));
 
 	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
