@@ -44,7 +44,9 @@ public class VirtualMachine
 	private readonly SharedDefinitions.BootMode _bootMode;
 	private readonly DriveDescriptor[] _drives;
 	private int _pointerPressedButtons = (int)SharedDefinitions.MouseButtons.None;
-
+	private bool _isLeftShiftKeyDown = false;
+	private bool _isRightShiftKeyDown = false;
+	
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
 	{
@@ -228,6 +230,19 @@ public class VirtualMachine
 	{
 		if (PhysicalKeyToKeySymbol.TryGetValue(key, out KeySymbol keySymbol))
 		{
+			if (key == PhysicalKey.ShiftLeft)
+			{
+				_isLeftShiftKeyDown = pressed;
+			}
+			else if (key == PhysicalKey.ShiftRight)
+			{
+				_isRightShiftKeyDown = pressed;
+			}
+
+			if ((_isRightShiftKeyDown || _isLeftShiftKeyDown) && (int)keySymbol >= (int)KeySymbol.a && (int)keySymbol <= (int)KeySymbol.z)
+			{
+				keySymbol -= KeySymbol.a - KeySymbol.A;
+			}
 			_rfbConnection.EnqueueMessage(new KeyEventMessage(pressed, keySymbol));
 		}
 	}
