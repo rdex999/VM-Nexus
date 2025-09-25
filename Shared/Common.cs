@@ -96,33 +96,6 @@ public static class Common
 	}
 
 	/// <summary>
-	/// Runs the given bash command in a bash shell.
-	/// </summary>
-	/// <param name="command">
-	/// The bash command to run. command != null.
-	/// </param>
-	/// <returns>
-	/// The exit code of the command.
-	/// </returns>
-	/// <remarks>
-	/// Precondition: command contains a valid bash command. command != null. <br/>
-	/// Postcondition: The exit code of the command is returned.
-	/// </remarks>
-	public static async Task<int> RunBashCommandAsync(string command)
-	{
-		ProcessStartInfo psi = new ProcessStartInfo();
-		psi.FileName = "/bin/bash";
-		psi.Arguments = command;
-		
-		Process? process = Process.Start(psi);
-		if (process == null)
-			return -1;
-		
-		await process.WaitForExitAsync();
-		return process.ExitCode;
-	}
-
-	/// <summary>
 	/// Checks if the given email is in valid email syntax.
 	/// </summary>
 	/// <param name="email">

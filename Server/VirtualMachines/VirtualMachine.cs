@@ -384,7 +384,13 @@ public class VirtualMachine
 			new XElement("graphics",
 				new XAttribute("type", "vnc"),
 				new XAttribute("autoport", "yes")
-				// new XAttribute("port", "5900")	/* Temporary */
+			),
+			new XElement("graphics", new XAttribute("type", "egl-headless")
+				// new XElement("gl", new XAttribute("enabled", "yes"))
+			),
+			new XElement("interface", new XAttribute("type", "network"),
+				new XElement("source", new XAttribute("network", "default")),
+				new XElement("model", new XAttribute("type", "virtio"))
 			)
 		);
 
@@ -395,10 +401,13 @@ public class VirtualMachine
 		else
 		{
 			devices.Add(new XElement("video",
-				new XElement("model", 
+				new XElement("model",
 					new XAttribute("type", "virtio"),
 					new XAttribute("heads", "1"),
-					new XAttribute("primary", "yes")
+					new XAttribute("primary", "yes"),
+					new XElement("acceleration",
+						new XAttribute("accel3d", "yes")
+					)
 				)
 			));
 		}
