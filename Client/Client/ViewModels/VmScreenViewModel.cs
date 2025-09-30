@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -28,9 +27,9 @@ public partial class VmScreenViewModel : ViewModelBase
 	private PixelFormat? _pixelFormat = null;
 	private readonly Stopwatch _pointerMovementStopwatch = new Stopwatch();
 	private const int PointerMovementHz = 30;
-	public bool CapsLockOn = false;
-	public bool NumLockOn = false;
-	public bool ScrollLockOn = false;
+	private bool _capsLockOn = false;
+	private bool _numLockOn = false;
+	private bool _scrollLockOn = false;
 	
 	[ObservableProperty] 
 	private WriteableBitmap? _vmScreenBitmap = null;
@@ -39,6 +38,7 @@ public partial class VmScreenViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		ClientSvc.VmScreenFrameReceived += OnVmScreenFrameReceived;
+		ClientSvc.VmAudioPacketReceived += OnVmAudioPacketReceived;
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		ClientSvc.VmPoweredOff += OnVmPoweredOff;
 		ClientSvc.VmCrashed += OnVmCrashed;
@@ -224,6 +224,21 @@ public partial class VmScreenViewModel : ViewModelBase
 		Dispatcher.UIThread.Invoke(NewFrameReceived!);
 	}
 
+	/// <summary>
+	/// Runs when a new audio packet is received from a virtual machine.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="packet">The audio packet information message. packet != null.</param>
+	/// <remarks>
+	/// Precondition: A new audio packet from a virtual machine was received. packet != null. <br/>
+	/// Postcondition: The audio packet is played if conditions are met.
+	/// </remarks>
+	private void OnVmAudioPacketReceived(object? sender, MessageInfoVmAudioPacket packet)
+	{
+		if (_vmDescriptor == null || _vmDescriptor.Id != packet.VmId) return;
+		
+		
+	}
 
 	/// <summary>
 	/// Handles the event of the virtual machine being powered on.
@@ -349,20 +364,20 @@ public partial class VmScreenViewModel : ViewModelBase
 		{
 			case PhysicalKey.CapsLock:
 			{
-				if(keyDown) ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, !CapsLockOn);
-				CapsLockOn ^= true;
+				if(keyDown) ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, !_capsLockOn);
+				_capsLockOn ^= true;
 				break;
 			}
 			case PhysicalKey.NumLock:
 			{
-				if(keyDown) ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, !NumLockOn);
-				NumLockOn ^= true;
+				if(keyDown) ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, !_numLockOn);
+				_numLockOn ^= true;
 				break;
 			}
 			case PhysicalKey.ScrollLock:
 			{
-				if(keyDown) ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, !ScrollLockOn);
-				ScrollLockOn ^= true;
+				if(keyDown) ClientSvc.NotifyKeyboardKeyEvent(_vmDescriptor.Id, key, !_scrollLockOn);
+				_scrollLockOn ^= true;
 				break;
 			}
 			default:

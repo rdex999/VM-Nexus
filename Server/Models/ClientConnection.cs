@@ -508,8 +508,7 @@ public sealed class ClientConnection : MessagingService
 	{
 		if (!_isLoggedIn || _streamVmId != frame.VmId) return;
 		
-		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, new byte[frame.Framebuffer.Length]);
-		frame.Framebuffer.CopyTo(frameMessage.Framebuffer, 0);
+		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, frame.Framebuffer);
 		SendInfo(frameMessage);
 	}
 
@@ -526,8 +525,9 @@ public sealed class ClientConnection : MessagingService
 	private void OnVmNewAudioPacket(object? sender, byte[] packet)
 	{
 		if (sender == null || sender is not VirtualMachine vm || !_isLoggedIn || _streamVmId != vm.Id) return;
-		
-		
+
+		MessageInfoVmAudioPacket audioMessage = new MessageInfoVmAudioPacket(true, _streamVmId, packet);
+		SendInfo(audioMessage);
 	}
 	
 	/// <summary>

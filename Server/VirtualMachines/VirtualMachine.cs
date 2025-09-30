@@ -634,8 +634,6 @@ public class VirtualMachine
 		{ PhysicalKey.NumPadEnter, KeySymbol.KP_Enter },
 		{ PhysicalKey.NumPadEqual, KeySymbol.KP_Equal },
 		{ PhysicalKey.NumPadMultiply, KeySymbol.KP_Multiply },
-		// { PhysicalKey.NumPadParenLeft, KeySymbol.VoidSymbol }, // Not in your enum
-		// { PhysicalKey.NumPadParenRight, KeySymbol.VoidSymbol },
 		{ PhysicalKey.NumPadSubtract, KeySymbol.KP_Subtract },
 
 		// Function keys

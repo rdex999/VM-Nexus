@@ -18,6 +18,7 @@ public class ClientService : MessagingService
 	public event EventHandler? Reconnected;
 	public event EventHandler<SharedDefinitions.VmGeneralDescriptor[]>? VmListChanged;
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
+	public event EventHandler<MessageInfoVmAudioPacket>? VmAudioPacketReceived;
 	public event EventHandler<int>? VmPoweredOn;
 	public event EventHandler<int>? VmPoweredOff;
 	public event EventHandler<int>? VmCrashed;
@@ -517,6 +518,11 @@ public class ClientService : MessagingService
 			case MessageInfoVmScreenFrame infoVmScreenFrame:
 			{
 				VmScreenFrameReceived?.Invoke(this, infoVmScreenFrame);
+				break;
+			}
+			case MessageInfoVmAudioPacket infoVmAudioPacket:
+			{
+				VmAudioPacketReceived?.Invoke(this, infoVmAudioPacket);
 				break;
 			}
 			case MessageInfoVmPoweredOn infoVirtualMachineData:
