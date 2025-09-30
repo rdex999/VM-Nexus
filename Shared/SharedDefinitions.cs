@@ -10,6 +10,8 @@ public static class SharedDefinitions
 
 	public const int CredentialsMaxLength = 64;
 	public static readonly char[] InvalidUsernameCharacters = { '"', '\'', '/', '<', '>', '|' };
+
+	public const int AudioFramesFrequency = 34000;
 	
 	public enum CpuArchitecture
 	{

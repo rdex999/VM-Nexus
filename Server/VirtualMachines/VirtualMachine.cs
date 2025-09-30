@@ -50,8 +50,8 @@ public class VirtualMachine
 	private bool _isLeftShiftKeyDown = false;
 	private bool _isRightShiftKeyDown = false;
 	private readonly string _pcmAudioFilePath;
-	
-	private const int AudioFramesFrequency = 48000;
+
+	private const int AudioFramesFrequency = SharedDefinitions.AudioFramesFrequency;
 	private const int AudioChannels = 2;
 	private const int AudioPacketMs = 30;
 	

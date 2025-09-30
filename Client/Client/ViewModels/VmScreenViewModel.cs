@@ -30,6 +30,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	private bool _capsLockOn = false;
 	private bool _numLockOn = false;
 	private bool _scrollLockOn = false;
+	private readonly PcmAudioPlayerService _audioPlayerService;
 	
 	[ObservableProperty] 
 	private WriteableBitmap? _vmScreenBitmap = null;
@@ -37,6 +38,8 @@ public partial class VmScreenViewModel : ViewModelBase
 	public VmScreenViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
+		_audioPlayerService = new PcmAudioPlayerService();
+		
 		ClientSvc.VmScreenFrameReceived += OnVmScreenFrameReceived;
 		ClientSvc.VmAudioPacketReceived += OnVmAudioPacketReceived;
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
@@ -133,7 +136,8 @@ public partial class VmScreenViewModel : ViewModelBase
 		{
 			return ExitCode.VmIsShutDown;
 		}
-		
+	
+		_audioPlayerService.Initialize();
 		MessageResponseVmScreenStreamStart? response = await ClientSvc.VirtualMachineStartScreenStreamAsync(_vmDescriptor!.Id);
 
 		if (response == null)
@@ -183,6 +187,7 @@ public partial class VmScreenViewModel : ViewModelBase
 		}
 		
 		_streamRunning = false;
+		_audioPlayerService.Close();
 		MessageResponseVmScreenStreamStop.Status result = await ClientSvc.VirtualMachineStopScreenStreamAsync(_vmDescriptor!.Id);
 		if (result == MessageResponseVmScreenStreamStop.Status.Success)
 		{
@@ -237,7 +242,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	{
 		if (_vmDescriptor == null || _vmDescriptor.Id != packet.VmId) return;
 		
-		
+		_audioPlayerService.EnqueuePacket(packet.Packet);
 	}
 
 	/// <summary>
@@ -286,6 +291,7 @@ public partial class VmScreenViewModel : ViewModelBase
 		{
 			_streamRunning = false;
 			VmScreenBitmap = null;
+			_audioPlayerService.Close();
 		}
 	}
 	

@@ -37,4 +37,6 @@ public enum ExitCode
 	DriveConnectionAlreadyExists,
 	DiskImageCreationFailed,
 	NamedPipeCreationFailed,
+	OpenAlDeviceOpenFailed,
+	OpenAlInitializationFailed
 }
