@@ -1,14 +1,10 @@
 using System;
-using System.Diagnostics;
-using System.IO;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using Avalonia.Platform;
 using Server.Services;
 using Server.VirtualMachines;
 using Shared;
 using Shared.Networking;
-using PixelFormat = MarcusW.VncClient.PixelFormat;
 
 namespace Server.Models;
 
@@ -23,7 +19,7 @@ public sealed class ClientConnection : MessagingService
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
 	private const string ServerRootDirectory = "../../../";
 
-	private int _screenStreamVmId = -1;
+	private int _streamVmId = -1;
 
 	/// <summary>
 	/// Creates and initializes the ClientConnection object.
@@ -281,36 +277,45 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				if (_screenStreamVmId != -1)
+				if (_streamVmId != -1)
 				{
-					if (_screenStreamVmId == reqScreenStreamStart.VmId)
+					if (_streamVmId == reqScreenStreamStart.VmId)
 					{
 						SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
 							MessageResponseVmScreenStreamStart.Status.AlreadyStreaming));
 						break;
 					}
 
-					_virtualMachineService.UnsubscribeFromVmNewFrameReceived(_screenStreamVmId, OnVmNewFrame);
-					_screenStreamVmId = -1;
+					_virtualMachineService.UnsubscribeFromVmNewFrameReceived(_streamVmId, OnVmNewFrame);
+					/* TODO: Unsubscribe from VmAudioPacketReceived */
+					
+					_streamVmId = -1;
 				}
 				
 				result = _virtualMachineService.SubscribeToVmNewFrameReceived(reqScreenStreamStart.VmId, OnVmNewFrame);
-				if (result == ExitCode.Success)
-				{
-					Shared.PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqScreenStreamStart.VmId)!;
-					
-					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
-						MessageResponseVmScreenStreamStart.Status.Success, pixelFormat));
-					
-					_screenStreamVmId = reqScreenStreamStart.VmId;
-					_virtualMachineService.EnqueueGetFullFrame(reqScreenStreamStart.VmId);
-				} 
-				else 
+				if (result != ExitCode.Success)
 				{
 					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id, 
 						MessageResponseVmScreenStreamStart.Status.Failure));
+					break;
+				}
+				result = _virtualMachineService.SubscribeToVmAudioPacketReceived(reqScreenStreamStart.VmId, OnVmNewAudioPacket);
+				if (result != ExitCode.Success)
+				{
+					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id, 
+						MessageResponseVmScreenStreamStart.Status.Failure));
+					
+					_virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqScreenStreamStart.VmId, OnVmNewFrame);
+					break;
 				}
 				
+				PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqScreenStreamStart.VmId)!;
+
+				SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
+					MessageResponseVmScreenStreamStart.Status.Success, pixelFormat));
+					
+				_streamVmId = reqScreenStreamStart.VmId;
+				_virtualMachineService.EnqueueGetFullFrame(reqScreenStreamStart.VmId);
 				break;
 			}
 
@@ -322,7 +327,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				if (_screenStreamVmId == -1)
+				if (_streamVmId == -1)
 				{
 					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.StreamNotRunning));
 					break;
@@ -332,12 +337,12 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.Success));
-					_screenStreamVmId = -1;
+					_streamVmId = -1;
 				} 
 				else if (result == ExitCode.VmScreenStreamNotRunning)	/* Should not happen. Doing it for safety. */
 				{
 					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.StreamNotRunning));
-					_screenStreamVmId = -1;
+					_streamVmId = -1;
 				}
 				else
 				{
@@ -500,11 +505,28 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	private void OnVmNewFrame(object? sender, VirtualMachineFrame frame)
 	{
-		if (!_isLoggedIn || _screenStreamVmId != frame.VmId) return;
+		if (!_isLoggedIn || _streamVmId != frame.VmId) return;
 		
 		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, new byte[frame.Framebuffer.Length]);
 		frame.Framebuffer.CopyTo(frameMessage.Framebuffer, 0);
 		SendInfo(frameMessage);
+	}
+
+	/// <summary>
+	/// Handles a new audio packet of a virtual machine. Sends it to the client.
+	/// </summary>
+	/// <param name="sender">The virtual machine that received the audio packet. sender != null &amp;&amp; sender is VirtualMachine.</param>
+	/// <param name="packet">The new audio packet. packet != null.</param>
+	/// <remarks>
+	/// Precondition: A new audio packet of a virtual machine was received. The user is logged in, and has watch permissions for the virtual machine.
+	/// sender != null. &amp;&amp; sender is VirtualMachine &amp;&amp; packet != null.<br/>
+	/// Postcondition: The audio packet is sent to the client. If the user is not logged in or doesn't have watch permissions, the packet is not sent.
+	/// </remarks>
+	private void OnVmNewAudioPacket(object? sender, byte[] packet)
+	{
+		if (sender == null || sender is not VirtualMachine vm || !_isLoggedIn || _streamVmId != vm.Id) return;
+		
+		
 	}
 	
 	/// <summary>
@@ -522,9 +544,9 @@ public sealed class ClientConnection : MessagingService
 		
 		SendInfo(new MessageInfoVmPoweredOff(true, id));
 
-		if (id == _screenStreamVmId)
+		if (id == _streamVmId)
 		{
-			_screenStreamVmId = -1;
+			_streamVmId = -1;
 		}
 	}
 	
@@ -543,9 +565,9 @@ public sealed class ClientConnection : MessagingService
 		
 		SendInfo(new MessageInfoVmCrashed(true, id));
 		
-		if (id == _screenStreamVmId)
+		if (id == _streamVmId)
 		{
-			_screenStreamVmId = -1;
+			_streamVmId = -1;
 		}
 	}
 }

@@ -34,13 +34,14 @@ public class VirtualMachine
 	public readonly TaskCompletionSource<virDomainState> PoweredOffTcs = new TaskCompletionSource<virDomainState>();		/* Returns the new state - powered off, crashed */
 	
 	public static readonly TimeSpan PowerOffTimeout = TimeSpan.FromMinutes(1);
+	public int Id { get; }
 	
 	private readonly DatabaseService _databaseService;
 	private readonly DriveService _driveService;
 	private Domain _domain = null!;
-	private RfbConnection _rfbConnection;
+	private RfbConnection _rfbConnection = null!;
 	private readonly CancellationTokenSource _cts;
-	private readonly int _id;
+
 	private readonly SharedDefinitions.OperatingSystem _operatingSystem;
 	private readonly SharedDefinitions.CpuArchitecture _cpuArchitecture;
 	private readonly SharedDefinitions.BootMode _bootMode;
@@ -59,12 +60,12 @@ public class VirtualMachine
 	{
 		_databaseService = databaseService;
 		_driveService = driveService;
-		_id = id;
+		Id = id;
 		_operatingSystem = operatingSystem;
 		_drives = drives;
 		_cpuArchitecture = cpuArchitecture;
 		_bootMode = bootMode;
-		_pcmAudioFilePath = $"/tmp/VM_Nexus_vm_{_id}.pcm";
+		_pcmAudioFilePath = $"/tmp/VM_Nexus_vm_{Id}.pcm";
 		
 		_cts = new CancellationTokenSource();
 	}
@@ -145,7 +146,7 @@ public class VirtualMachine
 			return result;
 		}
 		
-		return await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.Running);
+		return await _databaseService.SetVmStateAsync(Id, SharedDefinitions.VmState.Running);
 	}
 
 	public async Task<ExitCode> PowerOffAsync()
@@ -279,7 +280,7 @@ public class VirtualMachine
 
 		try
 		{
-			_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(_id, _rfbConnection.RemoteFramebufferFormat);
+			_rfbConnection.RenderTarget = new VirtualMachineVncRenderTarget(Id, _rfbConnection.RemoteFramebufferFormat);
 		}
 		catch (Exception)
 		{
@@ -304,16 +305,16 @@ public class VirtualMachine
 					case virDomainState.VIR_DOMAIN_SHUTOFF:		/* Machine is shut off. */
 					case virDomainState.VIR_DOMAIN_SHUTDOWN:	/* Machine is being shut down (libvirts definition - not exactly accurate. Runs when the VM is shut down.) */
 					{
-						await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.ShutDown);
+						await _databaseService.SetVmStateAsync(Id, SharedDefinitions.VmState.ShutDown);
 						PoweredOffTcs.SetResult(currentState);
-						PoweredOff?.Invoke(this, _id);
+						PoweredOff?.Invoke(this, Id);
 						return;
 					}
 					case virDomainState.VIR_DOMAIN_CRASHED:
 					{
-						await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.ShutDown);
+						await _databaseService.SetVmStateAsync(Id, SharedDefinitions.VmState.ShutDown);
 						PoweredOffTcs.SetResult(currentState);
-						Crashed?.Invoke(this, _id);
+						Crashed?.Invoke(this, Id);
 						return;
 					}
 				}
@@ -513,7 +514,7 @@ public class VirtualMachine
 		
 		XDocument doc = new XDocument(
 			new XElement("domain", new XAttribute("type", "kvm"),
-				new XElement("name", _id.ToString()),
+				new XElement("name", Id.ToString()),
 				new XElement("memory", "8192", new XAttribute("unit", "MiB")),
 				new XElement("features",
 					new XElement("vmport", new XAttribute("state", "off")),
