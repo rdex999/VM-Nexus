@@ -137,7 +137,14 @@ public class VirtualMachine
 
 		_ = StateInformerAsync();
 		_ = AudioCaptureWorkerAsync();
-
+		
+		ExitCode result = StartScreenStream();
+		if (result != ExitCode.Success)
+		{
+			await PowerOffAndDestroyOnTimeout();
+			return result;
+		}
+		
 		return await _databaseService.SetVmStateAsync(_id, SharedDefinitions.VmState.Running);
 	}
 
@@ -181,15 +188,7 @@ public class VirtualMachine
 	
 	public ExitCode SubscribeToNewFrameReceived(EventHandler<VirtualMachineFrame> handler)
 	{
-		if (!IsScreenStreamRunning())
-		{
-			ExitCode result = StartScreenStream();
-
-			if (result != ExitCode.Success)
-			{
-				return result;
-			}
-		}
+		if (!IsScreenStreamRunning()) return ExitCode.VmScreenStreamNotRunning;
 	
 		GetRenderTarget()!.NewFrameReceived += handler;
 		
