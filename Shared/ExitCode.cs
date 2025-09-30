@@ -30,9 +30,11 @@ public enum ExitCode
 	VmScreenStreamStopFailed,
 	VmScreenStreamUnsupportedPixelFormat,
 	TooManyVmsRunning,
+	InvalidVmXml,
 	VncConnectionFailed,
 	DriveAlreadyExists,
 	DriveDoesntExist,
 	DriveConnectionAlreadyExists,
 	DiskImageCreationFailed,
+	NamedPipeCreationFailed,
 }
