@@ -46,6 +46,21 @@ public class MessageInfoVmScreenFrame : MessageInfo
 	                                         Framebuffer != null && Framebuffer.Length > 0;
 }
 
+public class MessageInfoVmAudioPacket : MessageInfo
+{
+	public int VmId { get; }
+	public byte[] Packet { get; }
+
+	public MessageInfoVmAudioPacket(bool generateGuid, int vmId, byte[] packet)
+		: base(generateGuid)
+	{
+		VmId = vmId;
+		Packet = packet;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Packet != null && Packet.Length > 0;
+}
+
 public class MessageInfoVmPoweredOn : MessageInfo
 {
 	public int VmId { get; }

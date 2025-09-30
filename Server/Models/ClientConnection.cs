@@ -287,7 +287,7 @@ public sealed class ClientConnection : MessagingService
 					}
 
 					_virtualMachineService.UnsubscribeFromVmNewFrameReceived(_streamVmId, OnVmNewFrame);
-					/* TODO: Unsubscribe from VmAudioPacketReceived */
+					_virtualMachineService.UnsubscribeFromVmAudioPacketReceived(_streamVmId, OnVmNewAudioPacket);
 					
 					_streamVmId = -1;
 				}
@@ -334,6 +334,7 @@ public sealed class ClientConnection : MessagingService
 				}
 				
 				result = _virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqScreenStreamStop.VmId, OnVmNewFrame);
+				_virtualMachineService.UnsubscribeFromVmAudioPacketReceived(reqScreenStreamStop.VmId, OnVmNewAudioPacket);
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.Success));

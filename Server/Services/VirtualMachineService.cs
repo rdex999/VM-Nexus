@@ -322,6 +322,33 @@ public class VirtualMachineService
 	}
 
 	/// <summary>
+	/// Unsubscribe from the event of receiving a new audio packet from the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to unsubscribe from. id >= 1.</param>
+	/// <param name="handler">The event handler that was subscribed. handler != null.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: There is a virtual machine with the given ID, and it is not shutdown. id >= 1 &amp;&amp; handler != null <br/>
+	/// Postcondition: On success, the handler is unsubscribed and will not receive new audio packet events. <br/>
+	/// On failure, the event is not unsubscribed and the returned exit code will indicate the error.
+	/// </remarks>
+	public ExitCode UnsubscribeFromVmAudioPacketReceived(int id, EventHandler<byte[]> handler)
+	{
+		if (id < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			virtualMachine.AudioPacketReceived -= handler;
+			return ExitCode.Success;
+		}
+		
+		return ExitCode.VmIsShutDown;
+	}
+	
+	/// <summary>
 	/// Enqueue a message to receive a fully updated frame.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to enqueue the message in. id >= 1.</param>
