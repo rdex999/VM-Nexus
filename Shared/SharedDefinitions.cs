@@ -2,7 +2,8 @@
 
 public static class SharedDefinitions
 {
-	public const int ServerPort = 5000;
+	public const int ServerTcpPort = 5000;
+	public const int ServerUdpPort = 5001;
 	public const string ServerIp = "192.168.1.155"; /* local IP in network */
 
 	public const int MessageTimeoutMilliseconds = 3 * 60 * 1000;

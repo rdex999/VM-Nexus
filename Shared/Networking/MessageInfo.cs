@@ -19,7 +19,7 @@ public class MessageInfoUdp : MessageUdp
 	}
 }
 
-public class MessageInfoVmList : MessageInfoTcp	/* An updated list of virtual machines that the user has. */
+public class MessageInfoVmList : MessageInfoTcp		/* An updated list of virtual machines that the user has. */
 {
 	public SharedDefinitions.VmGeneralDescriptor[] VmDescriptors { get; }
 
@@ -35,7 +35,7 @@ public class MessageInfoVmList : MessageInfoTcp	/* An updated list of virtual ma
 	}
 }
 
-public class MessageInfoVmScreenFrame : MessageInfoTcp
+public class MessageInfoVmScreenFrame : MessageInfoUdp
 {
 	public int VmId { get; }
 	public Size Size { get; }
@@ -54,7 +54,7 @@ public class MessageInfoVmScreenFrame : MessageInfoTcp
 	                                         Framebuffer != null && Framebuffer.Length > 0;
 }
 
-public class MessageInfoVmAudioPacket : MessageInfoTcp
+public class MessageInfoVmAudioPacket : MessageInfoUdp
 {
 	public int VmId { get; }
 	public byte[] Packet { get; }

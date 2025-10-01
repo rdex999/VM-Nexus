@@ -24,7 +24,7 @@ public sealed class ClientConnection : MessagingService
 	/// <summary>
 	/// Creates and initializes the ClientConnection object.
 	/// </summary>
-	/// <param name="socket">The socket on which the client has connected. socket != null.</param>
+	/// <param name="tcpSocket">The socket on which the client has connected. socket != null.</param>
 	/// <param name="databaseService">A reference to the database service. databaseService != null.</param>
 	/// <param name="virtualMachineService">A reference to the virtual machine service. virtualMachineService != null.</param>
 	/// <param name="driveService">A reference to the drive service. driveService != null.</param>
@@ -33,14 +33,18 @@ public sealed class ClientConnection : MessagingService
 	/// socket != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null.<br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
-	public ClientConnection(Socket socket, DatabaseService databaseService, VirtualMachineService virtualMachineService, DriveService driveService)
+	public ClientConnection(Socket tcpSocket, DatabaseService databaseService, VirtualMachineService virtualMachineService, DriveService driveService)
 	{
 		_databaseService = databaseService;
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
-		Initialize(socket);
+		
+		Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+		udpSocket.Connect(tcpSocket.RemoteEndPoint!);
+		Initialize(tcpSocket, udpSocket);
 		IsServiceInitialized = true;
-		CommunicationThread!.Start();
+		TcpCommunicationThread!.Start();
+		UdpCommunicationThread!.Start();
 		MessageSenderThread!.Start();
 	}
 

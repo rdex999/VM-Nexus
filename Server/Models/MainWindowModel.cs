@@ -56,7 +56,7 @@ public class MainWindowModel
 		if (ipAddr == null)
 			return ExitCode.ServerNoValidLocalhostIp;
 				
-		IPEndPoint localEndPoint = new IPEndPoint(ipAddr, SharedDefinitions.ServerPort);			/* Combination of IP and port - End point. */
+		IPEndPoint localEndPoint = new IPEndPoint(ipAddr, SharedDefinitions.ServerTcpPort);			/* Combination of IP and port - End point. */
 	
 		Socket socket = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);		/* Create the socket */	
 		socket.Bind(localEndPoint);																	/* Associate the IP address and port (end point) in the socket */

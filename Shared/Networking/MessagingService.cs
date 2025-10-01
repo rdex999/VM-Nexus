@@ -5,8 +5,10 @@ namespace Shared.Networking;
 
 public class MessagingService
 {
-	protected Socket? MessagingSocket;
-	protected Thread? CommunicationThread;								/* Runs the Communicate function */
+	protected Socket? TcpSocket;
+	protected Socket? UdpSocket;
+	protected Thread? TcpCommunicationThread;							/* Runs the CommunicateTcp function */
+	protected Thread? UdpCommunicationThread;							/* Runs the CommunicateUdp function */
 	private CancellationTokenSource? _cts;
 	protected bool IsServiceInitialized;
 	private ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
@@ -32,11 +34,13 @@ public class MessagingService
 	/// Precondition: Service must not be initialized <br/>
 	/// Postcondition: Base service initialized - sub services (child classes) must set IsServiceInitialized=true when initialization is completed.
 	/// </remarks>
-	public void Initialize(Socket socket)
+	public void Initialize(Socket tcpSocket, Socket udpSocket)
 	{
-		MessagingSocket = socket;
+		TcpSocket = tcpSocket;
+		UdpSocket = udpSocket;
 		_cts = new CancellationTokenSource();
-		CommunicationThread = new Thread(() => Communicate(_cts.Token));
+		TcpCommunicationThread = new Thread(() => CommunicateTcp(_cts.Token));
+		UdpCommunicationThread = new Thread(() => CommunicateUdp(_cts.Token));
 		_responses =  new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
 		MessageSenderThread = new Thread(() => MessageSender(_cts.Token));
 		_messageQueue = new ConcurrentQueue<Message>();
@@ -64,7 +68,7 @@ public class MessagingService
 	/// </remarks>
 	public bool IsConnected()
 	{
-		return IsInitialized() && MessagingSocket!.Connected;
+		return IsInitialized() && TcpSocket!.Connected;
 	}
 
 	/// <summary>
@@ -82,7 +86,7 @@ public class MessagingService
 	/// Precondition: Service fully initialized and connected to the other side, (server/client) token != null. <br/>
 	/// Postcondition: Communication stopped and disconnected. (socket disconnected and closed)
 	/// </remarks>
-	private void Communicate(CancellationToken token)
+	private void CommunicateTcp(CancellationToken token)
 	{
 		while (!token.IsCancellationRequested)
 		{
@@ -91,7 +95,7 @@ public class MessagingService
 				HandleSuddenDisconnection(token);
 			}
 			
-			Message? message = ReceiveMessageAsync().GetAwaiter().GetResult();
+			Message? message = ReceiveMessageAsync(TcpSocket!).GetAwaiter().GetResult();
 			if (message == null)
 			{
 				if (!IsConnected() && !token.IsCancellationRequested)
@@ -136,6 +140,21 @@ public class MessagingService
 		
 		Disconnect();
 		AfterDisconnection();
+	}
+
+	private void CommunicateUdp(CancellationToken token)
+	{
+		while (!token.IsCancellationRequested && IsConnected())
+		{
+			Message? message = ReceiveMessageAsync(UdpSocket!).GetAwaiter().GetResult();
+			
+			if (message == null || !message.IsValidMessage()) continue;
+			
+			if (message is MessageInfoUdp)
+			{
+				_ = HandleInfoAsync(message, token);
+			}
+		}
 	}
 
 	/// <summary>
@@ -283,12 +302,26 @@ public class MessagingService
 		
 		byte[] bytes = Common.ToByteArrayWithType(message);
 		byte[] sizeInBytes = BitConverter.GetBytes(bytes.Length);
-		result = await SendBytesExactAsync(sizeInBytes);
+
+		Socket socket;
+		if (message is MessageTcp)
+		{
+			socket = TcpSocket!;
+		} 
+		else if (message is MessageUdp)
+		{
+			socket = UdpSocket!;
+		}
+		else
+		{
+			return ExitCode.InvalidParameter;
+		}
+		result = await SendBytesExactAsync(socket, sizeInBytes);
 		
 		if (result != ExitCode.Success)
 			return result;
 		
-		result = await SendBytesExactAsync(bytes);
+		result = await SendBytesExactAsync(socket, bytes);
 		
 		return result;
 	}
@@ -356,16 +389,16 @@ public class MessagingService
 	/// Precondition: The service must be fully initialized and connected to the server. <br/>
 	/// Postcondition: On success, the received message is returned. On failure, null is returned.
 	/// </remarks>
-	private async Task<Message?> ReceiveMessageAsync()
+	private async Task<Message?> ReceiveMessageAsync(Socket socket)
 	{
-		byte[]? messageSizeInBytes = await ReceiveBytesExactAsync(4);
+		byte[]? messageSizeInBytes = await ReceiveBytesExactAsync(socket, 4);
 		if (messageSizeInBytes == null || messageSizeInBytes.Length == 0)
 		{
 			return null;
 		}
 		int size =  BitConverter.ToInt32(messageSizeInBytes, 0);	/* If the size is 0, then its an invalid message */
 	
-		byte[]? messageBytes = await ReceiveBytesExactAsync(size);
+		byte[]? messageBytes = await ReceiveBytesExactAsync(socket, size);
 		if (messageBytes == null || messageBytes.Length == 0)
 		{
 			return null;
@@ -377,6 +410,7 @@ public class MessagingService
 	/// <summary>
 	/// Sends an exact amount of bytes (the full byte array parameter) to the other side (client/server)
 	/// </summary>
+	/// <param name="socket">The socket on which to send the bytes. Must be connected. socket != null.</param>
 	/// <param name="bytes">
 	/// The byte array to send to the other side. bytes != null
 	/// </param>
@@ -384,11 +418,11 @@ public class MessagingService
 	/// An exit code indicating the result of the operation. On failure, the data should be considered as not sent.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: The service must be fully initialized and connected to the other side, bytes != null. <br/>
+	/// Precondition: The service must be fully initialized and connected to the other side, socket connected, socket != null &amp;&amp; bytes != null. <br/>
 	/// Postcondition: On success, the byte array is fully sent to the other side, and an exit code of success is returned. <br/>
 	/// On failure, an exit code indicating the error is returned, and the data should be considered as not sent.
 	/// </remarks>
-	private async Task<ExitCode> SendBytesExactAsync(byte[] bytes)
+	private async Task<ExitCode> SendBytesExactAsync(Socket socket, byte[] bytes)
 	{
 		int bytesSent = 0;
 		
@@ -399,7 +433,7 @@ public class MessagingService
 				int sent;
 				try
 				{
-					sent = MessagingSocket!.Send(bytes, bytesSent, bytes.Length - bytesSent, SocketFlags.None);
+					sent = TcpSocket!.Send(bytes, bytesSent, bytes.Length - bytesSent, SocketFlags.None);
 				}
 				catch (Exception)
 				{
@@ -423,18 +457,17 @@ public class MessagingService
 	/// Waits for a specific amount of bytes to be sent to us by the other side (client/server). <br/>
 	/// In other words, this method reads an exact amount of bytes from the socket, and waits until the specified amount of bytes was read.
 	/// </summary>
-	/// <param name="size">
-	/// The amount of bytes to receive. size > 0
-	/// </param>
+	/// <param name="socket">The socket to receive the data from. Must be connected. socket != null.</param>
+	/// <param name="size">The amount of bytes to receive. size > 0.</param>
 	/// <returns>
 	/// On success, the received bytes are returned. <br/>
 	/// On failure, null is returned, which can indicate a disconnection. That should be checked with the IsConnected() method.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: The service must be fully initialized and connected to the other side. size != null. <br/>
+	/// Precondition: The service must be fully initialized and connected to the other side. socket != null &amp;&amp; size > 0. <br/>
 	/// Postcondition: On success, the received bytes are returned. On failure, null is returned.
 	/// </remarks>
-	private async Task<byte[]?> ReceiveBytesExactAsync(int size)
+	private async Task<byte[]?> ReceiveBytesExactAsync(Socket socket, int size)
 	{
 		if (size <= 0)
 			return null;
@@ -448,7 +481,7 @@ public class MessagingService
 				int currentRead;
 				try
 				{
-					currentRead = MessagingSocket!.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
+					currentRead = socket.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
 				}
 				catch (Exception)
 				{
@@ -530,19 +563,41 @@ public class MessagingService
 			_cts.Cancel();
 		}
 
-		if (MessagingSocket != null)
+		if (TcpSocket != null)
 		{
-			MessagingSocket.Dispose();
-			MessagingSocket.Close();
+			TcpSocket.Close();
+			TcpSocket.Dispose();
+		}
+
+		if (UdpSocket != null)
+		{
+			UdpSocket.Close();
+			UdpSocket.Dispose();
 		}
 		
-		if (CommunicationThread != null && Thread.CurrentThread != CommunicationThread && CommunicationThread.IsAlive)
+		if (TcpCommunicationThread != null && Thread.CurrentThread != TcpCommunicationThread && TcpCommunicationThread.IsAlive)
 		{
-			CommunicationThread.Join();
+			TcpCommunicationThread.Join();
 		}
 		
 		if (_cts != null)
 		{
+			if (TcpCommunicationThread != null && Thread.CurrentThread != TcpCommunicationThread &&
+			    TcpCommunicationThread.IsAlive)
+			{
+				TcpCommunicationThread.Join();
+			}
+			if (UdpCommunicationThread != null && Thread.CurrentThread != UdpCommunicationThread &&
+			    UdpCommunicationThread.IsAlive)
+			{
+				UdpCommunicationThread.Join();
+			}
+			if (MessageSenderThread != null && Thread.CurrentThread != MessageSenderThread &&
+			    MessageSenderThread.IsAlive)
+			{
+				MessageSenderThread.Join();
+			}
+			
 			_cts.Dispose();
 			_cts = null;
 		}

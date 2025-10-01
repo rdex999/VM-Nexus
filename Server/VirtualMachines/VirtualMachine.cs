@@ -80,7 +80,7 @@ public class VirtualMachine
 		await _rfbConnection.CloseAsync();
 		_rfbConnection.Dispose();
 		
-		File.Delete(_pcmAudioFilePath);
+		// File.Delete(_pcmAudioFilePath);
 	}
 
 	public async Task<ExitCode> PowerOnAsync(Connect libvirtConnection)

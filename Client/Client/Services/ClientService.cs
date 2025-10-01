@@ -5,10 +5,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Input;
-using Avalonia.Platform;
 using Shared;
 using Shared.Networking;
-using PixelFormat = Avalonia.Platform.PixelFormat;
 
 namespace Client.Services;
 
@@ -35,7 +33,10 @@ public class ClientService : MessagingService
 		if (IsInitialized())
 			return;
 
-		base.Initialize(new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp));
+		Initialize(
+			new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
+			new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
+		);
 		await ConnectToServerAsync();
 	}
 
@@ -391,8 +392,8 @@ public class ClientService : MessagingService
 				break;
 			}
 
-			MessagingSocket!.Close();
-			MessagingSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			TcpSocket!.Close();
+			TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
 			if (token == null)
 			{
@@ -418,11 +419,14 @@ public class ClientService : MessagingService
 		}
 
 		IsServiceInitialized = true;
-		if (!CommunicationThread!.IsAlive)
+		if (!TcpCommunicationThread!.IsAlive)
 		{
-			CommunicationThread.Start();
+			TcpCommunicationThread.Start();
 		}
-
+		if (!UdpCommunicationThread!.IsAlive)
+		{
+			UdpCommunicationThread.Start();
+		}
 		if (!MessageSenderThread!.IsAlive)
 		{
 			MessageSenderThread.Start();
@@ -450,12 +454,23 @@ public class ClientService : MessagingService
 		/* Connect to the server. On connection failure try connecting with a 3-second delay between each try. */
 		try
 		{
-			MessagingSocket!.Connect(IPAddress.Parse(Shared.SharedDefinitions.ServerIp), Shared.SharedDefinitions.ServerPort);
-			return true;
+			TcpSocket!.Connect(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerTcpPort);
 		}
 		catch (Exception)
 		{
 			OnFailure(ExitCode.ConnectionToServerFailed);
+			return false;
+		}
+		
+		/* TCP socket is connected. Now try connecting the UDP socket. */
+		try
+		{
+			UdpSocket!.Connect(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerUdpPort);
+			return true;
+		}
+		catch (Exception e)
+		{
+			TcpSocket!.Close();
 			return false;
 		}
 	}
