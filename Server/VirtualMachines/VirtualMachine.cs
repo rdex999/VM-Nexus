@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -30,8 +31,8 @@ public class VirtualMachine
 {
 	public event EventHandler<int>? PoweredOff;
 	public event EventHandler<int>? Crashed;
-	public event EventHandler<byte[]>? AudioPacketReceived;		/* Gives the packet byte array - representing frames. (two channels, s16le) */
-	public readonly TaskCompletionSource<virDomainState> PoweredOffTcs = new TaskCompletionSource<virDomainState>();		/* Returns the new state - powered off, crashed */
+	public event EventHandler<byte[]>? AudioPacketReceived;					/* Gives the packet byte array - representing frames. (two channels, s16le) */
+	public readonly TaskCompletionSource<virDomainState> PoweredOffTcs;		/* Returns the new state - powered off, crashed */
 	
 	public static readonly TimeSpan PowerOffTimeout = TimeSpan.FromMinutes(1);
 	public int Id { get; }
@@ -50,10 +51,6 @@ public class VirtualMachine
 	private bool _isLeftShiftKeyDown = false;
 	private bool _isRightShiftKeyDown = false;
 	private readonly string _pcmAudioFilePath;
-
-	private const int AudioFramesFrequency = SharedDefinitions.AudioFramesFrequency;
-	private const int AudioChannels = 2;
-	private const int AudioPacketMs = 30;
 	
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
@@ -66,7 +63,8 @@ public class VirtualMachine
 		_cpuArchitecture = cpuArchitecture;
 		_bootMode = bootMode;
 		_pcmAudioFilePath = $"/tmp/VM_Nexus_vm_{Id}.pcm";
-		
+
+		PoweredOffTcs = new TaskCompletionSource<virDomainState>();
 		_cts = new CancellationTokenSource();
 	}
 
@@ -87,8 +85,8 @@ public class VirtualMachine
 
 	public async Task<ExitCode> PowerOnAsync(Connect libvirtConnection)
 	{
-		// int result = mkfifo(_pcmAudioFilePath, 438);
-		// if (result != 0) return ExitCode.NamedPipeCreationFailed;
+		// int status = mkfifo(_pcmAudioFilePath, 511);
+		// if (status != 0) return ExitCode.NamedPipeCreationFailed;
 
 		string xml = AsXmlDocument().ToString();
 		try
@@ -360,12 +358,14 @@ public class VirtualMachine
 			bytesRead += currentRead;
 		}
 
-		int framesPerPacket = (int)((float)AudioFramesFrequency * ((float)AudioPacketMs / 1000.0));
-		int bytesPerPacket = framesPerPacket * AudioChannels * 2;	/* Using two channels, s16le */
+		int framesPerPacket = (int)((float)SharedDefinitions.AudioFramesFrequency * ((float)SharedDefinitions.AudioPacketMs / 1000.0));
+		int bytesPerPacket = framesPerPacket * SharedDefinitions.AudioChannels * 2;	/* Using two channels, s16le */
 		buffer = new byte[bytesPerPacket];
 
+		Stopwatch stopwatch = new Stopwatch();
 		while (!_cts.IsCancellationRequested)
 		{
+			stopwatch.Restart();
 			bytesRead = 0;
 			while (bytesRead < bytesPerPacket)
 			{
@@ -377,10 +377,40 @@ public class VirtualMachine
 				catch (OperationCanceledException) { return; }
 
 				bytesRead += currentRead;
+
+				if (stopwatch.ElapsedMilliseconds > SharedDefinitions.AudioPacketMs - 2 && currentRead == 0 && bytesRead > 0)
+				{
+					Array.Clear(buffer, bytesRead, buffer.Length - bytesRead);
+					break;
+				}
 			}
-			
-			AudioPacketReceived?.Invoke(this, buffer);
+	
+			if(!AllBytesZeros(buffer))
+			{
+				if (stopwatch.ElapsedMilliseconds < SharedDefinitions.AudioPacketMs)
+				{
+					await Task.Delay(SharedDefinitions.AudioPacketMs - (int)stopwatch.ElapsedMilliseconds, _cts.Token).ConfigureAwait(false);
+				}
+				AudioPacketReceived?.Invoke(this, buffer);
+			}
 		}
+	}
+	private bool AllBytesZeros(byte[] a)
+	{
+		var span = a.AsSpan();
+		int i = 0;
+
+		// check 8 bytes at a time
+		while (i + 8 <= span.Length)
+		{
+			if (BitConverter.ToUInt64(span.Slice(i, 8)) != 0UL) return false;
+			i += 8;
+		}
+		while (i < span.Length)		/* Checks for the remaining bytes, after the last multiple of 8 */
+		{
+			if (span[i++] != 0) return false;
+		}
+		return true;
 	}
 
 	public SharedDefinitions.VmState GetVmState()
@@ -456,7 +486,7 @@ public class VirtualMachine
 				new XElement("source", new XAttribute("network", "default")),
 				new XElement("model", new XAttribute("type", "virtio"))
 			),
-			new XElement("sound", new XAttribute("model", "virtio"), 
+			new XElement("sound", new XAttribute("model", "ich9"), 
 				new XElement("audio", new XAttribute("id", "1"))
 			),
 			new XElement("audio", 
@@ -464,10 +494,14 @@ public class VirtualMachine
 				new XAttribute("type", "file"), 
 				new XAttribute("path", _pcmAudioFilePath),
 				new XAttribute("format", "pcm"),
-				new XElement("output", new XAttribute("fixedSettings", "yes"), new XAttribute("mixingEngine", "yes"),
+				new XElement("output", 
+					new XAttribute("fixedSettings", "yes"), 
+					new XAttribute("mixingEngine", "yes"), 
+					// new XAttribute("bufferLength", AudioPacketMs.ToString()),
+					
 					new XElement("settings",
-						new XAttribute("frequency", AudioFramesFrequency.ToString()),
-						new XAttribute("channels", AudioChannels.ToString()),
+						new XAttribute("frequency", SharedDefinitions.AudioFramesFrequency.ToString()),
+						new XAttribute("channels", SharedDefinitions.AudioChannels.ToString()),
 						new XAttribute("format", "s16")
 					)
 				)
@@ -662,11 +696,11 @@ public class VirtualMachine
 public class VirtualMachineVncRenderTarget : IRenderTarget
 {
 	public event EventHandler<VirtualMachineFrame>? NewFrameReceived;
-	private int _vmId;
+	private readonly int _vmId;
 	private byte[]? _framebuffer;
 	private readonly object _lock;
 	public Size ScreenSize { get; private set; }
-	private PixelFormat _pixelFormat;
+	private readonly PixelFormat _pixelFormat;
 	public Shared.PixelFormat UniPixelFormat { get; }		/* Universal pixel format */
 	private bool _grabbed = false;
 	private GCHandle? _framebufferHandle;

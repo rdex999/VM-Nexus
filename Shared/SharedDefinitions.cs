@@ -11,7 +11,11 @@ public static class SharedDefinitions
 	public const int CredentialsMaxLength = 64;
 	public static readonly char[] InvalidUsernameCharacters = { '"', '\'', '/', '<', '>', '|' };
 
-	public const int AudioFramesFrequency = 34000;
+	public const int AudioFramesFrequency = 48000;
+	public const int AudioPacketMs = 20;
+	public const int AudioChannels = 2;
+	public const int AudioFramesPerPacket = (int)((float)AudioFramesFrequency * ((float)AudioPacketMs / 1000.0));
+	public const int AudioBytesPerPacket = AudioFramesPerPacket * AudioChannels * 2;	/* Using two channels, s16le */
 	
 	public enum CpuArchitecture
 	{
