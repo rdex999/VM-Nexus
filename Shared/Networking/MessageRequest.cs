@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Shared.Networking;
 
-public class MessageRequest : Message
+public class MessageRequest : MessageTcp
 {
 	public MessageRequest(bool generateGuid)
 		: base(generateGuid) {}

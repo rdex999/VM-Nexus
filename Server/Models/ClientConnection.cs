@@ -432,13 +432,13 @@ public sealed class ClientConnection : MessagingService
 	/// <summary>
 	/// Processes message info from the client.
 	/// </summary>
-	/// <param name="info">The sent message info that should be processed. info != null.</param>
+	/// <param name="info">The sent message info that should be processed. info != null. &amp;&amp; (info is MessageInfoTcp || info is MessageInfoUdp)</param>
 	/// <remarks>
 	/// Precondition: Service fully initialized and connected to the client. <br/>
-	/// A message of info type was received - should be processed. info != null. <br/>
+	/// A message of info type was received - should be processed. info != null &amp;&amp; (info is MessageInfoTcp || info is MessageInfoUdp) <br/>
 	/// Postcondition: Info is considered processed.
 	/// </remarks>
-	protected override async Task ProcessInfoAsync(MessageInfo info)
+	protected override async Task ProcessInfoAsync(Message info)
 	{
 		await base.ProcessInfoAsync(info);
 

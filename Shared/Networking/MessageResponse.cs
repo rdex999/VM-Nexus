@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Shared.Networking;
 
-public class MessageResponse : Message
+public class MessageResponse : MessageTcp
 {
 	public Guid RequestId { get; }		/* This is a response for request ID=... */
 	

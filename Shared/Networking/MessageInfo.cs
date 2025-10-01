@@ -3,15 +3,23 @@ using Avalonia.Input;
 
 namespace Shared.Networking;
 
-public class MessageInfo : Message
+public class MessageInfoTcp : MessageTcp
 {
-	public MessageInfo(bool generateGuid)
+	public MessageInfoTcp(bool generateGuid)
 		: base(generateGuid)
 	{
 	}
 }
 
-public class MessageInfoVmList : MessageInfo	/* An updated list of virtual machines that the user has. */
+public class MessageInfoUdp : MessageUdp
+{
+	public MessageInfoUdp(bool generateGuid)
+		: base(generateGuid)
+	{
+	}
+}
+
+public class MessageInfoVmList : MessageInfoTcp	/* An updated list of virtual machines that the user has. */
 {
 	public SharedDefinitions.VmGeneralDescriptor[] VmDescriptors { get; }
 
@@ -27,7 +35,7 @@ public class MessageInfoVmList : MessageInfo	/* An updated list of virtual machi
 	}
 }
 
-public class MessageInfoVmScreenFrame : MessageInfo
+public class MessageInfoVmScreenFrame : MessageInfoTcp
 {
 	public int VmId { get; }
 	public Size Size { get; }
@@ -46,7 +54,7 @@ public class MessageInfoVmScreenFrame : MessageInfo
 	                                         Framebuffer != null && Framebuffer.Length > 0;
 }
 
-public class MessageInfoVmAudioPacket : MessageInfo
+public class MessageInfoVmAudioPacket : MessageInfoTcp
 {
 	public int VmId { get; }
 	public byte[] Packet { get; }
@@ -61,7 +69,7 @@ public class MessageInfoVmAudioPacket : MessageInfo
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Packet != null && Packet.Length > 0;
 }
 
-public class MessageInfoVmPoweredOn : MessageInfo
+public class MessageInfoVmPoweredOn : MessageInfoTcp
 {
 	public int VmId { get; }
 
@@ -74,7 +82,7 @@ public class MessageInfoVmPoweredOn : MessageInfo
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
-public class MessageInfoVmPoweredOff : MessageInfo
+public class MessageInfoVmPoweredOff : MessageInfoTcp
 {
 	public int VmId { get; }
 
@@ -87,7 +95,7 @@ public class MessageInfoVmPoweredOff : MessageInfo
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
-public class MessageInfoVmCrashed : MessageInfo
+public class MessageInfoVmCrashed : MessageInfoTcp
 {
 	public int VmId { get; }
 
@@ -100,7 +108,7 @@ public class MessageInfoVmCrashed : MessageInfo
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
-public class MessageInfoPointerMoved : MessageInfo
+public class MessageInfoPointerMoved : MessageInfoTcp
 {
 	public int VmId { get; }
 	public Point Position { get; }
@@ -115,7 +123,7 @@ public class MessageInfoPointerMoved : MessageInfo
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Position.X >= 0 && Position.Y >= 0;
 }
 
-public class MessageInfoPointerButtonEvent : MessageInfo
+public class MessageInfoPointerButtonEvent : MessageInfoTcp
 {
 	public int VmId { get; }
 	public Point Position { get; }
@@ -132,7 +140,7 @@ public class MessageInfoPointerButtonEvent : MessageInfo
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Position.X >= 0 && Position.Y >= 0;
 }
 
-public class MessageInfoKeyboardKeyEvent : MessageInfo
+public class MessageInfoKeyboardKeyEvent : MessageInfoTcp
 {
 	public int VmId { get; }
 	public PhysicalKey Key { get; }

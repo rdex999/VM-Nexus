@@ -122,11 +122,12 @@ public class MessagingService
 					break;
 				}
 				
-				case MessageInfo info:
+				case MessageInfoTcp:
+				case MessageInfoUdp:
 				{
-					if (info.IsValidMessage())
+					if (message.IsValidMessage())
 					{
-						_ = HandleInfoAsync(info, token);
+						_ = HandleInfoAsync(message, token);
 					}
 					break;
 				}
@@ -236,7 +237,7 @@ public class MessagingService
 	/// Sends an info message to the other side (client/server)
 	/// </summary>
 	/// <param name="info">
-	/// The info message to send. info != null.
+	/// The info message to send. info != null &amp;&amp; (info is MessageInfoTcp || info is MessageInfoUdp)
 	/// </param>
 	/// <returns>
 	/// An exit code indicating the result of the operation.
@@ -246,7 +247,7 @@ public class MessagingService
 	/// Postcondition: Message info sent to the other side on success, exit code states success.
 	/// On failure, the info message is not sent, and the exit code indicates the error.
 	/// </remarks>
-	protected void SendInfo(MessageInfo info) => SendMessage(info);
+	protected void SendInfo(Message info) => SendMessage(info);
 
 	/// <summary>
 	/// Enqueues a message in the message queue - the message will be sent. (Basically sends the message)
@@ -333,7 +334,7 @@ public class MessagingService
 	/// If the token requests' cancellation while processing the info message, <br/>
 	/// this method will return and the info message should be considered not handled/processed.
 	/// </remarks>
-	private async Task HandleInfoAsync(MessageInfo info, CancellationToken token)
+	private async Task HandleInfoAsync(Message info, CancellationToken token)
 	{
 		try
 		{
@@ -504,14 +505,14 @@ public class MessagingService
 	/// Children of this class can override this method to implement message info handling.
 	/// </summary>
 	/// <param name="info">
-	/// The sent message info that should be processed. info != null.
+	/// The sent message info that should be processed. info != null &amp;&amp; (info is MessageInfoTcp || info is MessageInfoUdp).
 	/// </param>
 	/// <remarks>
 	/// Precondition: Service fully initialized and connected to the other side. <br/>
-	/// A message of info type was received - should be processed. info != null. <br/>
+	/// A message of info type was received - should be processed. info != null &amp;&amp; (info is MessageInfoTcp || info is MessageInfoUdp) <br/>
 	/// Postcondition: Info is considered processed.
 	/// </remarks>
-	protected virtual async Task ProcessInfoAsync(MessageInfo info)
+	protected virtual async Task ProcessInfoAsync(Message info)
 	{
 	}
 	

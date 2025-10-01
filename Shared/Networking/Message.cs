@@ -15,3 +15,19 @@ public class Message
 		return true; 
 	}
 }
+
+public class MessageTcp : Message
+{
+	public MessageTcp(bool generateGuid)
+		: base(generateGuid)
+	{
+	}
+}
+
+public class MessageUdp : Message
+{
+	public MessageUdp(bool generateGuid)
+		: base(generateGuid)
+	{
+	}
+}

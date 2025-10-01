@@ -493,13 +493,14 @@ public class ClientService : MessagingService
 	/// Handles message info's from the server.
 	/// </summary>
 	/// <param name="info">
-	/// The info message that was sent by the server. info != null.
+	/// The info message that was sent by the server. info != null &amp;&amp; (info is MessageInfoTcp || info is MessageInfoUdp).
 	/// </param>
 	/// <remarks>
-	/// Precondition: Service fully initialized and connected to the server. An info message has been sent from the server. info != null. <br/>
+	/// Precondition: Service fully initialized and connected to the server. An info message has been sent from the server.
+	/// info != null &amp;&amp; (info is MessageInfoTcp || info is MessageInfoUdp) <br/>
 	/// Postcondition: The info message is considered as handled.
 	/// </remarks>
-	protected override async Task ProcessInfoAsync(MessageInfo info)
+	protected override async Task ProcessInfoAsync(Message info)
 	{
 		await base.ProcessInfoAsync(info);
 		
