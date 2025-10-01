@@ -22,6 +22,8 @@ public class PcmAudioPlayerService
 
 	public ExitCode Initialize()
 	{
+		if (IsInitialized) return ExitCode.AlreadyInitialized;
+		
 		_cts = new CancellationTokenSource();
 		_thread = new Thread(AudioPlayer);
 	
@@ -45,6 +47,8 @@ public class PcmAudioPlayerService
 
 	public void Close()
 	{
+		if (!IsInitialized) return;
+		
 		IsInitialized = false;
 		
 		_cts.Cancel();

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -39,6 +40,11 @@ public partial class VmScreenViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		_audioPlayerService = new PcmAudioPlayerService();
+
+		if (Application.Current!.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+		{
+			desktop.ShutdownRequested += OnShutdownRequested;
+		}
 		
 		ClientSvc.VmScreenFrameReceived += OnVmScreenFrameReceived;
 		ClientSvc.VmAudioPacketReceived += OnVmAudioPacketReceived;
@@ -316,6 +322,29 @@ public partial class VmScreenViewModel : ViewModelBase
 		/* TODO: Display a message */
 	}
 
+	/// <summary>
+	/// Handles a shutdown request. (For example, the user closes the window)
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="shutdownRequestedEventArgs">Unused.</param>
+	/// <remarks>
+	/// Precondition: An application shutdown was requested. <br/>
+	/// Postcondition: Video and audio streaming is terminated and application shutdown procedure is started.
+	/// </remarks>
+	private void OnShutdownRequested(object? sender, ShutdownRequestedEventArgs shutdownRequestedEventArgs)
+	{
+		if (!_streamRunning) return;
+	
+		shutdownRequestedEventArgs.Cancel = true;
+		
+		_audioPlayerService.Close();
+		_streamRunning = false;
+		ClientSvc.VmScreenFrameReceived -= OnVmScreenFrameReceived;
+		ClientSvc.VmAudioPacketReceived -= OnVmAudioPacketReceived;
+
+		Task.Run(() => ((IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!).TryShutdown());
+	}
+	
 	/// <summary>
 	/// Handles a pointer (mouse) move.
 	/// </summary>

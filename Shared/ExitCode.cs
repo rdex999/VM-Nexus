@@ -5,6 +5,7 @@ public enum ExitCode
 	Success = 0,
 	InvalidParameter,
 	CallOnInvalidCondition,
+	AlreadyInitialized,
 	ServerNoValidLocalhostIp,
 	ConnectionToServerFailed,
 	DisconnectedFromServer,
