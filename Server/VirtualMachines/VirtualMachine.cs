@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -754,7 +755,18 @@ public class VirtualMachineVncRenderTarget : IRenderTarget
 	private void OnFramebufferReleased(FramebufferReference framebufferReference)
 	{
 		_framebufferHandle!.Value.Free();
-		NewFrameReceived?.Invoke(this, new VirtualMachineFrame(_vmId, new System.Drawing.Size(ScreenSize.Width, ScreenSize.Height), _framebuffer!));
+
+		byte[] compressed;
+		using (MemoryStream stream = new MemoryStream())
+		{
+			using (BrotliStream brotliStream = new BrotliStream(stream, CompressionLevel.Fastest, true))
+			{
+				brotliStream.Write(_framebuffer.AsSpan());
+			}
+			compressed = stream.ToArray();
+		}
+		
+		NewFrameReceived?.Invoke(this, new VirtualMachineFrame(_vmId, new System.Drawing.Size(ScreenSize.Width, ScreenSize.Height), compressed));
 		_grabbed = false;
 	}
 

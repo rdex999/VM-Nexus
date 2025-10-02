@@ -1,5 +1,7 @@
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.IO.Compression;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Avalonia;
@@ -230,8 +232,16 @@ public partial class VmScreenViewModel : ViewModelBase
 			VmScreenBitmap = new WriteableBitmap(new PixelSize(frame.Size.Width, frame.Size.Height), new Vector(96, 96), _pixelFormat);
 		}
 
+		using MemoryStream input = new MemoryStream(frame.CompressedFramebuffer);
+		using MemoryStream output = new MemoryStream();
+		using (BrotliStream brotliStream = new BrotliStream(input, CompressionMode.Decompress))
+		{
+			brotliStream.CopyTo(output);
+		}
+		byte[] framebuffer = output.ToArray();
+
 		using ILockedFramebuffer buffer = VmScreenBitmap.Lock();
-		Marshal.Copy(frame.Framebuffer, 0, buffer.Address, frame.Size.Width * frame.Size.Height * (_pixelFormat.Value.BitsPerPixel / 8));
+		Marshal.Copy(framebuffer, 0, buffer.Address, frame.Size.Width * frame.Size.Height * (_pixelFormat.Value.BitsPerPixel / 8));
 		Dispatcher.UIThread.Invoke(NewFrameReceived!);
 	}
 

@@ -39,19 +39,19 @@ public class MessageInfoVmScreenFrame : MessageInfoUdp
 {
 	public int VmId { get; }
 	public Size Size { get; }
-	public byte[] Framebuffer { get; }
+	public byte[] CompressedFramebuffer { get; }
 
-	public MessageInfoVmScreenFrame(bool generateGuid, int vmId, Size size, byte[] framebuffer)
+	public MessageInfoVmScreenFrame(bool generateGuid, int vmId, Size size, byte[] compressedFramebuffer)
 		: base(generateGuid)
 	{
 		VmId = vmId;
 		Size = size;
-		Framebuffer = framebuffer;
+		CompressedFramebuffer = compressedFramebuffer;
 	}
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 &&
 	                                         Size != null && Size.Width > 0 && Size.Height > 0 && 
-	                                         Framebuffer != null && Framebuffer.Length > 0;
+	                                         CompressedFramebuffer != null && CompressedFramebuffer.Length > 0;
 }
 
 public class MessageInfoVmAudioPacket : MessageInfoUdp
