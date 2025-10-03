@@ -41,7 +41,7 @@ public class VirtualMachine
 	
 	private readonly DatabaseService _databaseService;
 	private readonly DriveService _driveService;
-	private Domain _domain = null!;
+	private Domain _libvirtDomain = null!;
 	private RfbConnection _rfbConnection = null!;
 	private readonly CancellationTokenSource _cts;
 
@@ -54,7 +54,7 @@ public class VirtualMachine
 	private bool _isRightShiftKeyDown = false;
 	private readonly string _pcmAudioFilePath;
 	private int _fps = 20;
-	private object _frameLock;
+	private readonly object _frameLock;
 	private VirtualMachineFrame? _lastFrame = null;
 	
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
@@ -74,37 +74,67 @@ public class VirtualMachine
 		_frameLock = new object();
 	}
 
+	/// <summary>
+	/// Closes this instance of the virtual machine interface.
+	/// If the virtual machine is not already shut down, a graceful shutdown will be attempted,
+	/// after a timeout the virtual machine will be forced off.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The virtual machine was shutdown/crashed, or closing it is required. <br/>
+	/// Postcondition: The virtual machine is powered off, the connection to the virtual machine is closed, (VNC) resources are freed.
+	/// </remarks>
 	public async Task CloseAsync()
 	{
+		StopScreenStream();
+		
 		if (GetVmState() == SharedDefinitions.VmState.Running)
 		{
 			await PowerOffAndDestroyOnTimeout();
 		}
-		_cts.Cancel();
+		await _cts.CancelAsync();
 		_cts.Dispose();
+
 		
-		await _rfbConnection.CloseAsync();
+		try
+		{
+			await _rfbConnection.CloseAsync();
+		}
+		catch (Exception)
+		{
+			// ignored
+		}
+
 		_rfbConnection.Dispose();
-		
-		// File.Delete(_pcmAudioFilePath);
+
+		await using FileStream fileStream = new FileStream(_pcmAudioFilePath, FileMode.Truncate);
 	}
 
+	/// <summary>
+	/// Powers on this virtual machine.
+	/// </summary>
+	/// <param name="libvirtConnection">The libvirt connection. libvirtConnection != null.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: The virtual machine is powered off. libvirtConnection is connected. libvirtConnection != null. <br/>
+	/// Postcondition: On success, the virtual machine is powered on, and the returned exit code will indicate success. <br/>
+	/// On failure, the virtual machine is not powered on, and the returned exit code will indicate the error.
+	/// </remarks>
 	public async Task<ExitCode> PowerOnAsync(Connect libvirtConnection)
 	{
 		// int status = mkfifo(_pcmAudioFilePath, 511);
 		// if (status != 0) return ExitCode.NamedPipeCreationFailed;
 
-		string xml = AsXmlDocument().ToString();
+		string xml = AsLibvirtDomainXml().ToString();
 		try
 		{
-			_domain = libvirtConnection.CreateDomain(xml);
+			_libvirtDomain = libvirtConnection.CreateDomain(xml);
 		}
 		catch (Exception)
 		{
 			return ExitCode.VmStartupFailed;
 		}
 		
-		XDocument xmlDoc = XDocument.Parse(_domain.Xml);
+		XDocument xmlDoc = XDocument.Parse(_libvirtDomain.Xml);
 		XElement? devices = xmlDoc.Descendants("devices").FirstOrDefault();
 		if (devices == null) return ExitCode.InvalidVmXml;
 		
@@ -154,9 +184,18 @@ public class VirtualMachine
 		return await _databaseService.SetVmStateAsync(Id, SharedDefinitions.VmState.Running);
 	}
 
+	/// <summary>
+	/// Attempts to gracefully power off the virtual machine. The virtual machine might ignore this signal.
+	/// </summary>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: The virtual machine is running, a power off is required. <br/>
+	/// Postcondition: On success, the virtual machine is powered off and the returned exit code will indicate success. <br/>
+	/// On failure, the virtual machine is not powered off, and the returned exit code will indicate the error.
+	/// </remarks>
 	public async Task<ExitCode> PowerOffAsync()
 	{
-		_domain.Shutdown();
+		_libvirtDomain.Shutdown();
 
 		try
 		{
@@ -174,6 +213,20 @@ public class VirtualMachine
 		}
 	}
 
+	/// <summary>
+	/// Attempts to gracefully power off the virtual machine.
+	/// If the virtual machine ignores the shutdown signal, (not shutdown on timeout) it will be forced shutdown.
+	/// </summary>
+	/// <returns>
+	/// An exit code indicating the result of the operation.
+	/// If a forced shutdown was done, ExitCode.VmShutdownTimeout is returned.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: The virtual machine is powered on. It must be shutdown. <br/>
+	/// Postcondition: The virtual machine is shutdown.
+	/// If the virtual machine responded to the shutdown signal, and did in fact shutdown, ExitCode.Success is returned.
+	/// If the graceful shutdown has timed out, the virtual machine is forced shut down (destroyed) and ExitCode.VmShutdownTimeout is returned.
+	/// </remarks>
 	public async Task<ExitCode> PowerOffAndDestroyOnTimeout()
 	{
 		ExitCode result = await PowerOffAsync();
@@ -185,22 +238,58 @@ public class VirtualMachine
 		return result;
 	}
 
-	public void Destroy()
-	{
-		_domain.Destroy();
-	}
+	/// <summary>
+	/// Destroys the virtual machine - forced shutdown.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The virtual machine is running, a forced shutdown is required. <br/>
+	/// Postcondition: The virtual machine is destroyed.
+	/// </remarks>
+	public void Destroy() => _libvirtDomain.Destroy();
 
+	/// <summary>
+	/// Checks if the screen stream of the virtual machine is running.
+	/// </summary>
+	/// <returns>True if the stream is running, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: The virtual machine is running. <br/>
+	/// Postcondition: Returns whether the screen stream of the virtual machine is running. (true = running, false = not running)
+	/// </remarks>
 	public bool IsScreenStreamRunning() => GetRenderTarget() != null;
-	
+
+	/// <summary>
+	/// Enqueues a request to receive a full frame of the virtual machines screen. The frame will be received by the FrameReceived event.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The virtual machine is running, and its screen stream is running. <br/>
+	/// Postcondition: The request is enqueued in the virtual machines message queue.
+	/// </remarks>
 	public void EnqueueGetFullFrame() => _rfbConnection.EnqueueMessage(
 		new FramebufferUpdateRequestMessage(false,
 			new Rectangle(0, 0, GetRenderTarget()!.ScreenSize.Width, GetRenderTarget()!.ScreenSize.Height))
 	);
-
+	
+	/// <summary>
+	/// Enqueues a pointer event message in the virtual machine, specifying the new location of the pointer on the virtual machines' screen.
+	/// </summary>
+	/// <param name="position">The new pointer position on the virtual machines' screen. Must be in valid range. position != null</param>
+	/// <remarks>
+	/// Precondition: The virtual machine is running, and its screen stream is running. The mouse position must be in valid range. position != null.<br/>
+	/// Postcondition: The message is enqueued in the virtual machines message queue.
+	/// </remarks>
 	public void EnqueuePointerMovement(Point position) => _rfbConnection.EnqueueMessage(
 		new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons)
 	);
 
+	/// <summary>
+	/// Enqueues a pointer event message in the virtual machine, specifying the new location of the pointer along with the new currently pressed mouse buttons.
+	/// </summary>
+	/// <param name="position">The new pointer position on the virtual machines' screen. Must be in valid range. position != null</param>
+	/// <param name="pressedButtons">The currently pressed mouse buttons.</param>
+	/// <remarks>
+	/// Precondition: The virtual machine is running, and its screen stream is running. The mouse position must be in valid range. position != null.<br/>
+	/// Postcondition: The message is enqueued in the virtual machines message queue.
+	/// </remarks>
 	public void EnqueuePointerButtonEvent(Point position, int pressedButtons)
 	{
 		if (pressedButtons == _pointerPressedButtons) return;
@@ -224,6 +313,15 @@ public class VirtualMachine
 		);
 	}
 
+	/// <summary>
+	/// Enqueues a keyboard key event message in the virtual machine, specifying a key and whether it's pressed or not
+	/// </summary>
+	/// <param name="key">The physical keyboard key that was pressed or released.</param>
+	/// <param name="pressed">Whether this is a key press or release event. (true = pressed, false = released)</param>
+	/// <remarks>
+	/// Precondition: The virtual machine is running, and its screen stream is running. <br/>
+	/// Postcondition: The message is enqueued in the virtual machines message queue.
+	/// </remarks>
 	public void EnqueueKeyboardKeyEvent(PhysicalKey key, bool pressed)
 	{
 		if (PhysicalKeyToKeySymbol.TryGetValue(key, out KeySymbol keySymbol))
@@ -245,16 +343,31 @@ public class VirtualMachine
 		}
 	}
 
+	/// <summary>
+	/// Gets the used pixel format in the virtual machines' screen stream.
+	/// </summary>
+	/// <returns>The used pixel format, or null if the stream is not running.</returns>
+	/// <remarks>
+	/// Precondition: The virtual machine is running, and its screen stream is running. <br/>
+	/// Postcondition: On success, the used pixel format for the screen stream is returned.
+	/// On failure, (stream not running) null is returned.
+	/// </remarks>
 	public Shared.PixelFormat? GetScreenStreamPixelFormat()
 	{
-		if (!IsScreenStreamRunning())
-		{
-			return null;
-		}
+		if (!IsScreenStreamRunning()) return null;
 
 		return GetRenderTarget()!.UniPixelFormat;
 	}
 
+	/// <summary>
+	/// Starts the screen stream of the virtual machine.
+	/// </summary>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: The virtual machine is running. VNC is connected. <br/>
+	/// Postcondition: On success, the stream is started and the FrameReceived event will receive frames. <br/>
+	/// On failure, the stream is not started and the returned exit code indicates the error.
+	/// </remarks>
 	private ExitCode StartScreenStream()
 	{
 		if (IsScreenStreamRunning())
@@ -282,8 +395,22 @@ public class VirtualMachine
 		return ExitCode.Success;
 	}
 
+	/// <summary>
+	/// Stops the screen stream of the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Virtual machine is running, screen stream running. <br/>
+	/// Postcondition: The screen stream is stopped, FrameReceived will not receive frames.
+	/// </remarks>
 	private void StopScreenStream() => _rfbConnection.RenderTarget = null;
 
+	/// <summary>
+	/// Handles state informing. Informs of state changed of the virtual machine. (powered off, crashed)
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The virtual machine was powered on and is running. <br/>
+	/// Postcondition: Virtual machine was powered off or crashed, events are invoked accordingly.
+	/// </remarks>
 	private async Task StateInformerAsync()
 	{
 		virDomainState lastState = GetState();
@@ -325,6 +452,13 @@ public class VirtualMachine
 		}
 	}
 
+	/// <summary>
+	/// Sends screen frame received events.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The virtual machine was powered on, screen stream is running. <br/>
+	/// Postcondition: While running, invokes screen frame received events if frames are received. Returns on virtual machine shutdown.
+	/// </remarks>
 	private async Task FrameSenderAsync()
 	{
 		Stopwatch stopwatch = Stopwatch.StartNew();
@@ -356,7 +490,14 @@ public class VirtualMachine
 			}
 		}
 	}
-	
+
+	/// <summary>
+	/// Handles capturing the virtual machines' audio and sending it, by invoking the AudioPacketReceived event.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The virtual machine was powered on - running. The file _pcmAudioFilePath exists. (Libvirt creates it on VM startup) <br/>
+	/// Postcondition: While running, invokes the AudioPacketReceived for each audio packet that is received. Returns on virtual machine shutdown.
+	/// </remarks>
 	private async Task AudioCaptureWorkerAsync()
 	{
 		FileStream stream;
@@ -384,34 +525,42 @@ public class VirtualMachine
 			bytesRead += currentRead;
 		}
 
-		int framesPerPacket = (int)((float)SharedDefinitions.AudioFramesFrequency * ((float)SharedDefinitions.AudioPacketMs / 1000.0));
-		int bytesPerPacket = framesPerPacket * SharedDefinitions.AudioChannels * 2;	/* Using two channels, s16le */
-		buffer = new byte[bytesPerPacket];
+		buffer = new byte[SharedDefinitions.AudioBytesPerPacket];
 
 		Stopwatch stopwatch = new Stopwatch();
 		while (!_cts.IsCancellationRequested)
 		{
 			stopwatch.Restart();
 			bytesRead = 0;
-			while (bytesRead < bytesPerPacket)
+			while (bytesRead < SharedDefinitions.AudioBytesPerPacket)
 			{
 				int currentRead;
 				try
 				{
-					currentRead = await stream.ReadAsync(buffer, bytesRead, bytesPerPacket - bytesRead, _cts.Token).ConfigureAwait(false);
+					currentRead = await stream
+						.ReadAsync(buffer, bytesRead, SharedDefinitions.AudioBytesPerPacket - bytesRead, _cts.Token)
+						.ConfigureAwait(false);
 				}
-				catch (OperationCanceledException) { return; }
+				catch (OperationCanceledException)
+				{
+					return;
+				}
 
 				bytesRead += currentRead;
 
+				/*
+				 * If stopped receiving samples and the packet time has elapsed, (currentRead == 0 && stopwatch.ElapsedMilliseconds > SharedDefinitions.AudioPacketMs - 2)
+				 * but we read some frames into the current packet, (bytesRead > 0) then fill the rest of the packet with silence and send it.
+				 */
 				if (stopwatch.ElapsedMilliseconds > SharedDefinitions.AudioPacketMs - 2 && currentRead == 0 && bytesRead > 0)
 				{
 					Array.Clear(buffer, bytesRead, buffer.Length - bytesRead);
 					break;
 				}
 			}
-	
-			if(!AllBytesZeros(buffer))
+
+			/* Do not send the packet if its silent. */
+			if(!Common.IsAllBytesZeros(buffer))
 			{
 				if (stopwatch.ElapsedMilliseconds < SharedDefinitions.AudioPacketMs)
 				{
@@ -421,24 +570,15 @@ public class VirtualMachine
 			}
 		}
 	}
-	private bool AllBytesZeros(byte[] a)
-	{
-		var span = a.AsSpan();
-		int i = 0;
 
-		// check 8 bytes at a time
-		while (i + 8 <= span.Length)
-		{
-			if (BitConverter.ToUInt64(span.Slice(i, 8)) != 0UL) return false;
-			i += 8;
-		}
-		while (i < span.Length)		/* Checks for the remaining bytes, after the last multiple of 8 */
-		{
-			if (span[i++] != 0) return false;
-		}
-		return true;
-	}
-
+	/// <summary>
+	/// Get the state of the virtual machine. (Running, ShutDown)
+	/// </summary>
+	/// <returns>The state of the virtual machine.</returns>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: Returns the state of the virtual machine.
+	/// </remarks>
 	public SharedDefinitions.VmState GetVmState()
 	{
 		return GetState() switch
@@ -447,20 +587,40 @@ public class VirtualMachine
 			_ => SharedDefinitions.VmState.Running,
 		};
 	}
-	
+
+	/// <summary>
+	/// Get the state of the virtual machine, as a libvirt state. (virDomainState)
+	/// </summary>
+	/// <returns>The state of the virtual machine.</returns>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: The state of the virtual machine is returned.
+	/// </remarks>
 	private virDomainState GetState()
 	{
+		// ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+		if (_libvirtDomain == null) return virDomainState.VIR_DOMAIN_SHUTOFF;
+		
 		try
 		{
-			return _domain.Info.State;
+			return _libvirtDomain.Info.State;
 		}
 		catch (LibvirtException)
 		{
 			return virDomainState.VIR_DOMAIN_SHUTOFF;
 		}
 	}
-	
-	private XDocument AsXmlDocument()
+
+	/// <summary>
+	/// Get libvirt domain XML of this virtual machine.
+	/// </summary>
+	/// <returns>An XML document, specifying a libvirt domain of this virtual machine.</returns>
+	/// <exception cref="ArgumentOutOfRangeException">Thrown if _cpuArchitecture contains an invalid or unsupported value.</exception>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: A libvirt domain XML description of this virtual machine is returned.
+	/// </remarks>
+	private XDocument AsLibvirtDomainXml()
 	{
 		string cpuArch = _cpuArchitecture switch
 		{
@@ -589,10 +749,31 @@ public class VirtualMachine
 		return doc;
 	}
 
+	/// <summary>
+	/// Gets the render target of the VNC connection, as a VirtualMachineVncRenderTarget.
+	/// </summary>
+	/// <returns>The VNC render target, or null if no render target was set.</returns>
+	/// <remarks>
+	/// Precondition: The VNC render target should be set. _rfbConnection.RenderTarget != null. <br/>
+	/// Postcondition: If the render target was set, it is returned as a VirtualMachineVncRenderTarget. Otherwise, null is returned.
+	/// </remarks>
 	private VirtualMachineVncRenderTarget? GetRenderTarget() => (VirtualMachineVncRenderTarget?)_rfbConnection.RenderTarget;
 	
 	private class VirtualMachineVncAuthenticationHandler : IAuthenticationHandler
 	{
+		/// <summary>
+		/// Handles a VNC authentication request.
+		/// </summary>
+		/// <param name="connection">Unused.</param>
+		/// <param name="securityType">Unused.</param>
+		/// <param name="request">Unused.</param>
+		/// <typeparam name="TInput">Must be PasswordAuthenticationInput.</typeparam>
+		/// <returns>The authentication input needed to authenticate the VNC client.</returns>
+		/// <exception cref="InvalidOperationException">Thrown if TInput is not PasswordAuthenticationInput.</exception>
+		/// <remarks>
+		/// Precondition: VNC client authentication is needed. TInput is PasswordAuthenticationInput. <br/>
+		/// Postcondition: PasswordAuthenticationInput is returned.
+		/// </remarks>
 		public async Task<TInput> ProvideAuthenticationInputAsync<TInput>(RfbConnection connection, ISecurityType securityType, IAuthenticationInputRequest<TInput> request)
 			where TInput : class, IAuthenticationInput
 		{
@@ -717,101 +898,102 @@ public class VirtualMachine
 	
 	[DllImport("libc", SetLastError = true)]
 	private static extern int mkfifo(string pathname, uint mode);
-}
 
-public class VirtualMachineVncRenderTarget : IRenderTarget
-{
-	public event EventHandler<VirtualMachineFrame>? NewFrameReceived;
-	private readonly int _vmId;
-	private byte[]? _framebuffer;
-	private readonly object _lock;
-	public Size ScreenSize { get; private set; }
-	private readonly PixelFormat _pixelFormat;
-	public Shared.PixelFormat UniPixelFormat { get; }		/* Universal pixel format */
-	private bool _grabbed = false;
-	private GCHandle? _framebufferHandle;
+	private class VirtualMachineVncRenderTarget : IRenderTarget
+	{
+		public event EventHandler<VirtualMachineFrame>? NewFrameReceived;
+		private readonly int _vmId;
+		private byte[]? _framebuffer;
+		private readonly object _lock;
+		public Size ScreenSize { get; private set; }
+		private readonly PixelFormat _pixelFormat;
+		public Shared.PixelFormat UniPixelFormat { get; } /* Universal pixel format */
+		private bool _grabbed = false;
+		private GCHandle? _framebufferHandle;
 
-	public VirtualMachineVncRenderTarget(int vmId, PixelFormat pixelFormat)
-	{
-		_vmId = vmId;
-		_pixelFormat = pixelFormat;
-		UniPixelFormat = new Shared.PixelFormat(_pixelFormat.BitsPerPixel, _pixelFormat.HasAlpha, _pixelFormat.RedShift,
-			_pixelFormat.GreenShift, _pixelFormat.BlueShift, _pixelFormat.AlphaShift);
-		
-		_lock = new object();
-		ScreenSize = new Size(0, 0);
-	}
-	
-	public IFramebufferReference GrabFramebufferReference(Size size, IImmutableSet<Screen> layout)
-	{
-		if (_grabbed)
+		public VirtualMachineVncRenderTarget(int vmId, PixelFormat pixelFormat)
 		{
-			throw new InvalidOperationException("Framebuffer is already grabbed.");
+			_vmId = vmId;
+			_pixelFormat = pixelFormat;
+			UniPixelFormat = new Shared.PixelFormat(_pixelFormat.BitsPerPixel, _pixelFormat.HasAlpha, _pixelFormat.RedShift,
+				_pixelFormat.GreenShift, _pixelFormat.BlueShift, _pixelFormat.AlphaShift);
+
+			_lock = new object();
+			ScreenSize = new Size(0, 0);
 		}
 
-		_grabbed = true;
-		
-		lock (_lock)
+		public IFramebufferReference GrabFramebufferReference(Size size, IImmutableSet<Screen> layout)
 		{
-			if (_framebuffer == null || ScreenSize != size)
+			if (_grabbed)
 			{
-				ScreenSize = size;
-				_framebuffer = new byte[ScreenSize.Width * ScreenSize.Height * _pixelFormat.BytesPerPixel];
+				throw new InvalidOperationException("Framebuffer is already grabbed.");
 			}
 
-			_framebufferHandle = GCHandle.Alloc(_framebuffer, GCHandleType.Pinned);
-			return new FramebufferReference(_framebufferHandle.Value.AddrOfPinnedObject(), ScreenSize, _pixelFormat)
+			_grabbed = true;
+
+			lock (_lock)
 			{
-				Released = OnFramebufferReleased
-			};
-		}
-	}
+				if (_framebuffer == null || ScreenSize != size)
+				{
+					ScreenSize = size;
+					_framebuffer = new byte[ScreenSize.Width * ScreenSize.Height * _pixelFormat.BytesPerPixel];
+				}
 
-	public bool HasNewFrameReceivedSubscribers()
-	{
-		if (NewFrameReceived == null)
-		{
-			return false;
-		}
-		
-		return NewFrameReceived.GetInvocationList().Length > 0;
-	}
-
-	private void OnFramebufferReleased(FramebufferReference framebufferReference)
-	{
-		_framebufferHandle!.Value.Free();
-
-		byte[] compressed;
-		using (MemoryStream stream = new MemoryStream())
-		{
-			using (BrotliStream brotliStream = new BrotliStream(stream, CompressionLevel.Fastest, true))
-			{
-				brotliStream.Write(_framebuffer.AsSpan());
+				_framebufferHandle = GCHandle.Alloc(_framebuffer, GCHandleType.Pinned);
+				return new FramebufferReference(_framebufferHandle.Value.AddrOfPinnedObject(), ScreenSize, _pixelFormat)
+				{
+					Released = OnFramebufferReleased
+				};
 			}
-			compressed = stream.ToArray();
 		}
-		
-		NewFrameReceived?.Invoke(this, new VirtualMachineFrame(_vmId, new System.Drawing.Size(ScreenSize.Width, ScreenSize.Height), compressed));
-		_grabbed = false;
-	}
 
-	private class FramebufferReference : IFramebufferReference
-	{
-		public IntPtr Address { get; }
-		public Size Size { get; }
-		public PixelFormat Format { get; }
-		public double HorizontalDpi { get; set; }
-		public double VerticalDpi { get; set; }
-		public Action<FramebufferReference>? Released { get; set; }
-
-		public FramebufferReference(IntPtr address, Size size, PixelFormat format)
+		public bool HasNewFrameReceivedSubscribers()
 		{
-			Address = address;
-			Size = size;
-			Format = format;
+			if (NewFrameReceived == null)
+			{
+				return false;
+			}
+
+			return NewFrameReceived.GetInvocationList().Length > 0;
 		}
-		
-		public void Dispose() => Released?.Invoke(this);
+
+		private void OnFramebufferReleased(FramebufferReference framebufferReference)
+		{
+			_framebufferHandle!.Value.Free();
+
+			byte[] compressed;
+			using (MemoryStream stream = new MemoryStream())
+			{
+				using (BrotliStream brotliStream = new BrotliStream(stream, CompressionLevel.Fastest, true))
+				{
+					brotliStream.Write(_framebuffer.AsSpan());
+				}
+
+				compressed = stream.ToArray();
+			}
+
+			NewFrameReceived?.Invoke(this, new VirtualMachineFrame(_vmId, new System.Drawing.Size(ScreenSize.Width, ScreenSize.Height), compressed));
+			_grabbed = false;
+		}
+
+		private class FramebufferReference : IFramebufferReference
+		{
+			public IntPtr Address { get; }
+			public Size Size { get; }
+			public PixelFormat Format { get; }
+			public double HorizontalDpi { get; set; }
+			public double VerticalDpi { get; set; }
+			public Action<FramebufferReference>? Released { get; set; }
+
+			public FramebufferReference(IntPtr address, Size size, PixelFormat format)
+			{
+				Address = address;
+				Size = size;
+				Format = format;
+			}
+
+			public void Dispose() => Released?.Invoke(this);
+		}
 	}
 }
 

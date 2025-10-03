@@ -243,4 +243,33 @@ public static class Common
 		}
 		return result;
 	}
+	
+	/// <summary>
+	/// Checks whether all bytes in the given array are 0.
+	/// </summary>
+	/// <param name="arr">The byte array to check the bytes of. arr != null.</param>
+	/// <returns>True if all the bytes in the given array are 0, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: arr != null. <br/>
+	/// Postcondition: Returns true if all the bytes in the given array are 0, false otherwise.
+	/// </remarks>
+	public static bool IsAllBytesZeros(byte[] arr)
+	{
+		var span = arr.AsSpan();
+		int i = 0;
+
+		/* check 8 bytes at a time */
+		while (i + 8 <= span.Length)
+		{
+			if (BitConverter.ToUInt64(span.Slice(i, 8)) != 0UL) return false;
+			i += 8;
+		}
+		
+		/* Checks the remaining bytes after the last multiple of 8 */
+		while (i < span.Length)		
+		{
+			if (span[i++] != 0) return false;
+		}
+		return true;
+	}
 }
