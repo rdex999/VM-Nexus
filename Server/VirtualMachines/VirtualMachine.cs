@@ -32,6 +32,7 @@ public class VirtualMachine
 {
 	public event EventHandler<int>? PoweredOff;
 	public event EventHandler<int>? Crashed;
+	public event EventHandler<VirtualMachineFrame>? FrameReceived;
 	public event EventHandler<byte[]>? AudioPacketReceived;					/* Gives the packet byte array - representing frames. (two channels, s16le) */
 	public readonly TaskCompletionSource<virDomainState> PoweredOffTcs;		/* Returns the new state - powered off, crashed */
 	
@@ -52,6 +53,9 @@ public class VirtualMachine
 	private bool _isLeftShiftKeyDown = false;
 	private bool _isRightShiftKeyDown = false;
 	private readonly string _pcmAudioFilePath;
+	private int _fps = 20;
+	private object _frameLock;
+	private VirtualMachineFrame? _lastFrame = null;
 	
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
@@ -67,6 +71,7 @@ public class VirtualMachine
 
 		PoweredOffTcs = new TaskCompletionSource<virDomainState>();
 		_cts = new CancellationTokenSource();
+		_frameLock = new object();
 	}
 
 	public async Task CloseAsync()
@@ -136,6 +141,7 @@ public class VirtualMachine
 		}
 
 		_ = StateInformerAsync();
+		_ = FrameSenderAsync();
 		_ = AudioCaptureWorkerAsync();
 		
 		ExitCode result = StartScreenStream();
@@ -186,27 +192,6 @@ public class VirtualMachine
 
 	public bool IsScreenStreamRunning() => GetRenderTarget() != null;
 	
-	public ExitCode SubscribeToNewFrameReceived(EventHandler<VirtualMachineFrame> handler)
-	{
-		if (!IsScreenStreamRunning()) return ExitCode.VmScreenStreamNotRunning;
-	
-		GetRenderTarget()!.NewFrameReceived += handler;
-		
-		return ExitCode.Success;
-	}
-
-	public ExitCode UnsubscribeFromNewFrameReceived(EventHandler<VirtualMachineFrame> handler)
-	{
-		if (!IsScreenStreamRunning())
-		{
-			return ExitCode.VmScreenStreamNotRunning;
-		}
-	
-		GetRenderTarget()!.NewFrameReceived -= handler;
-
-		return ExitCode.Success;	
-	}
-
 	public void EnqueueGetFullFrame() => _rfbConnection.EnqueueMessage(
 		new FramebufferUpdateRequestMessage(false,
 			new Rectangle(0, 0, GetRenderTarget()!.ScreenSize.Width, GetRenderTarget()!.ScreenSize.Height))
@@ -285,6 +270,14 @@ public class VirtualMachine
 		{
 			return ExitCode.VmScreenStreamUnsupportedPixelFormat;
 		}
+
+		GetRenderTarget()!.NewFrameReceived += (sender, frame) =>
+		{
+			lock (_frameLock)
+			{
+				_lastFrame = frame;
+			}
+		};
 			
 		return ExitCode.Success;
 	}
@@ -332,6 +325,38 @@ public class VirtualMachine
 		}
 	}
 
+	private async Task FrameSenderAsync()
+	{
+		Stopwatch stopwatch = Stopwatch.StartNew();
+		while (!_cts.IsCancellationRequested)
+		{
+			stopwatch.Restart();
+			VirtualMachineFrame? frame = null;
+			lock (_frameLock)
+			{
+				if (_lastFrame != null)
+				{
+					frame = _lastFrame;
+					_lastFrame = null;
+				}
+			}
+
+			if (frame != null)
+			{
+				FrameReceived?.Invoke(this, frame);
+			}
+
+			try
+			{
+				await Task.Delay(Math.Max(0, (int)(1000 / _fps - stopwatch.ElapsedMilliseconds)), _cts.Token).ConfigureAwait(false);
+			}
+			catch (OperationCanceledException)
+			{
+				break;
+			}
+		}
+	}
+	
 	private async Task AudioCaptureWorkerAsync()
 	{
 		FileStream stream;

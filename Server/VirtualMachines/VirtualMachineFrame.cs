@@ -7,12 +7,12 @@ public class VirtualMachineFrame
 {
 	public int VmId { get; }
 	public Size Size { get; }
-	public byte[] Framebuffer { get; }
+	public byte[] CompressedFramebuffer { get; }
 
-	public VirtualMachineFrame(int vmId, Size size, byte[] framebuffer)
+	public VirtualMachineFrame(int vmId, Size size, byte[] compressedFramebuffer)
 	{
 		VmId = vmId;
 		Size = size;
-		Framebuffer = framebuffer;
+		CompressedFramebuffer = compressedFramebuffer;
 	}
 }

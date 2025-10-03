@@ -512,7 +512,7 @@ public sealed class ClientConnection : MessagingService
 	{
 		if (!_isLoggedIn || _streamVmId != frame.VmId) return;
 		
-		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, frame.Framebuffer);
+		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, frame.CompressedFramebuffer);
 		SendInfo(frameMessage);
 	}
 

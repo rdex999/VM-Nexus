@@ -38,7 +38,7 @@ public class PcmAudioPlayerService
 		ALC.MakeContextCurrent(context.Value);
 	
 		_source = AL.GenSource();
-		_buffers = AL.GenBuffers(4);
+		_buffers = AL.GenBuffers(16);
 		_thread.Start();
 	
 		IsInitialized = true;

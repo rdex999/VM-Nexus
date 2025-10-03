@@ -207,7 +207,8 @@ public class VirtualMachineService
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
-			return virtualMachine.SubscribeToNewFrameReceived(handler);
+			virtualMachine.FrameReceived += handler;
+			return ExitCode.Success;
 		}
 
 		return ExitCode.VmIsShutDown;
@@ -315,7 +316,8 @@ public class VirtualMachineService
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
-			return virtualMachine.UnsubscribeFromNewFrameReceived(handler);
+			virtualMachine.FrameReceived -= handler;
+			return ExitCode.Success;
 		}
 		
 		return ExitCode.VmIsShutDown;
