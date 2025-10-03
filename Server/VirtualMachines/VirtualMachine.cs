@@ -922,6 +922,18 @@ public class VirtualMachine
 			ScreenSize = new Size(0, 0);
 		}
 
+		/// <summary>
+		/// Called by the VncClient library, to write into the framebuffer. Returns a reference to the framebuffer.
+		/// </summary>
+		/// <param name="size">The size of the needed framebuffer, in pixels. size != null.</param>
+		/// <param name="layout">Unused.</param>
+		/// <returns>An IFramebufferReference, referencing the framebuffer.</returns>
+		/// <exception cref="InvalidOperationException">Thrown if the framebuffer is already grabbed - already is use.</exception>
+		/// <remarks>
+		/// Precondition: VNC has an update and needs to write changes into the framebuffer.
+		/// (For example, the content of the virtual machines' screen has changed) size != null.<br/>
+		/// Postcondition: An IFramebufferReference is returned, referencing the framebuffer.
+		/// </remarks>
 		public IFramebufferReference GrabFramebufferReference(Size size, IImmutableSet<Screen> layout)
 		{
 			if (_grabbed)
@@ -933,7 +945,7 @@ public class VirtualMachine
 
 			lock (_lock)
 			{
-				if (_framebuffer == null || ScreenSize != size)
+				if (_framebuffer == null || ScreenSize.Width * ScreenSize.Height != size.Width * size.Height)
 				{
 					ScreenSize = size;
 					_framebuffer = new byte[ScreenSize.Width * ScreenSize.Height * _pixelFormat.BytesPerPixel];
@@ -947,17 +959,15 @@ public class VirtualMachine
 			}
 		}
 
-		public bool HasNewFrameReceivedSubscribers()
-		{
-			if (NewFrameReceived == null)
-			{
-				return false;
-			}
-
-			return NewFrameReceived.GetInvocationList().Length > 0;
-		}
-
-		private void OnFramebufferReleased(FramebufferReference framebufferReference)
+		/// <summary>
+		/// Handles the framebuffer being released - means it was updated with new content.
+		/// (The screen of the virtual machine has changed, the framebuffer is updated to it)
+		/// </summary>
+		/// <remarks>
+		/// Precondition: The framebuffer was released, and has new content in it. <br/>
+		/// Postcondition: Notifies that a new frame was received. (Invokes the NewFrameReceived event)
+		/// </remarks>
+		private void OnFramebufferReleased()
 		{
 			_framebufferHandle!.Value.Free();
 
@@ -983,7 +993,7 @@ public class VirtualMachine
 			public PixelFormat Format { get; }
 			public double HorizontalDpi { get; set; }
 			public double VerticalDpi { get; set; }
-			public Action<FramebufferReference>? Released { get; set; }
+			public Action? Released { get; init; }
 
 			public FramebufferReference(IntPtr address, Size size, PixelFormat format)
 			{
@@ -992,7 +1002,14 @@ public class VirtualMachine
 				Format = format;
 			}
 
-			public void Dispose() => Released?.Invoke(this);
+			/// <summary>
+			/// Disposes the framebuffer reference, notifies of the framebuffer being released.
+			/// </summary>
+			/// <remarks>
+			/// Precondition: The framebuffer reference was released. <br/>
+			/// Postcondition: The framebuffer reference is disposed, the Released event is invoked.
+			/// </remarks>
+			public void Dispose() => Released?.Invoke();
 		}
 	}
 }
