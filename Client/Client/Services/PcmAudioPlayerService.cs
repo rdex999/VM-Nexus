@@ -9,7 +9,7 @@ namespace Client.Services;
 public class PcmAudioPlayerService
 {
 	public bool IsInitialized { get; private set; }
-	private ConcurrentQueue<byte[]> _packets;
+	private readonly ConcurrentQueue<byte[]> _packets;
 	private CancellationTokenSource _cts = null!;
 	private Thread _thread = null!;
 	private int _source = -1;
@@ -20,6 +20,15 @@ public class PcmAudioPlayerService
 		_packets = new ConcurrentQueue<byte[]>();
 	}
 
+	/// <summary>
+	/// Initializes the service.
+	/// </summary>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service uninitialized. <br/>
+	/// Postcondition: On success, the service is initialized and the returned exit code indicates success. <br/>
+	/// On failure, the service is not initialized and the returned exit code indicates the error.
+	/// </remarks>
 	public ExitCode Initialize()
 	{
 		if (IsInitialized) return ExitCode.AlreadyInitialized;
@@ -39,12 +48,20 @@ public class PcmAudioPlayerService
 	
 		_source = AL.GenSource();
 		_buffers = AL.GenBuffers(16);
+		
+		IsInitialized = true;
 		_thread.Start();
 	
-		IsInitialized = true;
 		return ExitCode.Success;
 	}
 
+	/// <summary>
+	/// Closes and uninitializes the service.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Service initialized. <br/>
+	/// Postcondition: Service uninitialized.
+	/// </remarks>
 	public void Close()
 	{
 		if (!IsInitialized) return;
@@ -71,6 +88,17 @@ public class PcmAudioPlayerService
 		_buffers = null!;
 	}
 
+	/// <summary>
+	/// Enqueue an audio packet (encoded in two channel s16le format) in the packet play queue.
+	/// </summary>
+	/// <param name="packet">
+	/// The audio packet. Must be in 2 channel s16le format.
+	/// Should be of size SharedDefinitions.AudioBytesPerPacket, will be padded or truncated with silence if needed.
+	/// </param>
+	/// <remarks>
+	/// Precondition: Service initialized. packet encoded in 2 channel s16le. packet of size SharedDefinitions.AudioBytesPerPacket. packet != null. <br/>
+	/// Postcondition: Packet truncated/padded with silence if needed. Packet is enqueued in the packet play queue.
+	/// </remarks>
 	public void EnqueuePacket(byte[] packet)
 	{
 		if (!IsInitialized) return;
@@ -93,12 +121,17 @@ public class PcmAudioPlayerService
 		}
 	}
 
+	/// <summary>
+	/// Plays audio packets from the packet play queue.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Service initialized. <br/>
+	/// Postcondition: While running, plays packets from the packet play queue. If the queue is empty, plays silence.
+	/// Returns when the server closes. (Close() was called)
+	/// </remarks>
 	private void AudioPlayer()
 	{
-		int framesPerPacket = (int)((float)SharedDefinitions.AudioFramesFrequency * ((float)SharedDefinitions.AudioPacketMs / 1000.0));
-		int bytesPerPacket = framesPerPacket * 2 * 2;	/* Using two channels, s16le */
-		
-		byte[] silence = new byte[bytesPerPacket];
+		byte[] silence = new byte[SharedDefinitions.AudioBytesPerPacket];
 
 		foreach (int buffer in _buffers)
 		{
