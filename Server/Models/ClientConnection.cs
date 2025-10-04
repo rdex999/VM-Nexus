@@ -220,7 +220,7 @@ public sealed class ClientConnection : MessagingService
 					if (descriptor == null)
 					{
 						SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
-						/* TODO: Power off the virtual machine */
+						await _virtualMachineService.PowerOffAndDestroyOnTimeoutAsync(reqVmStartup.VmId);
 						break;
 					}
 					
@@ -228,6 +228,7 @@ public sealed class ClientConnection : MessagingService
 					SendInfo(new MessageInfoVmPoweredOn(true, reqVmStartup.VmId));
 					
 					_virtualMachineService.SubscribeToVmPoweredOff(reqVmStartup.VmId, OnVirtualMachinePoweredOff);
+					_virtualMachineService.SubscribeToVmCrashed(reqVmStartup.VmId, OnVirtualMachineCrashed);
 				} 
 				else if (result == ExitCode.VmAlreadyRunning)
 				{

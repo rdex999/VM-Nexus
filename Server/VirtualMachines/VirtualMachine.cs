@@ -89,7 +89,7 @@ public class VirtualMachine
 		
 		if (GetVmState() == SharedDefinitions.VmState.Running)
 		{
-			await PowerOffAndDestroyOnTimeout();
+			await PowerOffAndDestroyOnTimeoutAsync();
 		}
 		await _cts.CancelAsync();
 		_cts.Dispose();
@@ -166,7 +166,7 @@ public class VirtualMachine
 		catch (Exception)
 		{
 			_ = StateInformerAsync();
-			await PowerOffAndDestroyOnTimeout();
+			await PowerOffAndDestroyOnTimeoutAsync();
 			return ExitCode.VncConnectionFailed;
 		}
 
@@ -177,7 +177,7 @@ public class VirtualMachine
 		ExitCode result = StartScreenStream();
 		if (result != ExitCode.Success)
 		{
-			await PowerOffAndDestroyOnTimeout();
+			await PowerOffAndDestroyOnTimeoutAsync();
 			return result;
 		}
 		
@@ -227,7 +227,7 @@ public class VirtualMachine
 	/// If the virtual machine responded to the shutdown signal, and did in fact shutdown, ExitCode.Success is returned.
 	/// If the graceful shutdown has timed out, the virtual machine is forced shut down (destroyed) and ExitCode.VmShutdownTimeout is returned.
 	/// </remarks>
-	public async Task<ExitCode> PowerOffAndDestroyOnTimeout()
+	public async Task<ExitCode> PowerOffAndDestroyOnTimeoutAsync()
 	{
 		ExitCode result = await PowerOffAsync();
 		if (result == ExitCode.VmShutdownTimeout)

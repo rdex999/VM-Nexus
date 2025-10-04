@@ -125,7 +125,6 @@ public class VirtualMachineService
 			return ExitCode.VmDoesntExist;
 		}
 		
-		/* TODO: If the VM is sleeping, wake it up. */
 		if (vmDescriptor.Result.VmState == SharedDefinitions.VmState.Running)
 		{
 			return ExitCode.VmAlreadyRunning;
@@ -185,6 +184,33 @@ public class VirtualMachineService
 		}
 
 		return await virtualMachine.PowerOffAsync();
+	}
+
+	/// <summary>
+	/// Attempts to gracefully power off the given virtual machine.
+	/// If the virtual machine ignores the shutdown signal, it is forced off. (destroyed)
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to power off. id >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists, and it is running. id >= 1. <br/>
+	/// Postcondition: The virtual machine is shutdown.
+	/// If the virtual machine responded to the shutdown signal, and did in fact shutdown, ExitCode.Success is returned.
+	/// If the graceful shutdown has timed out, the virtual machine is forced shut down (destroyed) and ExitCode.VmShutdownTimeout is returned.
+	/// </remarks>
+	public async Task<ExitCode> PowerOffAndDestroyOnTimeoutAsync(int id)
+	{
+		if (id < 1)
+		{
+			return ExitCode.InvalidParameter;
+		}
+
+		if (!_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			return ExitCode.VmIsShutDown;
+		}
+
+		return await virtualMachine.PowerOffAndDestroyOnTimeoutAsync();
 	}
 
 	/// <summary>
