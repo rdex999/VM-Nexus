@@ -286,8 +286,20 @@ public sealed class ClientConnection : MessagingService
 				{
 					if (_streamVmId == reqScreenStreamStart.VmId)
 					{
-						SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
-							MessageResponseVmScreenStreamStart.Status.AlreadyStreaming));
+						PixelFormat? pixelsFmt = _virtualMachineService.GetScreenStreamPixelFormat(reqScreenStreamStart.VmId);
+						if (pixelsFmt != null)
+						{
+							SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
+								MessageResponseVmScreenStreamStart.Status.AlreadyStreaming, pixelsFmt));
+						
+							_virtualMachineService.EnqueueGetFullFrame(reqScreenStreamStart.VmId);
+						}
+						else
+						{
+							SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
+								MessageResponseVmScreenStreamStart.Status.Failure));			
+						}
+						
 						break;
 					}
 

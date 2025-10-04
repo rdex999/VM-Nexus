@@ -165,7 +165,17 @@ public partial class VmScreenViewModel : ViewModelBase
 			}
 
 			_pixelFormat = pixelFormat.Value;
-			
+
+			if (VmScreenBitmap != null)
+			{
+				/*
+				 * If this view model is not focused, the code-behind is closed - thus it is re-created when focused,
+				 * which means all of its properties are reset to default values, including its framebuffer size. (reset to 0)
+				 * So tell it there is a size for it, and give it the size.
+				 */
+				VmFramebufferSizeChanged?.Invoke(VmScreenBitmap.PixelSize.Width, VmScreenBitmap.PixelSize.Height);
+			}
+
 			return ExitCode.Success;
 		}
 
@@ -347,10 +357,10 @@ public partial class VmScreenViewModel : ViewModelBase
 	
 		shutdownRequestedEventArgs.Cancel = true;
 		
-		_audioPlayerService.Close();
 		_streamRunning = false;
 		ClientSvc.VmScreenFrameReceived -= OnVmScreenFrameReceived;
 		ClientSvc.VmAudioPacketReceived -= OnVmAudioPacketReceived;
+		_audioPlayerService.Close();
 
 		Task.Run(() => ((IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!).TryShutdown());
 	}

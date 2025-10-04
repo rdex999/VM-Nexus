@@ -176,6 +176,10 @@ public partial class MainViewModel : ViewModelBase
 		MessageResponseLogout.Status result = await ClientSvc.LogoutAsync();
 		if (result == MessageResponseLogout.Status.Success || result == MessageResponseLogout.Status.UserNotLoggedIn)
 		{
+			if (CurrentPageViewModel is VmScreenViewModel vmScreenViewModel)
+			{
+				await vmScreenViewModel.UnfocusAsync();
+			}
 			NavigationSvc.NavigateToView(new LoginView() { DataContext = new LoginViewModel(NavigationSvc, ClientSvc) });
 		}
 	}
