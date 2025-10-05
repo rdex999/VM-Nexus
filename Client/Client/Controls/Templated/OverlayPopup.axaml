@@ -1,0 +1,28 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:Client.Controls.Templated">
+	<Design.PreviewWith>
+		<controls:OverlayPopup />
+	</Design.PreviewWith>
+
+	<Style Selector="controls|OverlayPopup">
+		<!-- Set Defaults -->
+		<Setter Property="Template">
+			<ControlTemplate>
+				<Popup Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" 
+				       IsLightDismissEnabled="True"
+				       IsOpen="{TemplateBinding IsOpen}" 
+				       Placement="{TemplateBinding Placement}" 
+				       PlacementTarget="{TemplateBinding PlacementTarget}">
+					
+					<Border Padding="10" CornerRadius="15" Background="Red">
+						<StackPanel>
+							<TextBlock Text="Templated Control" />
+							<ContentPresenter Name="PART_ContentPresenter" Content="{TemplateBinding Content}" />
+						</StackPanel>
+					</Border>
+				</Popup>
+			</ControlTemplate>
+		</Setter>
+	</Style>
+</Styles>

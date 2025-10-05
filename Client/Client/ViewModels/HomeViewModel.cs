@@ -12,11 +12,14 @@ using Shared.Networking;
 
 namespace Client.ViewModels;
 
-public class HomeViewModel : ViewModelBase
+public partial class HomeViewModel : ViewModelBase
 {
 	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? VmOpenClicked;
 	public ObservableCollection<VmItemTemplate> Vms { get; }
 
+	[ObservableProperty] 
+	private bool _forceOffWarningIsOpen = false;
+	
 	/// <summary>
 	/// Initializes a new instance of HomeViewModel.
 	/// </summary>
@@ -295,4 +298,10 @@ public partial class VmItemTemplate : ObservableObject
 	/// </remarks>
 	[RelayCommand]
 	private void ErrorMessageDismiss() => ErrorMessage = string.Empty;
+
+	[RelayCommand]
+	private async Task ForceOffClickAsync()
+	{
+		
+	}
 }

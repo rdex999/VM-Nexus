@@ -4,6 +4,7 @@
     <option name="projectPerEditor">
       <map>
         <entry key="Client/Client/App.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
+        <entry key="Client/Client/Controls/Templated/OverlayPopup.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/CustomControls/FlyoutControl.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
         <entry key="Client/Client/CustomControls/FlyoutControl/FlyoutControl.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/CustomControls/TemplatedControl1.axaml" value="Client/Client.Browser/Client.Browser.csproj" />
