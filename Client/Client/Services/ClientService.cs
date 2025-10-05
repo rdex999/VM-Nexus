@@ -299,15 +299,15 @@ public class ClientService : MessagingService
 	/// Postcondition: On success, a video stream of the virtual machine's screen is sent, and the servers' response is returned. <br/>
 	/// On failure, the video stream will not be sent and null is returned.
 	/// </remarks>
-	public async Task<MessageResponseVmScreenStreamStart?> VirtualMachineStartScreenStreamAsync(int id)
+	public async Task<MessageResponseVmStreamStart?> VirtualMachineStartStreamAsync(int id)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmScreenStreamStart(true, id));
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmStreamStart(true, id));
 		if (result != ExitCode.Success)
 		{
 			return null;
 		}
 
-		return (MessageResponseVmScreenStreamStart)response!;
+		return (MessageResponseVmStreamStart)response!;
 	}
 	
 	/// <summary>
@@ -320,15 +320,15 @@ public class ClientService : MessagingService
 	/// Postcondition: On success, the video stream of the virtual machine's screen is stopped. <br/>
 	/// On failure, the video stream continues, (if it was running) and the returned status will indicate the error.
 	/// </remarks>
-	public async Task<MessageResponseVmScreenStreamStop.Status> VirtualMachineStopScreenStreamAsync(int id)
+	public async Task<MessageResponseVmStreamStop.Status> VirtualMachineStopStreamAsync(int id)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmScreenStreamStop(true, id));
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmStreamStop(true, id));
 		if (result != ExitCode.Success)
 		{
-			return MessageResponseVmScreenStreamStop.Status.Failure;
+			return MessageResponseVmStreamStop.Status.Failure;
 		}
 
-		return ((MessageResponseVmScreenStreamStop)response!).Result;
+		return ((MessageResponseVmStreamStop)response!).Result;
 	}
 
 	/// <summary>

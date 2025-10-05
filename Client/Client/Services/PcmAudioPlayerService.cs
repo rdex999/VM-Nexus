@@ -163,7 +163,8 @@ public class PcmAudioPlayerService
 			{
 				AL.SourcePlay(_source);
 			}
-			Thread.Sleep(5);
+
+			_cts.Token.WaitHandle.WaitOne(10);
 		}
 	}
 }

@@ -146,7 +146,7 @@ public partial class VmScreenViewModel : ViewModelBase
 		}
 	
 		_audioPlayerService.Initialize();
-		MessageResponseVmScreenStreamStart? response = await ClientSvc.VirtualMachineStartScreenStreamAsync(_vmDescriptor!.Id);
+		MessageResponseVmStreamStart? response = await ClientSvc.VirtualMachineStartStreamAsync(_vmDescriptor!.Id);
 
 		if (response == null)
 		{
@@ -154,7 +154,7 @@ public partial class VmScreenViewModel : ViewModelBase
 			return ExitCode.MessageNotReceived;
 		}
 		
-		if (response.Result == MessageResponseVmScreenStreamStart.Status.Success || response.Result == MessageResponseVmScreenStreamStart.Status.AlreadyStreaming)
+		if (response.Result == MessageResponseVmStreamStart.Status.Success || response.Result == MessageResponseVmStreamStart.Status.AlreadyStreaming)
 		{
 			_streamRunning = true;
 
@@ -206,13 +206,13 @@ public partial class VmScreenViewModel : ViewModelBase
 		
 		_streamRunning = false;
 		_audioPlayerService.Close();
-		MessageResponseVmScreenStreamStop.Status result = await ClientSvc.VirtualMachineStopScreenStreamAsync(_vmDescriptor!.Id);
-		if (result == MessageResponseVmScreenStreamStop.Status.Success)
+		MessageResponseVmStreamStop.Status result = await ClientSvc.VirtualMachineStopStreamAsync(_vmDescriptor!.Id);
+		if (result == MessageResponseVmStreamStop.Status.Success)
 		{
 			return ExitCode.Success;
 		}
 
-		if (result == MessageResponseVmScreenStreamStop.Status.StreamNotRunning)
+		if (result == MessageResponseVmStreamStop.Status.StreamNotRunning)
 		{
 			return ExitCode.VmScreenStreamNotRunning;
 		}

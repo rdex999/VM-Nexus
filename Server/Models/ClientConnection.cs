@@ -273,31 +273,31 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
-			case MessageRequestVmScreenStreamStart reqScreenStreamStart:
+			case MessageRequestVmStreamStart reqVmStreamStart:
 			{
 				if (!_isLoggedIn)
 				{
-					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id, 
-						MessageResponseVmScreenStreamStart.Status.Failure));
+					SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id, 
+						MessageResponseVmStreamStart.Status.Failure));
 					break;
 				}
 
 				if (_streamVmId != -1)
 				{
-					if (_streamVmId == reqScreenStreamStart.VmId)
+					if (_streamVmId == reqVmStreamStart.VmId)
 					{
-						PixelFormat? pixelsFmt = _virtualMachineService.GetScreenStreamPixelFormat(reqScreenStreamStart.VmId);
+						PixelFormat? pixelsFmt = _virtualMachineService.GetScreenStreamPixelFormat(reqVmStreamStart.VmId);
 						if (pixelsFmt != null)
 						{
-							SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
-								MessageResponseVmScreenStreamStart.Status.AlreadyStreaming, pixelsFmt));
+							SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id,
+								MessageResponseVmStreamStart.Status.AlreadyStreaming, pixelsFmt));
 						
-							_virtualMachineService.EnqueueGetFullFrame(reqScreenStreamStart.VmId);
+							_virtualMachineService.EnqueueGetFullFrame(reqVmStreamStart.VmId);
 						}
 						else
 						{
-							SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
-								MessageResponseVmScreenStreamStart.Status.Failure));			
+							SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id,
+								MessageResponseVmStreamStart.Status.Failure));			
 						}
 						
 						break;
@@ -309,62 +309,62 @@ public sealed class ClientConnection : MessagingService
 					_streamVmId = -1;
 				}
 				
-				result = _virtualMachineService.SubscribeToVmNewFrameReceived(reqScreenStreamStart.VmId, OnVmNewFrame);
+				result = _virtualMachineService.SubscribeToVmNewFrameReceived(reqVmStreamStart.VmId, OnVmNewFrame);
 				if (result != ExitCode.Success)
 				{
-					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id, 
-						MessageResponseVmScreenStreamStart.Status.Failure));
+					SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id, 
+						MessageResponseVmStreamStart.Status.Failure));
 					break;
 				}
-				result = _virtualMachineService.SubscribeToVmAudioPacketReceived(reqScreenStreamStart.VmId, OnVmNewAudioPacket);
+				result = _virtualMachineService.SubscribeToVmAudioPacketReceived(reqVmStreamStart.VmId, OnVmNewAudioPacket);
 				if (result != ExitCode.Success)
 				{
-					SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id, 
-						MessageResponseVmScreenStreamStart.Status.Failure));
+					SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id, 
+						MessageResponseVmStreamStart.Status.Failure));
 					
-					_virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqScreenStreamStart.VmId, OnVmNewFrame);
+					_virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqVmStreamStart.VmId, OnVmNewFrame);
 					break;
 				}
 				
-				PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqScreenStreamStart.VmId)!;
+				PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqVmStreamStart.VmId)!;
 
-				SendResponse(new MessageResponseVmScreenStreamStart(true, reqScreenStreamStart.Id,
-					MessageResponseVmScreenStreamStart.Status.Success, pixelFormat));
+				SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id,
+					MessageResponseVmStreamStart.Status.Success, pixelFormat));
 					
-				_streamVmId = reqScreenStreamStart.VmId;
-				_virtualMachineService.EnqueueGetFullFrame(reqScreenStreamStart.VmId);
+				_streamVmId = reqVmStreamStart.VmId;
+				_virtualMachineService.EnqueueGetFullFrame(reqVmStreamStart.VmId);
 				break;
 			}
 
-			case MessageRequestVmScreenStreamStop reqScreenStreamStop:
+			case MessageRequestVmStreamStop reqVmStreamStop:
 			{
 				if (!_isLoggedIn)
 				{
-					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.Failure));
+					SendResponse(new MessageResponseVmStreamStop(true, reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.Failure));
 					break;
 				}
 
 				if (_streamVmId == -1)
 				{
-					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.StreamNotRunning));
+					SendResponse(new MessageResponseVmStreamStop(true, reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.StreamNotRunning));
 					break;
 				}
 				
-				result = _virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqScreenStreamStop.VmId, OnVmNewFrame);
-				_virtualMachineService.UnsubscribeFromVmAudioPacketReceived(reqScreenStreamStop.VmId, OnVmNewAudioPacket);
+				result = _virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqVmStreamStop.VmId, OnVmNewFrame);
+				_virtualMachineService.UnsubscribeFromVmAudioPacketReceived(reqVmStreamStop.VmId, OnVmNewAudioPacket);
 				if (result == ExitCode.Success)
 				{
-					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.Success));
+					SendResponse(new MessageResponseVmStreamStop(true, reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.Success));
 					_streamVmId = -1;
 				} 
 				else if (result == ExitCode.VmScreenStreamNotRunning)	/* Should not happen. Doing it for safety. */
 				{
-					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.StreamNotRunning));
+					SendResponse(new MessageResponseVmStreamStop(true, reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.StreamNotRunning));
 					_streamVmId = -1;
 				}
 				else
 				{
-					SendResponse(new MessageResponseVmScreenStreamStop(true, reqScreenStreamStop.Id, MessageResponseVmScreenStreamStop.Status.Failure));
+					SendResponse(new MessageResponseVmStreamStop(true, reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.Failure));
 				}
 				break;
 			}

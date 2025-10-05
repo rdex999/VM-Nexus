@@ -92,6 +92,7 @@ public class MainWindowModel
 		{
 			_listener.Join();
 		}
+		await _virtualMachineService.CloseAsync();
 
 		while (_clients.FirstOrDefault() != null)
 		{
@@ -99,7 +100,6 @@ public class MainWindowModel
 			clientConnection.Disconnect();
 		}
 
-		await _virtualMachineService.CloseAsync();
 		_databaseService.Close();
 
 		return ExitCode.Success;

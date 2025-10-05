@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -9,7 +10,7 @@ namespace Server.ViewModels;
 
 public partial class MainWindowViewModel : ViewModelBase
 {
-	private readonly MainWindowModel _mainWindowModel;
+	public readonly MainWindowModel MainWindowModel;
 	
 	[ObservableProperty]
 	private bool _serverStateIsChecked;
@@ -23,24 +24,7 @@ public partial class MainWindowViewModel : ViewModelBase
 	/// </remarks>
 	public MainWindowViewModel()
 	{
-		_mainWindowModel = new MainWindowModel();
-	}
-
-	/// <summary>
-	/// Handles the program exit event.
-	/// </summary>
-	/// <param name="sender"></param>
-	/// <param name="args"></param>
-	/// <remarks>
-	/// Precondition: Application exit has been requested. (user quite the application) <br/>
-	/// Postcondition: Server shut down, application not running.
-	/// </remarks>
-	public void OnProgramExit(object? sender, ControlledApplicationLifetimeExitEventArgs args)
-	{
-		if (ServerStateIsChecked)
-		{
-			Task.Run(async () => await _mainWindowModel.ServerStopAsync()).Wait();		/* Run on the thread pool, not blocking main/UI thread. */
-		}
+		MainWindowModel = new MainWindowModel();
 	}
 	
 	/// <summary>
@@ -59,7 +43,7 @@ public partial class MainWindowViewModel : ViewModelBase
 	{
 		if (isToggled)
 		{
-			ExitCode result = await _mainWindowModel.ServerStartAsync();
+			ExitCode result = await MainWindowModel.ServerStartAsync();
 			if (result != ExitCode.Success)
 			{
 				/* TODO: Add logic to display error message */
@@ -68,7 +52,7 @@ public partial class MainWindowViewModel : ViewModelBase
 		}
 		else
 		{
-			ExitCode result = await _mainWindowModel.ServerStopAsync();
+			ExitCode result = await MainWindowModel.ServerStopAsync();
 			if (result != ExitCode.Success)
 			{
 				/* TODO: Add logic to display error message */

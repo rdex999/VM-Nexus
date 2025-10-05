@@ -253,11 +253,11 @@ public class MessageRequestVmShutdown : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
-public class MessageRequestVmScreenStreamStart : MessageRequest		/* Request to send a video stream of the screen of a virtual machine (through MessageInfo) */
+public class MessageRequestVmStreamStart : MessageRequest		/* Request to send a video stream of the screen of a virtual machine (through MessageInfo) */
 {
 	public int VmId { get; }
 
-	public MessageRequestVmScreenStreamStart(bool generateGuid, int vmId)
+	public MessageRequestVmStreamStart(bool generateGuid, int vmId)
 		: base(generateGuid)
 	{
 		VmId = vmId;
@@ -266,11 +266,11 @@ public class MessageRequestVmScreenStreamStart : MessageRequest		/* Request to s
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
-public class MessageRequestVmScreenStreamStop : MessageRequest
+public class MessageRequestVmStreamStop : MessageRequest
 {
 	public int VmId { get; }
 
-	public MessageRequestVmScreenStreamStop(bool generateGuid, int vmId)
+	public MessageRequestVmStreamStop(bool generateGuid, int vmId)
 		: base(generateGuid)
 	{
 		VmId = vmId;

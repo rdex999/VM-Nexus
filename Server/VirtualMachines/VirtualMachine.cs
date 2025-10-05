@@ -56,6 +56,8 @@ public class VirtualMachine
 	private int _fps = 20;
 	private readonly object _frameLock;
 	private VirtualMachineFrame? _lastFrame = null;
+	private Task _allBackgroundTasks = null!;
+	private bool _closing = false;
 	
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
@@ -85,26 +87,38 @@ public class VirtualMachine
 	/// </remarks>
 	public async Task CloseAsync()
 	{
-		StopScreenStream();
+		if (_closing)
+		{
+			return;
+		}
+		_closing = true;
 		
 		if (GetVmState() == SharedDefinitions.VmState.Running)
 		{
 			await PowerOffAndDestroyOnTimeoutAsync();
 		}
+		
+		StopScreenStream();
+		
 		await _cts.CancelAsync();
+		
+		await _allBackgroundTasks;
+		
 		_cts.Dispose();
-
 		
 		try
 		{
 			await _rfbConnection.CloseAsync();
+			_rfbConnection.Dispose();
+		}
+		catch (OperationCanceledException)
+		{
+			// ignored
 		}
 		catch (Exception)
 		{
 			// ignored
 		}
-
-		_rfbConnection.Dispose();
 
 		await using FileStream fileStream = new FileStream(_pcmAudioFilePath, FileMode.Truncate);
 	}
@@ -161,7 +175,7 @@ public class VirtualMachine
 				ConnectTimeout = TimeSpan.FromSeconds(3),
 				RenderFlags = RenderFlags.Default,
 				AuthenticationHandler = new VirtualMachineVncAuthenticationHandler(),
-			}, new CancellationTokenSource(3000).Token);		/* Cancel after 3 seconds. */
+			});		/* Cancel after 3 seconds. */
 		}
 		catch (Exception)
 		{
@@ -170,9 +184,11 @@ public class VirtualMachine
 			return ExitCode.VncConnectionFailed;
 		}
 
-		_ = StateInformerAsync();
-		_ = FrameSenderAsync();
-		_ = AudioCaptureWorkerAsync();
+		Task stateInformer = StateInformerAsync();
+		Task frameSender = FrameSenderAsync();
+		Task audioCaptureWorker = AudioCaptureWorkerAsync();
+		
+		_allBackgroundTasks = Task.WhenAll(stateInformer, frameSender, audioCaptureWorker);
 		
 		ExitCode result = StartScreenStream();
 		if (result != ExitCode.Success)
@@ -564,7 +580,14 @@ public class VirtualMachine
 			{
 				if (stopwatch.ElapsedMilliseconds < SharedDefinitions.AudioPacketMs)
 				{
-					await Task.Delay(SharedDefinitions.AudioPacketMs - (int)stopwatch.ElapsedMilliseconds, _cts.Token).ConfigureAwait(false);
+					try
+					{
+						await Task.Delay(SharedDefinitions.AudioPacketMs - (int)stopwatch.ElapsedMilliseconds, _cts.Token).ConfigureAwait(false);
+					}
+					catch (OperationCanceledException)
+					{
+						return;
+					}
 				}
 				AudioPacketReceived?.Invoke(this, buffer);
 			}
