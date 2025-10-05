@@ -227,6 +227,10 @@ public class VirtualMachine
 		{
 			return ExitCode.VmShutdownTimeout;
 		}
+		catch (TimeoutException)
+		{
+			return ExitCode.VmShutdownTimeout;
+		}
 	}
 
 	/// <summary>
