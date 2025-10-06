@@ -111,10 +111,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public async Task<ExitCode> PowerOnVirtualMachineAsync(int id)
 	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 		
 		Task<VirtualMachineDescriptor?> vmDescriptor = _databaseService.GetVmDescriptorAsync(id);
 		Task<DriveDescriptor[]?> vmDriveDescriptors = _databaseService.GetVmDriveDescriptorsAsync(id);
@@ -173,10 +170,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public async Task<ExitCode> PowerOffVirtualMachineAsync(int id)
 	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 
 		if (!_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -200,10 +194,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public async Task<ExitCode> PowerOffAndDestroyOnTimeoutAsync(int id)
 	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 
 		if (!_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -211,6 +202,29 @@ public class VirtualMachineService
 		}
 
 		return await virtualMachine.PowerOffAndDestroyOnTimeoutAsync();
+	}
+
+	/// <summary>
+	/// Force shutdown the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to force off. id >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists, and it is powered on. id >= 1. <br/>
+	/// Postcondition: On success, the virtual machine is forced off and is shutdown, and the returned exit code indicates success. <br/>
+	/// On failure, the virtual machine is not forced off (remains in its previous state) and the returned exit code indicates the error.
+	/// </remarks>
+	public ExitCode ForceOffVirtualMachine(int id)
+	{
+		if (id < 1) return ExitCode.InvalidParameter;
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			virtualMachine.Destroy();
+			return ExitCode.Success;
+		}
+		
+		return ExitCode.VmIsShutDown;
 	}
 
 	/// <summary>
@@ -226,10 +240,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public ExitCode SubscribeToVmNewFrameReceived(int id, EventHandler<VirtualMachineFrame> handler)
 	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -253,10 +264,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public ExitCode SubscribeToVmAudioPacketReceived(int id, EventHandler<byte[]> handler)
 	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -280,10 +288,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public ExitCode SubscribeToVmPoweredOff(int id, EventHandler<int> handler)
 	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -307,11 +312,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public ExitCode SubscribeToVmCrashed(int id, EventHandler<int> handler)
 	{
-		
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -335,10 +336,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public ExitCode UnsubscribeFromVmNewFrameReceived(int id, EventHandler<VirtualMachineFrame> handler)
 	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -362,10 +360,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public ExitCode UnsubscribeFromVmAudioPacketReceived(int id, EventHandler<byte[]> handler)
 	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -388,10 +383,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public ExitCode EnqueueGetFullFrame(int id)
 	{
-		if (id < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (id < 1) return ExitCode.InvalidParameter;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -485,10 +477,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public PixelFormat? GetScreenStreamPixelFormat(int id)
 	{
-		if (id < 1)
-		{
-			return null;
-		}
+		if (id < 1) return null;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
