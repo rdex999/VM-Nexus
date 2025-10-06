@@ -38,11 +38,22 @@
 
 		<Grid>
 			<templated:OverlayPopup IsOpen="{Binding ForceOffWarningIsOpen}" 
-			                        VerticalAlignment="Top" Placement="Center" PlacementTarget="Border" 
-			                        Width="400" Height="500" Background="White" Title="My title" 
+			                        VerticalAlignment="Top" Placement="Center" PlacementTarget="Border" Background="White" Title="Warning"
 			                        ClosedCommand="{Binding ForceOffWarningClosedCommand}">
-				
-				<TextBlock FontSize="16">My popup content :)</TextBlock>
+			
+				<StackPanel>
+					<TextBlock FontSize="14" TextWrapping="Wrap">
+						A forced shutdown powers off the virtual machine without powering off the operating system. <LineBreak/>
+						This action can damage the virtual machine, and cause data loss.
+					</TextBlock>
+					<TextBlock FontSize="14" TextWrapping="Wrap" FontWeight="DemiBold" Margin="0, 5, 0, 15"
+					           Text="{Binding ForceOffWarningQuestion}"/>
+					
+					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
+						<Button FontWeight="DemiBold" Command="{Binding ForceOffWarningClosedCommand}">Cancel</Button>
+						<Button FontWeight="DemiBold">Force Off</Button>
+					</StackPanel>
+				</StackPanel>
 			</templated:OverlayPopup>
 			
 			<ScrollViewer AllowAutoHide="False">

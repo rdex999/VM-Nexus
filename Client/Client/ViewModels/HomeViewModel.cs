@@ -17,8 +17,13 @@ public partial class HomeViewModel : ViewModelBase
 	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? VmOpenClicked;
 	public ObservableCollection<VmItemTemplate> Vms { get; }
 
+	private VmItemTemplate _forceOffWarningVm;
+	
 	[ObservableProperty] 
-	private bool _forceOffWarningIsOpen = true;
+	private bool _forceOffWarningIsOpen = false;
+	
+	[ObservableProperty]
+	private string _forceOffWarningQuestion = string.Empty;
 	
 	/// <summary>
 	/// Initializes a new instance of HomeViewModel.
@@ -59,6 +64,7 @@ public partial class HomeViewModel : ViewModelBase
 			{
 				VmItemTemplate template = new VmItemTemplate(ClientSvc, vm.Id, vm.Name, vm.OperatingSystem, vm.State);
 				template.OpenClicked += OnVmOpenClicked;
+				template.ForceOffClicked += OnVmForceOffClicked;
 				Vms.Add(template);
 			});
 		}
@@ -71,21 +77,47 @@ public partial class HomeViewModel : ViewModelBase
 	/// Precondition: User has clicked the Open button on a VM. <br/>
 	/// Postcondition: A new tab is opened for the VM. If a tab for the VM is already open, the user will be redirected to it.
 	/// </remarks>
-	private void OnVmOpenClicked(SharedDefinitions.VmGeneralDescriptor descriptor)
-	{
+	private void OnVmOpenClicked(SharedDefinitions.VmGeneralDescriptor descriptor) =>
 		VmOpenClicked?.Invoke(this, descriptor);
+
+	/// <summary>
+	/// Handles a click on one of the VM's force off button. Displays the force off warning message.
+	/// </summary>
+	/// <param name="sender">Unused</param>
+	/// <param name="e"></param>
+	/// <remarks>
+	/// Precondition: User has clicked the force off button on a virtual machine. sender != null &amp;&amp; sender is VmItemTemplate. <br/>
+	/// Postcondition: The force off warning popup is displayed.
+	/// </remarks>
+	private void OnVmForceOffClicked(object? sender, EventArgs e)
+	{
+		if (sender == null || sender is not VmItemTemplate template) return;
+		
+		_forceOffWarningVm = template;
+		ForceOffWarningQuestion = $"Are you sure you want to force off {template.Name}?";
+		ForceOffWarningIsOpen = true;
 	}
 
+	/// <summary>
+	/// Called when the force off warning popup closes, or if the user clicks on the Cancel button on the popup. Cleans up.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has closed the force off warning popup. <br/>
+	/// Postcondition: Popup is closed. Resources are freed.
+	/// </remarks>
 	[RelayCommand]
 	private void ForceOffWarningClosed()
 	{
 		ForceOffWarningIsOpen = false;
+		ForceOffWarningQuestion = string.Empty;
 	}
 }
 
 public partial class VmItemTemplate : ObservableObject
 {
 	public Action<SharedDefinitions.VmGeneralDescriptor>? OpenClicked;
+	public event EventHandler? ForceOffClicked;
+	
 	public int Id { get; }
 
 	[ObservableProperty] 
@@ -172,6 +204,17 @@ public partial class VmItemTemplate : ObservableObject
 		_clientService.VmPoweredOff += OnVmPoweredOff;
 		_clientService.VmCrashed += OnVmCrashed;
 	}
+
+	/// <summary>
+	/// Returns a VM general descriptor of this VM item template.
+	/// </summary>
+	/// <returns>A VM general descriptor of this VM item template.</returns>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: A VM general descriptor of this VM item template is returned.
+	/// </remarks>
+	public SharedDefinitions.VmGeneralDescriptor AsVmGeneralDescriptor() => 
+		new SharedDefinitions.VmGeneralDescriptor(Id, Name, OperatingSystem, State);
 	
 	/// <summary>
 	/// Handles the event of the virtual machine being powered on.
@@ -240,7 +283,7 @@ public partial class VmItemTemplate : ObservableObject
 		});
 
 	}
-	
+
 	/// <summary>
 	/// Handles opening the VM - opens a tab for the VM.
 	/// </summary>
@@ -249,7 +292,7 @@ public partial class VmItemTemplate : ObservableObject
 	/// Postcondition: A new tab is opened for the VM. If a tab for the VM is already open, the user will be redirected to it.
 	/// </remarks>
 	[RelayCommand]
-	private void OpenClick() => OpenClicked?.Invoke(new SharedDefinitions.VmGeneralDescriptor(Id, Name, OperatingSystem, State));
+	private void OpenClick() => OpenClicked?.Invoke(AsVmGeneralDescriptor());
 
 	/// <summary>
 	/// Handles a click on the power on button. Attempts to power on the virtual machine.
@@ -305,9 +348,13 @@ public partial class VmItemTemplate : ObservableObject
 	[RelayCommand]
 	private void ErrorMessageDismiss() => ErrorMessage = string.Empty;
 
+	/// <summary>
+	/// Handles a click on the force off button.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the force off button on this virtual machine. <br/>
+	/// Postcondition: Warning popup apprears.
+	/// </remarks>
 	[RelayCommand]
-	private async Task ForceOffClickAsync()
-	{
-		
-	}
+	private void ForceOffClick() => ForceOffClicked?.Invoke(this, EventArgs.Empty);
 }

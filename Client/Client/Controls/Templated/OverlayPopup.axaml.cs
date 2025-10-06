@@ -68,6 +68,7 @@ public class OverlayPopup : TemplatedControl
 
 	public OverlayPopup()
 	{
+		if (double.IsNaN(Width)) Width = 400;	/* Default width */
 	}
 
 	/// <summary>
@@ -84,7 +85,7 @@ public class OverlayPopup : TemplatedControl
 		Button? closeButton = e.NameScope.Find<Button>("CloseButton");
 		if (closeButton == null) return;
 		
-		closeButton.Click += OnCloseButtonClick;
+		closeButton.Click += OnPopupClosed;
 		
 		Popup? popup = e.NameScope.Find<Popup>("Popup");
 		if (popup == null) return;
@@ -103,25 +104,8 @@ public class OverlayPopup : TemplatedControl
 	/// </remarks>
 	private void OnPopupClosed(object? sender, EventArgs e)
 	{
-		if (ClosedCommand != null && ClosedCommand.CanExecute(null))
-		{
-			ClosedCommand.Execute(null);
-		}
-	}
-
-	/// <summary>
-	/// Handles a click on the close popup button. Closes the popup.
-	/// </summary>
-	/// <param name="sender">Unused.</param>
-	/// <param name="e">Unused.</param>
-	/// <remarks>
-	/// Precondition: User clicked on the close popup button. <br/>
-	/// Postcondition: Popup is closed, ClosedCommand is executed if possible.
-	/// </remarks>
-	private void OnCloseButtonClick(object? sender, RoutedEventArgs e)
-	{
 		IsOpen = false;
-
+		
 		if (ClosedCommand != null && ClosedCommand.CanExecute(null))
 		{
 			ClosedCommand.Execute(null);
