@@ -313,10 +313,10 @@ public partial class VmScreenViewModel : ViewModelBase
 
 		_vmDescriptor.State = SharedDefinitions.VmState.ShutDown;
 		
+		VmScreenBitmap = null;
 		if (_streamRunning)
 		{
 			_streamRunning = false;
-			VmScreenBitmap = null;
 			_audioPlayerService.Close();
 		}
 	}

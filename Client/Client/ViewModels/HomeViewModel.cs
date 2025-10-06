@@ -99,7 +99,7 @@ public partial class HomeViewModel : ViewModelBase
 	}
 
 	/// <summary>
-	/// Called when the force off warning popup closes, or if the user clicks on the Cancel button on the popup. Cleans up.
+	/// Called to close the force off warning popup, or called when it is closed, or if the user clicks on either the Cancel or Force Off buttons on the popup. Cleans up.
 	/// </summary>
 	/// <remarks>
 	/// Precondition: User has closed the force off warning popup. <br/>
@@ -112,10 +112,18 @@ public partial class HomeViewModel : ViewModelBase
 		ForceOffWarningQuestion = string.Empty;
 	}
 
+	/// <summary>
+	/// Handles a click on the force off confirmation button. (The one on the popup itself)
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the force off confirmation button. (The one on the popup itself) <br/>
+	/// Postcondition: A force off is requested. On success (or if VM already powered off), the virtual machine is powered off. On failure, an error message is displayed.
+	/// </remarks>
 	[RelayCommand]
 	private async Task ForceOffConfirmClickAsync()
 	{
-		
+		MessageResponseVmForceOff.Status result = await ClientSvc.ForceOffVirtualMachineAsync(_forceOffWarningVm.Id);
+		ForceOffWarningClosed();
 	}
 }
 

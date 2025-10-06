@@ -273,6 +273,31 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestVmForceOff reqVmForceOff:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseVmForceOff(true, reqVmForceOff.Id, MessageResponseVmForceOff.Status.Failure));
+					break;
+				}
+
+				result = _virtualMachineService.ForceOffVirtualMachine(reqVmForceOff.VmId);
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseVmForceOff(true, reqVmForceOff.Id, MessageResponseVmForceOff.Status.Success));
+				}
+				else if (result == ExitCode.VmIsShutDown)
+				{
+					SendResponse(new MessageResponseVmForceOff(true, reqVmForceOff.Id, MessageResponseVmForceOff.Status.VmIsShutDown));
+				}
+				else
+				{
+					SendResponse(new MessageResponseVmForceOff(true, reqVmForceOff.Id, MessageResponseVmForceOff.Status.Failure));
+				}
+				
+				break;
+			}
+
 			case MessageRequestVmStreamStart reqVmStreamStart:
 			{
 				if (!_isLoggedIn)

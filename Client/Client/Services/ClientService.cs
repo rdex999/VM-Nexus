@@ -290,6 +290,27 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests to force off a virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to force off. id >= 1.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server.
+	/// The user is logged in, and has power permissions for the VM with the given ID. id >= 1. <br/>
+	/// Postcondition: On success, the virtual machine is powered off and the returned status indicates success. <br/>
+	/// On failure, the virtual machine remains in its previous state and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseVmForceOff.Status> ForceOffVirtualMachineAsync(int id)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmForceOff(true, id));
+		if (result != ExitCode.Success)
+		{
+			return MessageResponseVmForceOff.Status.Failure;
+		}
+		return ((MessageResponseVmForceOff)response!).Result;	
+	}
+
+	/// <summary>
 	/// Requests a video stream of the screen of the given virtual machine.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to get a video stream of. id >= 1.</param>
