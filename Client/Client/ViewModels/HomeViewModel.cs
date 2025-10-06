@@ -18,7 +18,7 @@ public partial class HomeViewModel : ViewModelBase
 	public ObservableCollection<VmItemTemplate> Vms { get; }
 
 	[ObservableProperty] 
-	private bool _forceOffWarningIsOpen = false;
+	private bool _forceOffWarningIsOpen = true;
 	
 	/// <summary>
 	/// Initializes a new instance of HomeViewModel.
@@ -74,6 +74,12 @@ public partial class HomeViewModel : ViewModelBase
 	private void OnVmOpenClicked(SharedDefinitions.VmGeneralDescriptor descriptor)
 	{
 		VmOpenClicked?.Invoke(this, descriptor);
+	}
+
+	[RelayCommand]
+	private void ForceOffWarningClosed()
+	{
+		ForceOffWarningIsOpen = false;
 	}
 }
 

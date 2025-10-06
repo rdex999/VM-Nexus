@@ -39,7 +39,9 @@
 		<Grid>
 			<templated:OverlayPopup IsOpen="{Binding ForceOffWarningIsOpen}" 
 			                        VerticalAlignment="Top" Placement="Center" PlacementTarget="Border" 
-			                        Width="400" Height="500" Background="White" Title="My title">
+			                        Width="400" Height="500" Background="White" Title="My title" 
+			                        ClosedCommand="{Binding ForceOffWarningClosedCommand}">
+				
 				<TextBlock FontSize="16">My popup content :)</TextBlock>
 			</templated:OverlayPopup>
 			

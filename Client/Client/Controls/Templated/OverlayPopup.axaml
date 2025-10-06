@@ -16,7 +16,7 @@
 		
 		<Setter Property="Template">
 			<ControlTemplate>
-				<Popup Width="{TemplateBinding Width}" Height="{TemplateBinding Height}" 
+				<Popup Name="Popup" Width="{TemplateBinding Width}" Height="{TemplateBinding Height}"
 				       IsLightDismissEnabled="True"
 				       IsOpen="{TemplateBinding IsOpen}" 
 				       Placement="{TemplateBinding Placement}" 
