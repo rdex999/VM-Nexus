@@ -111,6 +111,12 @@ public partial class HomeViewModel : ViewModelBase
 		ForceOffWarningIsOpen = false;
 		ForceOffWarningQuestion = string.Empty;
 	}
+
+	[RelayCommand]
+	private async Task ForceOffConfirmClickAsync()
+	{
+		
+	}
 }
 
 public partial class VmItemTemplate : ObservableObject

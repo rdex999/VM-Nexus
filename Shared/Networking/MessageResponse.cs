@@ -224,6 +224,24 @@ public class MessageResponseVmShutdown : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+public class MessageResponseVmForceOff : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseVmForceOff(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		VmIsShutDown,
+		Failure,
+	}
+}
+
 public class MessageResponseVmStreamStart : MessageResponse
 {
 	public Status Result { get; }

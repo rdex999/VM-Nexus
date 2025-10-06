@@ -51,7 +51,7 @@
 					
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
 						<Button FontWeight="DemiBold" Command="{Binding ForceOffWarningClosedCommand}">Cancel</Button>
-						<Button FontWeight="DemiBold">Force Off</Button>
+						<Button FontWeight="DemiBold" Command="{Binding ForceOffConfirmClickCommand}">Force Off</Button>
 					</StackPanel>
 				</StackPanel>
 			</templated:OverlayPopup>
