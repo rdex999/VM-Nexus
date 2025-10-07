@@ -55,6 +55,36 @@
 					</StackPanel>
 				</StackPanel>
 			</templated:OverlayPopup>
+		
+			<templated:OverlayPopup Title="Delete Connected Drives?" Placement="Center" PlacementTarget="Border" 
+			                        IsOpen="{Binding DeleteDrivesIsOpen}" Background="White">
+				
+				<StackPanel Spacing="10">
+					<TextBlock TextWrapping="Wrap" Foreground="Black">The virtual machine has drives connected to it.</TextBlock>
+					<TextBlock TextWrapping="Wrap" FontWeight="DemiBold">Select the drives you would like to delete.</TextBlock>
+					
+					<ScrollViewer MaxHeight="350">
+						<ItemsControl ItemsSource="{Binding DeletionDrives}" Background="Transparent">
+							<ItemsControl.ItemTemplate>
+								<DataTemplate DataType="{x:Type vm:DeletionDriveItemTemplate}">
+									<Border Background="#efefef" Padding="6" CornerRadius="10" Margin="0, 0, 0, 8">
+										<Grid ColumnDefinitions="*, Auto" VerticalAlignment="Center">
+											<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="15">
+												<TextBlock Text="{Binding Name}" />
+												<TextBlock FontWeight="DemiBold" Text="{Binding DriveTypeString}" />
+											</StackPanel>
+											
+											<CheckBox Grid.Column="1" />
+										</Grid>
+									</Border>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+					</ScrollViewer>
+					
+					<Button FontWeight="Bold" HorizontalAlignment="Center" FontSize="16">Delete</Button>
+				</StackPanel>
+			</templated:OverlayPopup>
 			
 			<ScrollViewer AllowAutoHide="False">
 				<StackPanel>

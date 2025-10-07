@@ -24,6 +24,11 @@ public partial class HomeViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private string _forceOffWarningQuestion = string.Empty;
+
+	[ObservableProperty]
+	private bool _deleteDrivesIsOpen = false;
+	
+	public ObservableCollection<DeletionDriveItemTemplate> DeletionDrives { get; set; }		/* Drives the user can select to delete, when deleting a VM */
 	
 	/// <summary>
 	/// Initializes a new instance of HomeViewModel.
@@ -42,6 +47,19 @@ public partial class HomeViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		Vms = new ObservableCollection<VmItemTemplate>();
+		DeletionDrives = new ObservableCollection<DeletionDriveItemTemplate>();
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Floppy, 15));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.CDROM, 8192));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
 		ClientSvc.VmListChanged += OnVmListChanged;
 	}
 
@@ -376,4 +394,21 @@ public partial class VmItemTemplate : ObservableObject
 	/// </remarks>
 	[RelayCommand]
 	private void ForceOffClick() => ForceOffClicked?.Invoke(this, EventArgs.Empty);
+}
+
+public class DeletionDriveItemTemplate
+{
+	public int Id { get; }
+	public string Name { get; }
+	public SharedDefinitions.DriveType DriveType { get; }
+	public int Size { get; }	/* The size of the drive, in MiB */
+	public string DriveTypeString => DriveType.ToString();
+	
+	public DeletionDriveItemTemplate(int id, string name, SharedDefinitions.DriveType driveType, int size)
+	{
+		Id = id;
+		Name = name;
+		DriveType = driveType;
+		Size = size;
+	}
 }
