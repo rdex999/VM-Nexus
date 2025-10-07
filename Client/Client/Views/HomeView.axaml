@@ -42,16 +42,16 @@
 			                        ClosedCommand="{Binding ForceOffWarningClosedCommand}">
 			
 				<StackPanel>
-					<TextBlock FontSize="14" TextWrapping="Wrap">
+					<TextBlock TextWrapping="Wrap" Foreground="Black">
 						A forced shutdown powers off the virtual machine without powering off the operating system. <LineBreak/>
 						This action can damage the virtual machine, and cause data loss.
 					</TextBlock>
-					<TextBlock FontSize="14" TextWrapping="Wrap" FontWeight="DemiBold" Margin="0, 5, 0, 15"
+					<TextBlock TextWrapping="Wrap" FontWeight="DemiBold" Margin="0, 5, 0, 15"
 					           Text="{Binding ForceOffWarningQuestion}"/>
 					
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
-						<Button FontWeight="DemiBold" Command="{Binding ForceOffWarningClosedCommand}">Cancel</Button>
-						<Button FontWeight="DemiBold" Command="{Binding ForceOffConfirmClickCommand}">Force Off</Button>
+						<Button FontWeight="Bold" Foreground="#3a3a3a" Command="{Binding ForceOffWarningClosedCommand}">Cancel</Button>
+						<Button FontWeight="Bold" Foreground="#3a3a3a" Command="{Binding ForceOffConfirmClickCommand}">Force Off</Button>
 					</StackPanel>
 				</StackPanel>
 			</templated:OverlayPopup>
@@ -118,7 +118,7 @@
 
 						<ListBox.ItemTemplate>
 							<DataTemplate DataType="{x:Type vm:VmItemTemplate}">
-								<Border Padding="10" Background="Transparent" Width="230" Height="200">
+								<Border Padding="10" Background="Transparent" Width="230" Height="210">
 									<Border CornerRadius="10" Padding="10" BorderThickness="0" BorderBrush="#5f757a">
 										<Border.Background>
 											<LinearGradientBrush StartPoint="0%, 0%" EndPoint="45%, 45%">
@@ -136,12 +136,10 @@
 													<Button Grid.Column="1" Padding="4" VerticalAlignment="Center" Background="#b3cad8">
 														<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
 														<Button.Flyout>
-															<Flyout>
-																<StackPanel>
-																	<Button Command="{Binding ForceOffClickCommand}">Force Off</Button>
-																	<Button>Delete</Button>
-																</StackPanel>
-															</Flyout>
+															<MenuFlyout VerticalOffset="5">
+																<MenuItem Header="Force Off" Command="{Binding ForceOffClickCommand}"/>
+																<MenuItem Header="Delete"/>
+															</MenuFlyout>
 														</Button.Flyout>
 													</Button>
 												</Grid>

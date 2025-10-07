@@ -184,6 +184,27 @@ public class MessageResponseConnectDrive : MessageResponse
 	}
 }
 
+public class MessageResponseListConnectedDrives : MessageResponse
+{
+	public Status Result { get; }
+	public SharedDefinitions.DriveGeneralDescriptor[]? Drives { get; }		/* Should be empty if no drives connected. Null only on failure. */
+
+	public MessageResponseListConnectedDrives(bool generateGuid, Guid requestId, Status result, SharedDefinitions.DriveGeneralDescriptor[]? drives)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Drives = drives;
+	}
+	
+	public enum Status
+	{
+		Success,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
 public class MessageResponseVmStartup : MessageResponse
 {
 	public Status Result { get; }
@@ -240,6 +261,8 @@ public class MessageResponseVmForceOff : MessageResponse
 		VmIsShutDown,
 		Failure,
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
 public class MessageResponseVmStreamStart : MessageResponse

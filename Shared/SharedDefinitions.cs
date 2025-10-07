@@ -82,6 +82,18 @@ public static class SharedDefinitions
 		}
 	}
 
+	public class DriveGeneralDescriptor
+	{
+		public int Id { get; }
+		public string Name { get; }
+		
+		public DriveGeneralDescriptor(int id, string name)
+		{
+			Id = id;
+			Name = name;
+		}
+	}
+	
 	public class PartitionDescriptor
 	{
 		public string Lable { get; }

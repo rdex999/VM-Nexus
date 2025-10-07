@@ -124,6 +124,11 @@ public partial class HomeViewModel : ViewModelBase
 	{
 		MessageResponseVmForceOff.Status result = await ClientSvc.ForceOffVirtualMachineAsync(_forceOffWarningVm.Id);
 		ForceOffWarningClosed();
+
+		if (result == MessageResponseVmForceOff.Status.Failure)
+		{
+			_forceOffWarningVm.ErrorMessage = "Force off failed.";
+		}
 	}
 }
 

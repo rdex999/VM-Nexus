@@ -227,6 +227,17 @@ public class MessageRequestConnectDrive : MessageRequest	/* Request to mark the 
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
 
+public class MessageRequestListConnectedDrives : MessageRequest		/* Request a list of drives connected to the given VM */
+{
+	public int VmId { get; }
+
+	public MessageRequestListConnectedDrives(bool generateGuid, int vmId)
+		: base(generateGuid)
+	{
+		VmId = vmId;
+	}
+}
+
 public class MessageRequestVmStartup : MessageRequest
 {
 	public int VmId { get; }
@@ -262,6 +273,8 @@ public class MessageRequestVmForceOff : MessageRequest
 	{
 		VmId = vmId;
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
 public class MessageRequestVmStreamStart : MessageRequest		/* Request to send a video stream of the screen of a virtual machine (through MessageInfo) */
