@@ -189,11 +189,19 @@ public class MessageResponseListConnectedDrives : MessageResponse
 	public Status Result { get; }
 	public SharedDefinitions.DriveGeneralDescriptor[]? Drives { get; }		/* Should be empty if no drives connected. Null only on failure. */
 
+	[JsonConstructor]
 	public MessageResponseListConnectedDrives(bool generateGuid, Guid requestId, Status result, SharedDefinitions.DriveGeneralDescriptor[]? drives)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
 		Drives = drives;
+	}
+	
+	public MessageResponseListConnectedDrives(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Drives = null;
 	}
 	
 	public enum Status

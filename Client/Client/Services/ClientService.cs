@@ -248,6 +248,23 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests a list of all drives that are connected to the given virtual machine.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine that the drives are connected to. vmId >= 1.</param>
+	/// <returns>The servers response, or null on networking failure.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. A virtual machine with the given ID exists. <br/>
+	/// Postcondition: The servers response is returned. On networking failure, null is returned.
+	/// </remarks>
+	public async Task<MessageResponseListConnectedDrives?> GetConnectedDrivesAsync(int vmId)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestListConnectedDrives(true, vmId));
+		if (result != ExitCode.Success) return null;
+
+		return (MessageResponseListConnectedDrives)response!;
+	}
+
+	/// <summary>
 	/// Requests to power on a virtual machine.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to power on. id >= 1.</param>
