@@ -679,12 +679,12 @@ public class DatabaseService
 	}
 
 	/// <summary>
-	/// Get all drives associated with a virtual machine.
+	/// Get all drives connected to the virtual machine.
 	/// </summary>
 	/// <param name="vmId">The ID of the virtual machine that the drives are attached to. vmId >= 1.</param>
 	/// <returns>An array of drive descriptors, describing each drive that is connected to the virtual machine. Returns null on failure.</returns>
 	/// <remarks>
-	/// Precondition: A user with the given username exists. The user has a virtual machine with the given name. vmId >= 1. <br/>
+	/// Precondition: A virtual machine with the given ID exists. vmId >= 1. <br/>
 	/// Postcondition: On success, an array of drive descriptors is returned, describing each drive that is connected to the virtual machine.
 	/// On failure, null is returned.
 	/// </remarks>
@@ -719,6 +719,46 @@ public class DatabaseService
 		return descriptors.ToArray();
 	}
 
+	/// <summary>
+	/// Get general descriptors of all drives connected to the given virtual machine.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine that the drives are attached to. vmId >= 1.</param>
+	/// <returns>An array of general drive descriptors, describing each drive that is connected to the virtual machine. Returns null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists. vmId >= 1. <br/>
+	/// Postcondition: On success, an array of general drive descriptors is returned, describing each drive that is connected to the virtual machine.
+	/// On failure, null is returned.
+	/// </remarks>
+	public async Task<SharedDefinitions.DriveGeneralDescriptor[]?> GetVmDriveGeneralDescriptorsAsync(int vmId)
+	{
+		if (vmId < 1)
+		{
+			return null;
+		}
+
+		NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		                                                    SELECT d.id, d.name, d.size, d.type FROM drive_connections dc 
+		                                                        JOIN drives d ON d.id = dc.drive_id 
+		                                                    	WHERE dc.vm_id = @vm_id
+		                                                    """,
+			new NpgsqlParameter("@vm_id", vmId)
+		);
+		
+		List<SharedDefinitions.DriveGeneralDescriptor> descriptors = new List<SharedDefinitions.DriveGeneralDescriptor>();
+		while (await reader.ReadAsync())
+		{
+			SharedDefinitions.DriveGeneralDescriptor descriptor = new SharedDefinitions.DriveGeneralDescriptor(
+				reader.GetInt32(0),
+				reader.GetString(1),
+				reader.GetInt32(2),
+				(SharedDefinitions.DriveType)reader.GetInt32(3)
+			);
+			
+			descriptors.Add(descriptor);
+		}
+		
+		return descriptors.ToArray();
+	}
 	/// <summary>
 	/// The asynchronous version of the ExecuteNonQuery command.
 	/// Executes a Non-Query command (Something that doesnt search for stuff, like a DELETE or INSERT command)

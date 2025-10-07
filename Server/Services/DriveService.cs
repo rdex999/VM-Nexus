@@ -166,10 +166,8 @@ public class DriveService
 	/// Precondition: A user called by username exists. The given user has a drive called by name. userId != null &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, the ID of the drive is returned. On failure, -1 is returned.
 	/// </remarks>
-	public async Task<int> GetDriveIdAsync(int userId, string name)
-	{
-		return await _databaseService.GetDriveIdAsync(userId, name);
-	}
+	public async Task<int> GetDriveIdAsync(int userId, string name) => 
+		await _databaseService.GetDriveIdAsync(userId, name);
 
 	/// <summary>
 	/// Check if the given user has a drive called by name.
@@ -181,10 +179,8 @@ public class DriveService
 	/// Precondition: A user with the given ID must exist. userId >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: Returns whether a drive called by the given name exists under the given user. Returns false on failure.
 	/// </remarks>
-	public async Task<bool> IsDriveExistsAsync(int userId, string name)
-	{
-		return await _databaseService.IsDriveExistsAsync(userId, name);
-	}
+	public async Task<bool> IsDriveExistsAsync(int userId, string name) =>
+		await _databaseService.IsDriveExistsAsync(userId, name);
 
 	/// <summary>
 	/// Deletes the given drive.
@@ -216,10 +212,8 @@ public class DriveService
 	/// Postcondition: On success, the drive connection is registered and the returned exit code states success. <br/>
 	/// On failure, the connection is not registered and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> ConnectDriveAsync(int driveId, int vmId)
-	{
-		return await _databaseService.ConnectDriveAsync(driveId, vmId);
-	}
+	public async Task<ExitCode> ConnectDriveAsync(int driveId, int vmId) => 
+		await _databaseService.ConnectDriveAsync(driveId, vmId);
 	
 	/// <summary>
 	/// Get the filename of a drive (the drives disk image file) that the ID of is the given ID.

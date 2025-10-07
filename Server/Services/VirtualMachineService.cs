@@ -58,7 +58,12 @@ public class VirtualMachineService
 	/// Postcondition: On success, the state of the virtual machine is returned. On failure, -1 is returned.
 	/// </remarks>
 	public async Task<SharedDefinitions.VmState> GetVmStateAsync(int id)
-	{ 
+	{
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			return virtualMachine.GetVmState();
+		}
+		
 		return await _databaseService.GetVmStateAsync(id);
 	}
 	
