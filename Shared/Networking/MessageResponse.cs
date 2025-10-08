@@ -151,14 +151,33 @@ public class MessageResponseCreateDrive : MessageResponse
 		Id = -1;
 	}
 
-	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (Id >= 1 || Id == -1);
-	
 	public enum Status
 	{
 		Success,
 		DriveAlreadyExists,
 		Failure,
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (Id >= 1 || Id == -1);
+}
+
+public class MessageResponseDeleteDrive : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseDeleteDrive(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
 public class MessageResponseConnectDrive : MessageResponse
@@ -178,10 +197,7 @@ public class MessageResponseConnectDrive : MessageResponse
 		Failure,
 	}
 
-	public override bool IsValidMessage()
-	{
-		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
-	}
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
 public class MessageResponseListConnectedDrives : MessageResponse

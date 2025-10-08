@@ -212,6 +212,19 @@ public class MessageRequestCreateDrive : MessageRequest
 	}
 }
 
+public class MessageRequestDeleteDrive : MessageRequest
+{
+	public int DriveId { get; }
+
+	public MessageRequestDeleteDrive(bool generateGuid, int driveId)
+		: base(generateGuid)
+	{
+		DriveId = driveId;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
+}
+
 public class MessageRequestConnectDrive : MessageRequest	/* Request to mark the drive as connected to some VM. */
 {
 	public int DriveId { get; }
@@ -236,6 +249,8 @@ public class MessageRequestListConnectedDrives : MessageRequest		/* Request a li
 	{
 		VmId = vmId;
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
 public class MessageRequestVmStartup : MessageRequest
