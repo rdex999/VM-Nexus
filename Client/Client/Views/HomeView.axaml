@@ -56,36 +56,52 @@
 				</StackPanel>
 			</templated:OverlayPopup>
 		
-			<templated:OverlayPopup Title="Delete Connected Drives?" Background="White"
+			<templated:OverlayPopup Title="Delete the Virtual Machine?" Background="White"
 			                        Placement="Center" PlacementTarget="Border"
 			                        IsOpen="{Binding DeleteDrivesIsOpen}"
 			                        ClosedCommand="{Binding DeletePopupClosedCommand}">
 				
 				<StackPanel Spacing="10">
-					<TextBlock TextWrapping="Wrap" Foreground="Black">The virtual machine has drives connected to it.</TextBlock>
-					<TextBlock TextWrapping="Wrap" FontWeight="DemiBold">Select the drives you would like to delete.</TextBlock>
+					<TextBlock TextWrapping="Wrap" Foreground="Black" IsVisible="{Binding DeletePopupHasDrives}">
+						The virtual machine has drives connected to it.
+					</TextBlock>
+					<TextBlock TextWrapping="Wrap" FontWeight="DemiBold" IsVisible="{Binding DeletePopupHasDrives}">
+						Select the drives you would like to delete.
+					</TextBlock>
 					
-					<ScrollViewer MaxHeight="350">
+					<ScrollViewer MaxHeight="350" IsVisible="{Binding DeletePopupHasDrives}">
 						<ItemsControl ItemsSource="{Binding DeletionDrives}" Background="Transparent">
 							<ItemsControl.ItemTemplate>
 								<DataTemplate DataType="{x:Type vm:DeletionDriveItemTemplate}">
 									<Border Background="#efefef" Padding="6" CornerRadius="10" Margin="0, 0, 0, 8">
-										<Grid ColumnDefinitions="4*, 3*, 3*, Auto" VerticalAlignment="Center">
+										<Grid ColumnDefinitions="4*, 5, 2*, 3*, Auto" VerticalAlignment="Center">
+											
 											<TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
 											
-											<TextBlock Grid.Column="1" VerticalAlignment="Center"
+											<TextBlock Grid.Column="2" VerticalAlignment="Center"
 											           FontWeight="DemiBold" Text="{Binding DriveTypeString}" />
 											
-											<TextBlock Grid.Column="2" VerticalAlignment="Center"
+											<TextBlock Grid.Column="3" VerticalAlignment="Center"
 											           FontWeight="DemiBold" Text="{Binding SizeString}"/>
 											
-											<CheckBox Grid.Column="3" Margin="10, 0, 0, 0" IsChecked="{Binding IsChecked}"/>
+											<CheckBox Grid.Column="4" Margin="10, 0, 0, 0" IsChecked="{Binding IsChecked}"/>
 										</Grid>
 									</Border>
 								</DataTemplate>
 							</ItemsControl.ItemTemplate>
 						</ItemsControl>
 					</ScrollViewer>
+				
+					<TextBlock FontWeight="DemiBold" IsVisible="{Binding DeletePopupHasDrives}" TextWrapping="Wrap">
+						The selected drives and the virtual machine will be deleted. <LineBreak/>
+						This action cannot be undone.
+					</TextBlock>
+					<TextBlock FontWeight="DemiBold" IsVisible="{Binding !DeletePopupHasDrives}" TextWrapping="Wrap">
+						The virtual machine will be deleted. <LineBreak/>
+						This action cannot be undone.
+					</TextBlock>
+					
+					<TextBlock FontWeight="Bold">Are you sure you want to continue?</TextBlock>
 					
 					<Button FontWeight="Bold" HorizontalAlignment="Center" FontSize="16">Delete</Button>
 				</StackPanel>

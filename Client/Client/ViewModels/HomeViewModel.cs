@@ -26,6 +26,9 @@ public partial class HomeViewModel : ViewModelBase
 
 	[ObservableProperty]
 	private bool _deleteDrivesIsOpen = false;
+
+	[ObservableProperty] 
+	private bool _deletePopupHasDrives = false;
 	
 	public ObservableCollection<DeletionDriveItemTemplate> DeletionDrives { get; set; }		/* Drives the user can select to delete, when deleting a VM */
 	
@@ -112,7 +115,27 @@ public partial class HomeViewModel : ViewModelBase
 	/// </remarks>
 	private void OnVmDeleteClicked(SharedDefinitions.VmGeneralDescriptor vm)
 	{
-		DeleteDrivesIsOpen = true;
+		Task<MessageResponseListConnectedDrives?> task = ClientSvc.GetConnectedDrivesAsync(vm.Id);
+		task.GetAwaiter().OnCompleted(() =>
+		{
+			if (task.Result == null || task.Result.Result != MessageResponseListConnectedDrives.Status.Success)
+			{
+				DeletePopupClosed();
+				return;
+			}
+
+			SharedDefinitions.DriveGeneralDescriptor[] drives = task.Result.Drives!;
+		
+			DeletePopupHasDrives = drives.Length != 0;
+		
+			DeletionDrives.Clear();
+			foreach (SharedDefinitions.DriveGeneralDescriptor drive in drives)
+			{
+				DeletionDrives.Add(new DeletionDriveItemTemplate(drive.Id, drive.Name, drive.DriveType, drive.Size));
+			}
+		
+			DeleteDrivesIsOpen = true;
+		});
 	}
 	
 	/// <summary>
@@ -159,6 +182,7 @@ public partial class HomeViewModel : ViewModelBase
 	private void DeletePopupClosed()
 	{
 		DeleteDrivesIsOpen = false;
+		DeletionDrives.Clear();
 	}
 }
 
