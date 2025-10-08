@@ -1,6 +1,5 @@
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media;
 using Avalonia.Threading;
@@ -48,18 +47,7 @@ public partial class HomeViewModel : ViewModelBase
 	{
 		Vms = new ObservableCollection<VmItemTemplate>();
 		DeletionDrives = new ObservableCollection<DeletionDriveItemTemplate>();
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Floppy, 15));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.CDROM, 8192));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
-		// DeletionDrives.Add(new DeletionDriveItemTemplate(1, "d1", SharedDefinitions.DriveType.Disk, 50000));
+
 		ClientSvc.VmListChanged += OnVmListChanged;
 	}
 
@@ -83,6 +71,7 @@ public partial class HomeViewModel : ViewModelBase
 				VmItemTemplate template = new VmItemTemplate(ClientSvc, vm.Id, vm.Name, vm.OperatingSystem, vm.State);
 				template.OpenClicked += OnVmOpenClicked;
 				template.ForceOffClicked += OnVmForceOffClicked;
+				template.DeleteClicked += OnVmDeleteClicked;
 				Vms.Add(template);
 			});
 		}
@@ -101,21 +90,31 @@ public partial class HomeViewModel : ViewModelBase
 	/// <summary>
 	/// Handles a click on one of the VM's force off button. Displays the force off warning message.
 	/// </summary>
-	/// <param name="sender">Unused</param>
-	/// <param name="e"></param>
+	/// <param name="template">The virtual machine that the force off button was clicked on. template != null.</param>
 	/// <remarks>
-	/// Precondition: User has clicked the force off button on a virtual machine. sender != null &amp;&amp; sender is VmItemTemplate. <br/>
+	/// Precondition: User has clicked the force off button on a virtual machine. template != null. <br/>
 	/// Postcondition: The force off warning popup is displayed.
 	/// </remarks>
-	private void OnVmForceOffClicked(object? sender, EventArgs e)
+	private void OnVmForceOffClicked(VmItemTemplate template)
 	{
-		if (sender == null || sender is not VmItemTemplate template) return;
-		
 		_forceOffWarningVm = template;
 		ForceOffWarningQuestion = $"Are you sure you want to force off {template.Name}?";
 		ForceOffWarningIsOpen = true;
 	}
 
+	/// <summary>
+	/// Handles a click on one of the VM's delete button. Displays a confirmation popup.
+	/// </summary>
+	/// <param name="vm">A descriptor of the virtual machine that the delete button was clicked upon. vm != null.</param>
+	/// <remarks>
+	/// Precondition: User has clicked on the delete button on a virtual machine. vm != null.<br/>
+	/// Postcondition: A confirmation popup appears.
+	/// </remarks>
+	private void OnVmDeleteClicked(SharedDefinitions.VmGeneralDescriptor vm)
+	{
+		DeleteDrivesIsOpen = true;
+	}
+	
 	/// <summary>
 	/// Called to close the force off warning popup, or called when it is closed, or if the user clicks on either the Cancel or Force Off buttons on the popup. Cleans up.
 	/// </summary>
@@ -148,12 +147,26 @@ public partial class HomeViewModel : ViewModelBase
 			_forceOffWarningVm.ErrorMessage = "Force off failed.";
 		}
 	}
+
+	/// <summary>
+	/// Closes the VM delete confirmation popup. Also called when the popup closes.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the user has closed the popup, or closing it is needed. Popup is open. <br/>
+	/// Postcondition: Popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private void DeletePopupClosed()
+	{
+		DeleteDrivesIsOpen = false;
+	}
 }
 
 public partial class VmItemTemplate : ObservableObject
 {
 	public Action<SharedDefinitions.VmGeneralDescriptor>? OpenClicked;
-	public event EventHandler? ForceOffClicked;
+	public Action<VmItemTemplate>? ForceOffClicked;
+	public Action<SharedDefinitions.VmGeneralDescriptor>? DeleteClicked;
 	
 	public int Id { get; }
 
@@ -390,10 +403,20 @@ public partial class VmItemTemplate : ObservableObject
 	/// </summary>
 	/// <remarks>
 	/// Precondition: User has clicked on the force off button on this virtual machine. <br/>
-	/// Postcondition: Warning popup apprears.
+	/// Postcondition: Warning popup appears.
 	/// </remarks>
 	[RelayCommand]
-	private void ForceOffClick() => ForceOffClicked?.Invoke(this, EventArgs.Empty);
+	private void ForceOffClick() => ForceOffClicked?.Invoke(this);
+
+	/// <summary>
+	/// Handles a click on the delete button.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the delete button on this virtual machine. <br/>
+	/// Postcondition: A confirmation popup appears.
+	/// </remarks>
+	[RelayCommand]
+	private void DeleteClick() => DeleteClicked?.Invoke(AsVmGeneralDescriptor());
 }
 
 public class DeletionDriveItemTemplate
@@ -402,8 +425,21 @@ public class DeletionDriveItemTemplate
 	public string Name { get; }
 	public SharedDefinitions.DriveType DriveType { get; }
 	public int Size { get; }	/* The size of the drive, in MiB */
+
 	public string DriveTypeString => DriveType.ToString();
-	
+
+	public string SizeString
+	{
+		get
+		{
+			if (Size >= 1024) return $"{(Size/1024.0):0.##} GiB";
+			
+			return $"{Size} MiB";
+		}
+	}
+
+	public bool IsChecked { get; } = true;
+
 	public DeletionDriveItemTemplate(int id, string name, SharedDefinitions.DriveType driveType, int size)
 	{
 		Id = id;

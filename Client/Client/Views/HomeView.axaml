@@ -56,8 +56,10 @@
 				</StackPanel>
 			</templated:OverlayPopup>
 		
-			<templated:OverlayPopup Title="Delete Connected Drives?" Placement="Center" PlacementTarget="Border" 
-			                        IsOpen="{Binding DeleteDrivesIsOpen}" Background="White">
+			<templated:OverlayPopup Title="Delete Connected Drives?" Background="White"
+			                        Placement="Center" PlacementTarget="Border"
+			                        IsOpen="{Binding DeleteDrivesIsOpen}"
+			                        ClosedCommand="{Binding DeletePopupClosedCommand}">
 				
 				<StackPanel Spacing="10">
 					<TextBlock TextWrapping="Wrap" Foreground="Black">The virtual machine has drives connected to it.</TextBlock>
@@ -68,13 +70,16 @@
 							<ItemsControl.ItemTemplate>
 								<DataTemplate DataType="{x:Type vm:DeletionDriveItemTemplate}">
 									<Border Background="#efefef" Padding="6" CornerRadius="10" Margin="0, 0, 0, 8">
-										<Grid ColumnDefinitions="*, Auto" VerticalAlignment="Center">
-											<StackPanel Orientation="Horizontal" VerticalAlignment="Center" Spacing="15">
-												<TextBlock Text="{Binding Name}" />
-												<TextBlock FontWeight="DemiBold" Text="{Binding DriveTypeString}" />
-											</StackPanel>
+										<Grid ColumnDefinitions="4*, 3*, 3*, Auto" VerticalAlignment="Center">
+											<TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
 											
-											<CheckBox Grid.Column="1" />
+											<TextBlock Grid.Column="1" VerticalAlignment="Center"
+											           FontWeight="DemiBold" Text="{Binding DriveTypeString}" />
+											
+											<TextBlock Grid.Column="2" VerticalAlignment="Center"
+											           FontWeight="DemiBold" Text="{Binding SizeString}"/>
+											
+											<CheckBox Grid.Column="3" Margin="10, 0, 0, 0" IsChecked="{Binding IsChecked}"/>
 										</Grid>
 									</Border>
 								</DataTemplate>
@@ -168,7 +173,7 @@
 														<Button.Flyout>
 															<MenuFlyout VerticalOffset="5">
 																<MenuItem Header="Force Off" Command="{Binding ForceOffClickCommand}"/>
-																<MenuItem Header="Delete"/>
+																<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}"/>
 															</MenuFlyout>
 														</Button.Flyout>
 													</Button>
