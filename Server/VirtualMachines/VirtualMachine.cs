@@ -44,6 +44,7 @@ public class VirtualMachine
 	private Domain _libvirtDomain = null!;
 	private RfbConnection _rfbConnection = null!;
 	private readonly CancellationTokenSource _cts;
+	private readonly CancellationTokenSource _rfbMessageCts;
 
 	private readonly SharedDefinitions.OperatingSystem _operatingSystem;
 	private readonly SharedDefinitions.CpuArchitecture _cpuArchitecture;
@@ -73,6 +74,7 @@ public class VirtualMachine
 
 		PoweredOffTcs = new TaskCompletionSource<virDomainState>();
 		_cts = new CancellationTokenSource();
+		_rfbMessageCts = new CancellationTokenSource();
 		_frameLock = new object();
 	}
 
@@ -92,6 +94,8 @@ public class VirtualMachine
 			return;
 		}
 		_closing = true;
+
+		await _rfbMessageCts.CancelAsync();
 		
 		if (GetVmState() == SharedDefinitions.VmState.Running)
 		{
@@ -103,8 +107,6 @@ public class VirtualMachine
 		await _cts.CancelAsync();
 		
 		await _allBackgroundTasks;
-		
-		_cts.Dispose();
 		
 		try
 		{
@@ -119,6 +121,9 @@ public class VirtualMachine
 		{
 			// ignored
 		}
+		
+		_rfbMessageCts.Dispose();
+		_cts.Dispose();
 
 		await using FileStream fileStream = new FileStream(_pcmAudioFilePath, FileMode.Truncate);
 	}
@@ -211,6 +216,8 @@ public class VirtualMachine
 	/// </remarks>
 	public async Task<ExitCode> PowerOffAsync()
 	{
+		if (GetVmState() == SharedDefinitions.VmState.ShutDown) return ExitCode.VmIsShutDown;
+		
 		_libvirtDomain.Shutdown();
 
 		try
@@ -284,11 +291,16 @@ public class VirtualMachine
 	/// Precondition: The virtual machine is running, and its screen stream is running. <br/>
 	/// Postcondition: The request is enqueued in the virtual machines message queue.
 	/// </remarks>
-	public void EnqueueGetFullFrame() => _rfbConnection.EnqueueMessage(
-		new FramebufferUpdateRequestMessage(false,
-			new Rectangle(0, 0, GetRenderTarget()!.ScreenSize.Width, GetRenderTarget()!.ScreenSize.Height))
-	);
-	
+	public void EnqueueGetFullFrame()
+	{
+		if (_closing || GetVmState() == SharedDefinitions.VmState.ShutDown) return;
+		
+		_rfbConnection.EnqueueMessage(
+			new FramebufferUpdateRequestMessage(false, new Rectangle(0, 0, GetRenderTarget()!.ScreenSize.Width, GetRenderTarget()!.ScreenSize.Height)),
+			_rfbMessageCts.Token
+		);
+	}
+
 	/// <summary>
 	/// Enqueues a pointer event message in the virtual machine, specifying the new location of the pointer on the virtual machines' screen.
 	/// </summary>
@@ -297,9 +309,15 @@ public class VirtualMachine
 	/// Precondition: The virtual machine is running, and its screen stream is running. The mouse position must be in valid range. position != null.<br/>
 	/// Postcondition: The message is enqueued in the virtual machines message queue.
 	/// </remarks>
-	public void EnqueuePointerMovement(Point position) => _rfbConnection.EnqueueMessage(
-		new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons)
-	);
+	public void EnqueuePointerMovement(Point position)
+	{
+		if (_closing || GetVmState() == SharedDefinitions.VmState.ShutDown) return;
+		
+		_rfbConnection.EnqueueMessage(
+			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons),
+			_rfbMessageCts.Token
+		);
+	}
 
 	/// <summary>
 	/// Enqueues a pointer event message in the virtual machine, specifying the new location of the pointer along with the new currently pressed mouse buttons.
@@ -312,6 +330,8 @@ public class VirtualMachine
 	/// </remarks>
 	public void EnqueuePointerButtonEvent(Point position, int pressedButtons)
 	{
+		if (_closing || GetVmState() == SharedDefinitions.VmState.ShutDown) return;
+		
 		if (pressedButtons == _pointerPressedButtons) return;
 		
 		_pointerPressedButtons = pressedButtons & ~(
@@ -326,10 +346,12 @@ public class VirtualMachine
 		 * This results in VNC actually seeing the mouse wheel scroll event, and responding to it.
 		 */
 		_rfbConnection.EnqueueMessage(
-			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)pressedButtons)
+			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)pressedButtons),
+			_rfbMessageCts.Token
 		);
 		_rfbConnection.EnqueueMessage(
-			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons)
+			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons),
+			_rfbMessageCts.Token
 		);
 	}
 
@@ -344,6 +366,8 @@ public class VirtualMachine
 	/// </remarks>
 	public void EnqueueKeyboardKeyEvent(PhysicalKey key, bool pressed)
 	{
+		if (_closing || GetVmState() == SharedDefinitions.VmState.ShutDown) return;
+		
 		if (PhysicalKeyToKeySymbol.TryGetValue(key, out KeySymbol keySymbol))
 		{
 			if (key == PhysicalKey.ShiftLeft)
@@ -359,7 +383,7 @@ public class VirtualMachine
 			{
 				keySymbol -= KeySymbol.a - KeySymbol.A;
 			}
-			_rfbConnection.EnqueueMessage(new KeyEventMessage(pressed, keySymbol));
+			_rfbConnection.EnqueueMessage(new KeyEventMessage(pressed, keySymbol), _rfbMessageCts.Token);
 		}
 	}
 
