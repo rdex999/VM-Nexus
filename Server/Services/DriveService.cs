@@ -49,7 +49,6 @@ public class DriveService
 		}
 
 		int driveId = await GetDriveIdAsync(userId, driveName);	/* Just successfully created the drive - this must succeed. */
-		string driveFileName = GetDriveFileName(driveId);
 		string driveFilePath = GetDriveFilePath(driveId);
 	
 		long driveSize = (long)size * 1024 * 1024;		/* The drive size in bytes */
