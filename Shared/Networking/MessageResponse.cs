@@ -146,6 +146,8 @@ public class MessageResponseListVms : MessageResponse
 		Success,
 		Failure,
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
 public class MessageResponseCheckVmExist : MessageResponse
@@ -251,6 +253,35 @@ public class MessageResponseListConnectedDrives : MessageResponse
 	{
 		Success,
 		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
+public class MessageResponseListDrives : MessageResponse
+{
+	public Status Result { get; }
+	public SharedDefinitions.DriveGeneralDescriptor[]? Drives { get; }
+
+	[JsonConstructor]
+	public MessageResponseListDrives(bool generateGuid, Guid requestId, Status result, SharedDefinitions.DriveGeneralDescriptor[]? drives)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Drives = drives;
+	}
+
+	public MessageResponseListDrives(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Drives = null;
+	}
+	
+	public enum Status
+	{
+		Success,
+		Failure
 	}
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);

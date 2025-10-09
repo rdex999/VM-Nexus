@@ -261,6 +261,14 @@ public class MessageRequestListConnectedDrives : MessageRequest		/* Request a li
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+public class MessageRequestListDrives : MessageRequest
+{
+	public MessageRequestListDrives(bool generateGuid)
+		: base(generateGuid)
+	{
+	}
+}
+
 public class MessageRequestVmStartup : MessageRequest
 {
 	public int VmId { get; }
