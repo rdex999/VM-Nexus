@@ -22,6 +22,18 @@ public class DatabaseService
 	private const int Argon2MemorySize = 1024 * 512;	/* 512 MiB */
 	private const int Argon2Iterations = 4;
 	private const int Argon2Threads = 2;
+
+	public struct DriveConnection
+	{
+		public int DriveId { get; }
+		public int VmId { get; }
+		
+		public DriveConnection(int driveId, int vmId)
+		{
+			DriveId = driveId;
+			VmId = vmId;
+		}
+	}
 	
 	/// <summary>
 	/// Initializes the database service and establishes a connection tp the database.
@@ -155,10 +167,7 @@ public class DatabaseService
 			new NpgsqlParameter("@password_salt",  salt)
 		);
 
-		if (rowCount == 1)
-		{
-			return ExitCode.Success;
-		}
+		if (rowCount == 1) return ExitCode.Success;
 		
 		return ExitCode.DatabaseOperationFailed;
 	}
@@ -216,10 +225,7 @@ public class DatabaseService
 	public async Task<int> GetUserIdAsync(string username)
 	{
 		object? id = await ExecuteScalarAsync("SELECT id FROM users WHERE username = @username", new NpgsqlParameter("@username", username));
-		if (id == null)
-		{
-			return -1;
-		}
+		if (id == null) return -1;
 		
 		return (int)id;
 	}
@@ -242,17 +248,11 @@ public class DatabaseService
 	public async Task<ExitCode> CreateVmAsync(int userId, string name, SharedDefinitions.OperatingSystem operatingSystem, 
 		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
-		if (userId < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
+		if (userId < 1) return ExitCode.InvalidParameter;
 		
 		bool vmExists = await IsVmExistsAsync(userId, name);
 		
-		if (vmExists)
-		{
-			return ExitCode.VmAlreadyExists;
-		}
+		if (vmExists) return ExitCode.VmAlreadyExists;
 
 		int state = (int)SharedDefinitions.VmState.ShutDown;
 		int rows = await ExecuteNonQueryAsync($"""
@@ -287,10 +287,7 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsVmExistsAsync(int userId, string name)
 	{
-		if (userId < 1)
-		{
-			return false;
-		}
+		if (userId < 1) return false;
 		
 		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM virtual_machines WHERE owner_id = @owner_id AND name = @name)",
 			new NpgsqlParameter("@owner_id", userId),
@@ -312,20 +309,14 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int> GetVmIdAsync(int userId, string name)
 	{
-		if (userId < 1)
-		{
-			return -1;
-		}
+		if (userId < 1) return -1;
 		
 		object? id = await ExecuteScalarAsync("SELECT id FROM virtual_machines WHERE owner_id = @owner_id AND name = @name", 
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
 		);
 		
-		if (id == null)
-		{
-			return -1;
-		}
+		if (id == null) return -1;
 		
 		return (int)id;
 	}
@@ -344,6 +335,8 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<SharedDefinitions.VmGeneralDescriptor[]?> GetVmGeneralDescriptorsOfUserAsync(int userId)
 	{
+		if (userId < 1) return null;
+		
 		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
 			"SELECT id, name, operating_system, state FROM virtual_machines WHERE owner_id = @owner_id",
 			new NpgsqlParameter("@owner_id", userId)
@@ -375,10 +368,7 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<SharedDefinitions.VmGeneralDescriptor?> GetVmGeneralDescriptorAsync(int id)
 	{
-		if (id < 1)
-		{
-			return null;
-		}
+		if (id < 1) return null;
 		
 		await using NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT name, operating_system, state FROM virtual_machines WHERE id = @id",
 			new NpgsqlParameter("@id", id)
@@ -475,7 +465,7 @@ public class DatabaseService
 			return null;
 		}
 		
-		NpgsqlDataReader reader = await ExecuteReaderAsync(
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
 			"SELECT name, operating_system, cpu_architecture, boot_mode, state FROM virtual_machines WHERE id = @id LIMIT 1",
 			new NpgsqlParameter("@id", vmId)
 		);
@@ -695,7 +685,7 @@ public class DatabaseService
 			return null;
 		}
 
-		NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
 		                                                    SELECT d.id, d.name, d.size, d.type FROM drive_connections dc 
 		                                                        JOIN drives d ON d.id = dc.drive_id 
 		                                                    	WHERE dc.vm_id = @vm_id
@@ -736,7 +726,7 @@ public class DatabaseService
 			return null;
 		}
 
-		NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
 		                                                    SELECT d.id, d.name, d.size, d.type FROM drive_connections dc 
 		                                                        JOIN drives d ON d.id = dc.drive_id 
 		                                                    	WHERE dc.vm_id = @vm_id
@@ -774,7 +764,7 @@ public class DatabaseService
 	{
 		if (userId < 1) return null;
 
-		NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
 		                                                    SELECT id, name, size, type FROM drives WHERE owner_id = @owner_id
 		                                                    """,
 			new NpgsqlParameter("@owner_id", userId)
@@ -792,6 +782,40 @@ public class DatabaseService
 		}
 		
 		return descriptors.ToArray();
+	}
+
+	/// <summary>
+	/// Get all drive connections of the given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user of which to get the drive connections of. userId >= 1.</param>
+	/// <returns>An array of drive connections, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
+	/// Postcondition: On success, an array of drive connections is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<DriveConnection[]?> GetDriveConnectionsOfUserAsync(int userId)
+	{
+		if (userId < 1) return null;
+
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		                                                    SELECT dc.drive_id, dc.vm_id FROM drive_connections dc
+		                                                    JOIN drives d ON d.id = dc.drive_id
+		                                                    JOIN virtual_machines vm ON vm.id = dc.vm_id
+		                                                    WHERE d.owner_id = @owner_id AND vm.owner_id = @owner_id
+		                                                    """,
+			new NpgsqlParameter("@owner_id", userId)
+		);
+
+		List<DriveConnection> connections = new List<DriveConnection>();
+		while (await reader.ReadAsync())
+		{
+			connections.Add(new DriveConnection(
+				reader.GetInt32(0),
+				reader.GetInt32(1)
+			));
+		}
+		
+		return connections.ToArray();
 	}
 	
 	/// <summary>
