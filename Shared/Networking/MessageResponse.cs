@@ -95,23 +95,23 @@ public class MessageResponseLogout : MessageResponse
 public class MessageResponseCreateVm : MessageResponse
 {
 	public Status Result { get; }
-	public int Id { get; }
+	public int VmId { get; }
 	
 	[JsonConstructor]
-	public MessageResponseCreateVm(bool generateGuid, Guid requestId, Status result, int id)
+	public MessageResponseCreateVm(bool generateGuid, Guid requestId, Status result, int vmId)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
-		Id = id;
+		VmId = vmId;
 	}
 	public MessageResponseCreateVm(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
-		Id = -1;
+		VmId = -1;
 	}
 
-	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (Id >= 1 || Id == -1);
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (VmId >= 1 || VmId == -1);
 
 	public enum Status
 	{
@@ -164,20 +164,20 @@ public class MessageResponseCheckVmExist : MessageResponse
 public class MessageResponseCreateDrive : MessageResponse
 {
 	public Status Result { get; }
-	public int Id { get; }		/* The ID of the new drive */
+	public int DriveId { get; }		/* The ID of the new drive */
 
 	[JsonConstructor]
-	public MessageResponseCreateDrive(bool generateGuid, Guid requestId, Status result, int id)
+	public MessageResponseCreateDrive(bool generateGuid, Guid requestId, Status result, int driveId)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
-		Id = id;
+		DriveId = driveId;
 	}
 	public MessageResponseCreateDrive(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
-		Id = -1;
+		DriveId = -1;
 	}
 
 	public enum Status
@@ -187,7 +187,7 @@ public class MessageResponseCreateDrive : MessageResponse
 		Failure,
 	}
 	
-	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (Id >= 1 || Id == -1);
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (DriveId >= 1 || DriveId == -1);
 }
 
 public class MessageResponseDeleteDrive : MessageResponse

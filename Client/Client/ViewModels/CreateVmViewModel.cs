@@ -10,6 +10,8 @@ namespace Client.ViewModels;
 
 public partial class CreateVmViewModel : ViewModelBase
 {
+	private readonly DriveService _driveService;
+	
 	[ObservableProperty] 
 	private string _vmName = string.Empty;
 	
@@ -71,9 +73,10 @@ public partial class CreateVmViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _vmCreationMessageSuccessClass = true;
 	
-	public CreateVmViewModel(NavigationService navigationSvc, ClientService clientSvc)
+	public CreateVmViewModel(NavigationService navigationSvc, ClientService clientSvc, DriveService driveService)
 		: base(navigationSvc, clientSvc)
 	{
+		_driveService = driveService;
 	}
 
 	/// <summary>
@@ -176,7 +179,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 		VmCreationMessage = string.Empty;
 		
-		CreateVmButtonIsEnabled = isVmNameValid && OsDriveSize != null && 
+		CreateVmButtonIsEnabled = _driveService.IsInitialized && isVmNameValid && OsDriveSize != null && 
 		                          ((OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax) || OperatingSystem == SharedDefinitions.OperatingSystem.Other);
 	}
 
@@ -198,7 +201,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		
 		MessageResponseCreateVm.Status createVmResult = MessageResponseCreateVm.Status.Failure;
 		MessageResponseCreateDrive.Status createDriveResult = MessageResponseCreateDrive.Status.Failure;
-		MessageResponseConnectDrive.Status connectDriveResult = MessageResponseConnectDrive.Status.Failure;
+		ExitCode connectDriveResult = ExitCode.Failure;
 
 		if (!createDrive)
 		{
@@ -242,14 +245,14 @@ public partial class CreateVmViewModel : ViewModelBase
 
 				if (createDriveResult == MessageResponseCreateDrive.Status.Success)
 				{
-					connectDriveResult = await ClientSvc.ConnectDriveAsync(taskCreateDrive.Result!.Id, taskCreateVm.Result!.Id);
+					connectDriveResult = await _driveService.ConnectDriveAsync(taskCreateDrive.Result!.DriveId, taskCreateVm.Result!.VmId);
 				}
 			}
 		}
 	
 		/* If Other is selected as the operating system - taskCreateDrive wont have a value because we are not creating a drive. */
 		if (createVmResult == MessageResponseCreateVm.Status.Success && 
-		    (!createDrive || (createDriveResult == MessageResponseCreateDrive.Status.Success && connectDriveResult == MessageResponseConnectDrive.Status.Success)))
+		    (!createDrive || (createDriveResult == MessageResponseCreateDrive.Status.Success && connectDriveResult == ExitCode.Success)))
 		{	
 			VmCreationMessageSuccessClass = true;
 			VmCreationMessage = "The virtual machine has been created successfully!";
@@ -269,12 +272,12 @@ public partial class CreateVmViewModel : ViewModelBase
 		if (createDrive && (
 			    createVmResult != MessageResponseCreateVm.Status.Success ||
 			    createDriveResult != MessageResponseCreateDrive.Status.Success ||
-			    connectDriveResult != MessageResponseConnectDrive.Status.Success)
+			    connectDriveResult != ExitCode.Success)
 		   )
 		{
 			/* One or more of the operations has failed - delete the ones that have succeeded. */
 			
-			if (connectDriveResult == MessageResponseConnectDrive.Status.Success)
+			if (connectDriveResult == ExitCode.Success)
 			{
 				/* TODO: Delete the drive connection */
 			}

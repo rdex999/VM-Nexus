@@ -58,16 +58,20 @@ public partial class MainViewModel : ViewModelBase
 		ClientSvc.VmCrashed += OnVmCrashed;
 		
 		AccountMenuTitle = $"Welcome, {username}.";
+
+		DriveService driveService = new DriveService(ClientSvc);
 		
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
-			new SideMenuItemTemplate("Home", new HomeViewModel(NavigationSvc, ClientSvc), "HomeRegular"),
-			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(NavigationSvc,  ClientSvc), "AddRegular"),
+			new SideMenuItemTemplate("Home", new HomeViewModel(NavigationSvc, ClientSvc, driveService), "HomeRegular"),
+			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(NavigationSvc,  ClientSvc, driveService), "AddRegular"),
 		};
 		CurrentSideMenuItem = SideMenuItems[0];
 		CurrentPageViewModel = SideMenuItems.First().ViewModel;
 		((HomeViewModel)CurrentPageViewModel).VmOpenClicked += OnVmOpenClicked;
 
+		_ = driveService.InitializeAsync();
+		
 		VmTabs = new ObservableCollection<VmTabTemplate>();
 
 		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())

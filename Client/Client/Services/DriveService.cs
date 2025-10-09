@@ -10,6 +10,7 @@ namespace Client.Services;
 
 public class DriveService
 {
+	public event EventHandler<ExitCode>? Initialized;	/* Gives the exit code of the InitializeAsync method */
 	public bool IsInitialized { get; private set; } = false;
 	
 	private readonly ClientService _clientService;
@@ -37,11 +38,14 @@ public class DriveService
 		Task<ExitCode> fetchDriveConnections = FetchDriveConnectionsAsync();
 
 		ExitCode[] results = await Task.WhenAll(fetchVms, fetchDrives, fetchDriveConnections);
+
+		ExitCode result = results.Any(code => code != ExitCode.Success) ? ExitCode.DataFetchFailed : ExitCode.Success;
 		
-		if (results.Any(code => code != ExitCode.Success)) return ExitCode.DataFetchFailed;
+		if (result == ExitCode.Success) IsInitialized = true;
+
+		Initialized?.Invoke(this, result);
 		
-		IsInitialized = true;
-		return ExitCode.Success;
+		return result;
 	}
 
 	public async Task<ExitCode> ConnectDriveAsync(int driveId, int vmId)
@@ -62,6 +66,9 @@ public class DriveService
 		};
 	}
 
+	public SharedDefinitions.VmGeneralDescriptor[] GetVirtualMachines() => _virtualMachines.Values.ToArray();
+	public SharedDefinitions.DriveGeneralDescriptor[] GetDrives() => _drives.Values.ToArray();
+	
 	private async Task<ExitCode> FetchVmsAsync()
 	{
 		_virtualMachines.Clear();
@@ -114,15 +121,17 @@ public class DriveService
 
 		if (!_drivesByVmId.TryGetValue(driveId, out HashSet<int>? drives))
 		{
-			_drivesByVmId[vmId] = new HashSet<int>();
+			drives = new HashSet<int>();
+			_drivesByVmId[vmId] = drives;
 		}
-		drives!.Add(vmId);
+		drives.Add(vmId);
 
 		if (!_vmsByDriveId.TryGetValue(driveId, out HashSet<int>? vms))
 		{
-			_vmsByDriveId[driveId] = new HashSet<int>();
+			vms = new HashSet<int>();
+			_vmsByDriveId[driveId] = vms;
 		}
-		vms!.Add(vmId);
+		vms.Add(vmId);
 		
 		return true;
 	}

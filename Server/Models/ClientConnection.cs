@@ -118,10 +118,9 @@ public sealed class ClientConnection : MessagingService
 			{
 				string usernameTrimmed = reqLogin.Username.Trim();
 				bool validLogin = await _databaseService.IsValidLoginAsync(usernameTrimmed, reqLogin.Password);
-				SendResponse(new MessageResponseLogin(true, reqLogin.Id, validLogin));
 				if (validLogin)
 				{
-					_isLoggedIn = validLogin;
+					_isLoggedIn = true;
 					_userId = await _databaseService.GetUserIdAsync(usernameTrimmed);		/* Must be valid because the user exists. (IsValidLogin would return false otherwise) */
 
 					SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(_userId);
@@ -129,8 +128,6 @@ public sealed class ClientConnection : MessagingService
 					{
 						break;
 					}
-
-					SendInfo(new MessageInfoVmList(true, vms));
 
 					foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
 					{
@@ -141,6 +138,8 @@ public sealed class ClientConnection : MessagingService
 						}
 					}
 				}
+				
+				SendResponse(new MessageResponseLogin(true, reqLogin.Id, validLogin));
 				break;
 			}
 
@@ -186,14 +185,6 @@ public sealed class ClientConnection : MessagingService
 
 				int id = await _databaseService.GetVmIdAsync(_userId, vmNameTrimmed);		/* Must be valid because we just successfully created the VM */
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
-				
-				SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(_userId);
-				if (vms == null)
-				{
-					break;
-				}
-
-				SendInfo(new MessageInfoVmList(true, vms));
 				break;
 			}
 

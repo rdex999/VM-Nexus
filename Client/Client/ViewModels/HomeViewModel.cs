@@ -16,6 +16,8 @@ public partial class HomeViewModel : ViewModelBase
 	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? VmOpenClicked;
 	public ObservableCollection<VmItemTemplate> Vms { get; }
 
+	private readonly DriveService _driveService;
+	
 	private VmItemTemplate _forceOffWarningVm;
 	
 	[ObservableProperty] 
@@ -31,55 +33,55 @@ public partial class HomeViewModel : ViewModelBase
 	private bool _deleteVmPopupHasDrives = false;
 	
 	public ObservableCollection<DeletionDriveItemTemplate> DeleteVmPopupDrives { get; set; }		/* Drives the user can select to delete, when deleting a VM */
-	
+
 	/// <summary>
 	/// Initializes a new instance of HomeViewModel.
 	/// </summary>
-	/// <param name="navigationSvc">
-	/// The navigation service. navigationSvc != null.
-	/// </param>
-	/// <param name="clientSvc">
-	/// The client service. clientSvc != null.
-	/// </param>
+	/// <param name="navigationSvc">The navigation service. navigationSvc != null.</param>
+	/// <param name="clientSvc">The client service. clientSvc != null.</param>
+	/// <param name="driveService">The drive service. driveService != null.</param>
 	/// <remarks>
 	/// Precondition: MainView is created, (HomeViewModel is the default side menu selection) or the user selects the home page in the side menu. <br/>
+	/// navigationService != null &amp;&amp; clientSvc != null &amp;&amp; driveService != null <br/>
 	/// Postcondition: A new instance of HomeViewModel is created.
 	/// </remarks>
-	public HomeViewModel(NavigationService navigationSvc, ClientService clientSvc)
+	public HomeViewModel(NavigationService navigationSvc, ClientService clientSvc, DriveService driveService)
 		: base(navigationSvc, clientSvc)
 	{
 		Vms = new ObservableCollection<VmItemTemplate>();
 		DeleteVmPopupDrives = new ObservableCollection<DeletionDriveItemTemplate>();
-
-		ClientSvc.VmListChanged += OnVmListChanged;
+		_driveService = driveService;
+		_driveService.Initialized += (sender, code) =>
+		{
+			if (code == ExitCode.Success) _ = InitializeAsync();
+		};
 	}
 
 	/// <summary>
-	/// Handles a change in the VMs. A change is, for example, that a new VM is available, or the state of one or more VMs has changed.
+	/// Initializes HomeViewModel. Fetches virtual machines and displayes them.
 	/// </summary>
-	/// <param name="sender"></param>
-	/// <param name="vms">An updated list of the users virtual machines. vms != null.</param>
 	/// <remarks>
-	/// Precondition: There was a change in the information of one or more of the users VMs, or some VMs were created/deleted. vms != null. <br/>
-	/// Postcondition: The change is handled, the virtual machines list is updated along with the UI.
+	/// Precondition: Drive service (_driveService) was initialized successfully. <br/>
+	/// Postcondition: The virtual machines of the user (if any) are displayed.
 	/// </remarks>
-	private void OnVmListChanged(object? sender, SharedDefinitions.VmGeneralDescriptor[] vms)
+	private async Task InitializeAsync()
 	{
-		Vms.Clear();
-		Dispatcher.UIThread.InvokeAsync(() => { }).Wait();			/* Allow the UI thread to process any changes that were made. */
-		foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
+		await Dispatcher.UIThread.InvokeAsync(() =>
 		{
-			Dispatcher.UIThread.Invoke(() =>
+			SharedDefinitions.VmGeneralDescriptor[] vms = _driveService.GetVirtualMachines();
+			foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
 			{
 				VmItemTemplate template = new VmItemTemplate(ClientSvc, vm.Id, vm.Name, vm.OperatingSystem, vm.State);
+
 				template.OpenClicked += OnVmOpenClicked;
 				template.ForceOffClicked += OnVmForceOffClicked;
 				template.DeleteClicked += OnVmDeleteClicked;
+				
 				Vms.Add(template);
-			});
-		}
+			}
+		});
 	}
-
+	
 	/// <summary>
 	/// Handles a click on the Open button of one of the users VMs. Open a new tab for the VM. If a tab exists, redirect the user to it.
 	/// </summary>

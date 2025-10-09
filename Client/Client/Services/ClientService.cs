@@ -14,7 +14,6 @@ namespace Client.Services;
 public class ClientService : MessagingService
 {
 	public event EventHandler? Reconnected;
-	public event EventHandler<SharedDefinitions.VmGeneralDescriptor[]>? VmListChanged;
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
 	public event EventHandler<MessageInfoVmAudioPacket>? VmAudioPacketReceived;
 	public event EventHandler<int>? VmPoweredOn;
@@ -610,16 +609,6 @@ public class ClientService : MessagingService
 		
 		switch (info)
 		{
-			case MessageInfoVmList infoVmList:
-			{
-				/* The server might send this info before HomeViewModel subscribes to the event, so wait for a subscriber. */
-				while (VmListChanged == null || VmListChanged.GetInvocationList().Length < 1)
-				{
-					await Task.Delay(50);
-				}
-				VmListChanged?.Invoke(this, infoVmList.VmDescriptors);
-				break;
-			}
 			case MessageInfoVmScreenFrame infoVmScreenFrame:
 			{
 				VmScreenFrameReceived?.Invoke(this, infoVmScreenFrame);
