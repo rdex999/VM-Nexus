@@ -10,6 +10,7 @@ public enum ExitCode
 	ServerNoValidLocalhostIp,
 	ConnectionToServerFailed,
 	DisconnectedFromServer,
+	MessageFailure,
 	MessageSendingTimeout,
 	MessageReceivingTimeout,
 	MessageReceivedCorrupted,

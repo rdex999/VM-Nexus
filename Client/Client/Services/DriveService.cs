@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,6 +42,24 @@ public class DriveService
 		
 		IsInitialized = true;
 		return ExitCode.Success;
+	}
+
+	public async Task<ExitCode> ConnectDriveAsync(int driveId, int vmId)
+	{
+		MessageResponseConnectDrive.Status result = await _clientService.ConnectDriveAsync(driveId, vmId);
+
+		if (result == MessageResponseConnectDrive.Status.Success 
+		    || (result == MessageResponseConnectDrive.Status.AlreadyConnected && !ConnectionExists(driveId, vmId)))
+		{
+			AddConnection(driveId, vmId);
+		}
+		
+		return result switch
+		{
+			MessageResponseConnectDrive.Status.Success				=> ExitCode.Success,
+			MessageResponseConnectDrive.Status.AlreadyConnected		=> ExitCode.DriveConnectionAlreadyExists,
+			MessageResponseConnectDrive.Status.Failure				=> ExitCode.MessageFailure,
+		};
 	}
 
 	private async Task<ExitCode> FetchVmsAsync()
