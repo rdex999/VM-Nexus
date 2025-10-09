@@ -759,6 +759,41 @@ public class DatabaseService
 		
 		return descriptors.ToArray();
 	}
+
+	/// <summary>
+	/// Get general descriptors of all drives of the given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user to get the drive descriptors of. userId >= 1.</param>
+	/// <returns>An array of drive general descriptors, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
+	/// Postcondition: On success, an array of drive general descriptors is returned. (can be empty of user doesnt have drives) <br/>
+	/// On failure, null is returned.
+	/// </remarks>
+	public async Task<SharedDefinitions.DriveGeneralDescriptor[]?> GetDriveGeneralDescriptorsOfUserAsync(int userId)
+	{
+		if (userId < 1) return null;
+
+		NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		                                                    SELECT id, name, size, type FROM drives WHERE owner_id = @owner_id
+		                                                    """,
+			new NpgsqlParameter("@owner_id", userId)
+		);
+
+		List<SharedDefinitions.DriveGeneralDescriptor> descriptors = new List<SharedDefinitions.DriveGeneralDescriptor>();
+		while (await reader.ReadAsync())
+		{
+			descriptors.Add(new SharedDefinitions.DriveGeneralDescriptor(
+				reader.GetInt32(0),
+				reader.GetString(1),
+				reader.GetInt32(2),
+				(SharedDefinitions.DriveType)reader.GetInt32(3)
+			));
+		}
+		
+		return descriptors.ToArray();
+	}
+	
 	/// <summary>
 	/// The asynchronous version of the ExecuteNonQuery command.
 	/// Executes a Non-Query command (Something that doesnt search for stuff, like a DELETE or INSERT command)
