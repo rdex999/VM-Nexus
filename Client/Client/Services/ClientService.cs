@@ -283,6 +283,22 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests a list of all drive connections of the user. (which drives are connected to which virtual machines)
+	/// </summary>
+	/// <returns>The servers response, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. User is logged in. <br/>
+	/// Postcondition: On success, the servers response is returned. On networking failure, null is returned.
+	/// </remarks>
+	public async Task<MessageResponseListDriveConnections?> GetDriveConnectionsAsync()
+	{
+		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListDriveConnections(true));
+		if (response == null) return null;
+		
+		return (MessageResponseListDriveConnections)response;
+	}
+	
+	/// <summary>
 	/// Requests a list of all drives of the user.
 	/// </summary>
 	/// <returns>The servers response, or null on networking failure.</returns>

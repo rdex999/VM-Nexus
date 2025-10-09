@@ -258,21 +258,21 @@ public class MessageResponseListConnectedDrives : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
-public class MessageResponseListVmDriveConnections : MessageResponse
+public class MessageResponseListDriveConnections : MessageResponse
 {
 	public Status Result { get; }
-	public Connection[]? Connections { get; }
+	public SharedDefinitions.DriveConnection[]? Connections { get; }
 
 	[JsonConstructor]
-	public MessageResponseListVmDriveConnections(bool generateGuid, Guid requestId, Status result,
-		Connection[]? connections)
+	public MessageResponseListDriveConnections(bool generateGuid, Guid requestId, Status result,
+		SharedDefinitions.DriveConnection[]? connections)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
 		Connections = connections;
 	}
 
-	public MessageResponseListVmDriveConnections(bool generateGuid, Guid requestId, Status result)
+	public MessageResponseListDriveConnections(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
@@ -285,12 +285,6 @@ public class MessageResponseListVmDriveConnections : MessageResponse
 		Failure,
 	}
 
-	public struct Connection
-	{
-		public int DriveId { get; }
-		public int VmId { get; }
-	}
-	
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 

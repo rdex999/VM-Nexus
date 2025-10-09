@@ -495,6 +495,28 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestListDriveConnections reqListDriveConnections:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseListDriveConnections(true, reqListDriveConnections.Id, MessageResponseListDriveConnections.Status.Failure));
+					break;
+				}
+				
+				SharedDefinitions.DriveConnection[]? connections = await _databaseService.GetDriveConnectionsOfUserAsync(_userId);
+				if (connections == null)
+				{
+					SendResponse(new MessageResponseListDriveConnections(true, reqListDriveConnections.Id, 
+						MessageResponseListDriveConnections.Status.Failure));
+					break;				
+				}
+			
+				SendResponse(new MessageResponseListDriveConnections(true, reqListDriveConnections.Id, 
+					MessageResponseListDriveConnections.Status.Success, connections));
+				
+				break;
+			}
+			
 			case MessageRequestListDrives reqListDrives:
 			{
 				if (!_isLoggedIn)

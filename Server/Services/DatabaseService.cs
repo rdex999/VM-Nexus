@@ -23,18 +23,6 @@ public class DatabaseService
 	private const int Argon2Iterations = 4;
 	private const int Argon2Threads = 2;
 
-	public struct DriveConnection
-	{
-		public int DriveId { get; }
-		public int VmId { get; }
-		
-		public DriveConnection(int driveId, int vmId)
-		{
-			DriveId = driveId;
-			VmId = vmId;
-		}
-	}
-	
 	/// <summary>
 	/// Initializes the database service and establishes a connection tp the database.
 	/// </summary>
@@ -793,7 +781,7 @@ public class DatabaseService
 	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
 	/// Postcondition: On success, an array of drive connections is returned. On failure, null is returned.
 	/// </remarks>
-	public async Task<DriveConnection[]?> GetDriveConnectionsOfUserAsync(int userId)
+	public async Task<SharedDefinitions.DriveConnection[]?> GetDriveConnectionsOfUserAsync(int userId)
 	{
 		if (userId < 1) return null;
 
@@ -806,10 +794,10 @@ public class DatabaseService
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
-		List<DriveConnection> connections = new List<DriveConnection>();
+		List<SharedDefinitions.DriveConnection> connections = new List<SharedDefinitions.DriveConnection>();
 		while (await reader.ReadAsync())
 		{
-			connections.Add(new DriveConnection(
+			connections.Add(new SharedDefinitions.DriveConnection(
 				reader.GetInt32(0),
 				reader.GetInt32(1)
 			));

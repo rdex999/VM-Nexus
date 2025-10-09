@@ -97,6 +97,18 @@ public static class SharedDefinitions
 			DriveType = driveType;
 		}
 	}
+
+	public struct DriveConnection
+	{
+		public int DriveId { get; }
+		public int VmId { get; }
+		
+		public DriveConnection(int driveId, int vmId)
+		{
+			DriveId = driveId;
+			VmId = vmId;
+		}
+	}
 	
 	public class PartitionDescriptor
 	{
