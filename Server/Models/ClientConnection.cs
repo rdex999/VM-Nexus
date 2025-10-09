@@ -197,6 +197,26 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestListVms reqListVms:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseListVms(true, reqListVms.Id, MessageResponseListVms.Status.Failure));
+					break;
+				}
+				
+				SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(_userId);
+				if (vms == null)
+				{
+					SendResponse(new MessageResponseListVms(true, reqListVms.Id, MessageResponseListVms.Status.Failure));
+					break;
+				}
+				
+				SendResponse(new MessageResponseListVms(true, reqListVms.Id, MessageResponseListVms.Status.Success, vms));
+				
+				break;
+			}
+
 			case MessageRequestCheckVmExist reqCheckVmExist:
 			{
 				SendResponse(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 

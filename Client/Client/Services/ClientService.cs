@@ -175,7 +175,8 @@ public class ClientService : MessagingService
 		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
 		(MessageResponse? response, ExitCode _) = await SendRequestAsync(
-			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode));
+			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode)
+		);
 
 		if (response == null)
 		{
@@ -183,6 +184,23 @@ public class ClientService : MessagingService
 		}
 
 		return (MessageResponseCreateVm)response;
+	}
+
+	/// <summary>
+	/// Requests a list of all virtual machines of the user.
+	/// </summary>
+	/// <returns>The servers resonse, or null on networking failure.</returns>
+	/// <remarks>
+	/// Precondition: Serivce fully initialized and connected to the server. User must be logged in. <br/>
+	/// Postcondition: On success, the servers response is returned. On networking failure, null is returned.
+	/// </remarks>
+	public async Task<MessageResponseListVms?> GetVirtualMachinesAsync()
+	{
+		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListVms(true));
+
+		if (response == null) return null;
+		
+		return (MessageResponseListVms)response;
 	}
 	
 	/// <summary>
