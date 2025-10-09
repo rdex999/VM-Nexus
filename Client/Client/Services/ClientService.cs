@@ -283,6 +283,23 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests a list of all drives of the user.
+	/// </summary>
+	/// <returns>The servers response, or null on networking failure.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server, user is logged in. <br/>
+	/// Postcondition: On success, the servers response is returned. On networking failure, null is returned.
+	/// </remarks>
+	public async Task<MessageResponseListDrives?> GetDrivesAsync()
+	{
+		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListDrives(true));
+	
+		if (response == null) return null;
+		
+		return (MessageResponseListDrives)response;
+	}
+
+	/// <summary>
 	/// Requests to power on a virtual machine.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to power on. id >= 1.</param>

@@ -495,6 +495,26 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestListDrives reqListDrives:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseListDrives(true, reqListDrives.Id, MessageResponseListDrives.Status.Failure));
+					break;
+				}
+				
+				SharedDefinitions.DriveGeneralDescriptor[]? descriptors = await _databaseService.GetDriveGeneralDescriptorsOfUserAsync(_userId);
+				if (descriptors == null)
+				{
+					SendResponse(new MessageResponseListDrives(true, reqListDrives.Id, MessageResponseListDrives.Status.Failure));
+					break;
+				}
+				
+				SendResponse(new MessageResponseListDrives(true, reqListDrives.Id, MessageResponseListDrives.Status.Success, descriptors));
+
+				break;
+			}
+
 			default:
 			{
 				result = ExitCode.Success;
