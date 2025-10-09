@@ -6,6 +6,7 @@ public enum ExitCode
 	InvalidParameter,
 	CallOnInvalidCondition,
 	AlreadyInitialized,
+	DataFetchFailed,
 	ServerNoValidLocalhostIp,
 	ConnectionToServerFailed,
 	DisconnectedFromServer,

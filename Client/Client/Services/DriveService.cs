@@ -1,11 +1,16 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Shared;
+using Shared.Networking;
 
 namespace Client.Services;
 
 public class DriveService
 {
+	public bool IsInitialized { get; private set; } = false;
+	
 	private readonly ClientService _clientService;
 	private readonly ConcurrentDictionary<int, SharedDefinitions.VmGeneralDescriptor> _virtualMachines;
 	private readonly ConcurrentDictionary<int, SharedDefinitions.DriveGeneralDescriptor> _drives;
@@ -22,6 +27,68 @@ public class DriveService
 		_drivesByVmId = new ConcurrentDictionary<int, HashSet<int>>();
 	}
 
+	public async Task<ExitCode> InitializeAsync()
+	{
+		if (IsInitialized) return ExitCode.AlreadyInitialized;
+
+		Task<ExitCode> fetchVms = FetchVmsAsync();
+		Task<ExitCode> fetchDrives = FetchDrivesAsync();
+		Task<ExitCode> fetchDriveConnections = FetchDriveConnectionsAsync();
+
+		ExitCode[] results = await Task.WhenAll(fetchVms, fetchDrives, fetchDriveConnections);
+		
+		if (results.Any(code => code != ExitCode.Success)) return ExitCode.DataFetchFailed;
+		
+		IsInitialized = true;
+		return ExitCode.Success;
+	}
+
+	private async Task<ExitCode> FetchVmsAsync()
+	{
+		_virtualMachines.Clear();
+		
+		MessageResponseListVms? response = await _clientService.GetVirtualMachinesAsync();
+		if (response == null || response.Result != MessageResponseListVms.Status.Success) return ExitCode.DataFetchFailed;
+		
+		foreach (SharedDefinitions.VmGeneralDescriptor virtualMachine in response.Vms!)
+		{
+			_virtualMachines[virtualMachine.Id] = virtualMachine;
+		}
+		
+		return ExitCode.Success;
+	}
+
+	private async Task<ExitCode> FetchDrivesAsync()
+	{
+		_drives.Clear();
+		
+		MessageResponseListDrives? response = await _clientService.GetDrivesAsync();
+		if (response == null || response.Result != MessageResponseListDrives.Status.Success) return ExitCode.DataFetchFailed;
+
+		foreach (SharedDefinitions.DriveGeneralDescriptor drive in response.Drives!)
+		{
+			_drives[drive.Id] = drive;
+		}
+		
+		return ExitCode.Success;
+	}
+
+	private async Task<ExitCode> FetchDriveConnectionsAsync()
+	{
+		_drivesByVmId.Clear();
+		_vmsByDriveId.Clear();
+		
+		MessageResponseListDriveConnections? response = await _clientService.GetDriveConnectionsAsync();
+		if (response == null || response.Result != MessageResponseListDriveConnections.Status.Success) return ExitCode.DataFetchFailed;
+
+		foreach (SharedDefinitions.DriveConnection connection in response.Connections!)
+		{
+			AddConnection(connection.DriveId, connection.VmId);
+		}
+		
+		return ExitCode.Success;
+	}
+	
 	private bool AddConnection(int driveId, int vmId)
 	{
 		if (ConnectionExists(driveId, vmId)) return false;
