@@ -121,6 +121,33 @@ public class MessageResponseCreateVm : MessageResponse
 	}
 }
 
+public class MessageResponseListVms : MessageResponse
+{
+	public Status Result { get; }
+	public SharedDefinitions.VmGeneralDescriptor[]? Vms { get; }
+
+	[JsonConstructor]
+	public MessageResponseListVms(bool generateGuid, Guid requestId, Status result, SharedDefinitions.VmGeneralDescriptor[]? vms)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Vms = vms;
+	}
+
+	public MessageResponseListVms(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Vms = null;
+	}
+	
+	public enum Status
+	{
+		Success,
+		Failure,
+	}
+}
+
 public class MessageResponseCheckVmExist : MessageResponse
 {
 	public bool Exists { get; }

@@ -96,6 +96,14 @@ public class MessageRequestCreateVm : MessageRequest
 	}
 }
 
+public class MessageRequestListVms : MessageRequest
+{
+	public MessageRequestListVms(bool generateGuid)
+		: base(generateGuid)
+	{
+	}
+}
+
 public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a virtual machine with the given name */
 {
 	public string Name { get; }

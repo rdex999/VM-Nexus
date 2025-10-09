@@ -41,6 +41,19 @@ public class DriveService
 		return true;
 	}
 
+	private bool RemoveConnection(int driveId, int vmId)
+	{
+		if (!ConnectionExists(driveId, vmId)) return false;
+		
+		HashSet<int> drives = _drivesByVmId[vmId];
+		drives.Remove(driveId);
+		
+		HashSet<int> vms = _vmsByDriveId[driveId];
+		vms.Remove(vmId);
+		
+		return true;
+	}
+
 	private bool ConnectionExists(int driveId, int vmId)
 	{
 		if (_drivesByVmId.TryGetValue(vmId, out HashSet<int>? drives))
