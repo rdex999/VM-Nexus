@@ -29,6 +29,7 @@ public class DriveService
 		_drivesByVmId = new ConcurrentDictionary<int, HashSet<int>>();
 		
 		_clientService.VmCreated += OnVmCreated;
+		_clientService.VmDeleted += OnVmDeleted;
 		_clientService.VmPoweredOn += OnVmPoweredOn;
 		_clientService.VmPoweredOff += OnVmPoweredOffOrCrashed;
 		_clientService.VmCrashed += OnVmPoweredOffOrCrashed;
@@ -195,9 +196,11 @@ public class DriveService
 		
 		HashSet<int> drives = _drivesByVmId[vmId];
 		drives.Remove(driveId);
+		if (drives.Count == 0) _drivesByVmId.Remove(vmId, out _);
 		
 		HashSet<int> vms = _vmsByDriveId[driveId];
 		vms.Remove(vmId);
+		if (vms.Count == 0) _vmsByDriveId.Remove(driveId, out _);
 		
 		return true;
 	}
@@ -230,4 +233,17 @@ public class DriveService
 
 	private void OnVmCreated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor) =>
 		_virtualMachines.TryAdd(descriptor.Id, descriptor);
+
+	private void OnVmDeleted(object? sender, int vmId)
+	{
+		if (_drivesByVmId.TryGetValue(vmId, out HashSet<int>? drives))
+		{
+			foreach (int driveId in drives)		/* Removes all instances of vmId in both _drivesByVmId and _vmsByDriveId */
+			{
+				RemoveConnection(driveId, vmId);
+			}
+		}
+		
+		_virtualMachines.TryRemove(vmId, out SharedDefinitions.VmGeneralDescriptor? _);
+	}
 }

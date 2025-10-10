@@ -62,6 +62,7 @@ public partial class HomeViewModel : ViewModelBase
 			if (code == ExitCode.Success) _ = InitializeAsync();
 		};
 		ClientSvc.VmCreated += OnVmCreated;
+		ClientSvc.VmDeleted += OnVmDeleted;
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		ClientSvc.VmPoweredOff += OnVmPoweredOffOrCrashed;
 		ClientSvc.VmCrashed += OnVmPoweredOffOrCrashed;
@@ -112,6 +113,46 @@ public partial class HomeViewModel : ViewModelBase
 			template.DeleteClicked += OnVmDeleteClicked;
 				
 			Vms.Add(template);
+		});
+	}
+	
+	/// <summary>
+	/// Handles the event that a virtual machine was deleted.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="vmId">The ID of the virtual machine that was deleted. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine was deleted. vmId >= 1. <br/>
+	/// Postcondition: UI is updated accordingly.
+	/// </remarks>
+	private void OnVmDeleted(object? sender, int vmId)
+	{
+		if (vmId < 1) return;
+		
+		Dispatcher.UIThread.Post(() =>
+		{
+			if (DeleteVmPopupIsOpen)
+			{
+				if (_deleteVmPopupVmDescriptor.Id == vmId)
+				{
+					DeletePopupClosed();
+				}
+				else
+				{
+					DeleteVmPopupInitialize(_deleteVmPopupVmDescriptor);
+				}
+			}
+
+			int vmIndex = -1;
+			for (int i = 0; i < Vms.Count; ++i)
+			{
+				if (Vms[i].Id == vmId) vmIndex = i;
+			}
+
+			if (vmIndex != -1)
+			{
+				Vms.RemoveAt(vmIndex);
+			}
 		});
 	}
 
