@@ -55,6 +55,7 @@ public partial class HomeViewModel : ViewModelBase
 		{
 			if (code == ExitCode.Success) _ = InitializeAsync();
 		};
+		ClientSvc.VmCreated += OnVmCreated;
 	}
 
 	/// <summary>
@@ -81,7 +82,30 @@ public partial class HomeViewModel : ViewModelBase
 			}
 		});
 	}
-	
+
+	/// <summary>
+	/// Handles the event that a new virtual machine was created. Adds the new virtual machine to the displayed virtual machines.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="descriptor">The descriptor of the new virtual machine. descriptor != null.</param>
+	/// <remarks>
+	/// Precondition: A new virtual machine was created. descriptor != null. <br/>
+	/// Postcondition: An operation of adding the virtual machine to the displayed virtual machines is posted unto the UI thread. Will execute soon.
+	/// </remarks>
+	private void OnVmCreated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	{
+		Dispatcher.UIThread.Post(() =>
+		{
+			VmItemTemplate template = new VmItemTemplate(ClientSvc, descriptor.Id, descriptor.Name, descriptor.OperatingSystem, descriptor.State);
+
+			template.OpenClicked += OnVmOpenClicked;
+			template.ForceOffClicked += OnVmForceOffClicked;
+			template.DeleteClicked += OnVmDeleteClicked;
+				
+			Vms.Add(template);
+		});
+	}
+
 	/// <summary>
 	/// Handles a click on the Open button of one of the users VMs. Open a new tab for the VM. If a tab exists, redirect the user to it.
 	/// </summary>

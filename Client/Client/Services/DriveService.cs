@@ -27,7 +27,31 @@ public class DriveService
 		_drives = new ConcurrentDictionary<int, SharedDefinitions.DriveGeneralDescriptor>();
 		_vmsByDriveId = new ConcurrentDictionary<int, HashSet<int>>();
 		_drivesByVmId = new ConcurrentDictionary<int, HashSet<int>>();
+		
+		_clientService.VmCreated += OnVmCreated;
+		_clientService.VmPoweredOn += OnVmPoweredOn;
+		_clientService.VmPoweredOff += OnVmPoweredOffOrCrashed;
+		_clientService.VmCrashed += OnVmPoweredOffOrCrashed;
 	}
+
+	private void OnVmPoweredOffOrCrashed(object? sender, int vmId)
+	{
+		if (_virtualMachines.TryGetValue(vmId, out SharedDefinitions.VmGeneralDescriptor? vm))
+		{
+			vm.State = SharedDefinitions.VmState.ShutDown;
+		}
+	}
+
+	private void OnVmPoweredOn(object? sender, int vmId)
+	{
+		if (_virtualMachines.TryGetValue(vmId, out SharedDefinitions.VmGeneralDescriptor? vm))
+		{
+			vm.State = SharedDefinitions.VmState.Running;
+		}	
+	}
+
+	private void OnVmCreated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor) =>
+		_virtualMachines.TryAdd(descriptor.Id, descriptor);
 
 	public async Task<ExitCode> InitializeAsync()
 	{
