@@ -111,14 +111,33 @@ public class MessageResponseCreateVm : MessageResponse
 		VmId = -1;
 	}
 
-	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (VmId >= 1 || VmId == -1);
-
 	public enum Status
 	{
 		Success,
 		VmAlreadyExists,
 		Failure,
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (VmId >= 1 || VmId == -1);
+}
+
+public class MessageResponseDeleteVm : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseDeleteVm(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
 public class MessageResponseListVms : MessageResponse

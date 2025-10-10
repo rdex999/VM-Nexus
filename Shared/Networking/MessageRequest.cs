@@ -96,6 +96,19 @@ public class MessageRequestCreateVm : MessageRequest
 	}
 }
 
+public class MessageRequestDeleteVm : MessageRequest
+{
+	public int VmId { get; }
+
+	public MessageRequestDeleteVm(bool generateGuid, int vmId)
+		: base(generateGuid)
+	{
+		VmId = vmId;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
+}
+
 public class MessageRequestListVms : MessageRequest
 {
 	public MessageRequestListVms(bool generateGuid)
@@ -114,10 +127,7 @@ public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a 
 		Name = name;
 	}
 
-	public override bool IsValidMessage()
-	{
-		return base.IsValidMessage() && !string.IsNullOrEmpty(Name);
-	}
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Name);
 }
 
 public class MessageRequestCreateDrive : MessageRequest
