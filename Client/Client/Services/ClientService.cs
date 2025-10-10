@@ -15,6 +15,7 @@ public class ClientService : MessagingService
 {
 	public event EventHandler? Reconnected;
 	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? VmCreated;
+	public event EventHandler<int>? VmDeleted;
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
 	public event EventHandler<MessageInfoVmAudioPacket>? VmAudioPacketReceived;
 	public event EventHandler<int>? VmPoweredOn;
@@ -207,9 +208,9 @@ public class ClientService : MessagingService
 	/// <summary>
 	/// Requests a list of all virtual machines of the user.
 	/// </summary>
-	/// <returns>The servers resonse, or null on networking failure.</returns>
+	/// <returns>The servers response, or null on networking failure.</returns>
 	/// <remarks>
-	/// Precondition: Serivce fully initialized and connected to the server. User must be logged in. <br/>
+	/// Precondition: Service fully initialized and connected to the server. User must be logged in. <br/>
 	/// Postcondition: On success, the servers response is returned. On networking failure, null is returned.
 	/// </remarks>
 	public async Task<MessageResponseListVms?> GetVirtualMachinesAsync()
@@ -632,6 +633,11 @@ public class ClientService : MessagingService
 			case MessageInfoVmCreated infoVmCreated:
 			{
 				VmCreated?.Invoke(this, infoVmCreated.Descriptor);
+				break;
+			}
+			case MessageInfoVmDeleted infoVmDeleted:
+			{
+				VmDeleted?.Invoke(this, infoVmDeleted.VmId);
 				break;
 			}
 			case MessageInfoVmScreenFrame infoVmScreenFrame:

@@ -210,6 +210,7 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseDeleteVm(true, reqDeleteVm.Id, MessageResponseDeleteVm.Status.Success));
+					SendInfo(new MessageInfoVmDeleted(true, reqDeleteVm.VmId));
 				}
 				else
 				{
