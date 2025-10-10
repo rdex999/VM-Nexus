@@ -445,6 +445,30 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestDeleteDrive reqDeleteDrive:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseDeleteDrive(true, reqDeleteDrive.Id, MessageResponseDeleteDrive.Status.Failure));
+					break;
+				}
+
+				result = await _driveService.DeleteDriveAsync(reqDeleteDrive.DriveId);
+
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseDeleteDrive(true, reqDeleteDrive.Id, MessageResponseDeleteDrive.Status.Success));
+				}
+				else
+				{
+					SendResponse(new MessageResponseDeleteDrive(true, reqDeleteDrive.Id, MessageResponseDeleteDrive.Status.Failure));
+				}
+				
+				/* TODO: Send info drive deleted. */
+				
+				break;
+			}
+			
 			case MessageRequestConnectDrive reqConnectDrive:
 			{
 				if (!_isLoggedIn)
