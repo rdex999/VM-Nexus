@@ -112,6 +112,10 @@
 					
 					<TextBlock FontWeight="Bold">Are you sure you want to continue?</TextBlock>
 					
+					<TextBlock Classes="error" IsVisible="{Binding DeleteVmPopupVmRunning}">
+						Cannot delete a virtual machine while it is running.
+					</TextBlock>
+					
 					<Button FontWeight="Bold" HorizontalAlignment="Center" FontSize="16"
 					        IsEnabled="{Binding !DeleteVmPopupVmRunning}"
 					        Command="{Binding DeleteVmConfirmDeleteClickCommand}">

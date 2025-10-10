@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Avalonia.Media;
@@ -291,10 +292,41 @@ public partial class HomeViewModel : ViewModelBase
 		DeleteVmPopupDrives.Clear();
 	}
 
+	/// <summary>
+	/// Handles a click on the delete VM confirmation button. (the one on the delete VM popup)
+	/// Attempts to delete the virtual machine and the selected drives.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the delete VM confirmation button. (the one on the delete VM popup)
+	/// Postcondition: On success, the virtual machine and the selected drives are deleted. <br/>
+	/// If the virtual machine could not be deleted, the selected drives are not deleted.
+	/// If the virtual machine was deleted successfully, each drive marked for deletion will attempt deletion.
+	/// </remarks>
 	[RelayCommand]
 	private async Task DeleteVmConfirmDeleteClickAsync()
 	{
+		MessageResponseDeleteVm.Status deleteVmResult = await ClientSvc.DeleteVirtualMachineAsync(_deleteVmPopupVmDescriptor.Id);
+
+		if (deleteVmResult == MessageResponseDeleteVm.Status.Success)
+		{
+			List<Task<MessageResponseDeleteDrive.Status>> deleteDriveTasks = new List<Task<MessageResponseDeleteDrive.Status>>();
+			foreach (DeletionDriveItemTemplate drive in DeleteVmPopupDrives)
+			{
+				if (drive.IsMarkedForDeletion)
+				{
+					deleteDriveTasks.Add(ClientSvc.DeleteDriveAsync(drive.Id));
+				}
+			}
 		
+			await Task.WhenAll(deleteDriveTasks);
+			
+			DeletePopupClosed();
+		}
+		else if (deleteVmResult == MessageResponseDeleteVm.Status.VirtualMachineIsRunning)
+		{
+			_deleteVmPopupVmDescriptor.State = SharedDefinitions.VmState.Running;
+			DeleteVmPopupInitialize(_deleteVmPopupVmDescriptor);
+		}
 	}
 }
 
