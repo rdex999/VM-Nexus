@@ -255,10 +255,28 @@ public class DatabaseService
 			new NpgsqlParameter("@state", state) { NpgsqlDbType = NpgsqlDbType.Integer }
 		);
 		
-		if (rows == 1)
-		{
-			return ExitCode.Success;
-		}
+		if (rows == 1) return ExitCode.Success;
+		
+		return ExitCode.DatabaseOperationFailed;
+	}
+
+	/// <summary>
+	/// Deletes the given virtual machine from the database. (Does not stop the VM if running, does not delete disk images.)
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to delete. id >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized and connected to the database, A virtual machine with the given ID exists. id >= 1. <br/>
+	/// Postcondition: On success, the virtual machine is deleted from the database, and the returned exit code indicates success. <br/>
+	/// On failure, the virtual machine is not deleted from the database and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> DeleteVmAsync(int id)
+	{
+		if (id < 1) return ExitCode.InvalidParameter;
+
+		int rows = await ExecuteNonQueryAsync("DELETE FROM virtual_machines WHERE id = @id", new NpgsqlParameter("@id", id));
+
+		if (rows == 1) return ExitCode.Success;
 		
 		return ExitCode.DatabaseOperationFailed;
 	}
