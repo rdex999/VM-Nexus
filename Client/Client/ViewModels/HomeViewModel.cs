@@ -141,27 +141,22 @@ public partial class HomeViewModel : ViewModelBase
 	/// </remarks>
 	private void OnVmDeleteClicked(SharedDefinitions.VmGeneralDescriptor vm)
 	{
-		Task<MessageResponseListConnectedDrives?> task = ClientSvc.GetConnectedDrivesAsync(vm.Id);
-		task.GetAwaiter().OnCompleted(() =>
+		SharedDefinitions.DriveGeneralDescriptor[]? drives = _driveService.GetDrivesOnVirtualMachine(vm.Id);
+		if (drives == null)
 		{
-			if (task.Result == null || task.Result.Result != MessageResponseListConnectedDrives.Status.Success)
-			{
-				DeletePopupClosed();
-				return;
-			}
+			DeletePopupClosed();
+			return;
+		}
 
-			SharedDefinitions.DriveGeneralDescriptor[] drives = task.Result.Drives!;
-		
-			DeleteVmPopupHasDrives = drives.Length != 0;
-		
-			DeleteVmPopupDrives.Clear();
-			foreach (SharedDefinitions.DriveGeneralDescriptor drive in drives)
-			{
-				DeleteVmPopupDrives.Add(new DeletionDriveItemTemplate(drive.Id, drive.Name, drive.DriveType, drive.Size));
-			}
-		
-			DeleteVmPopupIsOpen = true;
-		});
+		DeleteVmPopupHasDrives = drives.Length != 0;
+
+		DeleteVmPopupDrives.Clear();
+		foreach (SharedDefinitions.DriveGeneralDescriptor drive in drives)
+		{
+			DeleteVmPopupDrives.Add(new DeletionDriveItemTemplate(drive.Id, drive.Name, drive.DriveType, drive.Size));
+		}
+
+		DeleteVmPopupIsOpen = true;
 	}
 	
 	/// <summary>

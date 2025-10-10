@@ -34,25 +34,6 @@ public class DriveService
 		_clientService.VmCrashed += OnVmPoweredOffOrCrashed;
 	}
 
-	private void OnVmPoweredOffOrCrashed(object? sender, int vmId)
-	{
-		if (_virtualMachines.TryGetValue(vmId, out SharedDefinitions.VmGeneralDescriptor? vm))
-		{
-			vm.State = SharedDefinitions.VmState.ShutDown;
-		}
-	}
-
-	private void OnVmPoweredOn(object? sender, int vmId)
-	{
-		if (_virtualMachines.TryGetValue(vmId, out SharedDefinitions.VmGeneralDescriptor? vm))
-		{
-			vm.State = SharedDefinitions.VmState.Running;
-		}	
-	}
-
-	private void OnVmCreated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor) =>
-		_virtualMachines.TryAdd(descriptor.Id, descriptor);
-
 	public async Task<ExitCode> InitializeAsync()
 	{
 		if (IsInitialized) return ExitCode.AlreadyInitialized;
@@ -92,6 +73,23 @@ public class DriveService
 
 	public SharedDefinitions.VmGeneralDescriptor[] GetVirtualMachines() => _virtualMachines.Values.ToArray();
 	public SharedDefinitions.DriveGeneralDescriptor[] GetDrives() => _drives.Values.ToArray();
+
+	public SharedDefinitions.DriveGeneralDescriptor[]? GetDrivesOnVirtualMachine(int vmId)
+	{
+		if (_drivesByVmId.TryGetValue(vmId, out HashSet<int>? driveIds))
+		{
+			SharedDefinitions.DriveGeneralDescriptor[] drives = new SharedDefinitions.DriveGeneralDescriptor[driveIds.Count];
+			int i = 0;
+			foreach (int driveId in driveIds)
+			{
+				drives[i++] = _drives[driveId];
+			}
+			
+			return drives;
+		}
+		
+		return null;
+	}
 	
 	private async Task<ExitCode> FetchVmsAsync()
 	{
@@ -143,12 +141,12 @@ public class DriveService
 	{
 		if (ConnectionExists(driveId, vmId)) return false;
 
-		if (!_drivesByVmId.TryGetValue(driveId, out HashSet<int>? drives))
+		if (!_drivesByVmId.TryGetValue(vmId, out HashSet<int>? drives))
 		{
 			drives = new HashSet<int>();
 			_drivesByVmId[vmId] = drives;
 		}
-		drives.Add(vmId);
+		drives.Add(driveId);
 
 		if (!_vmsByDriveId.TryGetValue(driveId, out HashSet<int>? vms))
 		{
@@ -182,4 +180,23 @@ public class DriveService
 
 		return false;
 	}
+	
+	private void OnVmPoweredOffOrCrashed(object? sender, int vmId)
+	{
+		if (_virtualMachines.TryGetValue(vmId, out SharedDefinitions.VmGeneralDescriptor? vm))
+		{
+			vm.State = SharedDefinitions.VmState.ShutDown;
+		}
+	}
+
+	private void OnVmPoweredOn(object? sender, int vmId)
+	{
+		if (_virtualMachines.TryGetValue(vmId, out SharedDefinitions.VmGeneralDescriptor? vm))
+		{
+			vm.State = SharedDefinitions.VmState.Running;
+		}	
+	}
+
+	private void OnVmCreated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor) =>
+		_virtualMachines.TryAdd(descriptor.Id, descriptor);
 }

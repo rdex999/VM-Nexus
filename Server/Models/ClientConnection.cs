@@ -469,27 +469,6 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
-			case MessageRequestListConnectedDrives reqListConnectedDrives:
-			{
-				if (!_isLoggedIn)
-				{
-					SendResponse(new MessageResponseListConnectedDrives(true, reqListConnectedDrives.Id, MessageResponseListConnectedDrives.Status.Failure));
-					break;
-				}
-
-				SharedDefinitions.DriveGeneralDescriptor[]? descriptors = await _databaseService.GetVmDriveGeneralDescriptorsAsync(reqListConnectedDrives.VmId);
-				if (descriptors == null)
-				{
-					SendResponse(new MessageResponseListConnectedDrives(true, reqListConnectedDrives.Id, MessageResponseListConnectedDrives.Status.Failure));
-				}
-				else
-				{
-					SendResponse(new MessageResponseListConnectedDrives(true, reqListConnectedDrives.Id, 
-						MessageResponseListConnectedDrives.Status.Success, descriptors));
-				}
-				break;
-			}
-
 			case MessageRequestListDriveConnections reqListDriveConnections:
 			{
 				if (!_isLoggedIn)
