@@ -185,6 +185,10 @@ public sealed class ClientConnection : MessagingService
 
 				int id = await _databaseService.GetVmIdAsync(_userId, vmNameTrimmed);		/* Must be valid because we just successfully created the VM */
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
+				
+				SendInfo(new MessageInfoVmCreated(true, 
+					new SharedDefinitions.VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, SharedDefinitions.VmState.ShutDown)
+				));
 				break;
 			}
 

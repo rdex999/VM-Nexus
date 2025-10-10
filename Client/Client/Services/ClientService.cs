@@ -14,6 +14,7 @@ namespace Client.Services;
 public class ClientService : MessagingService
 {
 	public event EventHandler? Reconnected;
+	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? VmCreated;
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
 	public event EventHandler<MessageInfoVmAudioPacket>? VmAudioPacketReceived;
 	public event EventHandler<int>? VmPoweredOn;
@@ -609,6 +610,11 @@ public class ClientService : MessagingService
 		
 		switch (info)
 		{
+			case MessageInfoVmCreated infoVmCreated:
+			{
+				VmCreated?.Invoke(this, infoVmCreated.Descriptor);
+				break;
+			}
 			case MessageInfoVmScreenFrame infoVmScreenFrame:
 			{
 				VmScreenFrameReceived?.Invoke(this, infoVmScreenFrame);

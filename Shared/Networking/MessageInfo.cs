@@ -19,7 +19,23 @@ public class MessageInfoUdp : MessageUdp
 	}
 }
 
-/* TODO: Add VM created info message */
+public class MessageInfoVmCreated : MessageInfoTcp
+{
+	public SharedDefinitions.VmGeneralDescriptor Descriptor { get; }
+
+	public MessageInfoVmCreated(bool generateGuid, SharedDefinitions.VmGeneralDescriptor descriptor)
+		: base(generateGuid)
+	{
+		Descriptor = descriptor;
+	}
+
+	public override bool IsValidMessage() => 
+		base.IsValidMessage() && Descriptor != null 
+		                      && !string.IsNullOrEmpty(Descriptor.Name) && Descriptor.Id >= 1
+		                      && Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), Descriptor.OperatingSystem)
+		                      && Enum.IsDefined(typeof(SharedDefinitions.VmState), Descriptor.State);
+}
+
 
 public class MessageInfoVmScreenFrame : MessageInfoUdp
 {
