@@ -187,6 +187,24 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests the server to delete the given virtual machine.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to delete. id >= 1.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server, a virtual machine with the given ID exists. id >= 1. <br/>
+	/// Postcondition: On success, the virtual machine is deleted and the returned exit code indicates success. <br/>
+	/// On failure, the virtual machine is not deleted and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseDeleteVm.Status> DeleteVirtualMachineAsync(int id)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteVm(true, id));
+		if (result != ExitCode.Success) return MessageResponseDeleteVm.Status.Failure;
+
+		return ((MessageResponseDeleteVm)response!).Result;
+	}
+
+	/// <summary>
 	/// Requests a list of all virtual machines of the user.
 	/// </summary>
 	/// <returns>The servers resonse, or null on networking failure.</returns>

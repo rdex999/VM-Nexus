@@ -134,6 +134,7 @@ public class MessageResponseDeleteVm : MessageResponse
 	public enum Status
 	{
 		Success,
+		VirtualMachineIsRunning,
 		Failure,
 	}
 	

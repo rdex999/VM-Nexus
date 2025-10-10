@@ -192,6 +192,33 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestDeleteVm reqDeleteVm:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseDeleteVm(true, reqDeleteVm.Id, MessageResponseDeleteVm.Status.Failure));
+					break;
+				}
+
+				if (await _virtualMachineService.GetVmStateAsync(reqDeleteVm.VmId) != SharedDefinitions.VmState.ShutDown)
+				{
+					SendResponse(new MessageResponseDeleteVm(true, reqDeleteVm.Id, MessageResponseDeleteVm.Status.VirtualMachineIsRunning));
+					break;					
+				}
+
+				result = await _databaseService.DeleteVmAsync(reqDeleteVm.VmId);
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseDeleteVm(true, reqDeleteVm.Id, MessageResponseDeleteVm.Status.Success));
+				}
+				else
+				{
+					SendResponse(new MessageResponseDeleteVm(true, reqDeleteVm.Id, MessageResponseDeleteVm.Status.Failure));
+				}
+				
+				break;
+			}
+
 			case MessageRequestListVms reqListVms:
 			{
 				if (!_isLoggedIn)
