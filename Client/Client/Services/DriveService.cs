@@ -76,6 +76,8 @@ public class DriveService
 
 	public SharedDefinitions.DriveGeneralDescriptor[]? GetDrivesOnVirtualMachine(int vmId)
 	{
+		if (vmId < 1) return null;
+		
 		if (_drivesByVmId.TryGetValue(vmId, out HashSet<int>? driveIds))
 		{
 			SharedDefinitions.DriveGeneralDescriptor[] drives = new SharedDefinitions.DriveGeneralDescriptor[driveIds.Count];
@@ -89,6 +91,35 @@ public class DriveService
 		}
 		
 		return null;
+	}
+
+	public SharedDefinitions.VmGeneralDescriptor[]? GetVirtualMachinesOnDrive(int driveId)
+	{
+		if (driveId < 1) return null;
+		
+		if (_vmsByDriveId.TryGetValue(driveId, out HashSet<int>? vmIds))
+		{
+			SharedDefinitions.VmGeneralDescriptor[] vms = new SharedDefinitions.VmGeneralDescriptor[vmIds.Count];
+			int i = 0;
+			foreach (int vmId in vmIds)
+			{
+				vms[i++] = _virtualMachines[vmId];
+			}
+
+			return vms;
+		}
+
+		return null;
+	}
+	
+	public bool IsDriveInUse(int driveId)
+	{
+		if (driveId < 1) return false;
+		
+		SharedDefinitions.VmGeneralDescriptor[]? vms = GetVirtualMachinesOnDrive(driveId);
+		if (vms == null) return false;
+
+		return vms.Any(vm => vm.State == SharedDefinitions.VmState.Running);
 	}
 	
 	private async Task<ExitCode> FetchVmsAsync()
