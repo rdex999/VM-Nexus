@@ -31,9 +31,14 @@ public partial class HomeViewModel : ViewModelBase
 
 	[ObservableProperty] 
 	private bool _deleteVmPopupHasDrives = false;
+
+	[ObservableProperty] 
+	private bool _deleteVmPopupVmRunning;
 	
 	public ObservableCollection<DeletionDriveItemTemplate> DeleteVmPopupDrives { get; set; }		/* Drives the user can select to delete, when deleting a VM */
 
+	private SharedDefinitions.VmGeneralDescriptor _deleteVmPopupVmDescriptor = null!;
+	
 	/// <summary>
 	/// Initializes a new instance of HomeViewModel.
 	/// </summary>
@@ -56,6 +61,9 @@ public partial class HomeViewModel : ViewModelBase
 			if (code == ExitCode.Success) _ = InitializeAsync();
 		};
 		ClientSvc.VmCreated += OnVmCreated;
+		ClientSvc.VmPoweredOn += OnVmPoweredOn;
+		ClientSvc.VmPoweredOff += OnVmPoweredOffOrCrashed;
+		ClientSvc.VmCrashed += OnVmPoweredOffOrCrashed;
 	}
 
 	/// <summary>
@@ -107,6 +115,62 @@ public partial class HomeViewModel : ViewModelBase
 	}
 
 	/// <summary>
+	/// Handles the event that a virtual machine was powered on.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="vmId">The ID of the virtual machine that was powered on. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine was powered on. vmId >= 1. <br/>
+	/// Postcondition: State change is handled.
+	/// </remarks>
+	private void OnVmPoweredOn(object? sender, int vmId)
+	{
+		if (vmId < 1) return;
+		
+		OnVmStateChanged(vmId, SharedDefinitions.VmState.Running);
+	}
+	
+	/// <summary>
+	/// Handles the event that a virtual machine was powered off or has crashed.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="vmId">The ID of the virtual machine of which the state has changed. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine was powered off or has crashed. vmId >= 1. <br/>
+	/// Postcondition: State change is handled.
+	/// </remarks>
+	private void OnVmPoweredOffOrCrashed(object? sender, int vmId)
+	{
+		if (vmId < 1) return;
+		
+		OnVmStateChanged(vmId, SharedDefinitions.VmState.ShutDown);
+	}
+
+	/// <summary>
+	/// Handles a change in the state of a virtual machine. (powered on/off, crashed)
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine of which the state has changed. vmId >= 1.</param>
+	/// <param name="newState">The new state of the virtual machine.</param>
+	/// <remarks>
+	/// Precondition: The state of the given virtual machine has changed. (powered on/off, crashed) vmId >= 1. <br/>
+	/// Postcondition: State change is handled.
+	/// </remarks>
+	private void OnVmStateChanged(int vmId, SharedDefinitions.VmState newState)
+	{
+		if (vmId < 1) return;
+		
+		if (DeleteVmPopupIsOpen)
+		{
+			if (_deleteVmPopupVmDescriptor.Id == vmId)
+			{
+				_deleteVmPopupVmDescriptor.State = newState;
+			}
+			
+			Dispatcher.UIThread.Post(() => DeleteVmPopupInitialize(_deleteVmPopupVmDescriptor));
+		}	
+	}
+	
+	/// <summary>
 	/// Handles a click on the Open button of one of the users VMs. Open a new tab for the VM. If a tab exists, redirect the user to it.
 	/// </summary>
 	/// <remarks>
@@ -139,13 +203,31 @@ public partial class HomeViewModel : ViewModelBase
 	/// Precondition: User has clicked on the delete button on a virtual machine. vm != null.<br/>
 	/// Postcondition: A confirmation popup appears.
 	/// </remarks>
-	private void OnVmDeleteClicked(SharedDefinitions.VmGeneralDescriptor vm)
+	private void OnVmDeleteClicked(SharedDefinitions.VmGeneralDescriptor vm) => DeleteVmPopupInitialize(vm);
+
+	/// <summary>
+	/// Initializes the delete virtual machine popup.
+	/// </summary>
+	/// <param name="descriptor">A descriptor of the virtual machine that the delete button was clicked upon. descriptor != null</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Initializing the VM delete popup is needed. (Either popup just opened, or the state of drives has changed) descriptor != null. <br/>
+	/// Postcondition: On success, the popup is initialized and messages are displayed, the returned exit code indicates success. <br/>
+	/// On failure, the popup is closed and the returned exit code indicates the error.
+	/// </remarks>
+	private ExitCode DeleteVmPopupInitialize(SharedDefinitions.VmGeneralDescriptor descriptor)
 	{
-		SharedDefinitions.DriveGeneralDescriptor[]? drives = _driveService.GetDrivesOnVirtualMachine(vm.Id);
+		if (descriptor.Id < 1) return ExitCode.InvalidParameter;
+		
+		_deleteVmPopupVmDescriptor = descriptor;
+
+		DeleteVmPopupVmRunning = _deleteVmPopupVmDescriptor.State == SharedDefinitions.VmState.Running;
+		
+		SharedDefinitions.DriveGeneralDescriptor[]? drives = _driveService.GetDrivesOnVirtualMachine(descriptor.Id);
 		if (drives == null)
 		{
 			DeletePopupClosed();
-			return;
+			return ExitCode.VmDoesntExist;
 		}
 
 		DeleteVmPopupHasDrives = drives.Length != 0;
@@ -153,10 +235,13 @@ public partial class HomeViewModel : ViewModelBase
 		DeleteVmPopupDrives.Clear();
 		foreach (SharedDefinitions.DriveGeneralDescriptor drive in drives)
 		{
-			DeleteVmPopupDrives.Add(new DeletionDriveItemTemplate(drive.Id, drive.Name, drive.DriveType, drive.Size));
+			bool driveInUse = _driveService.IsDriveInUse(drive.Id);
+			DeleteVmPopupDrives.Add(new DeletionDriveItemTemplate(drive.Id, drive.Name, drive.DriveType, drive.Size, driveInUse));
 		}
 
-		DeleteVmPopupIsOpen = true;
+		DeleteVmPopupIsOpen = true;	
+		
+		return ExitCode.Success;
 	}
 	
 	/// <summary>
@@ -488,15 +573,20 @@ public partial class DeletionDriveItemTemplate : ObservableObject
 			return $"{Size} MiB";
 		}
 	}
-
+	
+	[ObservableProperty]
+	private bool _isInUse;
+	
 	[ObservableProperty] 
-	private bool _isChecked = false;
-
-	public DeletionDriveItemTemplate(int id, string name, SharedDefinitions.DriveType driveType, int size)
+	private bool _isMarkedForDeletion;
+	
+	public DeletionDriveItemTemplate(int id, string name, SharedDefinitions.DriveType driveType, int size, bool isDriveInUse)
 	{
 		Id = id;
 		Name = name;
 		DriveType = driveType;
 		Size = size;
+		IsInUse = isDriveInUse;
+		IsMarkedForDeletion = !isDriveInUse;
 	}
 }

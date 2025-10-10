@@ -74,19 +74,27 @@
 							<ItemsControl.ItemTemplate>
 								<DataTemplate DataType="{x:Type vm:DeletionDriveItemTemplate}">
 									<Border Background="#efefef" Padding="6" CornerRadius="10" Margin="0, 0, 0, 8">
-										<Grid ColumnDefinitions="4*, 5, 2*, 3*, Auto" VerticalAlignment="Center">
+										<StackPanel>
+											<Grid ColumnDefinitions="4*, 5, 2*, 3*, Auto" VerticalAlignment="Center">
+
+												<TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
+
+												<TextBlock Grid.Column="2" VerticalAlignment="Center"
+												           FontWeight="DemiBold" Text="{Binding DriveTypeString}" />
+
+												<TextBlock Grid.Column="3" VerticalAlignment="Center"
+												           FontWeight="DemiBold" Text="{Binding SizeString}" />
+
+												<CheckBox Grid.Column="4" Margin="10, 0, 0, 0"
+												          IsChecked="{Binding IsMarkedForDeletion}" 
+												          IsEnabled="{Binding !IsInUse}"/>
+											</Grid>
 											
-											<TextBlock VerticalAlignment="Center" Text="{Binding Name}" />
-											
-											<TextBlock Grid.Column="2" VerticalAlignment="Center"
-											           FontWeight="DemiBold" Text="{Binding DriveTypeString}" />
-											
-											<TextBlock Grid.Column="3" VerticalAlignment="Center"
-											           FontWeight="DemiBold" Text="{Binding SizeString}"/>
-											
-											<CheckBox Grid.Column="4" Margin="10, 0, 0, 0" 
-											          IsChecked="{Binding IsChecked}"/>
-										</Grid>
+											<TextBlock Classes="error" IsVisible="{Binding IsInUse}"
+											           FontSize="13">
+												Cannot delete drive, used by one or more virtual machines.
+											</TextBlock>
+										</StackPanel>
 									</Border>
 								</DataTemplate>
 							</ItemsControl.ItemTemplate>
@@ -104,7 +112,8 @@
 					
 					<TextBlock FontWeight="Bold">Are you sure you want to continue?</TextBlock>
 					
-					<Button FontWeight="Bold" HorizontalAlignment="Center" FontSize="16" 
+					<Button FontWeight="Bold" HorizontalAlignment="Center" FontSize="16"
+					        IsEnabled="{Binding !DeleteVmPopupVmRunning}"
 					        Command="{Binding DeleteVmConfirmDeleteClickCommand}">
 						Delete
 					</Button>
