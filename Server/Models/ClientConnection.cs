@@ -466,6 +466,10 @@ public sealed class ClientConnection : MessagingService
 				{
 					int id = await _driveService.GetDriveIdAsync(_userId, driveNameTrimmed);	/* Must succeed because the drive was created successfully */
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success, id));
+					
+					SendInfo(new MessageInfoDriveCreated(true, 
+						new SharedDefinitions.DriveGeneralDescriptor(id, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type)
+					));
 					break;				
 				}
 

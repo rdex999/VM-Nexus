@@ -170,3 +170,14 @@ public class MessageInfoKeyboardKeyEvent : MessageInfoTcp
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Enum.IsDefined(typeof(PhysicalKey), Key);
 }
+
+public class MessageInfoDriveCreated : MessageInfoTcp
+{
+	public SharedDefinitions.DriveGeneralDescriptor Descriptor { get; }
+
+	public MessageInfoDriveCreated(bool generateGuid, SharedDefinitions.DriveGeneralDescriptor descriptor)
+		: base(generateGuid)
+	{
+		Descriptor = descriptor;
+	}
+}

@@ -33,6 +33,7 @@ public class DriveService
 		_clientService.VmPoweredOn += OnVmPoweredOn;
 		_clientService.VmPoweredOff += OnVmPoweredOffOrCrashed;
 		_clientService.VmCrashed += OnVmPoweredOffOrCrashed;
+		_clientService.DriveCreated += OnDriveCreated;
 	}
 
 	public async Task<ExitCode> InitializeAsync()
@@ -246,4 +247,7 @@ public class DriveService
 		
 		_virtualMachines.TryRemove(vmId, out SharedDefinitions.VmGeneralDescriptor? _);
 	}
+
+	private void OnDriveCreated(object? sender, SharedDefinitions.DriveGeneralDescriptor descriptor) =>
+		_drives.TryAdd(descriptor.Id, descriptor);
 }
