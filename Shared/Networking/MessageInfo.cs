@@ -181,3 +181,16 @@ public class MessageInfoDriveCreated : MessageInfoTcp
 		Descriptor = descriptor;
 	}
 }
+
+public class MessageInfoDriveDeleted : MessageInfoTcp
+{
+	public int DriveId { get; }
+
+	public MessageInfoDriveDeleted(bool generateGuid, int driveId)
+		: base(generateGuid)
+	{
+		DriveId = driveId;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
+}

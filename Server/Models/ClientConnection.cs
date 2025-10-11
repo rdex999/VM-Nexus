@@ -490,6 +490,7 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseDeleteDrive(true, reqDeleteDrive.Id, MessageResponseDeleteDrive.Status.Success));
+					SendInfo(new MessageInfoDriveDeleted(true, reqDeleteDrive.DriveId));
 				}
 				else
 				{
