@@ -34,6 +34,7 @@ public class DriveService
 		_clientService.VmPoweredOff += OnVmPoweredOffOrCrashed;
 		_clientService.VmCrashed += OnVmPoweredOffOrCrashed;
 		_clientService.DriveCreated += OnDriveCreated;
+		_clientService.DriveDeleted += OnDriveDeleted;
 	}
 
 	public async Task<ExitCode> InitializeAsync()
@@ -237,6 +238,8 @@ public class DriveService
 
 	private void OnVmDeleted(object? sender, int vmId)
 	{
+		if (vmId < 1) return;
+		
 		if (_drivesByVmId.TryGetValue(vmId, out HashSet<int>? drives))
 		{
 			foreach (int driveId in drives)		/* Removes all instances of vmId in both _drivesByVmId and _vmsByDriveId */
@@ -250,4 +253,19 @@ public class DriveService
 
 	private void OnDriveCreated(object? sender, SharedDefinitions.DriveGeneralDescriptor descriptor) =>
 		_drives.TryAdd(descriptor.Id, descriptor);
+
+	private void OnDriveDeleted(object? sender, int driveId)
+	{
+		if (driveId < 1) return;
+		
+		if (_vmsByDriveId.TryGetValue(driveId, out HashSet<int>? vms))
+		{
+			foreach (int vmId in vms)
+			{
+				RemoveConnection(driveId, vmId);
+			}
+		}
+		
+		_drives.TryRemove(driveId, out SharedDefinitions.DriveGeneralDescriptor? _);
+	}
 }
