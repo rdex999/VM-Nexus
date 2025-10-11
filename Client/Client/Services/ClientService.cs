@@ -23,6 +23,7 @@ public class ClientService : MessagingService
 	public event EventHandler<int>? VmCrashed;
 	public event EventHandler<SharedDefinitions.DriveGeneralDescriptor>? DriveCreated;
 	public event EventHandler<int>? DriveDeleted;
+	public event EventHandler<SharedDefinitions.DriveConnection>? DriveConnected;
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -675,6 +676,13 @@ public class ClientService : MessagingService
 			case MessageInfoDriveDeleted infoDriveDeleted:
 			{
 				DriveDeleted?.Invoke(this, infoDriveDeleted.DriveId);
+				break;
+			}
+			case MessageInfoDriveConnected infoDriveConnected:
+			{
+				DriveConnected?.Invoke(this, 
+					new SharedDefinitions.DriveConnection(infoDriveConnected.DriveId, infoDriveConnected.VmId)
+				);
 				break;
 			}
 		}

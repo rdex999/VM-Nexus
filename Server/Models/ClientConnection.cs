@@ -511,18 +511,21 @@ public sealed class ClientConnection : MessagingService
 				}
 
 				result = await _driveService.ConnectDriveAsync(reqConnectDrive.DriveId, reqConnectDrive.VmId);
-				
-				MessageResponseConnectDrive.Status status = MessageResponseConnectDrive.Status.Success;
-				if (result == ExitCode.DriveConnectionAlreadyExists)
+
+				if (result == ExitCode.Success)
 				{
-					status = MessageResponseConnectDrive.Status.AlreadyConnected;
+					SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, MessageResponseConnectDrive.Status.Success));
+					SendInfo(new MessageInfoDriveConnected(true, reqConnectDrive.DriveId, reqConnectDrive.VmId));
 				}
-				else if (result != ExitCode.Success)
+				else if (result == ExitCode.DriveConnectionAlreadyExists)
 				{
-					status = MessageResponseConnectDrive.Status.Failure;
+					SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, MessageResponseConnectDrive.Status.AlreadyConnected));
+				}
+				else
+				{
+					SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, MessageResponseConnectDrive.Status.Failure));
 				}
 				
-				SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, status));
 				break;
 			}
 

@@ -194,3 +194,18 @@ public class MessageInfoDriveDeleted : MessageInfoTcp
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }
+
+public class MessageInfoDriveConnected : MessageInfoTcp
+{
+	public int DriveId { get; }
+	public int VmId { get; }
+
+	public MessageInfoDriveConnected(bool generateGuid, int driveId, int vmId)
+		: base(generateGuid)
+	{
+		DriveId = driveId;
+		VmId = vmId;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
+}
