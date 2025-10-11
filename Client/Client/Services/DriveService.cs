@@ -35,6 +35,7 @@ public class DriveService
 		_clientService.VmCrashed += OnVmPoweredOffOrCrashed;
 		_clientService.DriveCreated += OnDriveCreated;
 		_clientService.DriveDeleted += OnDriveDeleted;
+		_clientService.DriveConnected += OnDriveConnected;
 	}
 
 	public async Task<ExitCode> InitializeAsync()
@@ -268,4 +269,7 @@ public class DriveService
 		
 		_drives.TryRemove(driveId, out SharedDefinitions.DriveGeneralDescriptor? _);
 	}
+
+	private void OnDriveConnected(object? sender, SharedDefinitions.DriveConnection connection) =>
+		AddConnection(connection.DriveId, connection.VmId);
 }

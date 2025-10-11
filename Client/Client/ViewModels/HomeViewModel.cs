@@ -66,8 +66,10 @@ public partial class HomeViewModel : ViewModelBase
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		ClientSvc.VmPoweredOff += OnVmPoweredOffOrCrashed;
 		ClientSvc.VmCrashed += OnVmPoweredOffOrCrashed;
+		ClientSvc.DriveDeleted += OnDriveDeleted;
+		ClientSvc.DriveConnected += OnDriveConnected;
 	}
-
+	
 	/// <summary>
 	/// Initializes HomeViewModel. Fetches virtual machines and displayes them.
 	/// </summary>
@@ -188,6 +190,42 @@ public partial class HomeViewModel : ViewModelBase
 		OnVmStateChanged(vmId, SharedDefinitions.VmState.ShutDown);
 	}
 
+	/// <summary>
+	/// Handles a drive deleted event.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the drive that was deleted. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: A drive was deleted. id >= 1. <br/>
+	/// Postcondition: Event is handled, UI informed if needed.
+	/// </remarks>
+	private void OnDriveDeleted(object? sender, int id)
+	{
+		if (id < 1) return;
+
+		if (DeleteVmPopupIsOpen)
+		{
+			Dispatcher.UIThread.Post(() => DeleteVmPopupInitialize(_deleteVmPopupVmDescriptor));
+		}
+	}
+
+	/// <summary>
+	/// Handles the event that a drive was connected to a virtual machine. (New connection created)
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="connection">The new drive-VM connection. connection != null.</param>
+	/// <remarks>
+	/// Precondition: A drive was connected to a virtual machine. (New drive-VM connection added) connection != null. <br/>
+	/// Postcondition: Event is handled, UI informed if needed.
+	/// </remarks>
+	private void OnDriveConnected(object? sender, SharedDefinitions.DriveConnection connection)
+	{
+		if (DeleteVmPopupIsOpen)
+		{
+			Dispatcher.UIThread.Post(() => DeleteVmPopupInitialize(_deleteVmPopupVmDescriptor));
+		}
+	}
+	
 	/// <summary>
 	/// Handles a change in the state of a virtual machine. (powered on/off, crashed)
 	/// </summary>
