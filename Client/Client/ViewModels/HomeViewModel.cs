@@ -71,7 +71,7 @@ public partial class HomeViewModel : ViewModelBase
 	}
 	
 	/// <summary>
-	/// Initializes HomeViewModel. Fetches virtual machines and displayes them.
+	/// Initializes HomeViewModel. Fetches virtual machines and displays them.
 	/// </summary>
 	/// <remarks>
 	/// Precondition: Drive service (_driveService) was initialized successfully. <br/>
