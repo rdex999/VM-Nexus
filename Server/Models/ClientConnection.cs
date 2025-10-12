@@ -12,9 +12,9 @@ public sealed class ClientConnection : MessagingService
 {
 	public event EventHandler? Disconnected;
 	private bool _isLoggedIn = false;
-	private int _userId = -1;
-	private readonly UserService _userService;
+	public int UserId { get; private set; }= -1;
 	private readonly DatabaseService _databaseService;
+	private readonly UserService _userService;
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
@@ -26,8 +26,8 @@ public sealed class ClientConnection : MessagingService
 	/// Creates and initializes the ClientConnection object.
 	/// </summary>
 	/// <param name="tcpSocket">The socket on which the client has connected. socket != null.</param>
-	/// <param name="userService">A reference to the user service. userService != null.</param>
 	/// <param name="databaseService">A reference to the database service. databaseService != null.</param>
+	/// <param name="userService">A reference to the user service. userService != null.</param>
 	/// <param name="virtualMachineService">A reference to the virtual machine service. virtualMachineService != null.</param>
 	/// <param name="driveService">A reference to the drive service. driveService != null.</param>
 	/// <remarks>
@@ -35,10 +35,10 @@ public sealed class ClientConnection : MessagingService
 	/// socket != null &amp;&amp; userService != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null. &amp;&amp; driveService != null.<br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
-	public ClientConnection(Socket tcpSocket, UserService userService, DatabaseService databaseService, VirtualMachineService virtualMachineService, DriveService driveService)
+	public ClientConnection(Socket tcpSocket, DatabaseService databaseService, UserService userService, VirtualMachineService virtualMachineService, DriveService driveService)
 	{
-		_userService = userService;
 		_databaseService = databaseService;
+		_userService = userService;
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
 		
@@ -101,7 +101,7 @@ public sealed class ClientConnection : MessagingService
 					{
 						status = MessageResponseCreateAccount.Status.Success;
 						_isLoggedIn = true;
-						_userId = await _databaseService.GetUserIdAsync(usernameTrimmed);		/* Must be valid because created user successfully. */
+						UserId = await _databaseService.GetUserIdAsync(usernameTrimmed);		/* Must be valid because created user successfully. */
 					}
 					else
 					{
@@ -124,9 +124,9 @@ public sealed class ClientConnection : MessagingService
 				if (validLogin)
 				{
 					_isLoggedIn = true;
-					_userId = await _databaseService.GetUserIdAsync(usernameTrimmed);		/* Must be valid because the user exists. (IsValidLogin would return false otherwise) */
+					UserId = await _databaseService.GetUserIdAsync(usernameTrimmed);		/* Must be valid because the user exists. (IsValidLogin would return false otherwise) */
 
-					SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(_userId);
+					SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(UserId);
 					if (vms == null)
 					{
 						break;
@@ -151,7 +151,7 @@ public sealed class ClientConnection : MessagingService
 				if (_isLoggedIn)
 				{
 					_isLoggedIn = false;
-					_userId = -1;
+					UserId = -1;
 					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
 				}
 				else
@@ -171,7 +171,7 @@ public sealed class ClientConnection : MessagingService
 				}
 			
 				string vmNameTrimmed = reqCreateVm.Name.Trim();
-				result = await _virtualMachineService.CreateVirtualMachineAsync(_userId, vmNameTrimmed,
+				result = await _virtualMachineService.CreateVirtualMachineAsync(UserId, vmNameTrimmed,
 					reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, reqCreateVm.BootMode);
 				
 				if (result == ExitCode.VmAlreadyExists)
@@ -186,7 +186,7 @@ public sealed class ClientConnection : MessagingService
 					break;				
 				}
 
-				int id = await _databaseService.GetVmIdAsync(_userId, vmNameTrimmed);		/* Must be valid because we just successfully created the VM */
+				int id = await _databaseService.GetVmIdAsync(UserId, vmNameTrimmed);		/* Must be valid because we just successfully created the VM */
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
 				
 				SendInfo(new MessageInfoVmCreated(true, 
@@ -231,7 +231,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(_userId);
+				SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(UserId);
 				if (vms == null)
 				{
 					SendResponse(new MessageResponseListVms(true, reqListVms.Id, MessageResponseListVms.Status.Failure));
@@ -246,7 +246,7 @@ public sealed class ClientConnection : MessagingService
 			case MessageRequestCheckVmExist reqCheckVmExist:
 			{
 				SendResponse(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 
-					_isLoggedIn && await _virtualMachineService.IsVmExistsAsync(_userId, reqCheckVmExist.Name.Trim()))
+					_isLoggedIn && await _virtualMachineService.IsVmExistsAsync(UserId, reqCheckVmExist.Name.Trim()))
 				);
 				break;
 			}
@@ -457,7 +457,7 @@ public sealed class ClientConnection : MessagingService
 				}
 				else
 				{
-					result = await _driveService.CreateOperatingSystemDriveAsync(_userId, driveNameTrimmed, reqCreateDrive.OperatingSystem, reqCreateDrive.Size);
+					result = await _driveService.CreateOperatingSystemDriveAsync(UserId, driveNameTrimmed, reqCreateDrive.OperatingSystem, reqCreateDrive.Size);
 				}
 				
 				if (result == ExitCode.DriveAlreadyExists)
@@ -467,7 +467,7 @@ public sealed class ClientConnection : MessagingService
 				}
 				if (result == ExitCode.Success)
 				{
-					int id = await _driveService.GetDriveIdAsync(_userId, driveNameTrimmed);	/* Must succeed because the drive was created successfully */
+					int id = await _driveService.GetDriveIdAsync(UserId, driveNameTrimmed);	/* Must succeed because the drive was created successfully */
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success, id));
 					
 					SendInfo(new MessageInfoDriveCreated(true, 
@@ -540,7 +540,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				SharedDefinitions.DriveConnection[]? connections = await _databaseService.GetDriveConnectionsOfUserAsync(_userId);
+				SharedDefinitions.DriveConnection[]? connections = await _databaseService.GetDriveConnectionsOfUserAsync(UserId);
 				if (connections == null)
 				{
 					SendResponse(new MessageResponseListDriveConnections(true, reqListDriveConnections.Id, 
@@ -562,7 +562,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				SharedDefinitions.DriveGeneralDescriptor[]? descriptors = await _databaseService.GetDriveGeneralDescriptorsOfUserAsync(_userId);
+				SharedDefinitions.DriveGeneralDescriptor[]? descriptors = await _databaseService.GetDriveGeneralDescriptorsOfUserAsync(UserId);
 				if (descriptors == null)
 				{
 					SendResponse(new MessageResponseListDrives(true, reqListDrives.Id, MessageResponseListDrives.Status.Failure));

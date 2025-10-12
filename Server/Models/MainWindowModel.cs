@@ -15,16 +15,16 @@ public class MainWindowModel
 	private Thread? _listener;
 	private CancellationTokenSource? _listenerCts;
 	private LinkedList<ClientConnection> _clients;	
-	private readonly UserService _userService;
 	private readonly DatabaseService _databaseService;
+	private readonly UserService _userService;
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
 
 	public MainWindowModel()
 	{
 		_clients = new LinkedList<ClientConnection>();
-		_userService = new UserService();
 		_databaseService = new DatabaseService();
+		_userService = new UserService(_databaseService);
 		_driveService = new DriveService(_databaseService);
 		_virtualMachineService = new VirtualMachineService(_databaseService, _driveService);
 	}
@@ -132,7 +132,7 @@ public class MainWindowModel
 			{
 				Socket clientSocket = socket.Accept();						/* There is a client in the queue, accept him */
 			
-				ClientConnection clientConnection = new ClientConnection(clientSocket, _userService, _databaseService, _virtualMachineService, _driveService);
+				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService, _userService, _virtualMachineService, _driveService);
 				clientConnection.Disconnected += DisconnectedHandler;
 				_clients.AddLast(clientConnection);
 			}

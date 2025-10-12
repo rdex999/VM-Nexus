@@ -335,7 +335,7 @@ public class DatabaseService
 	/// An array of general VM descriptors, describing the VMs of the user.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: Service connected to the database, a user with the given username exists. userId >= 1. <br/>
+	/// Precondition: userId >= 1. <br/>
 	/// Postcondition: On success, an array of general VM descriptors is returned. (might be empty, but not null) <br/>
 	/// On failure, null is returned.
 	/// </remarks>
@@ -361,6 +361,33 @@ public class DatabaseService
 			descriptors.Add(descriptor);
 		}
 		return descriptors.ToArray();
+	}
+
+	/// <summary>
+	/// Get the ID's of all virtual machines of a user.
+	/// </summary>
+	/// <param name="userId">The user of which to get the virtual machines of. userId >= 1.</param>
+	/// <returns>An array of virtual machine ID's, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: userId >= 1. <br/>
+	/// Postcondition: On success, an array of virtual machine ID's is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<int[]?> GetVmIdsOfUserAsync(int userId)
+	{
+		if (userId < 1) return null;
+		
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+			"SELECT id FROM virtual_machines WHERE owner_id = @owner_id",
+			new NpgsqlParameter("@owner_id", userId)
+		);
+
+		List<int> ids = new List<int>();
+		while (await reader.ReadAsync())
+		{
+			ids.Add(reader.GetInt32(0));
+		}
+		
+		return ids.ToArray();
 	}
 
 	/// <summary>

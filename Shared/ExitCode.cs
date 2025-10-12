@@ -17,6 +17,8 @@ public enum ExitCode
 	MessageReceivedCorrupted,
 	MessageNotReceived,
 	InvalidMessageData,
+	InvalidLoginCredentials,
+	UserAlreadyLoggedIn,
 	DatabaseStartupFailed,
 	DatabaseShutdownFailed,
 	DatabaseOperationFailed,
