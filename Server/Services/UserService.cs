@@ -40,8 +40,6 @@ public class UserService
 
 	public async Task<ExitCode> LoginAsync(string username, string password, ClientConnection connection)
 	{
-		throw new NotImplementedException();
-		
 		int userId = await _databaseService.GetUserIdAsync(username);
 
 		if (userId == -1)
@@ -54,8 +52,7 @@ public class UserService
 
 		if (valid)
 		{
-			/* TODO: Add user */
-			
+			await AddUserConnectionAsync(connection, userId);
 			return ExitCode.Success;
 		}
 		
@@ -74,39 +71,81 @@ public class UserService
 
 	private bool IsUserLoggedIn(int userId) => _users.ContainsKey(userId);
 
-	private async Task AddUserConnectionAsync(ClientConnection connection)
+	private async Task AddUserConnectionAsync(ClientConnection connection, int userId)
 	{
-		throw new NotImplementedException();
-		
-		if (IsUserLoggedIn(connection.UserId))
+		if (userId < 1)
 			return;
-
-		if (!_users.TryGetValue(connection.UserId, out List<ClientConnection>? userConnections))
+		
+		if (!_users.TryGetValue(userId, out List<ClientConnection>? userConnections))
 		{
 			userConnections = new List<ClientConnection>();
-			_users[connection.UserId] = userConnections;
+			_users[userId] = userConnections;
 		}
 		userConnections.Add(connection);
 
-		Task initUserVmsTask = InitializeUserVmsAsync(connection.UserId);
+		Task initUserVmsTask = InitializeUserVmsAsync(userId);
+		Task initUserDrivesTask = InitializeUserDrivesAsync(userId);
 		
-		await Task.WhenAll(initUserVmsTask);
+		await Task.WhenAll(initUserVmsTask, initUserDrivesTask);
 	}
 
 	private async Task InitializeUserVmsAsync(int userId)
 	{
+		if (userId < 1)
+			return;
+		
 		int[]? vmIds = await _databaseService.GetVmIdsOfUserAsync(userId);
-		if (vmIds != null)
+	
+		if (vmIds == null)
+			return;
+		
+		foreach (int vmId in vmIds)
 		{
-			foreach (int vmId in vmIds)
-			{
-				if (!_userIdsByVmId.TryGetValue(vmId, out HashSet<int>? userIdsByVmId))
-				{
-					userIdsByVmId = new HashSet<int>();
-					_userIdsByVmId[vmId] = userIdsByVmId;
-				}
-				userIdsByVmId.Add(vmId);
-			}
+			AddVirtualMachine(userId, vmId);
 		}
+	}
+
+	private async Task InitializeUserDrivesAsync(int userId)
+	{
+		if (userId < 1)
+			return;
+		
+		int[]? driveIds = await _databaseService.GetDriveIdsOfUserAsync(userId);
+		
+		if (driveIds == null)
+			return;
+
+		foreach (int driveId in driveIds)
+		{
+			AddDrive(userId, driveId);
+		}
+	}
+
+	private void AddVirtualMachine(int userId, int vmId)
+	{
+		if (userId < 1 || vmId < 1)
+			return;
+		
+		if (!_userIdsByVmId.TryGetValue(vmId, out HashSet<int>? userIds))
+		{
+			userIds = new HashSet<int>();
+			_userIdsByVmId[vmId] = userIds;
+		}
+		
+		userIds.Add(userId);
+	}
+
+	private void AddDrive(int userId, int driveId)
+	{
+		if (userId < 1 || driveId < 1)
+			return;
+		
+		if (!_userIdsByDriveId.TryGetValue(driveId, out HashSet<int>? userIds))
+		{
+			userIds = new HashSet<int>();
+			_userIdsByDriveId[driveId] = userIds;
+		}
+		
+		userIds.Add(userId);
 	}
 }
