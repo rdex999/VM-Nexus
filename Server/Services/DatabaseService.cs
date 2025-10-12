@@ -818,6 +818,34 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Get the ID's of all drives of the given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user of which to get the drives of. userId >= 1.</param>
+	/// <returns>An array of drive ID's, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
+	/// Postcondition: On success, an array of drive ID's is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<int[]?> GetDriveIdsOfUserAsync(int userId)
+	{
+		if (userId < 1) return null;
+
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		                                                                SELECT id FROM drives WHERE owner_id = @owner_id
+		                                                                """,
+			new NpgsqlParameter("@owner_id", userId)
+		);
+
+		List<int> ids = new List<int>();
+		while (await reader.ReadAsync())
+		{
+			ids.Add(reader.GetInt32(0));
+		}
+		
+		return ids.ToArray();
+	}
+
+	/// <summary>
 	/// Get all drive connections of the given user.
 	/// </summary>
 	/// <param name="userId">The ID of the user of which to get the drive connections of. userId >= 1.</param>
