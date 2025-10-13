@@ -1,5 +1,5 @@
 using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -14,7 +14,7 @@ public class MainWindowModel
 {
 	private Thread? _listener;
 	private CancellationTokenSource? _listenerCts;
-	private LinkedList<ClientConnection> _clients;	
+	private ConcurrentDictionary<Guid, ClientConnection> _clients;	
 	private readonly DatabaseService _databaseService;
 	private readonly UserService _userService;
 	private readonly VirtualMachineService _virtualMachineService;
@@ -22,13 +22,16 @@ public class MainWindowModel
 
 	public MainWindowModel()
 	{
-		_clients = new LinkedList<ClientConnection>();
+		_clients = new ConcurrentDictionary<Guid, ClientConnection>();
 		_databaseService = new DatabaseService();
 		_userService = new UserService(_databaseService);
 		_driveService = new DriveService(_databaseService);
 		_virtualMachineService = new VirtualMachineService(_databaseService, _driveService);
+		
+		_userService.UserLoggedIn += (sender, connection) => _clients.TryRemove(connection.ClientId, out _);
+		_userService.UserLoggedOut += (sender, connection) => _clients.TryAdd(connection.ClientId, connection);
 	}
-	
+
 	/// <summary>
 	/// Starts the server.
 	/// </summary>
@@ -62,8 +65,8 @@ public class MainWindowModel
 	
 		Socket socket = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);		/* Create the socket */	
 		socket.Bind(localEndPoint);																	/* Associate the IP address and port (end point) in the socket */
-	
-		_clients = new LinkedList<ClientConnection>();
+
+		_clients.Clear();
 		
 		_listener = new Thread(() => ListenForClients(_listenerCts.Token, socket));
 		_listener.Start();
@@ -85,21 +88,20 @@ public class MainWindowModel
 	public async Task<ExitCode> ServerStopAsync()
 	{
 		if (_listenerCts != null)
-		{
-			_listenerCts.Cancel();
-			_listenerCts.Dispose();
-		}
+			await _listenerCts.CancelAsync();
 		
 		if (_listener != null && _listener.IsAlive)
 		{
 			_listener.Join();
 		}
+		
+		_listenerCts?.Dispose();
+		
 		await _virtualMachineService.CloseAsync();
 
-		while (_clients.FirstOrDefault() != null)
+		foreach (ClientConnection client in _clients.Values)
 		{
-			ClientConnection clientConnection = _clients.First();
-			clientConnection.Disconnect();
+			client.Disconnect();
 		}
 
 		_userService.Close();
@@ -131,10 +133,15 @@ public class MainWindowModel
 			if (socket.Poll(10000, SelectMode.SelectRead))		/* Similar to Accept(), but blocks for a specified time. Returns true if there is a connection */
 			{
 				Socket clientSocket = socket.Accept();						/* There is a client in the queue, accept him */
-			
-				ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService, _userService, _virtualMachineService, _driveService);
-				clientConnection.Disconnected += DisconnectedHandler;
-				_clients.AddLast(clientConnection);
+
+				/* This loop ensures the GUID is unique and that the client is added. */
+				bool added;
+				do
+				{
+					ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService, _userService, _virtualMachineService, _driveService);
+					clientConnection.Disconnected += OnClientDisconnected;
+					added = _clients.TryAdd(clientConnection.ClientId, clientConnection);
+				} while (!added);
 			}
 		}
 		socket.Close();
@@ -153,13 +160,15 @@ public class MainWindowModel
 	/// Precondition: Client has disconnected. sender is the ClientConnection that was disconnected. sender != null. args is not used. <br/>
 	/// Postcondition: Client is removed from the client connection list.
 	/// </remarks>
-	private void DisconnectedHandler(object? sender, EventArgs args)
+	private void OnClientDisconnected(object? sender, EventArgs args)
 	{
 		ClientConnection? client = (ClientConnection?)sender;
 		if (client != null)
 		{
-			client.Disconnected -= DisconnectedHandler;
-			_clients.Remove(client);
+			client.Disconnected -= OnClientDisconnected;
+			_clients.TryRemove(client.ClientId, out _);
 		}
 	}
+	
+
 }

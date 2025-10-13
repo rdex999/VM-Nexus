@@ -10,6 +10,9 @@ namespace Server.Services;
 /* Manages logged-in users */
 public class UserService
 {
+	public event EventHandler<ClientConnection>? UserLoggedIn;
+	public event EventHandler<ClientConnection>? UserLoggedOut;
+	
 	private readonly ConcurrentDictionary<int, ConcurrentDictionary<Guid, ClientConnection>> _users;		/* By user ID, then by client ID */
 	private readonly ConcurrentDictionary<int, HashSet<int>> _userIdsByVmId;
 	private readonly ConcurrentDictionary<int, HashSet<int>> _userIdsByDriveId;
@@ -50,15 +53,17 @@ public class UserService
 		if (valid)
 		{
 			await AddUserConnectionAsync(connection, userId);
+			UserLoggedIn?.Invoke(this, connection);
 			return ExitCode.Success;
 		}
 		
 		return ExitCode.InvalidLoginCredentials;
 	}
-	
-	public ExitCode Logout(ClientConnection connection)
+
+	public async Task LogoutAsync(ClientConnection connection)
 	{
-		throw new NotImplementedException();
+		await RemoveUserConnectionAsync(connection);
+		UserLoggedOut?.Invoke(this, connection);
 	}
 	
 	private async Task AddUserConnectionAsync(ClientConnection connection, int userId)

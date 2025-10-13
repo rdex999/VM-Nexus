@@ -122,11 +122,11 @@ public sealed class ClientConnection : MessagingService
 			case MessageRequestLogin reqLogin:
 			{
 				string usernameTrimmed = reqLogin.Username.Trim();
-				bool validLogin = await _databaseService.IsValidLoginAsync(usernameTrimmed, reqLogin.Password);
-				if (validLogin)
+				result = await _userService.LoginAsync(usernameTrimmed, reqLogin.Password, this);
+				if (result == ExitCode.Success)
 				{
 					_isLoggedIn = true;
-					UserId = await _databaseService.GetUserIdAsync(usernameTrimmed);		/* Must be valid because the user exists. (IsValidLogin would return false otherwise) */
+					UserId = await _databaseService.GetUserIdAsync(usernameTrimmed);	/* Must be valid because the user exists. (IsValidLogin would return false otherwise) */
 
 					SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(UserId);
 					if (vms == null)
@@ -144,7 +144,7 @@ public sealed class ClientConnection : MessagingService
 					}
 				}
 				
-				SendResponse(new MessageResponseLogin(true, reqLogin.Id, validLogin));
+				SendResponse(new MessageResponseLogin(true, reqLogin.Id, result == ExitCode.Success));
 				break;
 			}
 
@@ -152,6 +152,7 @@ public sealed class ClientConnection : MessagingService
 			{
 				if (_isLoggedIn)
 				{
+					await _userService.LogoutAsync(this);
 					_isLoggedIn = false;
 					UserId = -1;
 					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
