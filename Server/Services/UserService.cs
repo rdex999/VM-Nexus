@@ -10,7 +10,7 @@ namespace Server.Services;
 /* Manages logged-in users */
 public class UserService
 {
-	private readonly ConcurrentDictionary<int, List<ClientConnection>> _users;		/* By user ID */
+	private readonly ConcurrentDictionary<int, ConcurrentDictionary<Guid, ClientConnection>> _users;		/* By user ID, then by client ID */
 	private readonly ConcurrentDictionary<int, HashSet<int>> _userIdsByVmId;
 	private readonly ConcurrentDictionary<int, HashSet<int>> _userIdsByDriveId;
 	
@@ -18,7 +18,7 @@ public class UserService
 	
 	public UserService(DatabaseService databaseService)
 	{
-		_users = new ConcurrentDictionary<int, List<ClientConnection>>();
+		_users = new ConcurrentDictionary<int, ConcurrentDictionary<Guid, ClientConnection>>();
 		_userIdsByVmId = new ConcurrentDictionary<int, HashSet<int>>();
 		_userIdsByDriveId = new ConcurrentDictionary<int, HashSet<int>>();
 		
@@ -27,9 +27,9 @@ public class UserService
 
 	public ExitCode Close()
 	{
-		foreach (List<ClientConnection> userConnections in _users.Values)
+		foreach (ConcurrentDictionary<Guid, ClientConnection> userConnections in _users.Values)
 		{
-			foreach (ClientConnection connection in userConnections)
+			foreach (ClientConnection connection in userConnections.Values)
 			{
 				connection.Disconnect();
 			}
@@ -45,9 +45,6 @@ public class UserService
 		if (userId == -1)
 			return ExitCode.UserDoesntExist;
 		
-		if (IsUserLoggedIn(userId)) 
-			return ExitCode.UserAlreadyLoggedIn;
-		
 		bool valid = await _databaseService.IsValidLoginAsync(username, password);
 
 		if (valid)
@@ -59,34 +56,51 @@ public class UserService
 		return ExitCode.InvalidLoginCredentials;
 	}
 	
-	public void Disconnect(int userId)
+	public ExitCode Logout(ClientConnection connection)
 	{
 		throw new NotImplementedException();
 	}
-
-	public void Logout(int userId)
-	{
-		throw new NotImplementedException();
-	}
-
-	private bool IsUserLoggedIn(int userId) => _users.ContainsKey(userId);
-
+	
 	private async Task AddUserConnectionAsync(ClientConnection connection, int userId)
 	{
 		if (userId < 1)
 			return;
 		
-		if (!_users.TryGetValue(userId, out List<ClientConnection>? userConnections))
+		if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			userConnections = new List<ClientConnection>();
-			_users[userId] = userConnections;
+			userConnections.TryAdd(connection.ClientId, connection);
 		}
-		userConnections.Add(connection);
-
-		Task initUserVmsTask = InitializeUserVmsAsync(userId);
-		Task initUserDrivesTask = InitializeUserDrivesAsync(userId);
+		else
+		{
+			userConnections = new ConcurrentDictionary<Guid, ClientConnection>();
+			userConnections.TryAdd(connection.ClientId, connection);
+			_users[userId] = userConnections;
+			
+			Task initUserVmsTask = InitializeUserVmsAsync(userId);
+			Task initUserDrivesTask = InitializeUserDrivesAsync(userId);
+			await Task.WhenAll(initUserVmsTask, initUserDrivesTask);
+		}
 		
-		await Task.WhenAll(initUserVmsTask, initUserDrivesTask);
+		connection.Disconnected += OnUserDisconnected;
+	}
+	
+	private async Task RemoveUserConnectionAsync(ClientConnection connection)
+	{
+		connection.Disconnected -= OnUserDisconnected;
+		
+		if (_users.TryGetValue(connection.UserId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+		{
+			userConnections.TryRemove(connection.ClientId, out _);
+			if (userConnections.IsEmpty)
+			{
+				Task removeUserFromVmsTask = RemoveUserFromVmsAsync(connection.UserId);
+				Task removeUserFromDrivesTask = RemoveUserFromDrivesAsync(connection.UserId);
+					
+				await Task.WhenAll(removeUserFromVmsTask, removeUserFromDrivesTask);
+				
+				_users.TryRemove(connection.UserId, out _);
+			}
+		}
 	}
 
 	private async Task InitializeUserVmsAsync(int userId)
@@ -121,6 +135,52 @@ public class UserService
 		}
 	}
 
+	private async Task RemoveUserFromVmsAsync(int userId)
+	{
+		if (userId < 1)
+			return;
+		
+		int[]? vmIds = await _databaseService.GetVmIdsOfUserAsync(userId);
+		if (vmIds != null)
+		{
+			foreach (int vmId in vmIds)
+			{
+				if (_userIdsByVmId.TryGetValue(vmId, out HashSet<int>? userIds))
+				{
+					userIds.Remove(userId);
+
+					if (userIds.Count == 0)
+					{
+						_userIdsByVmId.TryRemove(vmId, out _);
+					}
+				}
+			}
+		}
+	}
+
+	private async Task RemoveUserFromDrivesAsync(int userId)
+	{
+		if (userId < 1)
+			return;
+		
+		int[]? driveIds = await _databaseService.GetDriveIdsOfUserAsync(userId);
+		if (driveIds != null)
+		{
+			foreach (int driveId in driveIds)
+			{
+				if (_userIdsByDriveId.TryGetValue(driveId, out HashSet<int>? userIds))
+				{
+					userIds.Remove(userId);
+
+					if (userIds.Count == 0)
+					{
+						_userIdsByDriveId.TryRemove(driveId, out _);
+					}
+				}
+			}
+		}
+	}
+
 	private void AddVirtualMachine(int userId, int vmId)
 	{
 		if (userId < 1 || vmId < 1)
@@ -147,5 +207,13 @@ public class UserService
 		}
 		
 		userIds.Add(userId);
+	}
+	
+	private void OnUserDisconnected(object? sender, EventArgs e)
+	{
+		if (sender == null || sender is not ClientConnection connection)
+			return;
+		
+		_ = RemoveUserConnectionAsync(connection);
 	}
 }

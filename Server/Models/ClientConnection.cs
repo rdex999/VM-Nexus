@@ -11,8 +11,9 @@ namespace Server.Models;
 public sealed class ClientConnection : MessagingService
 {
 	public event EventHandler? Disconnected;
+	public int UserId { get; private set; } = -1;
+	public Guid ClientId { get; private init; }
 	private bool _isLoggedIn = false;
-	public int UserId { get; private set; }= -1;
 	private readonly DatabaseService _databaseService;
 	private readonly UserService _userService;
 	private readonly VirtualMachineService _virtualMachineService;
@@ -41,6 +42,7 @@ public sealed class ClientConnection : MessagingService
 		_userService = userService;
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
+		ClientId = Guid.NewGuid();
 		
 		Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 		udpSocket.Connect(tcpSocket.RemoteEndPoint!);
