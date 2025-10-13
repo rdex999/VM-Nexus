@@ -192,7 +192,7 @@ public sealed class ClientConnection : MessagingService
 				int id = await _databaseService.GetVmIdAsync(UserId, vmNameTrimmed);		/* Must be valid because we just successfully created the VM */
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
 				
-				_userService.NotifyVirtualMachineCreated(UserId,
+				await _userService.NotifyVirtualMachineCreatedAsync(
 					new SharedDefinitions.VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, SharedDefinitions.VmState.ShutDown)
 				);
 				
@@ -217,7 +217,7 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseDeleteVm(true, reqDeleteVm.Id, MessageResponseDeleteVm.Status.Success));
-					SendInfo(new MessageInfoVmDeleted(true, reqDeleteVm.VmId));
+					_userService.NotifyVirtualMachineDeleted(reqDeleteVm.VmId);
 				}
 				else
 				{
@@ -643,8 +643,27 @@ public sealed class ClientConnection : MessagingService
 		}
 	}
 
+	/// <summary>
+	/// Notifies the client that a virtual machine was created.
+	/// </summary>
+	/// <param name="descriptor">A descriptor of the new virtual machine. descriptor != null.</param>
+	/// <remarks>
+	/// Precondition: A new virtual machine was created. Service initialized and connected to client. descriptor != null. <br/>
+	/// Postcondition: Client notified of the new virtual machine.
+	/// </remarks>
 	public void NotifyVirtualMachineCreated(SharedDefinitions.VmGeneralDescriptor descriptor) =>
 		SendInfo(new MessageInfoVmCreated(true, descriptor));
+	
+	/// <summary>
+	/// Notifies the client that a virtual machine was deleted.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine that was deleted. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine was deleted. Service initialized and connected to client. vmId >= 1. <br/>
+	/// Postcondition: Client notified of the virtual machine deletion event.
+	/// </remarks>
+	public void NotifyVirtualMachineDeleted(int vmId) =>
+		SendInfo(new MessageInfoVmDeleted(true, vmId));
 
 	/// <summary>
 	/// Handles what happens after a disconnection. (sudden or regular disconnection)

@@ -328,6 +328,28 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Get the ID of the user that owns the virtual machine.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine to get the owner of. vmId >= 1.</param>
+	/// <returns>The ID of the owner user, or -1 on failure.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists. vmId >= 1. <br/>
+	/// Postcondition: On success, the ID of the owner user of the given virtual machine is returned. On failure, -1 is returned.
+	/// </remarks>
+	public async Task<int> GetVmOwnerIdAsync(int vmId)
+	{
+		if (vmId < 1) return -1;
+
+		object? id = await ExecuteScalarAsync("SELECT owner_id FROM virtual_machines WHERE id = @id",
+			new NpgsqlParameter("@id", vmId)
+		);
+		
+		if (id == null) return -1;
+		
+		return (int)id;
+	}
+
+	/// <summary>
 	/// Get an array of general virtual machine descriptors of all virtual machines of the user.
 	/// </summary>
 	/// <param name="userId">The ID of the user to get the VMs of. userId >= 1.</param>
