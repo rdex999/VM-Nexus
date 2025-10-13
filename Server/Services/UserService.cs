@@ -60,6 +60,22 @@ public class UserService
 		return ExitCode.InvalidLoginCredentials;
 	}
 
+	public void NotifyVirtualMachineCreated(int userId, SharedDefinitions.VmGeneralDescriptor descriptor)
+	{
+		/* Get users related to the virtual machine */
+
+		/* For now assume userId is the only related user */
+		AddVirtualMachine(userId, descriptor.Id);
+
+		if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+		{
+			foreach (ClientConnection connection in userConnections.Values)
+			{
+				connection.NotifyVirtualMachineCreated(descriptor);
+			}
+		}
+	}
+
 	public async Task LogoutAsync(ClientConnection connection)
 	{
 		await RemoveUserConnectionAsync(connection);

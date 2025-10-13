@@ -192,9 +192,10 @@ public sealed class ClientConnection : MessagingService
 				int id = await _databaseService.GetVmIdAsync(UserId, vmNameTrimmed);		/* Must be valid because we just successfully created the VM */
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
 				
-				SendInfo(new MessageInfoVmCreated(true, 
+				_userService.NotifyVirtualMachineCreated(UserId,
 					new SharedDefinitions.VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, SharedDefinitions.VmState.ShutDown)
-				));
+				);
+				
 				break;
 			}
 
@@ -641,6 +642,9 @@ public sealed class ClientConnection : MessagingService
 			}
 		}
 	}
+
+	public void NotifyVirtualMachineCreated(SharedDefinitions.VmGeneralDescriptor descriptor) =>
+		SendInfo(new MessageInfoVmCreated(true, descriptor));
 
 	/// <summary>
 	/// Handles what happens after a disconnection. (sudden or regular disconnection)
