@@ -40,6 +40,7 @@ public enum ExitCode
 	VncConnectionFailed,
 	DriveAlreadyExists,
 	DriveDoesntExist,
+	InvalidDriveSize,
 	DriveConnectionAlreadyExists,
 	DiskImageCreationFailed,
 	NamedPipeCreationFailed,

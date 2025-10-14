@@ -597,11 +597,8 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<ExitCode> CreateDriveAsync(int userId, string name, int size, SharedDefinitions.DriveType driveType)
 	{
-		if (size < 1 || userId < 1)
-		{
-			return ExitCode.InvalidParameter;
-		}
-	
+		if (size < 1 || userId < 1) return ExitCode.InvalidParameter;
+		
 		if (await IsDriveExistsAsync(userId, name))
 		{
 			return ExitCode.DriveAlreadyExists;

@@ -91,7 +91,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		if (OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
 		{
 			_osDriveSizeMax = 20;
-			_osDriveSizeMin = 1;
+			_osDriveSizeMin = 9;
 			
 			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86;
 			CpuArchitectureIsEnabled = false;
@@ -120,7 +120,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		else
 		{
 			_osDriveSizeMax = 1024 * 256;
-			_osDriveSizeMin = 1024 * 4;
+			_osDriveSizeMin = 1024 * 25;
 		
 			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
 			CpuArchitectureIsEnabled = false;

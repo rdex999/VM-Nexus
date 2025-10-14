@@ -38,6 +38,22 @@ public class DriveService
 			return ExitCode.InvalidParameter;
 		}
 
+		/* Check if the drive size is valid. */
+		if (operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
+		{
+			if (size > 20 || size < 9)
+			{
+				return ExitCode.InvalidDriveSize;
+			}
+		} 
+		else
+		{
+			if (size > 1024 * 256 || size < 1024 * 25)
+			{
+				return ExitCode.InvalidDriveSize;
+			}
+		}
+		
 		SharedDefinitions.DriveType driveType = operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS
 			? SharedDefinitions.DriveType.Floppy
 			: SharedDefinitions.DriveType.Disk;
