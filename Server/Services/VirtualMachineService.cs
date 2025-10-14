@@ -159,8 +159,8 @@ public class VirtualMachineService
 			return result;
 		}
 
-		virtualMachine.PoweredOff += OnVirtualMachineEnd;
-		virtualMachine.Crashed += OnVirtualMachineEnd;
+		virtualMachine.PoweredOff += OnVirtualMachinePoweredOff;
+		virtualMachine.Crashed += OnVirtualMachineCrashed;
 
 		await _userService.NotifyVirtualMachinePoweredOnAsync(id);
 		
@@ -497,15 +497,32 @@ public class VirtualMachineService
 	}
 
 	/// <summary>
-	/// Handles the end of a virtual machine. (powered off or crashed)
+	/// Handles the event that a virtual machine was powered off.
 	/// </summary>
-	/// <param name="sender">unused.</param>
-	/// <param name="id">The ID of the virtual machine that ended. id >= 1.</param>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine that was powered off. id >= 1.</param>
 	/// <remarks>
-	/// Precondition: A virtual machine has ended. (that is, powered off or crashed) id >= 1. <br/>
-	/// Postcondition: The virtual machine is removed from the running virtual machines dictionary, and its resources are freed.
+	/// Precondition: A virtual machine was powered off. id >= 1. <br/>
+	/// Postcondition: The virtual machine is removed, relevant users are notified.
 	/// </remarks>
-	private void OnVirtualMachineEnd(object? sender, int id)
+	private void OnVirtualMachinePoweredOff(object? sender, int id)
+	{
+		if (!_aliveVirtualMachines.TryRemove(id, out VirtualMachine? virtualMachine)) return;
+		
+		_ = virtualMachine.CloseAsync();
+		_ = _userService.NotifyVirtualMachinePoweredOffAsync(id);
+	}
+
+	/// <summary>
+	/// Handles the event that a virtual machine has crashed.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the virtual machine that has crahsed. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine has crashed. id >= 1. <br/>
+	/// Postcondition: The virtual machine is removed, relevant users are notified.
+	/// </remarks>
+	private void OnVirtualMachineCrashed(object? sender, int id)
 	{
 		if (!_aliveVirtualMachines.TryRemove(id, out VirtualMachine? virtualMachine)) return;
 		

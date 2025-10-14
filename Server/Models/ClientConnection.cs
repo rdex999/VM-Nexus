@@ -138,8 +138,8 @@ public sealed class ClientConnection : MessagingService
 					{
 						if (vm.State == SharedDefinitions.VmState.Running)
 						{
-							_virtualMachineService.SubscribeToVmPoweredOff(vm.Id, OnVirtualMachinePoweredOff);
-							_virtualMachineService.SubscribeToVmCrashed(vm.Id, OnVirtualMachineCrashed);
+							_virtualMachineService.SubscribeToVmPoweredOff(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
+							_virtualMachineService.SubscribeToVmCrashed(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
 						}
 					}
 				}
@@ -280,8 +280,8 @@ public sealed class ClientConnection : MessagingService
 					
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Success));
 					
-					_virtualMachineService.SubscribeToVmPoweredOff(reqVmStartup.VmId, OnVirtualMachinePoweredOff);
-					_virtualMachineService.SubscribeToVmCrashed(reqVmStartup.VmId, OnVirtualMachineCrashed);
+					_virtualMachineService.SubscribeToVmPoweredOff(reqVmStartup.VmId, OnVirtualMachinePoweredOffOrCrashed);
+					_virtualMachineService.SubscribeToVmCrashed(reqVmStartup.VmId, OnVirtualMachinePoweredOffOrCrashed);
 				} 
 				else if (result == ExitCode.VmAlreadyRunning)
 				{
@@ -683,6 +683,17 @@ public sealed class ClientConnection : MessagingService
 		SendInfo(new MessageInfoVmPoweredOn(true, vmId));
 	
 	/// <summary>
+	/// Notifies the client that a virtual machine was powered off.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine that was powered off. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine was powered off. Service initialized and connected to client. vmId >= 1. <br/>
+	/// Postcondition: Client is notified that the virtual machine was powered off.
+	/// </remarks>
+	public void NotifyVirtualMachinePoweredOff(int vmId) =>
+		SendInfo(new MessageInfoVmPoweredOff(true, vmId));
+	
+	/// <summary>
 	/// Notifies the client that a drive was created.
 	/// </summary>
 	/// <param name="descriptor">A descriptor of the new drive. descriptor != null.</param>
@@ -779,32 +790,9 @@ public sealed class ClientConnection : MessagingService
 	/// Precondition: A virtual machine has been powered off. id >= 1. <br/>
 	/// Postcondition: The event is handled, client receives information if needed.
 	/// </remarks>
-	private void OnVirtualMachinePoweredOff(object? sender, int id)
+	private void OnVirtualMachinePoweredOffOrCrashed(object? sender, int id)
 	{
 		if (!_isLoggedIn || id < 1) return;
-		
-		SendInfo(new MessageInfoVmPoweredOff(true, id));
-
-		if (id == _streamVmId)
-		{
-			_streamVmId = -1;
-		}
-	}
-	
-	/// <summary>
-	/// Handles the event of a virtual machine crashing
-	/// </summary>
-	/// <param name="sender">Unused.</param>
-	/// <param name="id">The ID of the virtual machine that was shut down. id >= 1.</param>
-	/// <remarks>
-	/// Precondition: A virtual machine has crashed. id >= 1. <br/>
-	/// Postcondition: The event is handled, client receives information if needed.
-	/// </remarks>
-	private void OnVirtualMachineCrashed(object? sender, int id)
-	{
-		if (!_isLoggedIn || id < 1) return;
-		
-		SendInfo(new MessageInfoVmCrashed(true, id));
 		
 		if (id == _streamVmId)
 		{
