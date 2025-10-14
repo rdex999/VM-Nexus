@@ -630,6 +630,28 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Get the ID of the owner user of the drive.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive of which to get the owner of. driveId >= 1.</param>
+	/// <returns>The ID of the owner user, or -1 on failure.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. driveId >= 1. <br/>
+	/// Postcondition: On success, the ID of the owner user of the given drive is returned. On failure, -1 is returned.
+	/// </remarks>
+	public async Task<int> GetDriveOwnerIdAsync(int driveId)
+	{
+		if (driveId < 1) return -1;
+
+		object? id = await ExecuteScalarAsync("SELECT owner_id FROM drives WHERE id = @drive_id",
+			new NpgsqlParameter("@drive_id", driveId)
+		);
+
+		if (id == null) return -1;
+		
+		return (int)id;
+	}
+
+	/// <summary>
 	/// Deletes the given drive from the database. (Not the disk image from the actual filesystem)
 	/// </summary>
 	/// <param name="id">The ID of the drive to delete. id >= 1.</param>

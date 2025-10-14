@@ -471,12 +471,14 @@ public sealed class ClientConnection : MessagingService
 				}
 				if (result == ExitCode.Success)
 				{
-					int id = await _driveService.GetDriveIdAsync(UserId, driveNameTrimmed);	/* Must succeed because the drive was created successfully */
+					/* Must succeed because the drive was created successfully */
+					int id = await _driveService.GetDriveIdAsync(UserId, driveNameTrimmed);		
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success, id));
 					
-					SendInfo(new MessageInfoDriveCreated(true, 
+					await _userService.NotifyDriveCreated(
 						new SharedDefinitions.DriveGeneralDescriptor(id, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type)
-					));
+					);
+					
 					break;				
 				}
 
@@ -665,6 +667,17 @@ public sealed class ClientConnection : MessagingService
 	public void NotifyVirtualMachineDeleted(int vmId) =>
 		SendInfo(new MessageInfoVmDeleted(true, vmId));
 
+	/// <summary>
+	/// Notifies the client that a drive was created.
+	/// </summary>
+	/// <param name="descriptor">A descriptor of the new drive. descriptor != null.</param>
+	/// <remarks>
+	/// Precondition: A new drive was created. Service initialized and connected to client. descriptor != null. <br/>
+	/// Postcondition: Client is notified of the new drive.
+	/// </remarks>
+	public void NotifyDriveCreated(SharedDefinitions.DriveGeneralDescriptor descriptor) =>
+		SendInfo(new MessageInfoDriveCreated(true, descriptor));
+	
 	/// <summary>
 	/// Handles what happens after a disconnection. (sudden or regular disconnection)
 	/// </summary>

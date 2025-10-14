@@ -103,6 +103,25 @@ public class UserService
 			}
 		}
 	}
+
+	public async Task NotifyDriveCreated(SharedDefinitions.DriveGeneralDescriptor descriptor)
+	{
+		int[] relatedUsers = [-1];
+		relatedUsers[0] = await _databaseService.GetDriveOwnerIdAsync(descriptor.Id);
+
+		foreach (int userId in relatedUsers)
+		{
+			AddDrive(userId, descriptor.Id);
+
+			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			{
+				foreach (ClientConnection connection in userConnections.Values)
+				{
+					connection.NotifyDriveCreated(descriptor);
+				}
+			}
+		}
+	}
 	
 	private async Task AddUserConnectionAsync(ClientConnection connection, int userId)
 	{
