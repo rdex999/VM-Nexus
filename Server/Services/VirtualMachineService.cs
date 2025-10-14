@@ -14,15 +14,17 @@ namespace Server.Services;
 public class VirtualMachineService
 {
 	private readonly DatabaseService _databaseService;
+	private readonly UserService _userService;
 	private readonly DriveService _driveService;
 	
 	/* By virtual machine ID's */
 	private readonly ConcurrentDictionary<int, VirtualMachine> _aliveVirtualMachines;
 	private readonly Connect _libvirtConnection;
 
-	public VirtualMachineService(DatabaseService databaseService, DriveService driveService)
+	public VirtualMachineService(DatabaseService databaseService, UserService userService, DriveService driveService)
 	{
 		_databaseService = databaseService;
+		_userService = userService;
 		_driveService = driveService;
 		_aliveVirtualMachines = new ConcurrentDictionary<int, VirtualMachine>();
 		_libvirtConnection = new Connect("qemu:///system");
@@ -159,6 +161,8 @@ public class VirtualMachineService
 
 		virtualMachine.PoweredOff += OnVirtualMachineEnd;
 		virtualMachine.Crashed += OnVirtualMachineEnd;
+
+		await _userService.NotifyVirtualMachinePoweredOnAsync(id);
 		
 		return ExitCode.Success;
 	}

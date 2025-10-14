@@ -26,7 +26,7 @@ public class MainWindowModel
 		_databaseService = new DatabaseService();
 		_userService = new UserService(_databaseService);
 		_driveService = new DriveService(_databaseService);
-		_virtualMachineService = new VirtualMachineService(_databaseService, _driveService);
+		_virtualMachineService = new VirtualMachineService(_databaseService, _userService, _driveService);
 		
 		_userService.UserLoggedIn += (sender, connection) => _clients.TryRemove(connection.ClientId, out _);
 		_userService.UserLoggedOut += (sender, connection) => _clients.TryAdd(connection.ClientId, connection);

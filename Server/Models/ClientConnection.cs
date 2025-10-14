@@ -279,7 +279,6 @@ public sealed class ClientConnection : MessagingService
 					}
 					
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Success));
-					SendInfo(new MessageInfoVmPoweredOn(true, reqVmStartup.VmId));
 					
 					_virtualMachineService.SubscribeToVmPoweredOff(reqVmStartup.VmId, OnVirtualMachinePoweredOff);
 					_virtualMachineService.SubscribeToVmCrashed(reqVmStartup.VmId, OnVirtualMachineCrashed);
@@ -672,6 +671,17 @@ public sealed class ClientConnection : MessagingService
 	public void NotifyVirtualMachineDeleted(int vmId) =>
 		SendInfo(new MessageInfoVmDeleted(true, vmId));
 
+	/// <summary>
+	/// Notifies the client that a virtual machine was powered on.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine that was powered on. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine was powered on. Service initialized and connected to client. vmId >= 1. <br/>
+	/// Postcondition: Client is notified that the virtual machine was powered on.
+	/// </remarks>
+	public void NotifyVirtualMachinePoweredOn(int vmId) =>
+		SendInfo(new MessageInfoVmPoweredOn(true, vmId));
+	
 	/// <summary>
 	/// Notifies the client that a drive was created.
 	/// </summary>
