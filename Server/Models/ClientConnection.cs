@@ -529,7 +529,7 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, MessageResponseConnectDrive.Status.Success));
-					SendInfo(new MessageInfoDriveConnected(true, reqConnectDrive.DriveId, reqConnectDrive.VmId));
+					await _userService.NotifyDriveConnected(reqConnectDrive.DriveId, reqConnectDrive.VmId);
 				}
 				else if (result == ExitCode.DriveConnectionAlreadyExists)
 				{
@@ -693,6 +693,19 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	public void NotifyDriveDeleted(int driveId) =>
 		SendInfo(new MessageInfoDriveDeleted(true, driveId));
+
+	/// <summary>
+	/// Notifies the client that a drive was connected to a virtual machine. (New VM-drive connection created)
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that was connected. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine that the drive was connected to. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A drive was connected to a virtual machine. Service initialized and connected to client.
+	/// driveId >= 1 &amp;&amp; vmId >= 1. <br/>
+	/// Postcondition: Client is notified that the drive is connected to the virtual machine.
+	/// </remarks>
+	public void NotifyDriveConnected(int driveId, int vmId) =>
+		SendInfo(new MessageInfoDriveConnected(true, driveId, vmId));
 	
 	/// <summary>
 	/// Handles what happens after a disconnection. (sudden or regular disconnection)

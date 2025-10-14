@@ -131,6 +131,24 @@ public class UserService
 			}
 		}
 	}
+
+	public async Task NotifyDriveConnected(int driveId, int vmId)
+	{
+		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(vmId);
+		if (relatedUsers == null)
+			return;
+
+		foreach (int userId in relatedUsers)
+		{
+			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			{
+				foreach (ClientConnection connection in userConnections.Values)
+				{
+					connection.NotifyDriveConnected(driveId, vmId);
+				}
+			}
+		}
+	}
 	
 	private void AddUserConnection(ClientConnection connection, int userId)
 	{
