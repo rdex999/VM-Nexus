@@ -132,6 +132,24 @@ public class UserService
 		}
 	}
 
+	public async Task NotifyVirtualMachineCrashedAsync(int vmId)
+	{
+		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(vmId);
+		if (relatedUsers == null)
+			return;
+
+		foreach (int userId in relatedUsers)
+		{
+			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			{
+				foreach (ClientConnection connection in userConnections.Values)
+				{
+					connection.NotifyVirtualMachineCrashed(vmId);
+				}
+			}
+		}
+	}
+
 	public async Task NotifyDriveCreatedAsync(SharedDefinitions.DriveGeneralDescriptor descriptor)
 	{
 		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToDriveAsync(descriptor.Id);

@@ -527,5 +527,6 @@ public class VirtualMachineService
 		if (!_aliveVirtualMachines.TryRemove(id, out VirtualMachine? virtualMachine)) return;
 		
 		_ = virtualMachine.CloseAsync();
+		_ = _userService.NotifyVirtualMachineCrashedAsync(id);
 	}
 }

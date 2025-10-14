@@ -692,6 +692,17 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	public void NotifyVirtualMachinePoweredOff(int vmId) =>
 		SendInfo(new MessageInfoVmPoweredOff(true, vmId));
+
+	/// <summary>
+	/// Notifies the client that a virtual machine has crashed.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine that has crashed. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A virtual machine has crashed. Service initialized and connected to client. vmId >= 1. <br/>
+	/// Postcondition: Client is notified that the virtual machine has crashed.
+	/// </remarks>
+	public void NotifyVirtualMachineCrashed(int vmId) =>
+		SendInfo(new MessageInfoVmCrashed(true, vmId));
 	
 	/// <summary>
 	/// Notifies the client that a drive was created.
