@@ -152,7 +152,7 @@ public sealed class ClientConnection : MessagingService
 			{
 				if (_isLoggedIn)
 				{
-					await _userService.LogoutAsync(this);
+					_userService.Logout(this);
 					_isLoggedIn = false;
 					UserId = -1;
 					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
@@ -213,11 +213,15 @@ public sealed class ClientConnection : MessagingService
 					break;					
 				}
 
-				result = await _databaseService.DeleteVmAsync(reqDeleteVm.VmId);
-				if (result == ExitCode.Success)
+				if (await _databaseService.IsVmExistsAsync(reqDeleteVm.VmId))
 				{
 					SendResponse(new MessageResponseDeleteVm(true, reqDeleteVm.Id, MessageResponseDeleteVm.Status.Success));
-					_userService.NotifyVirtualMachineDeleted(reqDeleteVm.VmId);
+					
+					/* First notifying of VM deletion and then deleting the VM, because this function depends on the VM being in the database. */
+					await _userService.NotifyVirtualMachineDeletedAsync(reqDeleteVm.VmId);
+				
+					/* Must succeed because the VM exists. */
+					await _databaseService.DeleteVmAsync(reqDeleteVm.VmId);
 				}
 				else
 				{
@@ -475,7 +479,7 @@ public sealed class ClientConnection : MessagingService
 					int id = await _driveService.GetDriveIdAsync(UserId, driveNameTrimmed);		
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success, id));
 					
-					await _userService.NotifyDriveCreated(
+					await _userService.NotifyDriveCreatedAsync(
 						new SharedDefinitions.DriveGeneralDescriptor(id, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type)
 					);
 					
@@ -494,19 +498,20 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				result = await _driveService.DeleteDriveAsync(reqDeleteDrive.DriveId);
-
-				if (result == ExitCode.Success)
+				if (await _databaseService.IsDriveExistsAsync(reqDeleteDrive.DriveId))
 				{
 					SendResponse(new MessageResponseDeleteDrive(true, reqDeleteDrive.Id, MessageResponseDeleteDrive.Status.Success));
-					SendInfo(new MessageInfoDriveDeleted(true, reqDeleteDrive.DriveId));
+					
+					/* First notifying of drive deletion and then deleting the drive, because this function depends on the drive being in the database. */
+					await _userService.NotifyDriveDeletedAsync(reqDeleteDrive.DriveId);
+				
+					/* Must succeed because the drive does exist. */
+					await _driveService.DeleteDriveAsync(reqDeleteDrive.DriveId);
 				}
 				else
 				{
 					SendResponse(new MessageResponseDeleteDrive(true, reqDeleteDrive.Id, MessageResponseDeleteDrive.Status.Failure));
 				}
-				
-				/* TODO: Send info drive deleted. */
 				
 				break;
 			}
@@ -677,6 +682,17 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	public void NotifyDriveCreated(SharedDefinitions.DriveGeneralDescriptor descriptor) =>
 		SendInfo(new MessageInfoDriveCreated(true, descriptor));
+
+	/// <summary>
+	/// Notifies the client that a drive was deleted.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that was deleted. driveId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A drive was deleted. Service initialized and connected to client. driveId >= 1. <br/>
+	/// Postcondition: Client is notified that the drive was deleted.
+	/// </remarks>
+	public void NotifyDriveDeleted(int driveId) =>
+		SendInfo(new MessageInfoDriveDeleted(true, driveId));
 	
 	/// <summary>
 	/// Handles what happens after a disconnection. (sudden or regular disconnection)

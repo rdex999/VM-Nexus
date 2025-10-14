@@ -304,6 +304,26 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Checks if a virtual machine with the given ID exists.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine to check for.</param>
+	/// <returns>True if the virtual machine exists, false otherwise or on failure.</returns>
+	/// <remarks>
+	/// Precondition: vmId >= 1. <br/>
+	/// Postcondition: On success, returns whether a virtual machine with the given ID exists. On failure, false is returned.
+	/// </remarks>
+	public async Task<bool> IsVmExistsAsync(int vmId)
+	{
+		if (vmId < 1) return false;
+		
+		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM virtual_machines WHERE id = @id)",
+			new NpgsqlParameter("@id", vmId)
+		);
+		
+		return exists != null && (bool)exists;	
+	}
+
+	/// <summary>
 	/// Get the ID of a virtual machine registered under the given user.
 	/// </summary>
 	/// <param name="userId">The ID of the user to search for the VM under. userId >= 1.</param>
@@ -347,6 +367,27 @@ public class DatabaseService
 		if (id == null) return -1;
 		
 		return (int)id;
+	}
+
+	/// <summary>
+	/// Get the ID's of all users that are related to the given virtual machine.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine to get the related users of. vmId >= 1.</param>
+	/// <returns>The ID's of the related users, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists. vmId >= 1. <br/>
+	/// Postcondition: On success, a user ID array of related users to the VM is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<int[]?> GetUserIdsRelatedToVmAsync(int vmId)
+	{
+		if (vmId < 1) return null;
+
+		/* For now the owner is the only related user */
+		int id = await GetVmOwnerIdAsync(vmId);
+		
+		if (id < 1) return null;
+		
+		return [id];
 	}
 
 	/// <summary>
@@ -596,6 +637,8 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsDriveExistsAsync(int userId, string name)
 	{
+		if (userId < 1 || string.IsNullOrEmpty(name)) return false;
+		
 		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM drives WHERE owner_id = @owner_id AND name = @name)",
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
@@ -604,6 +647,27 @@ public class DatabaseService
 		return exists != null && (bool)exists;
 	}
 
+	/// <summary>
+	/// Checks if a drive with the given ID exists.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to check the existence of. driveId >= 1.</param>
+	/// <returns>True if a drive with the given ID exists, false otherwise or on failure.</returns>
+	/// <remarks>
+	/// Precondition: driveId >= 1. <br/>
+	/// Postcondition: On success, returns whether a drive with the given ID exists. On failure, returns false.
+	/// </remarks>
+	public async Task<bool> IsDriveExistsAsync(int driveId)
+	{
+		if (driveId < 1) return false;
+		
+		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM drives WHERE id = @id)",
+			new NpgsqlParameter("@id", driveId)
+		);
+		
+		return exists != null && (bool)exists;	
+	}
+	
+	
 	/// <summary>
 	/// Get the ID of a drive called name, owned by the given user.
 	/// </summary>
@@ -649,6 +713,26 @@ public class DatabaseService
 		if (id == null) return -1;
 		
 		return (int)id;
+	}
+
+	/// <summary>
+	/// Get the ID's of all users that are related to the given drive.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to get the related users of. driveId >= 1.</param>
+	/// <returns>The ID's of the related users, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. driveId >= 1. <br/>
+	/// Postcondition: On success, a user ID array of related users to the drive is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<int[]?> GetUserIdsRelatedToDriveAsync(int driveId)
+	{
+		if (driveId < 1) return null;
+
+		/* For now the only related user is the owner */
+		int ownerId = await GetDriveOwnerIdAsync(driveId);
+		if (ownerId == -1) return null;
+
+		return [ownerId];
 	}
 
 	/// <summary>
