@@ -63,3 +63,4 @@ fi
 
 echo -e "\nThe new user was created successfully!"
 echo -e "You may now log in as the new user."
+reboot

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -117,6 +118,44 @@ public partial class CreateVmViewModel : ViewModelBase
 			OsSetupMessageIsVisible = false;
 			OsDriveSettingsIsVisible = false;
 		}
+		else if (OperatingSystem == SharedDefinitions.OperatingSystem.Ubuntu)
+		{
+			_osDriveSizeMax = 1024 * 256;
+			_osDriveSizeMin = 1024 * 25;
+		
+			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
+			CpuArchitectureIsEnabled = false;
+			
+			BootMode = SharedDefinitions.BootMode.Uefi;
+			BootModeIsEnabled = false;
+			
+			OsDriveType = SharedDefinitions.DriveType.Disk;
+			OsDriveTypeIsEnabled = false;
+			
+			OsDriveSizeIsEnabled = true;
+			OsSetupMessageIsVisible = true;
+
+			OsDriveSettingsIsVisible = true;
+		}
+		else if (OperatingSystem == SharedDefinitions.OperatingSystem.ManjaroLinux)
+		{
+			_osDriveSizeMax = 1024 * 256;
+			_osDriveSizeMin = 1024 * 30;
+		
+			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
+			CpuArchitectureIsEnabled = false;
+			
+			BootMode = SharedDefinitions.BootMode.Uefi;
+			BootModeIsEnabled = false;
+			
+			OsDriveType = SharedDefinitions.DriveType.Disk;
+			OsDriveTypeIsEnabled = false;
+			
+			OsDriveSizeIsEnabled = true;
+			OsSetupMessageIsVisible = true;
+
+			OsDriveSettingsIsVisible = true;
+		}
 		else
 		{
 			_osDriveSizeMax = 1024 * 256;
@@ -197,7 +236,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		string vmNameTrimmed = VmName.Trim();
 		bool createDrive = OperatingSystem != SharedDefinitions.OperatingSystem.Other;
 		Task<MessageResponseCreateVm?> taskCreateVm = ClientSvc.CreateVirtualMachineAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, BootMode);
-		Task<MessageResponseCreateDrive?> taskCreateDrive;
+		Task<MessageResponseCreateDrive?> taskCreateDrive = null!;
 		
 		MessageResponseCreateVm.Status createVmResult = MessageResponseCreateVm.Status.Failure;
 		MessageResponseCreateDrive.Status createDriveResult = MessageResponseCreateDrive.Status.Failure;
@@ -209,11 +248,6 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 		else
 		{
-			if (OperatingSystem != SharedDefinitions.OperatingSystem.MiniCoffeeOS && OperatingSystem != SharedDefinitions.OperatingSystem.Ubuntu)	/* Temporary */
-			{
-				throw new NotImplementedException();
-			}
-		
 			string driveName = $"{vmNameTrimmed} - {OperatingSystem.ToString()}";
 			
 			taskCreateDrive = ClientSvc.CreateDriveAsync(driveName, OsDriveType, OsDriveSize!.Value, OperatingSystem);
@@ -277,6 +311,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		{
 			/* One or more of the operations has failed - delete the ones that have succeeded. */
 			
+			List<Task> tasks = new List<Task>();
 			if (connectDriveResult == ExitCode.Success)
 			{
 				/* TODO: Delete the drive connection */
@@ -284,13 +319,15 @@ public partial class CreateVmViewModel : ViewModelBase
 			
 			if (createDriveResult == MessageResponseCreateDrive.Status.Success)
 			{
-				/* TODO: Delete the drive */
+				tasks.Add(ClientSvc.DeleteDriveAsync(taskCreateDrive.Result!.DriveId));
 			}
 			
 			if (createVmResult == MessageResponseCreateVm.Status.Success)
 			{
-				/* TODO: Delete the VM */
+				tasks.Add(ClientSvc.DeleteVirtualMachineAsync(taskCreateVm.Result!.VmId));
 			}
+			
+			await Task.WhenAll(tasks);
 		}
 
 		CreateVmButtonIsEnabled = false;

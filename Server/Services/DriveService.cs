@@ -38,20 +38,9 @@ public class DriveService
 			return ExitCode.InvalidParameter;
 		}
 
-		/* Check if the drive size is valid. */
-		if (operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
+		if (!Common.IsOperatingSystemDriveSizeValid(operatingSystem, size) || size > 256 * 1024)
 		{
-			if (size > 20 || size < 9)
-			{
-				return ExitCode.InvalidDriveSize;
-			}
-		} 
-		else
-		{
-			if (size > 1024 * 256 || size < 1024 * 25)
-			{
-				return ExitCode.InvalidDriveSize;
-			}
+			return ExitCode.InvalidDriveSize;
 		}
 		
 		SharedDefinitions.DriveType driveType = operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS
@@ -97,9 +86,6 @@ public class DriveService
 			{
 				case SharedDefinitions.OperatingSystem.Ubuntu:
 					osDiskImageName = "Ubuntu.raw";
-					break;
-				case SharedDefinitions.OperatingSystem.FedoraLinux:
-					osDiskImageName = "Fedora.raw";
 					break;
 				case SharedDefinitions.OperatingSystem.KaliLinux:
 					osDiskImageName = "Kali.raw";

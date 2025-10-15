@@ -47,7 +47,6 @@ public static class SharedDefinitions
 	public enum OperatingSystem
 	{
 		Ubuntu,
-		FedoraLinux,
 		KaliLinux,
 		ManjaroLinux,
 		MiniCoffeeOS,

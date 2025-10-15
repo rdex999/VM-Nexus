@@ -272,4 +272,28 @@ public static class Common
 		}
 		return true;
 	}
+
+	/// <summary>
+	/// Checks if the given drive size (MiB) is valid for the given operating system.
+	/// </summary>
+	/// <param name="operatingSystem">The operating system to check on.</param>
+	/// <param name="size">The drive size in MiB. size >= 1.</param>
+	/// <returns>True if the size is valid, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: size >= 1. size in MiB units. <br/>
+	/// Postcondition: Returns whether the given drive size is valid for the given operating system.
+	/// </remarks>
+	public static bool IsOperatingSystemDriveSizeValid(SharedDefinitions.OperatingSystem operatingSystem, int size)
+	{
+		if (size < 1)
+			return false;
+
+		return operatingSystem switch
+		{
+			SharedDefinitions.OperatingSystem.MiniCoffeeOS	=> size >= 9 && size <= 20,
+			SharedDefinitions.OperatingSystem.Ubuntu		=> size >= 25 * 1024,
+			SharedDefinitions.OperatingSystem.ManjaroLinux	=> size >= 30 * 1024,
+			_ => true
+		};
+	}
 }
