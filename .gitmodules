@@ -1,3 +1,6 @@
 [submodule "Server/MiniCoffeeOS"]
 	path = Server/MiniCoffeeOS
 	url = https://github.com/rdex999/MiniCoffeeOS
+[submodule "Server/Libraries/MarcusW.VncClient"]
+	path = Server/Libraries/MarcusW.VncClient
+	url = https://github.com/rdex999/MarcusW.VncClient.git
