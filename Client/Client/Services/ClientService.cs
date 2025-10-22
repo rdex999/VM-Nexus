@@ -256,7 +256,7 @@ public class ClientService : MessagingService
 	/// On failure, if there was a networking failure, null is returned. On other failures, the servers response is returned.
 	/// </remarks>
 	public async Task<MessageResponseCreateDrive?> CreateDriveAsync(
-		string name, SharedDefinitions.DriveType type, int size, SharedDefinitions.OperatingSystem operatingSystem)
+		string name, DriveType type, int size, SharedDefinitions.OperatingSystem operatingSystem)
 	{
 		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
 		if (response == null)

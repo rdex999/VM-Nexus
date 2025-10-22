@@ -428,7 +428,7 @@ public class VirtualMachine
 			return ExitCode.VmScreenStreamUnsupportedPixelFormat;
 		}
 
-		GetRenderTarget()!.NewFrameReceived += (sender, frame) =>
+		GetRenderTarget()!.NewFrameReceived += (_, frame) =>
 		{
 			lock (_frameLock)
 			{
@@ -768,15 +768,15 @@ public class VirtualMachine
 			string driveFilePath = _driveService.GetDriveFilePath(drive.Id);
 			XElement disk = new XElement("disk",
 				new XAttribute("type", "file"),
-				new XAttribute("device", drive.Type == SharedDefinitions.DriveType.CDROM ? "cdrom" : "disk"),
+				new XAttribute("device", drive.Type == Shared.Drives.DriveType.CDROM ? "cdrom" : "disk"),
 				new XElement("driver", new XAttribute("name", "qemu"), new XAttribute("type", "raw")),
 				new XElement("source", new XAttribute("file", driveFilePath)),
 				new XElement("target", 
-					new XAttribute("dev", drive.Type == SharedDefinitions.DriveType.CDROM ? "sda" : "vda"),
-					new XAttribute("bus", drive.Type == SharedDefinitions.DriveType.CDROM ? "sata" : "virtio")
+					new XAttribute("dev", drive.Type == Shared.Drives.DriveType.CDROM ? "sda" : "vda"),
+					new XAttribute("bus", drive.Type == Shared.Drives.DriveType.CDROM ? "sata" : "virtio")
 				)
 			);
-			if (drive.Type == SharedDefinitions.DriveType.CDROM)
+			if (drive.Type == Shared.Drives.DriveType.CDROM)
 			{
 				disk.Add(new XElement("readonly"));
 			}

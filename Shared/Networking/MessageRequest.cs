@@ -133,7 +133,7 @@ public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a 
 public class MessageRequestCreateDrive : MessageRequest
 {
 	public string Name { get; }
-	public SharedDefinitions.DriveType Type { get; }
+	public Shared.Drives.DriveType Type { get; }
 	public int Size { get; }	/* The size of the drive - in MiB */
 	
 	/*
@@ -146,7 +146,7 @@ public class MessageRequestCreateDrive : MessageRequest
 	public SharedDefinitions.PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
 
 
-	public MessageRequestCreateDrive(bool generateGuid, string name, SharedDefinitions.DriveType type, int size,
+	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
 		SharedDefinitions.OperatingSystem operatingSystem)
 		: base(generateGuid)
 	{
@@ -160,7 +160,7 @@ public class MessageRequestCreateDrive : MessageRequest
 		PartitionTableType = (SharedDefinitions.PartitionTableType)(-1);
 	}
 	
-	public MessageRequestCreateDrive(bool generateGuid, string name, SharedDefinitions.DriveType type, int size,
+	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
 		SharedDefinitions.PartitionTableType partitionTableType, SharedDefinitions.PartitionDescriptor[] partitions)
 		: base(generateGuid)
 	{
@@ -174,7 +174,7 @@ public class MessageRequestCreateDrive : MessageRequest
 	}
 
 	[JsonConstructor]
-	public MessageRequestCreateDrive(bool generateGuid, string name, SharedDefinitions.DriveType type, int size,
+	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
 		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.FilesystemType filesystemType,
 		SharedDefinitions.PartitionTableType partitionTableType, SharedDefinitions.PartitionDescriptor[] partitions)
 		: base(generateGuid)
@@ -190,7 +190,7 @@ public class MessageRequestCreateDrive : MessageRequest
 
 	public override bool IsValidMessage()
 	{
-		if (!base.IsValidMessage() || string.IsNullOrEmpty(Name) || !Enum.IsDefined(typeof(SharedDefinitions.DriveType), Type) || Size < 1)
+		if (!base.IsValidMessage() || string.IsNullOrEmpty(Name) || !Enum.IsDefined(typeof(Shared.Drives.DriveType), Type) || Size < 1)
 		{
 			return false;
 		}

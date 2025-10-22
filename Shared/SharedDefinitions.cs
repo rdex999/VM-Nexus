@@ -25,13 +25,6 @@ public static class SharedDefinitions
 		Arm,
 	}
 
-	public enum DriveType
-	{
-		Disk,
-		CDROM,
-		Floppy
-	}
-
 	public enum FilesystemType
 	{
 		Ext4,

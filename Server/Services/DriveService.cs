@@ -43,9 +43,9 @@ public class DriveService
 			return ExitCode.InvalidDriveSize;
 		}
 		
-		SharedDefinitions.DriveType driveType = operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS
-			? SharedDefinitions.DriveType.Floppy
-			: SharedDefinitions.DriveType.Disk;
+		Shared.Drives.DriveType driveType = operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS
+			? Shared.Drives.DriveType.Floppy
+			: Shared.Drives.DriveType.Disk;
 		
 		ExitCode result = await _databaseService.CreateDriveAsync(userId, driveName, size, driveType);
 		if (result != ExitCode.Success)

@@ -597,7 +597,7 @@ public class DatabaseService
 	/// Postcondition: On success, the drive is registered in the database, and the returned exit code indicates success. <br/>
 	/// On failure, the drive is not registered in the database, and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> CreateDriveAsync(int userId, string name, int size, SharedDefinitions.DriveType driveType)
+	public async Task<ExitCode> CreateDriveAsync(int userId, string name, int size, DriveType driveType)
 	{
 		if (size < 1 || userId < 1) return ExitCode.InvalidParameter;
 		
@@ -860,7 +860,7 @@ public class DatabaseService
 				reader.GetInt32(0),
 				reader.GetString(1),
 				reader.GetInt32(2),
-				(SharedDefinitions.DriveType)reader.GetInt32(3)
+				(DriveType)reader.GetInt32(3)
 			);
 			
 			descriptors.Add(descriptor);
@@ -901,7 +901,7 @@ public class DatabaseService
 				reader.GetInt32(0),
 				reader.GetString(1),
 				reader.GetInt32(2),
-				(SharedDefinitions.DriveType)reader.GetInt32(3)
+				(DriveType)reader.GetInt32(3)
 			);
 			
 			descriptors.Add(descriptor);
@@ -937,7 +937,7 @@ public class DatabaseService
 				reader.GetInt32(0),
 				reader.GetString(1),
 				reader.GetInt32(2),
-				(SharedDefinitions.DriveType)reader.GetInt32(3)
+				(DriveType)reader.GetInt32(3)
 			));
 		}
 		

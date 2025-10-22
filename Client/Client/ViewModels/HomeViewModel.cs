@@ -672,7 +672,7 @@ public partial class DeletionDriveItemTemplate : ObservableObject
 {
 	public int Id { get; }
 	public string Name { get; }
-	public SharedDefinitions.DriveType DriveType { get; }
+	public DriveType DriveType { get; }
 	public int Size { get; }	/* The size of the drive, in MiB */
 
 	public string DriveTypeString => DriveType.ToString();
@@ -693,7 +693,7 @@ public partial class DeletionDriveItemTemplate : ObservableObject
 	[ObservableProperty] 
 	private bool _isMarkedForDeletion;
 	
-	public DeletionDriveItemTemplate(int id, string name, SharedDefinitions.DriveType driveType, int size, bool isDriveInUse)
+	public DeletionDriveItemTemplate(int id, string name, DriveType driveType, int size, bool isDriveInUse)
 	{
 		Id = id;
 		Name = name;

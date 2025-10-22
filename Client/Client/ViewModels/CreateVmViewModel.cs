@@ -5,6 +5,7 @@ using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
+using Shared.Drives;
 using Shared.Networking;
 
 namespace Client.ViewModels;
@@ -41,7 +42,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	private bool _bootModeIsEnabled = true;
 	
 	[ObservableProperty] 
-	private SharedDefinitions.DriveType _osDriveType = SharedDefinitions.DriveType.Disk;
+	private DriveType _osDriveType = DriveType.Disk;
     	
 	[ObservableProperty]
 	private bool _osDriveTypeIsEnabled = true;
@@ -100,7 +101,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			BootMode = SharedDefinitions.BootMode.Bios;
 			BootModeIsEnabled = false;
 			
-			OsDriveType = SharedDefinitions.DriveType.Floppy;
+			OsDriveType = DriveType.Floppy;
 			OsDriveTypeIsEnabled = false;
 			OsDriveSizeIsEnabled = true;
 
@@ -129,7 +130,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			BootMode = SharedDefinitions.BootMode.Uefi;
 			BootModeIsEnabled = false;
 			
-			OsDriveType = SharedDefinitions.DriveType.Disk;
+			OsDriveType = DriveType.Disk;
 			OsDriveTypeIsEnabled = false;
 			
 			OsDriveSizeIsEnabled = true;
@@ -148,7 +149,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			BootMode = SharedDefinitions.BootMode.Uefi;
 			BootModeIsEnabled = false;
 			
-			OsDriveType = SharedDefinitions.DriveType.Disk;
+			OsDriveType = DriveType.Disk;
 			OsDriveTypeIsEnabled = false;
 			
 			OsDriveSizeIsEnabled = true;
@@ -167,7 +168,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			BootMode = SharedDefinitions.BootMode.Uefi;
 			BootModeIsEnabled = false;
 			
-			OsDriveType = SharedDefinitions.DriveType.Disk;
+			OsDriveType = DriveType.Disk;
 			OsDriveTypeIsEnabled = false;
 			
 			OsDriveSizeIsEnabled = true;
