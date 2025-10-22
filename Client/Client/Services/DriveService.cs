@@ -125,7 +125,7 @@ public class DriveService
 		VmGeneralDescriptor[]? vms = GetVirtualMachinesOnDrive(driveId);
 		if (vms == null) return false;
 
-		return vms.Any(vm => vm.State == SharedDefinitions.VmState.Running);
+		return vms.Any(vm => vm.State == VmState.Running);
 	}
 	
 	private async Task<ExitCode> FetchVmsAsync()
@@ -224,7 +224,7 @@ public class DriveService
 	{
 		if (_virtualMachines.TryGetValue(vmId, out VmGeneralDescriptor? vm))
 		{
-			vm.State = SharedDefinitions.VmState.ShutDown;
+			vm.State = VmState.ShutDown;
 		}
 	}
 
@@ -232,7 +232,7 @@ public class DriveService
 	{
 		if (_virtualMachines.TryGetValue(vmId, out VmGeneralDescriptor? vm))
 		{
-			vm.State = SharedDefinitions.VmState.Running;
+			vm.State = VmState.Running;
 		}	
 	}
 

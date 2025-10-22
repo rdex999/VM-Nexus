@@ -139,7 +139,7 @@ public sealed class ClientConnection : MessagingService
 
 					foreach (VmGeneralDescriptor vm in vms)
 					{
-						if (vm.State == SharedDefinitions.VmState.Running)
+						if (vm.State == VmState.Running)
 						{
 							_virtualMachineService.SubscribeToVmPoweredOff(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
 							_virtualMachineService.SubscribeToVmCrashed(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
@@ -196,7 +196,7 @@ public sealed class ClientConnection : MessagingService
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
 				
 				await _userService.NotifyVirtualMachineCreatedAsync(
-					new VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, SharedDefinitions.VmState.ShutDown)
+					new VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, VmState.ShutDown)
 				);
 				
 				break;
@@ -210,7 +210,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				if (await _virtualMachineService.GetVmStateAsync(reqDeleteVm.VmId) != SharedDefinitions.VmState.ShutDown)
+				if (await _virtualMachineService.GetVmStateAsync(reqDeleteVm.VmId) != VmState.ShutDown)
 				{
 					SendResponse(new MessageResponseDeleteVm(true, reqDeleteVm.Id, MessageResponseDeleteVm.Status.VirtualMachineIsRunning));
 					break;					

@@ -36,7 +36,7 @@ public class MessageInfoVmCreated : MessageInfoTcp
 		base.IsValidMessage() && Descriptor != null 
 		                      && !string.IsNullOrEmpty(Descriptor.Name) && Descriptor.Id >= 1
 		                      && Enum.IsDefined(typeof(OperatingSystem), Descriptor.OperatingSystem)
-		                      && Enum.IsDefined(typeof(SharedDefinitions.VmState), Descriptor.State);
+		                      && Enum.IsDefined(typeof(VmState), Descriptor.State);
 }
 
 public class MessageInfoVmDeleted : MessageInfoTcp

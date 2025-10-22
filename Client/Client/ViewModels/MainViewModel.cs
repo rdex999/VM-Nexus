@@ -251,7 +251,7 @@ public partial class MainViewModel : ViewModelBase
 		{
 			if (tab.Descriptor.Id == id)
 			{
-				tab.Descriptor.State = SharedDefinitions.VmState.Running;
+				tab.Descriptor.State = VmState.Running;
 				return;
 			}
 		}
@@ -272,7 +272,7 @@ public partial class MainViewModel : ViewModelBase
 		{
 			if (tab.Descriptor.Id == id)
 			{
-				tab.Descriptor.State = SharedDefinitions.VmState.ShutDown;
+				tab.Descriptor.State = VmState.ShutDown;
 				return;
 			}
 		}

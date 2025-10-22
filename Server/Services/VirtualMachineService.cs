@@ -61,7 +61,7 @@ public class VirtualMachineService
 	/// Precondition: There is a virtual machine with the given ID. id >= 1.<br/>
 	/// Postcondition: On success, the state of the virtual machine is returned. On failure, -1 is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.VmState> GetVmStateAsync(int id)
+	public async Task<VmState> GetVmStateAsync(int id)
 	{
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
@@ -131,7 +131,7 @@ public class VirtualMachineService
 			return ExitCode.VmDoesntExist;
 		}
 		
-		if (vmDescriptor.Result.VmState == SharedDefinitions.VmState.Running)
+		if (vmDescriptor.Result.VmState == VmState.Running)
 		{
 			return ExitCode.VmAlreadyRunning;
 		}

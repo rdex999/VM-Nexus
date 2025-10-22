@@ -10,11 +10,11 @@ public class VirtualMachineDescriptor
 	public OperatingSystem OperatingSystem { get; }
 	public CpuArchitecture CpuArchitecture { get; }
 	public SharedDefinitions.BootMode BootMode { get; }
-	public SharedDefinitions.VmState VmState { get; }
+	public VmState VmState { get; }
 
 	public VirtualMachineDescriptor(int id, string name, OperatingSystem operatingSystem,
 		CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode,
-		SharedDefinitions.VmState vmState)
+		VmState vmState)
 	{
 		Id = id;
 		Name = name;

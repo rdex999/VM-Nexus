@@ -174,7 +174,7 @@ public partial class HomeViewModel : ViewModelBase
 	{
 		if (vmId < 1) return;
 		
-		OnVmStateChanged(vmId, SharedDefinitions.VmState.Running);
+		OnVmStateChanged(vmId, VmState.Running);
 	}
 	
 	/// <summary>
@@ -190,7 +190,7 @@ public partial class HomeViewModel : ViewModelBase
 	{
 		if (vmId < 1) return;
 		
-		OnVmStateChanged(vmId, SharedDefinitions.VmState.ShutDown);
+		OnVmStateChanged(vmId, VmState.ShutDown);
 	}
 
 	/// <summary>
@@ -238,7 +238,7 @@ public partial class HomeViewModel : ViewModelBase
 	/// Precondition: The state of the given virtual machine has changed. (powered on/off, crashed) vmId >= 1. <br/>
 	/// Postcondition: State change is handled.
 	/// </remarks>
-	private void OnVmStateChanged(int vmId, SharedDefinitions.VmState newState)
+	private void OnVmStateChanged(int vmId, VmState newState)
 	{
 		if (vmId < 1) return;
 		
@@ -304,7 +304,7 @@ public partial class HomeViewModel : ViewModelBase
 		
 		_deleteVmPopupVmDescriptor = descriptor;
 
-		DeleteVmPopupVmRunning = _deleteVmPopupVmDescriptor.State == SharedDefinitions.VmState.Running;
+		DeleteVmPopupVmRunning = _deleteVmPopupVmDescriptor.State == VmState.Running;
 		
 		DriveGeneralDescriptor[]? drives = _driveService.GetDrivesOnVirtualMachine(descriptor.Id);
 		if (drives == null)
@@ -406,7 +406,7 @@ public partial class HomeViewModel : ViewModelBase
 		}
 		else if (deleteVmResult == MessageResponseDeleteVm.Status.VirtualMachineIsRunning)
 		{
-			_deleteVmPopupVmDescriptor.State = SharedDefinitions.VmState.Running;
+			_deleteVmPopupVmDescriptor.State = VmState.Running;
 			DeleteVmPopupInitialize(_deleteVmPopupVmDescriptor);
 		}
 	}
@@ -441,19 +441,19 @@ public partial class VmItemTemplate : ObservableObject
 	[ObservableProperty]
 	private string _operatingSystemString = string.Empty;
 
-	private SharedDefinitions.VmState _state;
-	public SharedDefinitions.VmState State
+	private VmState _state;
+	public VmState State
 	{
 		get => _state;
 		set
 		{
 			_state = value;
 			StateString = Common.SeparateStringWords(_state.ToString());
-			if (_state == SharedDefinitions.VmState.ShutDown)
+			if (_state == VmState.ShutDown)
 			{
 				StateColor = new SolidColorBrush(Color.FromRgb(0x4F, 0x5B, 0x5B));
 			}
-			else if (_state == SharedDefinitions.VmState.Running)
+			else if (_state == VmState.Running)
 			{
 				StateColor = new SolidColorBrush(Color.FromRgb(0x6B, 0xE5, 0x78));
 			}
@@ -493,7 +493,7 @@ public partial class VmItemTemplate : ObservableObject
 	/// Postcondition: A new instance of VmItemTemplate is created.
 	/// </remarks>
 	public VmItemTemplate(ClientService clientService, int id, string name,
-		OperatingSystem operatingSystem, SharedDefinitions.VmState state)
+		OperatingSystem operatingSystem, VmState state)
 	{
 		_clientService = clientService;
 		Id = id;
@@ -534,7 +534,7 @@ public partial class VmItemTemplate : ObservableObject
 
 		Dispatcher.UIThread.Post(() =>
 		{
-			State = SharedDefinitions.VmState.Running;
+			State = VmState.Running;
 		});
 	}
 
@@ -556,7 +556,7 @@ public partial class VmItemTemplate : ObservableObject
 
 		Dispatcher.UIThread.Post(() =>
 		{
-			State = SharedDefinitions.VmState.ShutDown;
+			State = VmState.ShutDown;
 		});
 	}
 	
@@ -578,7 +578,7 @@ public partial class VmItemTemplate : ObservableObject
 
 		Dispatcher.UIThread.Post(() =>
 		{
-			State = SharedDefinitions.VmState.ShutDown;
+			State = VmState.ShutDown;
 			ErrorMessage = "The VM has crashed.";
 		});
 
@@ -608,7 +608,7 @@ public partial class VmItemTemplate : ObservableObject
 		ErrorMessage = string.Empty;
 		if (result == MessageResponseVmStartup.Status.VmAlreadyRunning)
 		{
-			State = SharedDefinitions.VmState.Running;
+			State = VmState.Running;
 		} 
 		else if(result != MessageResponseVmStartup.Status.Success)
 		{
@@ -630,7 +630,7 @@ public partial class VmItemTemplate : ObservableObject
 		ErrorMessage = string.Empty;
 		if (result == MessageResponseVmShutdown.Status.VmIsShutDown)
 		{
-			State = SharedDefinitions.VmState.ShutDown;
+			State = VmState.ShutDown;
 		}
 		else if (result != MessageResponseVmShutdown.Status.Success)
 		{

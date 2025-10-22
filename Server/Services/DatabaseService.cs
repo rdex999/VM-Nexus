@@ -245,7 +245,7 @@ public class DatabaseService
 		
 		if (vmExists) return ExitCode.VmAlreadyExists;
 
-		int state = (int)SharedDefinitions.VmState.ShutDown;
+		int state = (int)VmState.ShutDown;
 		int rows = await ExecuteNonQueryAsync($"""
 		                                      INSERT INTO virtual_machines (name, owner_id, operating_system, cpu_architecture, boot_mode, state) 
 		                                      	VALUES (@name, @owner_id, @operating_system, @cpu_architecture,  @boot_mode, @state)
@@ -421,7 +421,7 @@ public class DatabaseService
 				reader.GetInt32(0),
 				reader.GetString(1),
 				(OperatingSystem)reader.GetInt32(2),
-				(SharedDefinitions.VmState)reader.GetInt32(3)
+				(VmState)reader.GetInt32(3)
 			);
 			
 			descriptors.Add(descriptor);
@@ -481,7 +481,7 @@ public class DatabaseService
 				id,
 				reader.GetString(0),
 				(OperatingSystem)reader.GetInt32(1),
-				(SharedDefinitions.VmState)reader.GetInt32(2)
+				(VmState)reader.GetInt32(2)
 			);
 		}
 
@@ -497,11 +497,11 @@ public class DatabaseService
 	/// Precondition: There is a virtual machine with the given ID. id >= 1.<br/>
 	/// Postcondition: On success, the state of the virtual machine is returned. On failure, -1 is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.VmState> GetVmStateAsync(int id)
+	public async Task<VmState> GetVmStateAsync(int id)
 	{
 		if (id < 1)
 		{
-			return (SharedDefinitions.VmState)(-1);
+			return (VmState)(-1);
 		}
 
 		object? state = await ExecuteScalarAsync(
@@ -511,10 +511,10 @@ public class DatabaseService
 
 		if (state == null)
 		{
-			return (SharedDefinitions.VmState)(-1);
+			return (VmState)(-1);
 		}
 		
-		return (SharedDefinitions.VmState)state;
+		return (VmState)state;
 	}
 
 	/// <summary>
@@ -528,7 +528,7 @@ public class DatabaseService
 	/// Postcondition: On success, the state is updated and the returned exit code indicates success. <br/>
 	/// On failure, the state is not updated and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> SetVmStateAsync(int id, SharedDefinitions.VmState state)
+	public async Task<ExitCode> SetVmStateAsync(int id, VmState state)
 	{
 		if (id < 1)
 		{
@@ -580,7 +580,7 @@ public class DatabaseService
 			(OperatingSystem)reader.GetInt32(1), 
 			(CpuArchitecture)reader.GetInt32(2),
 			(SharedDefinitions.BootMode)reader.GetInt32(3),
-			(SharedDefinitions.VmState)reader.GetInt32(4)
+			(VmState)reader.GetInt32(4)
 		);
 	}
 

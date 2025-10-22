@@ -67,7 +67,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	public async Task<ExitCode> FocusAsync()
 	{
 		_isFocused = true;
-		if (!_streamRunning && _vmDescriptor != null && _vmDescriptor.State == SharedDefinitions.VmState.Running)
+		if (!_streamRunning && _vmDescriptor != null && _vmDescriptor.State == VmState.Running)
 		{
 			return await StartStreamAsync();
 		}
@@ -112,7 +112,7 @@ public partial class VmScreenViewModel : ViewModelBase
 		_vmDescriptor = vmDescriptor;
 		VmScreenBitmap = null;
 
-		if (_vmDescriptor.State == SharedDefinitions.VmState.Running)
+		if (_vmDescriptor.State == VmState.Running)
 		{
 			return await StartStreamAsync();
 		}
@@ -141,7 +141,7 @@ public partial class VmScreenViewModel : ViewModelBase
 			return ExitCode.CallOnInvalidCondition;
 		}
 
-		if (_vmDescriptor.State == SharedDefinitions.VmState.ShutDown)
+		if (_vmDescriptor.State == VmState.ShutDown)
 		{
 			return ExitCode.VmIsShutDown;
 		}
@@ -288,7 +288,7 @@ public partial class VmScreenViewModel : ViewModelBase
 			return;
 		}
 
-		_vmDescriptor.State = SharedDefinitions.VmState.Running;
+		_vmDescriptor.State = VmState.Running;
 
 		if (_isFocused)
 		{
@@ -312,7 +312,7 @@ public partial class VmScreenViewModel : ViewModelBase
 			return;
 		}
 
-		_vmDescriptor.State = SharedDefinitions.VmState.ShutDown;
+		_vmDescriptor.State = VmState.ShutDown;
 		
 		VmScreenBitmap = null;
 		if (_streamRunning)

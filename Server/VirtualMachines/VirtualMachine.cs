@@ -99,7 +99,7 @@ public class VirtualMachine
 
 		await _rfbMessageCts.CancelAsync();
 		
-		if (GetVmState() == SharedDefinitions.VmState.Running)
+		if (GetVmState() == VmState.Running)
 		{
 			await PowerOffAndDestroyOnTimeoutAsync();
 		}
@@ -204,7 +204,7 @@ public class VirtualMachine
 			return result;
 		}
 		
-		return await _databaseService.SetVmStateAsync(Id, SharedDefinitions.VmState.Running);
+		return await _databaseService.SetVmStateAsync(Id, VmState.Running);
 	}
 
 	/// <summary>
@@ -218,7 +218,7 @@ public class VirtualMachine
 	/// </remarks>
 	public async Task<ExitCode> PowerOffAsync()
 	{
-		if (GetVmState() == SharedDefinitions.VmState.ShutDown) return ExitCode.VmIsShutDown;
+		if (GetVmState() == VmState.ShutDown) return ExitCode.VmIsShutDown;
 		
 		_libvirtDomain.Shutdown();
 
@@ -295,7 +295,7 @@ public class VirtualMachine
 	/// </remarks>
 	public void EnqueueGetFullFrame()
 	{
-		if (_closing || GetVmState() == SharedDefinitions.VmState.ShutDown) return;
+		if (_closing || GetVmState() == VmState.ShutDown) return;
 		
 		_rfbConnection.EnqueueMessage(
 			new FramebufferUpdateRequestMessage(false, new Rectangle(0, 0, GetRenderTarget()!.ScreenSize.Width, GetRenderTarget()!.ScreenSize.Height)),
@@ -313,7 +313,7 @@ public class VirtualMachine
 	/// </remarks>
 	public void EnqueuePointerMovement(Point position)
 	{
-		if (_closing || GetVmState() == SharedDefinitions.VmState.ShutDown) return;
+		if (_closing || GetVmState() == VmState.ShutDown) return;
 		
 		_rfbConnection.EnqueueMessage(
 			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons),
@@ -332,7 +332,7 @@ public class VirtualMachine
 	/// </remarks>
 	public void EnqueuePointerButtonEvent(Point position, int pressedButtons)
 	{
-		if (_closing || GetVmState() == SharedDefinitions.VmState.ShutDown) return;
+		if (_closing || GetVmState() == VmState.ShutDown) return;
 		
 		if (pressedButtons == _pointerPressedButtons) return;
 		
@@ -368,7 +368,7 @@ public class VirtualMachine
 	/// </remarks>
 	public void EnqueueKeyboardKeyEvent(PhysicalKey key, bool pressed)
 	{
-		if (_closing || GetVmState() == SharedDefinitions.VmState.ShutDown) return;
+		if (_closing || GetVmState() == VmState.ShutDown) return;
 		
 		if (PhysicalKeyToKeySymbol.TryGetValue(key, out KeySymbol keySymbol))
 		{
@@ -470,14 +470,14 @@ public class VirtualMachine
 					case virDomainState.VIR_DOMAIN_SHUTOFF:		/* Machine is shut off. */
 					case virDomainState.VIR_DOMAIN_SHUTDOWN:	/* Machine is being shut down (libvirts definition - not exactly accurate. Runs when the VM is shut down.) */
 					{
-						await _databaseService.SetVmStateAsync(Id, SharedDefinitions.VmState.ShutDown);
+						await _databaseService.SetVmStateAsync(Id, VmState.ShutDown);
 						PoweredOffTcs.SetResult(currentState);
 						PoweredOff?.Invoke(this, Id);
 						return;
 					}
 					case virDomainState.VIR_DOMAIN_CRASHED:
 					{
-						await _databaseService.SetVmStateAsync(Id, SharedDefinitions.VmState.ShutDown);
+						await _databaseService.SetVmStateAsync(Id, VmState.ShutDown);
 						PoweredOffTcs.SetResult(currentState);
 						Crashed?.Invoke(this, Id);
 						return;
@@ -632,12 +632,12 @@ public class VirtualMachine
 	/// Precondition: No specific precondition. <br/>
 	/// Postcondition: Returns the state of the virtual machine.
 	/// </remarks>
-	public SharedDefinitions.VmState GetVmState()
+	public VmState GetVmState()
 	{
 		return GetState() switch
 		{
-			virDomainState.VIR_DOMAIN_CRASHED or virDomainState.VIR_DOMAIN_SHUTDOWN or virDomainState.VIR_DOMAIN_SHUTOFF => SharedDefinitions.VmState.ShutDown,
-			_ => SharedDefinitions.VmState.Running,
+			virDomainState.VIR_DOMAIN_CRASHED or virDomainState.VIR_DOMAIN_SHUTDOWN or virDomainState.VIR_DOMAIN_SHUTOFF => VmState.ShutDown,
+			_ => VmState.Running,
 		};
 	}
 
