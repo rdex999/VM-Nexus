@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Shared.Drives;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Shared.Networking;
 
@@ -75,12 +76,12 @@ public class MessageRequestLogout : MessageRequest
 public class MessageRequestCreateVm : MessageRequest
 {
 	public string Name { get; }
-	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
+	public OperatingSystem OperatingSystem { get; }
 	public CpuArchitecture CpuArchitecture { get; }
 	public SharedDefinitions.BootMode BootMode { get; }
 
 	public MessageRequestCreateVm(bool generateGuid, string name,
-		SharedDefinitions.OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
+		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 		: base(generateGuid)
 	{
 		Name = name;
@@ -92,7 +93,7 @@ public class MessageRequestCreateVm : MessageRequest
 	public override bool IsValidMessage()
 	{
 		return base.IsValidMessage() && !string.IsNullOrEmpty(Name) &&
-		       Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), OperatingSystem) &&
+		       Enum.IsDefined(typeof(OperatingSystem), OperatingSystem) &&
 		       Enum.IsDefined(typeof(CpuArchitecture), CpuArchitecture) &&
 		       Enum.IsDefined(typeof(SharedDefinitions.BootMode), BootMode);
 	}
@@ -142,14 +143,14 @@ public class MessageRequestCreateDrive : MessageRequest
 	 * If other is selected or -1 - an operating system will not be installed on the drive.
 	 * If an operating system is selected, then the FilesystemType, PartitionTableType, Partitions properties are ignored.
 	 */
-	public SharedDefinitions.OperatingSystem OperatingSystem { get; }			/* Can be -1 for no operating system. */
+	public OperatingSystem OperatingSystem { get; }			/* Can be -1 for no operating system. */
 	public FilesystemType FilesystemType { get; }				/* Can be -1. Used only if no partition table is used. (PartitionTableType must be -1) */
 	public PartitionTableType PartitionTableType { get; }		/* When used, FilesystemType should be -1 (not used). */
 	public SharedDefinitions.PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
 
 
 	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
-		SharedDefinitions.OperatingSystem operatingSystem)
+		OperatingSystem operatingSystem)
 		: base(generateGuid)
 	{
 		Name = name;
@@ -172,12 +173,12 @@ public class MessageRequestCreateDrive : MessageRequest
 		PartitionTableType = partitionTableType;
 		Partitions = partitions;
 		FilesystemType = (FilesystemType)(-1);
-		OperatingSystem = (SharedDefinitions.OperatingSystem)(-1);
+		OperatingSystem = (OperatingSystem)(-1);
 	}
 
 	[JsonConstructor]
 	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
-		SharedDefinitions.OperatingSystem operatingSystem, FilesystemType filesystemType,
+		OperatingSystem operatingSystem, FilesystemType filesystemType,
 		PartitionTableType partitionTableType, SharedDefinitions.PartitionDescriptor[] partitions)
 		: base(generateGuid)
 	{
@@ -197,14 +198,14 @@ public class MessageRequestCreateDrive : MessageRequest
 			return false;
 		}
 
-		if (!Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), OperatingSystem) &&
-		    OperatingSystem != (SharedDefinitions.OperatingSystem)(-1))
+		if (!Enum.IsDefined(typeof(OperatingSystem), OperatingSystem) &&
+		    OperatingSystem != (OperatingSystem)(-1))
 		{
 			return false;
 		}
 
-		if (Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), OperatingSystem) &&
-		    OperatingSystem != SharedDefinitions.OperatingSystem.Other)
+		if (Enum.IsDefined(typeof(OperatingSystem), OperatingSystem) &&
+		    OperatingSystem != OperatingSystem.Other)
 		{
 			if (FilesystemType != (FilesystemType)(-1) ||
 			    PartitionTableType != (PartitionTableType)(-1) || Partitions.Length != 0)
@@ -212,8 +213,8 @@ public class MessageRequestCreateDrive : MessageRequest
 				return false;
 			}
 		}
-		else if (OperatingSystem == SharedDefinitions.OperatingSystem.Other ||
-		         OperatingSystem == (SharedDefinitions.OperatingSystem)(-1))
+		else if (OperatingSystem == OperatingSystem.Other ||
+		         OperatingSystem == (OperatingSystem)(-1))
 		{
 			if (Enum.IsDefined(typeof(FilesystemType), FilesystemType) &&
 			    PartitionTableType != (PartitionTableType)(-1))

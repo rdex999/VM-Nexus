@@ -11,6 +11,7 @@ using Shared;
 using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Client.ViewModels;
 
@@ -422,14 +423,14 @@ public partial class VmItemTemplate : ObservableObject
 	[ObservableProperty] 
 	private string _name;
 
-	private SharedDefinitions.OperatingSystem _operatingSystem;
-	public SharedDefinitions.OperatingSystem OperatingSystem
+	private OperatingSystem _operatingSystem;
+	public OperatingSystem OperatingSystem
 	{
 		get => _operatingSystem;
 		private set
 		{
 			_operatingSystem = value;
-			OperatingSystemString = _operatingSystem == SharedDefinitions.OperatingSystem.Other
+			OperatingSystemString = _operatingSystem == OperatingSystem.Other
 				? "Unknown OS"
 				: Common.SeparateStringWords(_operatingSystem.ToString());
 		}
@@ -492,7 +493,7 @@ public partial class VmItemTemplate : ObservableObject
 	/// Postcondition: A new instance of VmItemTemplate is created.
 	/// </remarks>
 	public VmItemTemplate(ClientService clientService, int id, string name,
-		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.VmState state)
+		OperatingSystem operatingSystem, SharedDefinitions.VmState state)
 	{
 		_clientService = clientService;
 		Id = id;

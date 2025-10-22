@@ -11,6 +11,7 @@ using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Networking;
 using Shared.VirtualMachines;
+using OperatingSystem = System.OperatingSystem;
 
 namespace Client.ViewModels;
 

@@ -20,20 +20,20 @@ public class DriveService
 	/// </summary>
 	/// <param name="userId">The ID of the user under which to create the drive on. userId >= 1.</param>
 	/// <param name="driveName">The name of the new drive. driveName != null.</param>
-	/// <param name="operatingSystem">The operating system to install on the drive. operatingSystem != SharedDefinitions.OperatingSystem.Other.</param>
+	/// <param name="operatingSystem">The operating system to install on the drive. operatingSystem != OperatingSystem.Other.</param>
 	/// <param name="size">The size of the new drive in MiB. size >= 1.</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
 	/// Precondition: A user with the given ID must exist. There must not be a drive named under the given name. <br/>
-	/// userId >= 1 &amp;&amp; driveName != null &amp;&amp; operatingSystem != SharedDefinitions.OperatingSystem.Other &amp;&amp; size >= 1. <br/>
+	/// userId >= 1 &amp;&amp; driveName != null &amp;&amp; operatingSystem != OperatingSystem.Other &amp;&amp; size >= 1. <br/>
 	/// Postcondition: On success, the new drive is created and registered, and the returned exit code indicates success. <br/>
 	/// On failure, the drive is not created and the returned exit code indicates the error.
 	/// </remarks>
 	public async Task<ExitCode> CreateOperatingSystemDriveAsync(int userId, string driveName,
-		SharedDefinitions.OperatingSystem operatingSystem, int size)
+		Shared.VirtualMachines.OperatingSystem operatingSystem, int size)
 	{
-		if (!Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), operatingSystem) ||
-		    operatingSystem == SharedDefinitions.OperatingSystem.Other || userId < 1 || size < 1)
+		if (!Enum.IsDefined(typeof(Shared.VirtualMachines.OperatingSystem), operatingSystem) ||
+		    operatingSystem == Shared.VirtualMachines.OperatingSystem.Other || userId < 1 || size < 1)
 		{
 			return ExitCode.InvalidParameter;
 		}
@@ -43,7 +43,7 @@ public class DriveService
 			return ExitCode.InvalidDriveSize;
 		}
 		
-		Shared.Drives.DriveType driveType = operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS
+		Shared.Drives.DriveType driveType = operatingSystem == Shared.VirtualMachines.OperatingSystem.MiniCoffeeOS
 			? Shared.Drives.DriveType.Floppy
 			: Shared.Drives.DriveType.Disk;
 		
@@ -58,7 +58,7 @@ public class DriveService
 	
 		long driveSize = (long)size * 1024 * 1024;		/* The drive size in bytes */
 
-		if (operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
+		if (operatingSystem == Shared.VirtualMachines.OperatingSystem.MiniCoffeeOS)
 		{
 			Process process = new Process()
 			{
@@ -84,13 +84,13 @@ public class DriveService
 			string osDiskImageName;
 			switch (operatingSystem)
 			{
-				case SharedDefinitions.OperatingSystem.Ubuntu:
+				case Shared.VirtualMachines.OperatingSystem.Ubuntu:
 					osDiskImageName = "Ubuntu.raw";
 					break;
-				case SharedDefinitions.OperatingSystem.KaliLinux:
+				case Shared.VirtualMachines.OperatingSystem.KaliLinux:
 					osDiskImageName = "Kali.raw";
 					break;
-				case SharedDefinitions.OperatingSystem.ManjaroLinux:
+				case Shared.VirtualMachines.OperatingSystem.ManjaroLinux:
 					osDiskImageName = "Manjaro.raw";
 					break;
 				default:

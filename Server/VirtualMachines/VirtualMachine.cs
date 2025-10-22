@@ -23,6 +23,7 @@ using Server.Drives;
 using Server.Services;
 using Shared;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 using PixelFormat = MarcusW.VncClient.PixelFormat;
 using Rectangle = MarcusW.VncClient.Rectangle;
 using Size = MarcusW.VncClient.Size;
@@ -47,7 +48,7 @@ public class VirtualMachine
 	private readonly CancellationTokenSource _cts;
 	private readonly CancellationTokenSource _rfbMessageCts;
 
-	private readonly SharedDefinitions.OperatingSystem _operatingSystem;
+	private readonly OperatingSystem _operatingSystem;
 	private readonly CpuArchitecture _cpuArchitecture;
 	private readonly SharedDefinitions.BootMode _bootMode;
 	private readonly DriveDescriptor[] _drives;
@@ -61,7 +62,7 @@ public class VirtualMachine
 	private Task _allBackgroundTasks = null!;
 	private bool _closing = false;
 	
-	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
+	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, OperatingSystem operatingSystem,
 		CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
 	{
 		_databaseService = databaseService;
@@ -746,7 +747,7 @@ public class VirtualMachine
 			)
 		);
 
-		if (_operatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
+		if (_operatingSystem == OperatingSystem.MiniCoffeeOS)
 		{
 			devices.Add(new XElement("model", new XAttribute("type", "vga")));
 		}

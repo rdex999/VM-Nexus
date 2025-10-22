@@ -19,15 +19,6 @@ public static class SharedDefinitions
 	public const int AudioChannels = 2;
 	public const int AudioFramesPerPacket = (int)((float)AudioFramesFrequency * ((float)AudioPacketMs / 1000.0));
 	public const int AudioBytesPerPacket = AudioFramesPerPacket * AudioChannels * 2;	/* Using two channels, s16le */
-	
-	public enum OperatingSystem
-	{
-		Ubuntu,
-		KaliLinux,
-		ManjaroLinux,
-		MiniCoffeeOS,
-		Other,
-	}
 
 	public enum VmState
 	{

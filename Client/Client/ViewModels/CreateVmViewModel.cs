@@ -8,6 +8,7 @@ using Shared;
 using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Client.ViewModels;
 
@@ -25,7 +26,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	private bool _vmNameErrorClass = true;
 
 	[ObservableProperty] 
-	private SharedDefinitions.OperatingSystem _operatingSystem = SharedDefinitions.OperatingSystem.Ubuntu;
+	private OperatingSystem _operatingSystem = OperatingSystem.Ubuntu;
 	
 	[ObservableProperty]
 	private bool _osSetupMessageIsVisible = true;
@@ -91,7 +92,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	/// </remarks>
 	public void OperatingSystemChanged()
 	{
-		if (OperatingSystem == SharedDefinitions.OperatingSystem.MiniCoffeeOS)
+		if (OperatingSystem == OperatingSystem.MiniCoffeeOS)
 		{
 			_osDriveSizeMax = 20;
 			_osDriveSizeMin = 9;
@@ -110,7 +111,7 @@ public partial class CreateVmViewModel : ViewModelBase
 
 			OsDriveSettingsIsVisible = true;
 		}
-		else if (OperatingSystem == SharedDefinitions.OperatingSystem.Other)
+		else if (OperatingSystem == OperatingSystem.Other)
 		{
 			CpuArchitectureIsEnabled = true;
 			BootModeIsEnabled = true;
@@ -120,7 +121,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			OsSetupMessageIsVisible = false;
 			OsDriveSettingsIsVisible = false;
 		}
-		else if (OperatingSystem == SharedDefinitions.OperatingSystem.Ubuntu)
+		else if (OperatingSystem == OperatingSystem.Ubuntu)
 		{
 			_osDriveSizeMax = 1024 * 256;
 			_osDriveSizeMin = 1024 * 25;
@@ -139,7 +140,7 @@ public partial class CreateVmViewModel : ViewModelBase
 
 			OsDriveSettingsIsVisible = true;
 		}
-		else if (OperatingSystem == SharedDefinitions.OperatingSystem.ManjaroLinux)
+		else if (OperatingSystem == OperatingSystem.ManjaroLinux)
 		{
 			_osDriveSizeMax = 1024 * 256;
 			_osDriveSizeMin = 1024 * 30;
@@ -188,7 +189,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	/// </remarks>
 	public async Task VmCreationInfoChangedAsync()
 	{
-		if ((OsDriveSize == null || OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin) && OperatingSystem != SharedDefinitions.OperatingSystem.Other)
+		if ((OsDriveSize == null || OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin) && OperatingSystem != OperatingSystem.Other)
 		{
 			OsDriveSizeErrorClass = true;
 			OsDriveSizeErrorMessage =
@@ -221,7 +222,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		VmCreationMessage = string.Empty;
 		
 		CreateVmButtonIsEnabled = _driveService.IsInitialized && isVmNameValid && OsDriveSize != null && 
-		                          ((OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax) || OperatingSystem == SharedDefinitions.OperatingSystem.Other);
+		                          ((OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax) || OperatingSystem == OperatingSystem.Other);
 	}
 
 	/// <summary>
@@ -236,7 +237,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	private async Task CreateVirtualMachineAsync()
 	{
 		string vmNameTrimmed = VmName.Trim();
-		bool createDrive = OperatingSystem != SharedDefinitions.OperatingSystem.Other;
+		bool createDrive = OperatingSystem != OperatingSystem.Other;
 		Task<MessageResponseCreateVm?> taskCreateVm = ClientSvc.CreateVirtualMachineAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, BootMode);
 		Task<MessageResponseCreateDrive?> taskCreateDrive = null!;
 		

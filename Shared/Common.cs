@@ -283,16 +283,16 @@ public static class Common
 	/// Precondition: size >= 1. size in MiB units. <br/>
 	/// Postcondition: Returns whether the given drive size is valid for the given operating system.
 	/// </remarks>
-	public static bool IsOperatingSystemDriveSizeValid(SharedDefinitions.OperatingSystem operatingSystem, int size)
+	public static bool IsOperatingSystemDriveSizeValid(VirtualMachines.OperatingSystem operatingSystem, int size)
 	{
 		if (size < 1)
 			return false;
 
 		return operatingSystem switch
 		{
-			SharedDefinitions.OperatingSystem.MiniCoffeeOS	=> size >= 9 && size <= 20,
-			SharedDefinitions.OperatingSystem.Ubuntu		=> size >= 25 * 1024,
-			SharedDefinitions.OperatingSystem.ManjaroLinux	=> size >= 30 * 1024,
+			VirtualMachines.OperatingSystem.MiniCoffeeOS	=> size >= 9 && size <= 20,
+			VirtualMachines.OperatingSystem.Ubuntu		=> size >= 25 * 1024,
+			VirtualMachines.OperatingSystem.ManjaroLinux	=> size >= 30 * 1024,
 			_ => true
 		};
 	}

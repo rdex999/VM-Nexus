@@ -7,6 +7,7 @@ using Shared;
 using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Server.Models;
 
@@ -459,7 +460,7 @@ public sealed class ClientConnection : MessagingService
 				
 				string driveNameTrimmed = reqCreateDrive.Name.Trim();
 
-				if (reqCreateDrive.OperatingSystem == SharedDefinitions.OperatingSystem.Other)
+				if (reqCreateDrive.OperatingSystem == OperatingSystem.Other)
 				{
 					/* Temporary */
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));

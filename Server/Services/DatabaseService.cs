@@ -13,6 +13,7 @@ using Server.VirtualMachines;
 using Shared;
 using Shared.Drives;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Server.Services;
 
@@ -235,7 +236,7 @@ public class DatabaseService
 	/// username != null &amp;&amp; name != null. <br/>
 	/// Postcondition: On success, a virtual machine with the given parameters is created. On failure, the returned exit code will indicate the error.
 	/// </remarks>
-	public async Task<ExitCode> CreateVmAsync(int userId, string name, SharedDefinitions.OperatingSystem operatingSystem, 
+	public async Task<ExitCode> CreateVmAsync(int userId, string name, OperatingSystem operatingSystem, 
 		CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
 		if (userId < 1) return ExitCode.InvalidParameter;
@@ -419,7 +420,7 @@ public class DatabaseService
 			VmGeneralDescriptor descriptor = new VmGeneralDescriptor(
 				reader.GetInt32(0),
 				reader.GetString(1),
-				(SharedDefinitions.OperatingSystem)reader.GetInt32(2),
+				(OperatingSystem)reader.GetInt32(2),
 				(SharedDefinitions.VmState)reader.GetInt32(3)
 			);
 			
@@ -479,7 +480,7 @@ public class DatabaseService
 			descriptor = new VmGeneralDescriptor(
 				id,
 				reader.GetString(0),
-				(SharedDefinitions.OperatingSystem)reader.GetInt32(1),
+				(OperatingSystem)reader.GetInt32(1),
 				(SharedDefinitions.VmState)reader.GetInt32(2)
 			);
 		}
@@ -576,7 +577,7 @@ public class DatabaseService
 		return new VirtualMachineDescriptor(
 			vmId,
 			reader.GetString(0),
-			(SharedDefinitions.OperatingSystem)reader.GetInt32(1), 
+			(OperatingSystem)reader.GetInt32(1), 
 			(CpuArchitecture)reader.GetInt32(2),
 			(SharedDefinitions.BootMode)reader.GetInt32(3),
 			(SharedDefinitions.VmState)reader.GetInt32(4)

@@ -9,6 +9,7 @@ using Server.Drives;
 using Server.VirtualMachines;
 using Shared;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Server.Services;
 
@@ -86,7 +87,7 @@ public class VirtualMachineService
 	/// Postcondition: On success, a virtual machine with the given parameters is created. On failure, the returned exit code will indicate the error.
 	/// </remarks>
 	public async Task<ExitCode> CreateVirtualMachineAsync(int userId, string name,
-		SharedDefinitions.OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture,
+		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture,
 		SharedDefinitions.BootMode bootMode)
 	{
 		return await _databaseService.CreateVmAsync(userId, name, operatingSystem, cpuArchitecture, bootMode);

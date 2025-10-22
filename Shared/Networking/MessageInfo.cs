@@ -2,6 +2,7 @@ using System.Drawing;
 using Avalonia.Input;
 using Shared.Drives;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Shared.Networking;
 
@@ -34,7 +35,7 @@ public class MessageInfoVmCreated : MessageInfoTcp
 	public override bool IsValidMessage() => 
 		base.IsValidMessage() && Descriptor != null 
 		                      && !string.IsNullOrEmpty(Descriptor.Name) && Descriptor.Id >= 1
-		                      && Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), Descriptor.OperatingSystem)
+		                      && Enum.IsDefined(typeof(OperatingSystem), Descriptor.OperatingSystem)
 		                      && Enum.IsDefined(typeof(SharedDefinitions.VmState), Descriptor.State);
 }
 

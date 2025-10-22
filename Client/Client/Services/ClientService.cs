@@ -9,6 +9,7 @@ using Shared;
 using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Client.Services;
 
@@ -178,7 +179,7 @@ public class ClientService : MessagingService
 	/// On networking failure, null is returned. On other failure, the servers response is returned.
 	/// </remarks>
 	public async Task<MessageResponseCreateVm?> CreateVirtualMachineAsync(string name,
-		SharedDefinitions.OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
+		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
 		(MessageResponse? response, ExitCode _) = await SendRequestAsync(
 			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode)
@@ -256,7 +257,7 @@ public class ClientService : MessagingService
 	/// On failure, if there was a networking failure, null is returned. On other failures, the servers response is returned.
 	/// </remarks>
 	public async Task<MessageResponseCreateDrive?> CreateDriveAsync(
-		string name, DriveType type, int size, SharedDefinitions.OperatingSystem operatingSystem)
+		string name, DriveType type, int size, OperatingSystem operatingSystem)
 	{
 		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
 		if (response == null)
