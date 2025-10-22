@@ -254,11 +254,11 @@ public class MessageResponseConnectDrive : MessageResponse
 public class MessageResponseListDriveConnections : MessageResponse
 {
 	public Status Result { get; }
-	public SharedDefinitions.DriveConnection[]? Connections { get; }
+	public DriveConnection[]? Connections { get; }
 
 	[JsonConstructor]
 	public MessageResponseListDriveConnections(bool generateGuid, Guid requestId, Status result,
-		SharedDefinitions.DriveConnection[]? connections)
+		DriveConnection[]? connections)
 		: base(generateGuid, requestId)
 	{
 		Result = result;

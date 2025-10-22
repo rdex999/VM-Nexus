@@ -166,7 +166,7 @@ public class DriveService
 		MessageResponseListDriveConnections? response = await _clientService.GetDriveConnectionsAsync();
 		if (response == null || response.Result != MessageResponseListDriveConnections.Status.Success) return ExitCode.DataFetchFailed;
 
-		foreach (SharedDefinitions.DriveConnection connection in response.Connections!)
+		foreach (DriveConnection connection in response.Connections!)
 		{
 			AddConnection(connection.DriveId, connection.VmId);
 		}
@@ -272,6 +272,6 @@ public class DriveService
 		_drives.TryRemove(driveId, out DriveGeneralDescriptor? _);
 	}
 
-	private void OnDriveConnected(object? sender, SharedDefinitions.DriveConnection connection) =>
+	private void OnDriveConnected(object? sender, DriveConnection connection) =>
 		AddConnection(connection.DriveId, connection.VmId);
 }

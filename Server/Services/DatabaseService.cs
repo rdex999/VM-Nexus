@@ -981,7 +981,7 @@ public class DatabaseService
 	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
 	/// Postcondition: On success, an array of drive connections is returned. On failure, null is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.DriveConnection[]?> GetDriveConnectionsOfUserAsync(int userId)
+	public async Task<DriveConnection[]?> GetDriveConnectionsOfUserAsync(int userId)
 	{
 		if (userId < 1) return null;
 
@@ -994,10 +994,10 @@ public class DatabaseService
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
-		List<SharedDefinitions.DriveConnection> connections = new List<SharedDefinitions.DriveConnection>();
+		List<DriveConnection> connections = new List<DriveConnection>();
 		while (await reader.ReadAsync())
 		{
-			connections.Add(new SharedDefinitions.DriveConnection(
+			connections.Add(new DriveConnection(
 				reader.GetInt32(0),
 				reader.GetInt32(1)
 			));

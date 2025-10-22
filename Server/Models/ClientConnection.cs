@@ -552,7 +552,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				SharedDefinitions.DriveConnection[]? connections = await _databaseService.GetDriveConnectionsOfUserAsync(UserId);
+				DriveConnection[]? connections = await _databaseService.GetDriveConnectionsOfUserAsync(UserId);
 				if (connections == null)
 				{
 					SendResponse(new MessageResponseListDriveConnections(true, reqListDriveConnections.Id, 

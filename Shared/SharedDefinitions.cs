@@ -64,18 +64,6 @@ public static class SharedDefinitions
 		Uefi,
 		Bios
 	}
-
-	public struct DriveConnection
-	{
-		public int DriveId { get; }
-		public int VmId { get; }
-		
-		public DriveConnection(int driveId, int vmId)
-		{
-			DriveId = driveId;
-			VmId = vmId;
-		}
-	}
 	
 	public class PartitionDescriptor
 	{

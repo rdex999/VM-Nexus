@@ -220,7 +220,7 @@ public partial class HomeViewModel : ViewModelBase
 	/// Precondition: A drive was connected to a virtual machine. (New drive-VM connection added) connection != null. <br/>
 	/// Postcondition: Event is handled, UI informed if needed.
 	/// </remarks>
-	private void OnDriveConnected(object? sender, SharedDefinitions.DriveConnection connection)
+	private void OnDriveConnected(object? sender, DriveConnection connection)
 	{
 		if (DeleteVmPopupIsOpen)
 		{
