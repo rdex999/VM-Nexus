@@ -8,6 +8,7 @@ using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
+using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
 
@@ -304,7 +305,7 @@ public partial class HomeViewModel : ViewModelBase
 
 		DeleteVmPopupVmRunning = _deleteVmPopupVmDescriptor.State == SharedDefinitions.VmState.Running;
 		
-		SharedDefinitions.DriveGeneralDescriptor[]? drives = _driveService.GetDrivesOnVirtualMachine(descriptor.Id);
+		DriveGeneralDescriptor[]? drives = _driveService.GetDrivesOnVirtualMachine(descriptor.Id);
 		if (drives == null)
 		{
 			DeletePopupClosed();
@@ -314,7 +315,7 @@ public partial class HomeViewModel : ViewModelBase
 		DeleteVmPopupHasDrives = drives.Length != 0;
 
 		DeleteVmPopupDrives.Clear();
-		foreach (SharedDefinitions.DriveGeneralDescriptor drive in drives)
+		foreach (DriveGeneralDescriptor drive in drives)
 		{
 			bool driveInUse = _driveService.IsDriveInUse(drive.Id);
 			DeleteVmPopupDrives.Add(new DeletionDriveItemTemplate(drive.Id, drive.Name, drive.DriveType, drive.Size, driveInUse));

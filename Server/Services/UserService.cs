@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Server.Models;
 using Shared;
+using Shared.Drives;
 using Shared.VirtualMachines;
 
 namespace Server.Services;
@@ -151,7 +152,7 @@ public class UserService
 		}
 	}
 
-	public async Task NotifyDriveCreatedAsync(SharedDefinitions.DriveGeneralDescriptor descriptor)
+	public async Task NotifyDriveCreatedAsync(DriveGeneralDescriptor descriptor)
 	{
 		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToDriveAsync(descriptor.Id);
 		if (relatedUsers == null)

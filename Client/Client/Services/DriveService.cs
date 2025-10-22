@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Shared;
+using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
 
@@ -16,7 +17,7 @@ public class DriveService
 	
 	private readonly ClientService _clientService;
 	private readonly ConcurrentDictionary<int, VmGeneralDescriptor> _virtualMachines;
-	private readonly ConcurrentDictionary<int, SharedDefinitions.DriveGeneralDescriptor> _drives;
+	private readonly ConcurrentDictionary<int, DriveGeneralDescriptor> _drives;
 
 	private readonly ConcurrentDictionary<int, HashSet<int>> _vmsByDriveId;
 	private readonly ConcurrentDictionary<int, HashSet<int>> _drivesByVmId;
@@ -25,7 +26,7 @@ public class DriveService
 	{
 		_clientService = clientService;
 		_virtualMachines = new ConcurrentDictionary<int, VmGeneralDescriptor>();
-		_drives = new ConcurrentDictionary<int, SharedDefinitions.DriveGeneralDescriptor>();
+		_drives = new ConcurrentDictionary<int, DriveGeneralDescriptor>();
 		_vmsByDriveId = new ConcurrentDictionary<int, HashSet<int>>();
 		_drivesByVmId = new ConcurrentDictionary<int, HashSet<int>>();
 		
@@ -77,15 +78,15 @@ public class DriveService
 	}
 
 	public VmGeneralDescriptor[] GetVirtualMachines() => _virtualMachines.Values.ToArray();
-	public SharedDefinitions.DriveGeneralDescriptor[] GetDrives() => _drives.Values.ToArray();
+	public DriveGeneralDescriptor[] GetDrives() => _drives.Values.ToArray();
 
-	public SharedDefinitions.DriveGeneralDescriptor[]? GetDrivesOnVirtualMachine(int vmId)
+	public DriveGeneralDescriptor[]? GetDrivesOnVirtualMachine(int vmId)
 	{
 		if (vmId < 1) return null;
 		
 		if (_drivesByVmId.TryGetValue(vmId, out HashSet<int>? driveIds))
 		{
-			SharedDefinitions.DriveGeneralDescriptor[] drives = new SharedDefinitions.DriveGeneralDescriptor[driveIds.Count];
+			DriveGeneralDescriptor[] drives = new DriveGeneralDescriptor[driveIds.Count];
 			int i = 0;
 			foreach (int driveId in driveIds)
 			{
@@ -149,7 +150,7 @@ public class DriveService
 		MessageResponseListDrives? response = await _clientService.GetDrivesAsync();
 		if (response == null || response.Result != MessageResponseListDrives.Status.Success) return ExitCode.DataFetchFailed;
 
-		foreach (SharedDefinitions.DriveGeneralDescriptor drive in response.Drives!)
+		foreach (DriveGeneralDescriptor drive in response.Drives!)
 		{
 			_drives[drive.Id] = drive;
 		}
@@ -253,7 +254,7 @@ public class DriveService
 		_virtualMachines.TryRemove(vmId, out VmGeneralDescriptor? _);
 	}
 
-	private void OnDriveCreated(object? sender, SharedDefinitions.DriveGeneralDescriptor descriptor) =>
+	private void OnDriveCreated(object? sender, DriveGeneralDescriptor descriptor) =>
 		_drives.TryAdd(descriptor.Id, descriptor);
 
 	private void OnDriveDeleted(object? sender, int driveId)
@@ -268,7 +269,7 @@ public class DriveService
 			}
 		}
 		
-		_drives.TryRemove(driveId, out SharedDefinitions.DriveGeneralDescriptor? _);
+		_drives.TryRemove(driveId, out DriveGeneralDescriptor? _);
 	}
 
 	private void OnDriveConnected(object? sender, SharedDefinitions.DriveConnection connection) =>

@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Shared.Drives;
 using Shared.VirtualMachines;
 
 namespace Shared.Networking;
@@ -283,10 +284,10 @@ public class MessageResponseListDriveConnections : MessageResponse
 public class MessageResponseListDrives : MessageResponse
 {
 	public Status Result { get; }
-	public SharedDefinitions.DriveGeneralDescriptor[]? Drives { get; }
+	public DriveGeneralDescriptor[]? Drives { get; }
 
 	[JsonConstructor]
-	public MessageResponseListDrives(bool generateGuid, Guid requestId, Status result, SharedDefinitions.DriveGeneralDescriptor[]? drives)
+	public MessageResponseListDrives(bool generateGuid, Guid requestId, Status result, DriveGeneralDescriptor[]? drives)
 		: base(generateGuid, requestId)
 	{
 		Result = result;

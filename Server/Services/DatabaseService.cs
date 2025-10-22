@@ -11,6 +11,7 @@ using NpgsqlTypes;
 using Server.Drives;
 using Server.VirtualMachines;
 using Shared;
+using Shared.Drives;
 using Shared.VirtualMachines;
 
 namespace Server.Services;
@@ -878,7 +879,7 @@ public class DatabaseService
 	/// Postcondition: On success, an array of general drive descriptors is returned, describing each drive that is connected to the virtual machine.
 	/// On failure, null is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.DriveGeneralDescriptor[]?> GetVmDriveGeneralDescriptorsAsync(int vmId)
+	public async Task<DriveGeneralDescriptor[]?> GetVmDriveGeneralDescriptorsAsync(int vmId)
 	{
 		if (vmId < 1)
 		{
@@ -893,10 +894,10 @@ public class DatabaseService
 			new NpgsqlParameter("@vm_id", vmId)
 		);
 		
-		List<SharedDefinitions.DriveGeneralDescriptor> descriptors = new List<SharedDefinitions.DriveGeneralDescriptor>();
+		List<DriveGeneralDescriptor> descriptors = new List<DriveGeneralDescriptor>();
 		while (await reader.ReadAsync())
 		{
-			SharedDefinitions.DriveGeneralDescriptor descriptor = new SharedDefinitions.DriveGeneralDescriptor(
+			DriveGeneralDescriptor descriptor = new DriveGeneralDescriptor(
 				reader.GetInt32(0),
 				reader.GetString(1),
 				reader.GetInt32(2),
@@ -919,7 +920,7 @@ public class DatabaseService
 	/// Postcondition: On success, an array of drive general descriptors is returned. (can be empty of user doesnt have drives) <br/>
 	/// On failure, null is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.DriveGeneralDescriptor[]?> GetDriveGeneralDescriptorsOfUserAsync(int userId)
+	public async Task<DriveGeneralDescriptor[]?> GetDriveGeneralDescriptorsOfUserAsync(int userId)
 	{
 		if (userId < 1) return null;
 
@@ -929,10 +930,10 @@ public class DatabaseService
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
-		List<SharedDefinitions.DriveGeneralDescriptor> descriptors = new List<SharedDefinitions.DriveGeneralDescriptor>();
+		List<DriveGeneralDescriptor> descriptors = new List<DriveGeneralDescriptor>();
 		while (await reader.ReadAsync())
 		{
-			descriptors.Add(new SharedDefinitions.DriveGeneralDescriptor(
+			descriptors.Add(new DriveGeneralDescriptor(
 				reader.GetInt32(0),
 				reader.GetString(1),
 				reader.GetInt32(2),

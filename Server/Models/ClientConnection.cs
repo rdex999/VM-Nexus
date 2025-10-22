@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Server.Services;
 using Server.VirtualMachines;
 using Shared;
+using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
 
@@ -480,7 +481,7 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success, id));
 					
 					await _userService.NotifyDriveCreatedAsync(
-						new SharedDefinitions.DriveGeneralDescriptor(id, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type)
+						new DriveGeneralDescriptor(id, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type)
 					);
 					
 					break;				
@@ -573,7 +574,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				SharedDefinitions.DriveGeneralDescriptor[]? descriptors = await _databaseService.GetDriveGeneralDescriptorsOfUserAsync(UserId);
+				DriveGeneralDescriptor[]? descriptors = await _databaseService.GetDriveGeneralDescriptorsOfUserAsync(UserId);
 				if (descriptors == null)
 				{
 					SendResponse(new MessageResponseListDrives(true, reqListDrives.Id, MessageResponseListDrives.Status.Failure));
@@ -713,7 +714,7 @@ public sealed class ClientConnection : MessagingService
 	/// Precondition: A new drive was created. Service initialized and connected to client. descriptor != null. <br/>
 	/// Postcondition: Client is notified of the new drive.
 	/// </remarks>
-	public void NotifyDriveCreated(SharedDefinitions.DriveGeneralDescriptor descriptor) =>
+	public void NotifyDriveCreated(DriveGeneralDescriptor descriptor) =>
 		SendInfo(new MessageInfoDriveCreated(true, descriptor));
 
 	/// <summary>

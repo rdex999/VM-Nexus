@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Input;
 using Shared;
+using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
 
@@ -22,7 +23,7 @@ public class ClientService : MessagingService
 	public event EventHandler<int>? VmPoweredOn;
 	public event EventHandler<int>? VmPoweredOff;
 	public event EventHandler<int>? VmCrashed;
-	public event EventHandler<SharedDefinitions.DriveGeneralDescriptor>? DriveCreated;
+	public event EventHandler<DriveGeneralDescriptor>? DriveCreated;
 	public event EventHandler<int>? DriveDeleted;
 	public event EventHandler<SharedDefinitions.DriveConnection>? DriveConnected;
 	

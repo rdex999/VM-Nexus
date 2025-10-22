@@ -1,5 +1,6 @@
 using System.Drawing;
 using Avalonia.Input;
+using Shared.Drives;
 using Shared.VirtualMachines;
 
 namespace Shared.Networking;
@@ -174,9 +175,9 @@ public class MessageInfoKeyboardKeyEvent : MessageInfoTcp
 
 public class MessageInfoDriveCreated : MessageInfoTcp
 {
-	public SharedDefinitions.DriveGeneralDescriptor Descriptor { get; }
+	public DriveGeneralDescriptor Descriptor { get; }
 
-	public MessageInfoDriveCreated(bool generateGuid, SharedDefinitions.DriveGeneralDescriptor descriptor)
+	public MessageInfoDriveCreated(bool generateGuid, DriveGeneralDescriptor descriptor)
 		: base(generateGuid)
 	{
 		Descriptor = descriptor;
