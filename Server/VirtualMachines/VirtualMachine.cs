@@ -23,6 +23,7 @@ using Server.Drives;
 using Server.Services;
 using Shared;
 using Shared.VirtualMachines;
+using MouseButtons = Shared.VirtualMachines.MouseButtons;
 using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 using PixelFormat = MarcusW.VncClient.PixelFormat;
 using Rectangle = MarcusW.VncClient.Rectangle;
@@ -52,7 +53,7 @@ public class VirtualMachine
 	private readonly CpuArchitecture _cpuArchitecture;
 	private readonly BootMode _bootMode;
 	private readonly DriveDescriptor[] _drives;
-	private int _pointerPressedButtons = (int)SharedDefinitions.MouseButtons.None;
+	private int _pointerPressedButtons = (int)MouseButtons.None;
 	private bool _isLeftShiftKeyDown = false;
 	private bool _isRightShiftKeyDown = false;
 	private readonly string _pcmAudioFilePath;
@@ -114,10 +115,6 @@ public class VirtualMachine
 		{
 			await _rfbConnection.CloseAsync();
 			_rfbConnection.Dispose();
-		}
-		catch (OperationCanceledException)
-		{
-			// ignored
 		}
 		catch (Exception)
 		{
@@ -316,7 +313,7 @@ public class VirtualMachine
 		if (_closing || GetVmState() == VmState.ShutDown) return;
 		
 		_rfbConnection.EnqueueMessage(
-			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons),
+			new PointerEventMessage(new Position(position.X, position.Y), (MarcusW.VncClient.MouseButtons)_pointerPressedButtons),
 			_rfbMessageCts.Token
 		);
 	}
@@ -337,8 +334,8 @@ public class VirtualMachine
 		if (pressedButtons == _pointerPressedButtons) return;
 		
 		_pointerPressedButtons = pressedButtons & ~(
-			(int)SharedDefinitions.MouseButtons.WheelUp		| (int)SharedDefinitions.MouseButtons.WheelDown |
-			(int)SharedDefinitions.MouseButtons.WheelLeft	| (int)SharedDefinitions.MouseButtons.WheelRight
+			(int)MouseButtons.WheelUp	| (int)MouseButtons.WheelDown |
+			(int)MouseButtons.WheelLeft	| (int)MouseButtons.WheelRight
 		);
 		
 		/*
@@ -348,11 +345,11 @@ public class VirtualMachine
 		 * This results in VNC actually seeing the mouse wheel scroll event, and responding to it.
 		 */
 		_rfbConnection.EnqueueMessage(
-			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)pressedButtons),
+			new PointerEventMessage(new Position(position.X, position.Y), (MarcusW.VncClient.MouseButtons)pressedButtons),
 			_rfbMessageCts.Token
 		);
 		_rfbConnection.EnqueueMessage(
-			new PointerEventMessage(new Position(position.X, position.Y), (MouseButtons)_pointerPressedButtons),
+			new PointerEventMessage(new Position(position.X, position.Y), (MarcusW.VncClient.MouseButtons)_pointerPressedButtons),
 			_rfbMessageCts.Token
 		);
 	}

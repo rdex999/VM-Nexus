@@ -1,12 +1,11 @@
-﻿using Shared.Drives;
-
+﻿
 namespace Shared;
 
 public static class SharedDefinitions
 {
 	public const int ServerTcpPort = 5000;
 	public const int ServerUdpPort = 5001;
-	public const string ServerIp = "10.0.0.59"; /* local IP in network */
+	public const string ServerIp = "10.0.0.59";		/* local IP in network */
 
 	public const int MessageTimeoutMilliseconds = 3 * 60 * 1000;
 	public const int ConnectionDeniedRetryTimeout = 4000;
@@ -19,17 +18,5 @@ public static class SharedDefinitions
 	public const int AudioChannels = 2;
 	public const int AudioFramesPerPacket = (int)((float)AudioFramesFrequency * ((float)AudioPacketMs / 1000.0));
 	public const int AudioBytesPerPacket = AudioFramesPerPacket * AudioChannels * 2;	/* Using two channels, s16le */
-
-	public enum MouseButtons
-	{
-		None		= 0,
-		Left		= 1 << 0,
-		Middle		= 1 << 1,
-		Right		= 1 << 2,
-		WheelUp		= 1 << 3,
-		WheelDown	= 1 << 4,
-		WheelLeft	= 1 << 5,
-		WheelRight	= 1 << 6,
-	}
 }
 

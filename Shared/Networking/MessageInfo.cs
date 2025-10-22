@@ -144,7 +144,7 @@ public class MessageInfoPointerButtonEvent : MessageInfoTcp
 {
 	public int VmId { get; }
 	public Point Position { get; }
-	public int PressedButtons { get; }		/* Flags - from SharedDefinitions.MouseButtons. */
+	public int PressedButtons { get; }		/* Flags - from MouseButtons. */
 
 	public MessageInfoPointerButtonEvent(bool generateGuid, int vmId, Point position, int pressedButtons)
 		: base(generateGuid)

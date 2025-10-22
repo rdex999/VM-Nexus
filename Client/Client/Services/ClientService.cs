@@ -464,7 +464,7 @@ public class ClientService : MessagingService
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine on which the pointer was clicked/released. id >= 1.</param>
 	/// <param name="position">The current position of the pointer on the virtual machines screen. Must be in valid range.</param>
-	/// <param name="pressedButtons">Flags for which buttons were pressed - See SharedDefinitions.MouseButtons.</param>
+	/// <param name="pressedButtons">Flags for which buttons were pressed - See MouseButtons.</param>
 	/// <remarks>
 	/// Precondition: The pointer was clicked/released upon the screen of a virtual machine. position must be in valid range. id >= 1. <br/>
 	/// Postcondition: The server is notified of the event.

@@ -1,10 +1,9 @@
 using System;
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Client.ViewModels;
-using Shared;
+using Shared.VirtualMachines;
 using Point = System.Drawing.Point;
 using Size = Avalonia.Size;
 
@@ -95,17 +94,17 @@ public partial class VmScreenView : UserControl
 	/// Get pressed pointer button flags from a pointer event.
 	/// </summary>
 	/// <param name="e">The pointer event arguments. Contains information on which buttons are pressed. e != null.</param>
-	/// <returns>Flags indicating which pointer buttons are currently pressed. See SharedDefinitions.MouseButtons.</returns>
+	/// <returns>Flags indicating which pointer buttons are currently pressed. See MouseButtons.</returns>
 	/// <remarks>
 	/// Precondition: e != null. <br/>
 	/// Postcondition: An integer (flags) representing the currently pressed pointer buttons is returned.
 	/// </remarks>
 	private int PressedButtonsFromPointerEvent(PointerEventArgs e)
 	{
-		int pressed = (int)SharedDefinitions.MouseButtons.None;
-		pressed |= e.Properties.IsLeftButtonPressed		? (int)SharedDefinitions.MouseButtons.Left		: 0;
-		pressed |= e.Properties.IsRightButtonPressed	? (int)SharedDefinitions.MouseButtons.Right		: 0;
-		pressed |= e.Properties.IsMiddleButtonPressed	? (int)SharedDefinitions.MouseButtons.Middle	: 0;	
+		int pressed = (int)MouseButtons.None;
+		pressed |= e.Properties.IsLeftButtonPressed		? (int)MouseButtons.Left		: 0;
+		pressed |= e.Properties.IsRightButtonPressed	? (int)MouseButtons.Right		: 0;
+		pressed |= e.Properties.IsMiddleButtonPressed	? (int)MouseButtons.Middle	: 0;	
 		
 		return pressed;
 	}
@@ -167,11 +166,11 @@ public partial class VmScreenView : UserControl
 		Point position = PointerPositionToPixels(sender, e);
 		int pressed = PressedButtonsFromPointerEvent(e);
 
-		pressed |= e.Delta.Y > 0 ? (int)SharedDefinitions.MouseButtons.WheelUp		: 0;
-		pressed |= e.Delta.Y < 0 ? (int)SharedDefinitions.MouseButtons.WheelDown	: 0;
+		pressed |= e.Delta.Y > 0 ? (int)MouseButtons.WheelUp		: 0;
+		pressed |= e.Delta.Y < 0 ? (int)MouseButtons.WheelDown	: 0;
 		
-		pressed |= e.Delta.X > 0 ? (int)SharedDefinitions.MouseButtons.WheelRight	: 0;
-		pressed |= e.Delta.X < 0 ? (int)SharedDefinitions.MouseButtons.WheelLeft	: 0;
+		pressed |= e.Delta.X > 0 ? (int)MouseButtons.WheelRight	: 0;
+		pressed |= e.Delta.X < 0 ? (int)MouseButtons.WheelLeft	: 0;
 	
 		vm.OnVmScreenPointerButtonEvent(position, pressed);
 	}
