@@ -88,7 +88,7 @@ public class VirtualMachineService
 	/// </remarks>
 	public async Task<ExitCode> CreateVirtualMachineAsync(int userId, string name,
 		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture,
-		SharedDefinitions.BootMode bootMode)
+		BootMode bootMode)
 	{
 		return await _databaseService.CreateVmAsync(userId, name, operatingSystem, cpuArchitecture, bootMode);
 	}

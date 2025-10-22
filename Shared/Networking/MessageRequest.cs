@@ -78,10 +78,10 @@ public class MessageRequestCreateVm : MessageRequest
 	public string Name { get; }
 	public OperatingSystem OperatingSystem { get; }
 	public CpuArchitecture CpuArchitecture { get; }
-	public SharedDefinitions.BootMode BootMode { get; }
+	public BootMode BootMode { get; }
 
 	public MessageRequestCreateVm(bool generateGuid, string name,
-		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
+		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, BootMode bootMode)
 		: base(generateGuid)
 	{
 		Name = name;
@@ -95,7 +95,7 @@ public class MessageRequestCreateVm : MessageRequest
 		return base.IsValidMessage() && !string.IsNullOrEmpty(Name) &&
 		       Enum.IsDefined(typeof(OperatingSystem), OperatingSystem) &&
 		       Enum.IsDefined(typeof(CpuArchitecture), CpuArchitecture) &&
-		       Enum.IsDefined(typeof(SharedDefinitions.BootMode), BootMode);
+		       Enum.IsDefined(typeof(BootMode), BootMode);
 	}
 }
 

@@ -50,7 +50,7 @@ public class VirtualMachine
 
 	private readonly OperatingSystem _operatingSystem;
 	private readonly CpuArchitecture _cpuArchitecture;
-	private readonly SharedDefinitions.BootMode _bootMode;
+	private readonly BootMode _bootMode;
 	private readonly DriveDescriptor[] _drives;
 	private int _pointerPressedButtons = (int)SharedDefinitions.MouseButtons.None;
 	private bool _isLeftShiftKeyDown = false;
@@ -63,7 +63,7 @@ public class VirtualMachine
 	private bool _closing = false;
 	
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, OperatingSystem operatingSystem,
-		CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
+		CpuArchitecture cpuArchitecture, BootMode bootMode, DriveDescriptor[] drives)
 	{
 		_databaseService = databaseService;
 		_driveService = driveService;
@@ -695,11 +695,11 @@ public class VirtualMachine
 			)
 		);
 
-		if (_bootMode == SharedDefinitions.BootMode.Bios)
+		if (_bootMode == BootMode.Bios)
 		{
 			// os.Add(new XElement("smbios", new XAttribute("mode", "sysinfo")));
 		}
-		else if (_bootMode == SharedDefinitions.BootMode.Uefi)
+		else if (_bootMode == BootMode.Uefi)
 		{
 			os.Add(new XAttribute("type", "efi"));
 			os.Add(new XElement("loader", "/usr/share/edk2/x64/OVMF_CODE.4m.fd",

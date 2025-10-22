@@ -38,7 +38,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	private bool _cpuArchitectureIsEnabled = true;
 
 	[ObservableProperty]
-	private SharedDefinitions.BootMode _bootMode = SharedDefinitions.BootMode.Uefi;
+	private BootMode _bootMode = BootMode.Uefi;
 	
 	[ObservableProperty]
 	private bool _bootModeIsEnabled = true;
@@ -100,7 +100,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			CpuArchitecture = CpuArchitecture.X86;
 			CpuArchitectureIsEnabled = false;
 		
-			BootMode = SharedDefinitions.BootMode.Bios;
+			BootMode = BootMode.Bios;
 			BootModeIsEnabled = false;
 			
 			OsDriveType = DriveType.Floppy;
@@ -129,7 +129,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			CpuArchitecture = CpuArchitecture.X86_64;
 			CpuArchitectureIsEnabled = false;
 			
-			BootMode = SharedDefinitions.BootMode.Uefi;
+			BootMode = BootMode.Uefi;
 			BootModeIsEnabled = false;
 			
 			OsDriveType = DriveType.Disk;
@@ -148,7 +148,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			CpuArchitecture = CpuArchitecture.X86_64;
 			CpuArchitectureIsEnabled = false;
 			
-			BootMode = SharedDefinitions.BootMode.Uefi;
+			BootMode = BootMode.Uefi;
 			BootModeIsEnabled = false;
 			
 			OsDriveType = DriveType.Disk;
@@ -167,7 +167,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			CpuArchitecture = CpuArchitecture.X86_64;
 			CpuArchitectureIsEnabled = false;
 			
-			BootMode = SharedDefinitions.BootMode.Uefi;
+			BootMode = BootMode.Uefi;
 			BootModeIsEnabled = false;
 			
 			OsDriveType = DriveType.Disk;
