@@ -146,7 +146,7 @@ public class MessageRequestCreateDrive : MessageRequest
 	public OperatingSystem OperatingSystem { get; }			/* Can be -1 for no operating system. */
 	public FilesystemType FilesystemType { get; }				/* Can be -1. Used only if no partition table is used. (PartitionTableType must be -1) */
 	public PartitionTableType PartitionTableType { get; }		/* When used, FilesystemType should be -1 (not used). */
-	public SharedDefinitions.PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
+	public PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
 
 
 	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
@@ -164,7 +164,7 @@ public class MessageRequestCreateDrive : MessageRequest
 	}
 	
 	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
-		PartitionTableType partitionTableType, SharedDefinitions.PartitionDescriptor[] partitions)
+		PartitionTableType partitionTableType, PartitionDescriptor[] partitions)
 		: base(generateGuid)
 	{
 		Name = name;
@@ -179,7 +179,7 @@ public class MessageRequestCreateDrive : MessageRequest
 	[JsonConstructor]
 	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
 		OperatingSystem operatingSystem, FilesystemType filesystemType,
-		PartitionTableType partitionTableType, SharedDefinitions.PartitionDescriptor[] partitions)
+		PartitionTableType partitionTableType, PartitionDescriptor[] partitions)
 		: base(generateGuid)
 	{
 		Name = name;

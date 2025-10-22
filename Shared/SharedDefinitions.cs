@@ -20,22 +20,6 @@ public static class SharedDefinitions
 	public const int AudioFramesPerPacket = (int)((float)AudioFramesFrequency * ((float)AudioPacketMs / 1000.0));
 	public const int AudioBytesPerPacket = AudioFramesPerPacket * AudioChannels * 2;	/* Using two channels, s16le */
 
-	public class PartitionDescriptor
-	{
-		public string Lable { get; }
-		public FilesystemType FilesystemType { get; }
-		public int Size { get; }	/* The partitions size in MiB. */
-		public bool Bootable { get; }
-
-		public PartitionDescriptor(string lable, FilesystemType filesystemType, int size, bool bootable)
-		{
-			Lable = lable;
-			FilesystemType = filesystemType;
-			Size = size;
-			Bootable = bootable;
-		}
-	}
-
 	public enum MouseButtons
 	{
 		None		= 0,
