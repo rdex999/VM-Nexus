@@ -5,6 +5,7 @@ using Server.Services;
 using Server.VirtualMachines;
 using Shared;
 using Shared.Networking;
+using Shared.VirtualMachines;
 
 namespace Server.Models;
 
@@ -128,13 +129,13 @@ public sealed class ClientConnection : MessagingService
 					_isLoggedIn = true;
 					UserId = await _databaseService.GetUserIdAsync(usernameTrimmed);	/* Must be valid because the user exists. (IsValidLogin would return false otherwise) */
 
-					SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(UserId);
+					VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(UserId);
 					if (vms == null)
 					{
 						break;
 					}
 
-					foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
+					foreach (VmGeneralDescriptor vm in vms)
 					{
 						if (vm.State == SharedDefinitions.VmState.Running)
 						{
@@ -193,7 +194,7 @@ public sealed class ClientConnection : MessagingService
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
 				
 				await _userService.NotifyVirtualMachineCreatedAsync(
-					new SharedDefinitions.VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, SharedDefinitions.VmState.ShutDown)
+					new VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, SharedDefinitions.VmState.ShutDown)
 				);
 				
 				break;
@@ -239,7 +240,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				SharedDefinitions.VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(UserId);
+				VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(UserId);
 				if (vms == null)
 				{
 					SendResponse(new MessageResponseListVms(true, reqListVms.Id, MessageResponseListVms.Status.Failure));
@@ -270,7 +271,7 @@ public sealed class ClientConnection : MessagingService
 				result = await _virtualMachineService.PowerOnVirtualMachineAsync(reqVmStartup.VmId);
 				if (result == ExitCode.Success)
 				{
-					SharedDefinitions.VmGeneralDescriptor? descriptor = await _databaseService.GetVmGeneralDescriptorAsync(reqVmStartup.VmId);
+					VmGeneralDescriptor? descriptor = await _databaseService.GetVmGeneralDescriptorAsync(reqVmStartup.VmId);
 					if (descriptor == null)
 					{
 						SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
@@ -657,7 +658,7 @@ public sealed class ClientConnection : MessagingService
 	/// Precondition: A new virtual machine was created. Service initialized and connected to client. descriptor != null. <br/>
 	/// Postcondition: Client notified of the new virtual machine.
 	/// </remarks>
-	public void NotifyVirtualMachineCreated(SharedDefinitions.VmGeneralDescriptor descriptor) =>
+	public void NotifyVirtualMachineCreated(VmGeneralDescriptor descriptor) =>
 		SendInfo(new MessageInfoVmCreated(true, descriptor));
 	
 	/// <summary>

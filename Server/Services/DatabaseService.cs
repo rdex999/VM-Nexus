@@ -11,6 +11,7 @@ using NpgsqlTypes;
 using Server.Drives;
 using Server.VirtualMachines;
 using Shared;
+using Shared.VirtualMachines;
 
 namespace Server.Services;
 
@@ -402,7 +403,7 @@ public class DatabaseService
 	/// Postcondition: On success, an array of general VM descriptors is returned. (might be empty, but not null) <br/>
 	/// On failure, null is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.VmGeneralDescriptor[]?> GetVmGeneralDescriptorsOfUserAsync(int userId)
+	public async Task<VmGeneralDescriptor[]?> GetVmGeneralDescriptorsOfUserAsync(int userId)
 	{
 		if (userId < 1) return null;
 		
@@ -411,10 +412,10 @@ public class DatabaseService
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
-		List<SharedDefinitions.VmGeneralDescriptor> descriptors = new List<SharedDefinitions.VmGeneralDescriptor>();
+		List<VmGeneralDescriptor> descriptors = new List<VmGeneralDescriptor>();
 		while(await reader.ReadAsync())
 		{
-			SharedDefinitions.VmGeneralDescriptor descriptor = new SharedDefinitions.VmGeneralDescriptor(
+			VmGeneralDescriptor descriptor = new VmGeneralDescriptor(
 				reader.GetInt32(0),
 				reader.GetString(1),
 				(SharedDefinitions.OperatingSystem)reader.GetInt32(2),
@@ -462,7 +463,7 @@ public class DatabaseService
 	/// Precondition: A virtual machine with the given ID exists. id >= 1. <br/>
 	/// Postcondition: On success, a general descriptor of the virtual machine is returned. On failure, null is returned.
 	/// </remarks>
-	public async Task<SharedDefinitions.VmGeneralDescriptor?> GetVmGeneralDescriptorAsync(int id)
+	public async Task<VmGeneralDescriptor?> GetVmGeneralDescriptorAsync(int id)
 	{
 		if (id < 1) return null;
 		
@@ -470,11 +471,11 @@ public class DatabaseService
 			new NpgsqlParameter("@id", id)
 		);
 		
-		SharedDefinitions.VmGeneralDescriptor? descriptor = null;
+		VmGeneralDescriptor? descriptor = null;
 
 		if (await reader.ReadAsync())
 		{
-			descriptor = new SharedDefinitions.VmGeneralDescriptor(
+			descriptor = new VmGeneralDescriptor(
 				id,
 				reader.GetString(0),
 				(SharedDefinitions.OperatingSystem)reader.GetInt32(1),

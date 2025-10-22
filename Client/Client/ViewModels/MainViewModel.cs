@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Networking;
+using Shared.VirtualMachines;
 
 namespace Client.ViewModels;
 
@@ -95,7 +96,7 @@ public partial class MainViewModel : ViewModelBase
 	/// Precondition: User has clicked the Open button on one of its VMs. descriptor != null. <br/>
 	/// Postcondition: If no open tab for the VM exists, create a new tab. If exists, redirect to it.
 	/// </remarks>
-	private void OnVmOpenClicked(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	private void OnVmOpenClicked(object? sender, VmGeneralDescriptor descriptor)
 	{
 		/* Check if a tab is already open for this VM */
 		foreach (VmTabTemplate vm in VmTabs)
@@ -325,9 +326,9 @@ public partial class SideMenuItemTemplate : ObservableObject
 
 public class VmTabTemplate
 {
-	public SharedDefinitions.VmGeneralDescriptor Descriptor { get; set; }
+	public VmGeneralDescriptor Descriptor { get; set; }
 
-	public VmTabTemplate(SharedDefinitions.VmGeneralDescriptor descriptor)
+	public VmTabTemplate(VmGeneralDescriptor descriptor)
 	{
 		Descriptor = descriptor;
 	}

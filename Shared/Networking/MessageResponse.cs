@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Shared.VirtualMachines;
 
 namespace Shared.Networking;
 
@@ -144,10 +145,10 @@ public class MessageResponseDeleteVm : MessageResponse
 public class MessageResponseListVms : MessageResponse
 {
 	public Status Result { get; }
-	public SharedDefinitions.VmGeneralDescriptor[]? Vms { get; }
+	public VmGeneralDescriptor[]? Vms { get; }
 
 	[JsonConstructor]
-	public MessageResponseListVms(bool generateGuid, Guid requestId, Status result, SharedDefinitions.VmGeneralDescriptor[]? vms)
+	public MessageResponseListVms(bool generateGuid, Guid requestId, Status result, VmGeneralDescriptor[]? vms)
 		: base(generateGuid, requestId)
 	{
 		Result = result;

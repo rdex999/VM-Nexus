@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Avalonia.Input;
 using Shared;
 using Shared.Networking;
+using Shared.VirtualMachines;
 
 namespace Client.Services;
 
@@ -14,7 +15,7 @@ namespace Client.Services;
 public class ClientService : MessagingService
 {
 	public event EventHandler? Reconnected;
-	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? VmCreated;
+	public event EventHandler<VmGeneralDescriptor>? VmCreated;
 	public event EventHandler<int>? VmDeleted;
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
 	public event EventHandler<MessageInfoVmAudioPacket>? VmAudioPacketReceived;

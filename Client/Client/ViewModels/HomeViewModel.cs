@@ -9,12 +9,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Networking;
+using Shared.VirtualMachines;
 
 namespace Client.ViewModels;
 
 public partial class HomeViewModel : ViewModelBase
 {
-	public event EventHandler<SharedDefinitions.VmGeneralDescriptor>? VmOpenClicked;
+	public event EventHandler<VmGeneralDescriptor>? VmOpenClicked;
 	public ObservableCollection<VmItemTemplate> Vms { get; }
 
 	private readonly DriveService _driveService;
@@ -38,7 +39,7 @@ public partial class HomeViewModel : ViewModelBase
 	
 	public ObservableCollection<DeletionDriveItemTemplate> DeleteVmPopupDrives { get; set; }		/* Drives the user can select to delete, when deleting a VM */
 
-	private SharedDefinitions.VmGeneralDescriptor _deleteVmPopupVmDescriptor = null!;
+	private VmGeneralDescriptor _deleteVmPopupVmDescriptor = null!;
 	
 	/// <summary>
 	/// Initializes a new instance of HomeViewModel.
@@ -81,8 +82,8 @@ public partial class HomeViewModel : ViewModelBase
 	{
 		await Dispatcher.UIThread.InvokeAsync(() =>
 		{
-			SharedDefinitions.VmGeneralDescriptor[] vms = _driveService.GetVirtualMachines();
-			foreach (SharedDefinitions.VmGeneralDescriptor vm in vms)
+			VmGeneralDescriptor[] vms = _driveService.GetVirtualMachines();
+			foreach (VmGeneralDescriptor vm in vms)
 			{
 				VmItemTemplate template = new VmItemTemplate(ClientSvc, vm.Id, vm.Name, vm.OperatingSystem, vm.State);
 
@@ -104,7 +105,7 @@ public partial class HomeViewModel : ViewModelBase
 	/// Precondition: A new virtual machine was created. descriptor != null. <br/>
 	/// Postcondition: An operation of adding the virtual machine to the displayed virtual machines is posted unto the UI thread. Will execute soon.
 	/// </remarks>
-	private void OnVmCreated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor)
+	private void OnVmCreated(object? sender, VmGeneralDescriptor descriptor)
 	{
 		Dispatcher.UIThread.Post(() =>
 		{
@@ -257,7 +258,7 @@ public partial class HomeViewModel : ViewModelBase
 	/// Precondition: User has clicked the Open button on a VM. <br/>
 	/// Postcondition: A new tab is opened for the VM. If a tab for the VM is already open, the user will be redirected to it.
 	/// </remarks>
-	private void OnVmOpenClicked(SharedDefinitions.VmGeneralDescriptor descriptor) =>
+	private void OnVmOpenClicked(VmGeneralDescriptor descriptor) =>
 		VmOpenClicked?.Invoke(this, descriptor);
 
 	/// <summary>
@@ -283,7 +284,7 @@ public partial class HomeViewModel : ViewModelBase
 	/// Precondition: User has clicked on the delete button on a virtual machine. vm != null.<br/>
 	/// Postcondition: A confirmation popup appears.
 	/// </remarks>
-	private void OnVmDeleteClicked(SharedDefinitions.VmGeneralDescriptor vm) => DeleteVmPopupInitialize(vm);
+	private void OnVmDeleteClicked(VmGeneralDescriptor vm) => DeleteVmPopupInitialize(vm);
 
 	/// <summary>
 	/// Initializes the delete virtual machine popup.
@@ -295,7 +296,7 @@ public partial class HomeViewModel : ViewModelBase
 	/// Postcondition: On success, the popup is initialized and messages are displayed, the returned exit code indicates success. <br/>
 	/// On failure, the popup is closed and the returned exit code indicates the error.
 	/// </remarks>
-	private ExitCode DeleteVmPopupInitialize(SharedDefinitions.VmGeneralDescriptor descriptor)
+	private ExitCode DeleteVmPopupInitialize(VmGeneralDescriptor descriptor)
 	{
 		if (descriptor.Id < 1) return ExitCode.InvalidParameter;
 		
@@ -411,9 +412,9 @@ public partial class HomeViewModel : ViewModelBase
 
 public partial class VmItemTemplate : ObservableObject
 {
-	public Action<SharedDefinitions.VmGeneralDescriptor>? OpenClicked;
+	public Action<VmGeneralDescriptor>? OpenClicked;
 	public Action<VmItemTemplate>? ForceOffClicked;
-	public Action<SharedDefinitions.VmGeneralDescriptor>? DeleteClicked;
+	public Action<VmGeneralDescriptor>? DeleteClicked;
 	
 	public int Id { get; }
 
@@ -510,8 +511,8 @@ public partial class VmItemTemplate : ObservableObject
 	/// Precondition: No specific precondition. <br/>
 	/// Postcondition: A VM general descriptor of this VM item template is returned.
 	/// </remarks>
-	public SharedDefinitions.VmGeneralDescriptor AsVmGeneralDescriptor() => 
-		new SharedDefinitions.VmGeneralDescriptor(Id, Name, OperatingSystem, State);
+	public VmGeneralDescriptor AsVmGeneralDescriptor() => 
+		new VmGeneralDescriptor(Id, Name, OperatingSystem, State);
 	
 	/// <summary>
 	/// Handles the event of the virtual machine being powered on.

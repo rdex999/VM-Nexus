@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Shared;
 using Shared.Networking;
+using Shared.VirtualMachines;
 
 namespace Client.Services;
 
@@ -14,7 +15,7 @@ public class DriveService
 	public bool IsInitialized { get; private set; } = false;
 	
 	private readonly ClientService _clientService;
-	private readonly ConcurrentDictionary<int, SharedDefinitions.VmGeneralDescriptor> _virtualMachines;
+	private readonly ConcurrentDictionary<int, VmGeneralDescriptor> _virtualMachines;
 	private readonly ConcurrentDictionary<int, SharedDefinitions.DriveGeneralDescriptor> _drives;
 
 	private readonly ConcurrentDictionary<int, HashSet<int>> _vmsByDriveId;
@@ -23,7 +24,7 @@ public class DriveService
 	public DriveService(ClientService clientService)
 	{
 		_clientService = clientService;
-		_virtualMachines = new ConcurrentDictionary<int, SharedDefinitions.VmGeneralDescriptor>();
+		_virtualMachines = new ConcurrentDictionary<int, VmGeneralDescriptor>();
 		_drives = new ConcurrentDictionary<int, SharedDefinitions.DriveGeneralDescriptor>();
 		_vmsByDriveId = new ConcurrentDictionary<int, HashSet<int>>();
 		_drivesByVmId = new ConcurrentDictionary<int, HashSet<int>>();
@@ -75,7 +76,7 @@ public class DriveService
 		};
 	}
 
-	public SharedDefinitions.VmGeneralDescriptor[] GetVirtualMachines() => _virtualMachines.Values.ToArray();
+	public VmGeneralDescriptor[] GetVirtualMachines() => _virtualMachines.Values.ToArray();
 	public SharedDefinitions.DriveGeneralDescriptor[] GetDrives() => _drives.Values.ToArray();
 
 	public SharedDefinitions.DriveGeneralDescriptor[]? GetDrivesOnVirtualMachine(int vmId)
@@ -97,13 +98,13 @@ public class DriveService
 		return null;
 	}
 
-	public SharedDefinitions.VmGeneralDescriptor[]? GetVirtualMachinesOnDrive(int driveId)
+	public VmGeneralDescriptor[]? GetVirtualMachinesOnDrive(int driveId)
 	{
 		if (driveId < 1) return null;
 		
 		if (_vmsByDriveId.TryGetValue(driveId, out HashSet<int>? vmIds))
 		{
-			SharedDefinitions.VmGeneralDescriptor[] vms = new SharedDefinitions.VmGeneralDescriptor[vmIds.Count];
+			VmGeneralDescriptor[] vms = new VmGeneralDescriptor[vmIds.Count];
 			int i = 0;
 			foreach (int vmId in vmIds)
 			{
@@ -120,7 +121,7 @@ public class DriveService
 	{
 		if (driveId < 1) return false;
 		
-		SharedDefinitions.VmGeneralDescriptor[]? vms = GetVirtualMachinesOnDrive(driveId);
+		VmGeneralDescriptor[]? vms = GetVirtualMachinesOnDrive(driveId);
 		if (vms == null) return false;
 
 		return vms.Any(vm => vm.State == SharedDefinitions.VmState.Running);
@@ -133,7 +134,7 @@ public class DriveService
 		MessageResponseListVms? response = await _clientService.GetVirtualMachinesAsync();
 		if (response == null || response.Result != MessageResponseListVms.Status.Success) return ExitCode.DataFetchFailed;
 		
-		foreach (SharedDefinitions.VmGeneralDescriptor virtualMachine in response.Vms!)
+		foreach (VmGeneralDescriptor virtualMachine in response.Vms!)
 		{
 			_virtualMachines[virtualMachine.Id] = virtualMachine;
 		}
@@ -220,7 +221,7 @@ public class DriveService
 	
 	private void OnVmPoweredOffOrCrashed(object? sender, int vmId)
 	{
-		if (_virtualMachines.TryGetValue(vmId, out SharedDefinitions.VmGeneralDescriptor? vm))
+		if (_virtualMachines.TryGetValue(vmId, out VmGeneralDescriptor? vm))
 		{
 			vm.State = SharedDefinitions.VmState.ShutDown;
 		}
@@ -228,13 +229,13 @@ public class DriveService
 
 	private void OnVmPoweredOn(object? sender, int vmId)
 	{
-		if (_virtualMachines.TryGetValue(vmId, out SharedDefinitions.VmGeneralDescriptor? vm))
+		if (_virtualMachines.TryGetValue(vmId, out VmGeneralDescriptor? vm))
 		{
 			vm.State = SharedDefinitions.VmState.Running;
 		}	
 	}
 
-	private void OnVmCreated(object? sender, SharedDefinitions.VmGeneralDescriptor descriptor) =>
+	private void OnVmCreated(object? sender, VmGeneralDescriptor descriptor) =>
 		_virtualMachines.TryAdd(descriptor.Id, descriptor);
 
 	private void OnVmDeleted(object? sender, int vmId)
@@ -249,7 +250,7 @@ public class DriveService
 			}
 		}
 		
-		_virtualMachines.TryRemove(vmId, out SharedDefinitions.VmGeneralDescriptor? _);
+		_virtualMachines.TryRemove(vmId, out VmGeneralDescriptor? _);
 	}
 
 	private void OnDriveCreated(object? sender, SharedDefinitions.DriveGeneralDescriptor descriptor) =>

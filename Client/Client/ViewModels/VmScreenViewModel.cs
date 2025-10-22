@@ -14,6 +14,7 @@ using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Shared;
 using Shared.Networking;
+using Shared.VirtualMachines;
 using PixelFormat = Avalonia.Platform.PixelFormat;
 using Point = System.Drawing.Point;
 
@@ -26,7 +27,7 @@ public partial class VmScreenViewModel : ViewModelBase
 
 	private bool _isFocused = false;
 	private bool _streamRunning = false;
-	private SharedDefinitions.VmGeneralDescriptor? _vmDescriptor = null;
+	private VmGeneralDescriptor? _vmDescriptor = null;
 	private PixelFormat? _pixelFormat = null;
 	private readonly Stopwatch _pointerMovementStopwatch = new Stopwatch();
 	private const int PointerMovementHz = 30;
@@ -100,7 +101,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	/// Postcondition: On success, the stream is started and the returned exit code indicates success. <br/>
 	/// On failure, the stream is not started and the returned exit code indicates the error.
 	/// </remarks>
-	public async Task<ExitCode> SwitchVirtualMachineAsync(SharedDefinitions.VmGeneralDescriptor vmDescriptor)
+	public async Task<ExitCode> SwitchVirtualMachineAsync(VmGeneralDescriptor vmDescriptor)
 	{
 		if (_vmDescriptor != null && _vmDescriptor.Id == vmDescriptor.Id)
 		{

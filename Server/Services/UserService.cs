@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using Server.Models;
 using Shared;
+using Shared.VirtualMachines;
 
 namespace Server.Services;
 
@@ -60,7 +61,7 @@ public class UserService
 		UserLoggedOut?.Invoke(this, connection);
 	}
 	
-	public async Task NotifyVirtualMachineCreatedAsync(SharedDefinitions.VmGeneralDescriptor descriptor)
+	public async Task NotifyVirtualMachineCreatedAsync(VmGeneralDescriptor descriptor)
 	{
 		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(descriptor.Id);
 		if (relatedUsers == null) 

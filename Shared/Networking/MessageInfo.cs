@@ -1,5 +1,6 @@
 using System.Drawing;
 using Avalonia.Input;
+using Shared.VirtualMachines;
 
 namespace Shared.Networking;
 
@@ -21,9 +22,9 @@ public class MessageInfoUdp : MessageUdp
 
 public class MessageInfoVmCreated : MessageInfoTcp
 {
-	public SharedDefinitions.VmGeneralDescriptor Descriptor { get; }
+	public VmGeneralDescriptor Descriptor { get; }
 
-	public MessageInfoVmCreated(bool generateGuid, SharedDefinitions.VmGeneralDescriptor descriptor)
+	public MessageInfoVmCreated(bool generateGuid, VmGeneralDescriptor descriptor)
 		: base(generateGuid)
 	{
 		Descriptor = descriptor;

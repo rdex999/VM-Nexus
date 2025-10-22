@@ -44,7 +44,6 @@
 							<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="190"
 							          SelectedIndex="{Binding OperatingSystem}" SelectionChanged="OperatingSystemChangedAsync">
 								<ComboBoxItem>Ubuntu 24.04</ComboBoxItem>
-								<ComboBoxItem>Fedora Linux 42</ComboBoxItem>
 								<ComboBoxItem>Kali Linux 2025.2</ComboBoxItem>
 								<ComboBoxItem>Manjaro Linux</ComboBoxItem>
 								<ComboBoxItem>

@@ -4,7 +4,7 @@ public static class SharedDefinitions
 {
 	public const int ServerTcpPort = 5000;
 	public const int ServerUdpPort = 5001;
-	public const string ServerIp = "192.168.1.155"; /* local IP in network */
+	public const string ServerIp = "172.20.10.2"; /* local IP in network */
 
 	public const int MessageTimeoutMilliseconds = 3 * 60 * 1000;
 	public const int ConnectionDeniedRetryTimeout = 4000;
@@ -63,22 +63,6 @@ public static class SharedDefinitions
 	{
 		Uefi,
 		Bios
-	}
-
-	public class VmGeneralDescriptor
-	{
-		public int Id { get; }
-		public string Name { get; set; }
-		public OperatingSystem OperatingSystem { get; set; }
-		public VmState State { get; set; }
-
-		public VmGeneralDescriptor(int id, string name, OperatingSystem operatingSystem, VmState state)
-		{
-			Id = id;
-			Name = name;
-			OperatingSystem = operatingSystem;
-			State = state;
-		}
 	}
 
 	public class DriveGeneralDescriptor
