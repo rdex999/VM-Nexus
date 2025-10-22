@@ -22,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using Server.Drives;
 using Server.Services;
 using Shared;
+using Shared.VirtualMachines;
 using PixelFormat = MarcusW.VncClient.PixelFormat;
 using Rectangle = MarcusW.VncClient.Rectangle;
 using Size = MarcusW.VncClient.Size;
@@ -47,7 +48,7 @@ public class VirtualMachine
 	private readonly CancellationTokenSource _rfbMessageCts;
 
 	private readonly SharedDefinitions.OperatingSystem _operatingSystem;
-	private readonly SharedDefinitions.CpuArchitecture _cpuArchitecture;
+	private readonly CpuArchitecture _cpuArchitecture;
 	private readonly SharedDefinitions.BootMode _bootMode;
 	private readonly DriveDescriptor[] _drives;
 	private int _pointerPressedButtons = (int)SharedDefinitions.MouseButtons.None;
@@ -61,7 +62,7 @@ public class VirtualMachine
 	private bool _closing = false;
 	
 	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, SharedDefinitions.OperatingSystem operatingSystem,
-		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
+		CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode, DriveDescriptor[] drives)
 	{
 		_databaseService = databaseService;
 		_driveService = driveService;
@@ -675,9 +676,9 @@ public class VirtualMachine
 	{
 		string cpuArch = _cpuArchitecture switch
 		{
-			SharedDefinitions.CpuArchitecture.X86_64 => "x86_64",
-			SharedDefinitions.CpuArchitecture.X86 => "i686",
-			SharedDefinitions.CpuArchitecture.Arm => "ARM",
+			CpuArchitecture.X86_64 => "x86_64",
+			CpuArchitecture.X86 => "i686",
+			CpuArchitecture.Arm => "ARM",
 			_ => throw new ArgumentOutOfRangeException()
 		};
 		XElement os = new XElement("os",

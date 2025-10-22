@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Drives;
 using Shared.Networking;
+using Shared.VirtualMachines;
 
 namespace Client.ViewModels;
 
@@ -30,7 +31,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	private bool _osSetupMessageIsVisible = true;
 	
 	[ObservableProperty]
-	private SharedDefinitions.CpuArchitecture _cpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
+	private CpuArchitecture _cpuArchitecture = CpuArchitecture.X86_64;
 	
 	[ObservableProperty]
 	private bool _cpuArchitectureIsEnabled = true;
@@ -95,7 +96,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			_osDriveSizeMax = 20;
 			_osDriveSizeMin = 9;
 			
-			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86;
+			CpuArchitecture = CpuArchitecture.X86;
 			CpuArchitectureIsEnabled = false;
 		
 			BootMode = SharedDefinitions.BootMode.Bios;
@@ -124,7 +125,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			_osDriveSizeMax = 1024 * 256;
 			_osDriveSizeMin = 1024 * 25;
 		
-			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
+			CpuArchitecture = CpuArchitecture.X86_64;
 			CpuArchitectureIsEnabled = false;
 			
 			BootMode = SharedDefinitions.BootMode.Uefi;
@@ -143,7 +144,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			_osDriveSizeMax = 1024 * 256;
 			_osDriveSizeMin = 1024 * 30;
 		
-			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
+			CpuArchitecture = CpuArchitecture.X86_64;
 			CpuArchitectureIsEnabled = false;
 			
 			BootMode = SharedDefinitions.BootMode.Uefi;
@@ -162,7 +163,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			_osDriveSizeMax = 1024 * 256;
 			_osDriveSizeMin = 1024 * 25;
 		
-			CpuArchitecture = SharedDefinitions.CpuArchitecture.X86_64;
+			CpuArchitecture = CpuArchitecture.X86_64;
 			CpuArchitectureIsEnabled = false;
 			
 			BootMode = SharedDefinitions.BootMode.Uefi;

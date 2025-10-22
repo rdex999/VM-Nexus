@@ -178,7 +178,7 @@ public class ClientService : MessagingService
 	/// On networking failure, null is returned. On other failure, the servers response is returned.
 	/// </remarks>
 	public async Task<MessageResponseCreateVm?> CreateVirtualMachineAsync(string name,
-		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
+		SharedDefinitions.OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
 		(MessageResponse? response, ExitCode _) = await SendRequestAsync(
 			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode)

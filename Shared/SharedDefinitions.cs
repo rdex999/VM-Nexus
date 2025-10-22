@@ -20,13 +20,6 @@ public static class SharedDefinitions
 	public const int AudioFramesPerPacket = (int)((float)AudioFramesFrequency * ((float)AudioPacketMs / 1000.0));
 	public const int AudioBytesPerPacket = AudioFramesPerPacket * AudioChannels * 2;	/* Using two channels, s16le */
 	
-	public enum CpuArchitecture
-	{
-		X86_64,
-		X86,
-		Arm,
-	}
-
 	public enum PartitionTableType
 	{
 		Mbr,

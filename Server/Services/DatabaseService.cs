@@ -236,7 +236,7 @@ public class DatabaseService
 	/// Postcondition: On success, a virtual machine with the given parameters is created. On failure, the returned exit code will indicate the error.
 	/// </remarks>
 	public async Task<ExitCode> CreateVmAsync(int userId, string name, SharedDefinitions.OperatingSystem operatingSystem, 
-		SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
+		CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 	{
 		if (userId < 1) return ExitCode.InvalidParameter;
 		
@@ -577,7 +577,7 @@ public class DatabaseService
 			vmId,
 			reader.GetString(0),
 			(SharedDefinitions.OperatingSystem)reader.GetInt32(1), 
-			(SharedDefinitions.CpuArchitecture)reader.GetInt32(2),
+			(CpuArchitecture)reader.GetInt32(2),
 			(SharedDefinitions.BootMode)reader.GetInt32(3),
 			(SharedDefinitions.VmState)reader.GetInt32(4)
 		);

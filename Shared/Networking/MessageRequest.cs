@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Shared.Drives;
+using Shared.VirtualMachines;
 
 namespace Shared.Networking;
 
@@ -75,11 +76,11 @@ public class MessageRequestCreateVm : MessageRequest
 {
 	public string Name { get; }
 	public SharedDefinitions.OperatingSystem OperatingSystem { get; }
-	public SharedDefinitions.CpuArchitecture CpuArchitecture { get; }
+	public CpuArchitecture CpuArchitecture { get; }
 	public SharedDefinitions.BootMode BootMode { get; }
 
 	public MessageRequestCreateVm(bool generateGuid, string name,
-		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
+		SharedDefinitions.OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, SharedDefinitions.BootMode bootMode)
 		: base(generateGuid)
 	{
 		Name = name;
@@ -92,7 +93,7 @@ public class MessageRequestCreateVm : MessageRequest
 	{
 		return base.IsValidMessage() && !string.IsNullOrEmpty(Name) &&
 		       Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), OperatingSystem) &&
-		       Enum.IsDefined(typeof(SharedDefinitions.CpuArchitecture), CpuArchitecture) &&
+		       Enum.IsDefined(typeof(CpuArchitecture), CpuArchitecture) &&
 		       Enum.IsDefined(typeof(SharedDefinitions.BootMode), BootMode);
 	}
 }
