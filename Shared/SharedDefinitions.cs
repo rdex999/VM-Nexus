@@ -1,4 +1,6 @@
-﻿namespace Shared;
+﻿using Shared.Drives;
+
+namespace Shared;
 
 public static class SharedDefinitions
 {
@@ -23,12 +25,6 @@ public static class SharedDefinitions
 		X86_64,
 		X86,
 		Arm,
-	}
-
-	public enum FilesystemType
-	{
-		Ext4,
-		Fat16,
 	}
 
 	public enum PartitionTableType

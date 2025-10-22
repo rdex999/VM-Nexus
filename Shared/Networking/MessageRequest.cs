@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using Shared.Drives;
 
 namespace Shared.Networking;
 
@@ -141,7 +142,7 @@ public class MessageRequestCreateDrive : MessageRequest
 	 * If an operating system is selected, then the FilesystemType, PartitionTableType, Partitions properties are ignored.
 	 */
 	public SharedDefinitions.OperatingSystem OperatingSystem { get; }			/* Can be -1 for no operating system. */
-	public SharedDefinitions.FilesystemType FilesystemType { get; }				/* Can be -1. Used only if no partition table is used. (PartitionTableType must be -1) */
+	public FilesystemType FilesystemType { get; }				/* Can be -1. Used only if no partition table is used. (PartitionTableType must be -1) */
 	public SharedDefinitions.PartitionTableType PartitionTableType { get; }		/* When used, FilesystemType should be -1 (not used). */
 	public SharedDefinitions.PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
 
@@ -156,7 +157,7 @@ public class MessageRequestCreateDrive : MessageRequest
 		OperatingSystem = operatingSystem;
 		Partitions = [];
 		
-		FilesystemType = (SharedDefinitions.FilesystemType)(-1);
+		FilesystemType = (FilesystemType)(-1);
 		PartitionTableType = (SharedDefinitions.PartitionTableType)(-1);
 	}
 	
@@ -169,13 +170,13 @@ public class MessageRequestCreateDrive : MessageRequest
 		Size = size;
 		PartitionTableType = partitionTableType;
 		Partitions = partitions;
-		FilesystemType = (SharedDefinitions.FilesystemType)(-1);
+		FilesystemType = (FilesystemType)(-1);
 		OperatingSystem = (SharedDefinitions.OperatingSystem)(-1);
 	}
 
 	[JsonConstructor]
 	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
-		SharedDefinitions.OperatingSystem operatingSystem, SharedDefinitions.FilesystemType filesystemType,
+		SharedDefinitions.OperatingSystem operatingSystem, FilesystemType filesystemType,
 		SharedDefinitions.PartitionTableType partitionTableType, SharedDefinitions.PartitionDescriptor[] partitions)
 		: base(generateGuid)
 	{
@@ -204,7 +205,7 @@ public class MessageRequestCreateDrive : MessageRequest
 		if (Enum.IsDefined(typeof(SharedDefinitions.OperatingSystem), OperatingSystem) &&
 		    OperatingSystem != SharedDefinitions.OperatingSystem.Other)
 		{
-			if (FilesystemType != (SharedDefinitions.FilesystemType)(-1) ||
+			if (FilesystemType != (FilesystemType)(-1) ||
 			    PartitionTableType != (SharedDefinitions.PartitionTableType)(-1) || Partitions.Length != 0)
 			{
 				return false;
@@ -213,14 +214,14 @@ public class MessageRequestCreateDrive : MessageRequest
 		else if (OperatingSystem == SharedDefinitions.OperatingSystem.Other ||
 		         OperatingSystem == (SharedDefinitions.OperatingSystem)(-1))
 		{
-			if (Enum.IsDefined(typeof(SharedDefinitions.FilesystemType), FilesystemType) &&
+			if (Enum.IsDefined(typeof(FilesystemType), FilesystemType) &&
 			    PartitionTableType != (SharedDefinitions.PartitionTableType)(-1))
 			{
 				return false;
 			}
 
 			if (Enum.IsDefined(typeof(SharedDefinitions.PartitionTableType), PartitionTableType) &&
-			    (FilesystemType != (SharedDefinitions.FilesystemType)(-1) || Partitions.Length == 0))
+			    (FilesystemType != (FilesystemType)(-1) || Partitions.Length == 0))
 			{
 				return false;
 			}
