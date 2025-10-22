@@ -783,7 +783,11 @@ public class VirtualMachine
 		}
 		
 		XDocument doc = new XDocument(
-			new XElement("domain", new XAttribute("type", "kvm"),
+			new XElement("domain", 
+				new XAttribute("type", _operatingSystem == OperatingSystem.MiniCoffeeOS 
+					? "qemu" 
+					: "kvm"
+				),
 				new XElement("name", Id.ToString()),
 				new XElement("memory", "8192", new XAttribute("unit", "MiB")),
 				new XElement("features",
