@@ -6,5 +6,14 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.DriveExplorerModes.DrivesView"
              x:DataType="dem:DrivesViewModel">
-	Welcome to Avalonia!
+		
+	<ItemsControl ItemsSource="{Binding DriveItems}" HorizontalAlignment="Stretch">
+		<ItemsControl.ItemTemplate>
+			<DataTemplate DataType="{x:Type dem:DriveItemTemplate}">
+				<Border CornerRadius="15" Background="LightBlue" Height="100" Margin="10" Padding="8">
+					<TextBlock Text="{Binding Descriptor.Name}"/>
+				</Border>
+			</DataTemplate>
+		</ItemsControl.ItemTemplate>
+	</ItemsControl>
 </UserControl>
