@@ -22,6 +22,11 @@ public partial class MainViewModel : ViewModelBase
 	public ObservableCollection<SideMenuItemTemplate> SideMenuItems { get; }
 	
 	public ObservableCollection<VmTabTemplate> VmTabs { get; }
+
+	private const int SideMenuIdxHome = 0;
+	private const int SideMenuIdxCreateVm = 1;
+	private const int SideMenuIdxDrives = 2;
+	private const int SideMenuIdxVmScreen = 3;
 	
 	[ObservableProperty]
 	private VmTabTemplate? _selectedVmTab;
@@ -34,7 +39,7 @@ public partial class MainViewModel : ViewModelBase
 
 	[ObservableProperty] 
 	private string _accountMenuTitle;
-
+	
 	/// <summary>
 	/// Creates the MainViewModel object. Initializes UI.
 	/// </summary>
@@ -67,8 +72,9 @@ public partial class MainViewModel : ViewModelBase
 		{
 			new SideMenuItemTemplate("Home", new HomeViewModel(NavigationSvc, ClientSvc, driveService), "HomeRegular"),
 			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(NavigationSvc,  ClientSvc, driveService), "AddRegular"),
+			new SideMenuItemTemplate("Drives", new DriveExplorerViewModel(NavigationSvc, ClientSvc, driveService), "FolderRegular"),
 		};
-		CurrentSideMenuItem = SideMenuItems[0];
+		CurrentSideMenuItem = SideMenuItems[SideMenuIdxHome];
 		CurrentPageViewModel = SideMenuItems.First().ViewModel;
 		((HomeViewModel)CurrentPageViewModel).VmOpenClicked += OnVmOpenClicked;
 
@@ -113,7 +119,7 @@ public partial class MainViewModel : ViewModelBase
 		VmTabs.Add(new VmTabTemplate(descriptor));
 		SelectedVmTab = VmTabs.Last();
 		SideMenuMode(true);
-		CurrentSideMenuItem = SideMenuItems[2];
+		CurrentSideMenuItem = SideMenuItems[SideMenuIdxVmScreen];
 	}
 
 	/// <summary>
@@ -160,7 +166,7 @@ public partial class MainViewModel : ViewModelBase
 
 		if (SelectedVmTab == value)
 		{
-			CurrentSideMenuItem = SideMenuItems.First();	/* Redirect to home page. */
+			CurrentSideMenuItem = SideMenuItems[SideMenuIdxHome];	/* Redirect to home page. */
 			SideMenuMode(false);
 		}
 		
@@ -201,10 +207,9 @@ public partial class MainViewModel : ViewModelBase
 	/// </remarks>
 	private void SideMenuMode(bool extended)
 	{
-		if ((extended && SideMenuItems.Count != 2) || (!extended && SideMenuItems.Count == 2))
-		{
+		bool isExtended = SideMenuItems.Count >= SideMenuIdxVmScreen + 1;
+		if (isExtended == extended)
 			return;
-		}
 
 		if (extended)
 		{
@@ -232,7 +237,7 @@ public partial class MainViewModel : ViewModelBase
 		}
 		
 		SideMenuMode(true);
-		CurrentSideMenuItem = SideMenuItems[2];
+		CurrentSideMenuItem = SideMenuItems[SideMenuIdxVmScreen];
 		_ = ((VmScreenViewModel)CurrentPageViewModel).SwitchVirtualMachineAsync(value.Descriptor);
 	}
 
