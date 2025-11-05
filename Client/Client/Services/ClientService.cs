@@ -256,15 +256,15 @@ public class ClientService : MessagingService
 	/// Postcondition: On success, the drive is created and the servers response is returned. <br/>
 	/// On failure, if there was a networking failure, null is returned. On other failures, the servers response is returned.
 	/// </remarks>
-	public async Task<MessageResponseCreateDrive?> CreateDriveAsync(
-		string name, DriveType type, int size, OperatingSystem operatingSystem)
+	public async Task<MessageResponseCreateDriveOs?> CreateDriveOsAsync(
+		string name, int size, OperatingSystem operatingSystem)
 	{
-		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestCreateDrive(true, name, type, size, operatingSystem));
+		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestCreateDriveOs(true, name, size, operatingSystem));
 		if (response == null)
 		{
 			return null;
 		}
-		return (MessageResponseCreateDrive)response;
+		return (MessageResponseCreateDriveOs)response;
 	}
 
 	/// <summary>

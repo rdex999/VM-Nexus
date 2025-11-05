@@ -450,45 +450,40 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 			
-			case MessageRequestCreateDrive reqCreateDrive:
+			case MessageRequestCreateDriveOs reqCreateDrive:
 			{
 				if (!_isLoggedIn)
 				{
-					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
+					SendResponse(new MessageResponseCreateDriveOs(true, reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.Failure));
 					break;
 				}
 				
 				string driveNameTrimmed = reqCreateDrive.Name.Trim();
 
-				if (reqCreateDrive.OperatingSystem == OperatingSystem.Other)
-				{
-					/* Temporary */
-					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
-				}
-				else
-				{
-					result = await _driveService.CreateOperatingSystemDriveAsync(UserId, driveNameTrimmed, reqCreateDrive.OperatingSystem, reqCreateDrive.Size);
-				}
+				result = await _driveService.CreateOperatingSystemDriveAsync(UserId, driveNameTrimmed, reqCreateDrive.OperatingSystem, reqCreateDrive.Size);
 				
 				if (result == ExitCode.DriveAlreadyExists)
 				{
-					SendResponse(new MessageResponseCreateDrive(true,  reqCreateDrive.Id, MessageResponseCreateDrive.Status.DriveAlreadyExists));
+					SendResponse(new MessageResponseCreateDriveOs(true,  reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.DriveAlreadyExists));
 					break;			
 				}
 				if (result == ExitCode.Success)
 				{
 					/* Must succeed because the drive was created successfully */
 					int id = await _driveService.GetDriveIdAsync(UserId, driveNameTrimmed);		
-					SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Success, id));
+					SendResponse(new MessageResponseCreateDriveOs(true, reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.Success, id));
 					
-					await _userService.NotifyDriveCreatedAsync(
-						new DriveGeneralDescriptor(id, driveNameTrimmed, reqCreateDrive.Size, reqCreateDrive.Type)
+					await _userService.NotifyDriveCreatedAsync(new DriveGeneralDescriptor(id, driveNameTrimmed, reqCreateDrive.Size, 
+							reqCreateDrive.OperatingSystem == OperatingSystem.MiniCoffeeOS 
+								? DriveType.Floppy 
+								: DriveType.Disk
+						)
 					);
 					
 					break;				
 				}
 
-				SendResponse(new MessageResponseCreateDrive(true, reqCreateDrive.Id, MessageResponseCreateDrive.Status.Failure));
+				SendResponse(new MessageResponseCreateDriveOs(true, reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.Failure));
 				break;
 			}
 

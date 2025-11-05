@@ -183,19 +183,19 @@ public class MessageResponseCheckVmExist : MessageResponse
 	}
 }
 
-public class MessageResponseCreateDrive : MessageResponse
+public class MessageResponseCreateDriveOs : MessageResponse
 {
 	public Status Result { get; }
 	public int DriveId { get; }		/* The ID of the new drive */
 
 	[JsonConstructor]
-	public MessageResponseCreateDrive(bool generateGuid, Guid requestId, Status result, int driveId)
+	public MessageResponseCreateDriveOs(bool generateGuid, Guid requestId, Status result, int driveId)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
 		DriveId = driveId;
 	}
-	public MessageResponseCreateDrive(bool generateGuid, Guid requestId, Status result)
+	public MessageResponseCreateDriveOs(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{
 		Result = result;

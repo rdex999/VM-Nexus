@@ -133,10 +133,9 @@ public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a 
 	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Name);
 }
 
-public class MessageRequestCreateDrive : MessageRequest
+public class MessageRequestCreateDriveOs : MessageRequest
 {
 	public string Name { get; }
-	public Shared.Drives.DriveType Type { get; }
 	public int Size { get; }	/* The size of the drive - in MiB */
 	
 	/*
@@ -144,93 +143,19 @@ public class MessageRequestCreateDrive : MessageRequest
 	 * If an operating system is selected, then the FilesystemType, PartitionTableType, Partitions properties are ignored.
 	 */
 	public OperatingSystem OperatingSystem { get; }			/* Can be -1 for no operating system. */
-	public FilesystemType FilesystemType { get; }				/* Can be -1. Used only if no partition table is used. (PartitionTableType must be -1) */
-	public PartitionTableType PartitionTableType { get; }		/* When used, FilesystemType should be -1 (not used). */
-	public PartitionDescriptor[] Partitions { get; }			/* Can be empty if using a filesystem only. */
 
-
-	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
-		OperatingSystem operatingSystem)
+	public MessageRequestCreateDriveOs(bool generateGuid, string name, int size, OperatingSystem operatingSystem)
 		: base(generateGuid)
 	{
 		Name = name;
-		Type = type;
 		Size = size;
 		OperatingSystem = operatingSystem;
-		Partitions = [];
-		
-		FilesystemType = (FilesystemType)(-1);
-		PartitionTableType = (PartitionTableType)(-1);
 	}
 	
-	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
-		PartitionTableType partitionTableType, PartitionDescriptor[] partitions)
-		: base(generateGuid)
-	{
-		Name = name;
-		Type = type;
-		Size = size;
-		PartitionTableType = partitionTableType;
-		Partitions = partitions;
-		FilesystemType = (FilesystemType)(-1);
-		OperatingSystem = (OperatingSystem)(-1);
-	}
-
-	[JsonConstructor]
-	public MessageRequestCreateDrive(bool generateGuid, string name, Shared.Drives.DriveType type, int size,
-		OperatingSystem operatingSystem, FilesystemType filesystemType,
-		PartitionTableType partitionTableType, PartitionDescriptor[] partitions)
-		: base(generateGuid)
-	{
-		Name = name;
-		Type = type;
-		Size = size;
-		OperatingSystem = operatingSystem;
-		FilesystemType = filesystemType;
-		PartitionTableType = partitionTableType;
-		Partitions = partitions;
-	}
-
-	public override bool IsValidMessage()
-	{
-		if (!base.IsValidMessage() || string.IsNullOrEmpty(Name) || !Enum.IsDefined(typeof(Shared.Drives.DriveType), Type) || Size < 1)
-		{
-			return false;
-		}
-
-		if (!Enum.IsDefined(typeof(OperatingSystem), OperatingSystem) &&
-		    OperatingSystem != (OperatingSystem)(-1))
-		{
-			return false;
-		}
-
-		if (Enum.IsDefined(typeof(OperatingSystem), OperatingSystem) &&
-		    OperatingSystem != OperatingSystem.Other)
-		{
-			if (FilesystemType != (FilesystemType)(-1) ||
-			    PartitionTableType != (PartitionTableType)(-1) || Partitions.Length != 0)
-			{
-				return false;
-			}
-		}
-		else if (OperatingSystem == OperatingSystem.Other ||
-		         OperatingSystem == (OperatingSystem)(-1))
-		{
-			if (Enum.IsDefined(typeof(FilesystemType), FilesystemType) &&
-			    PartitionTableType != (PartitionTableType)(-1))
-			{
-				return false;
-			}
-
-			if (Enum.IsDefined(typeof(PartitionTableType), PartitionTableType) &&
-			    (FilesystemType != (FilesystemType)(-1) || Partitions.Length == 0))
-			{
-				return false;
-			}
-		}
-
-		return true;
-	}
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Name) 
+	                                                               && Enum.IsDefined(typeof(OperatingSystem), OperatingSystem)
+	                                                               && OperatingSystem != OperatingSystem.Other
+	                                                               && Common.IsOperatingSystemDriveSizeValid(OperatingSystem, Size);
 }
 
 public class MessageRequestDeleteDrive : MessageRequest

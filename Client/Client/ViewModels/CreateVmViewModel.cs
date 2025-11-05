@@ -239,10 +239,10 @@ public partial class CreateVmViewModel : ViewModelBase
 		string vmNameTrimmed = VmName.Trim();
 		bool createDrive = OperatingSystem != OperatingSystem.Other;
 		Task<MessageResponseCreateVm?> taskCreateVm = ClientSvc.CreateVirtualMachineAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, BootMode);
-		Task<MessageResponseCreateDrive?> taskCreateDrive = null!;
+		Task<MessageResponseCreateDriveOs?> taskCreateDrive = null!;
 		
 		MessageResponseCreateVm.Status createVmResult = MessageResponseCreateVm.Status.Failure;
-		MessageResponseCreateDrive.Status createDriveResult = MessageResponseCreateDrive.Status.Failure;
+		MessageResponseCreateDriveOs.Status createDriveResult = MessageResponseCreateDriveOs.Status.Failure;
 		ExitCode connectDriveResult = ExitCode.Failure;
 
 		if (!createDrive)
@@ -251,9 +251,12 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 		else
 		{
-			string driveName = $"{vmNameTrimmed} - {OperatingSystem.ToString()}";
+			string osDriveNameExtenstion = $" - {OperatingSystem.ToString()}";
+			string driveName = vmNameTrimmed.Substring(0,
+				Math.Min(vmNameTrimmed.Length, SharedDefinitions.CredentialsMaxLength - osDriveNameExtenstion.Length)
+			) + osDriveNameExtenstion;
 			
-			taskCreateDrive = ClientSvc.CreateDriveAsync(driveName, OsDriveType, OsDriveSize!.Value, OperatingSystem);
+			taskCreateDrive = ClientSvc.CreateDriveOsAsync(driveName, OsDriveSize!.Value, OperatingSystem);
 			await Task.WhenAll(taskCreateVm, taskCreateDrive);
 
 			createVmResult = taskCreateVm.Result == null
@@ -261,26 +264,31 @@ public partial class CreateVmViewModel : ViewModelBase
 				: taskCreateVm.Result.Result;
 			
 			createDriveResult = taskCreateDrive.Result == null 
-				? MessageResponseCreateDrive.Status.Failure 
+				? MessageResponseCreateDriveOs.Status.Failure 
 				: taskCreateDrive.Result.Result;
 
 			if (createVmResult == MessageResponseCreateVm.Status.Success)
 			{
 				/* Search for an available drive name and use it. */
 				int cnt = 0;
-				while (createDriveResult == MessageResponseCreateDrive.Status.DriveAlreadyExists)
+				while (createDriveResult == MessageResponseCreateDriveOs.Status.DriveAlreadyExists)
 				{
-					taskCreateDrive = ClientSvc.CreateDriveAsync(driveName + "_" + cnt++, OsDriveType,
-						OsDriveSize!.Value, OperatingSystem);
+					osDriveNameExtenstion = $" - {OperatingSystem.ToString()}_{cnt++}";
+					
+					driveName = vmNameTrimmed.Substring(0,
+						Math.Min(vmNameTrimmed.Length, SharedDefinitions.CredentialsMaxLength - osDriveNameExtenstion.Length)
+					) + osDriveNameExtenstion;
+					
+					taskCreateDrive = ClientSvc.CreateDriveOsAsync(driveName, OsDriveSize!.Value, OperatingSystem);
 
 					await taskCreateDrive;
 
 					createDriveResult = taskCreateDrive.Result == null
-						? MessageResponseCreateDrive.Status.Failure
+						? MessageResponseCreateDriveOs.Status.Failure
 						: taskCreateDrive.Result.Result;
 				}
 
-				if (createDriveResult == MessageResponseCreateDrive.Status.Success)
+				if (createDriveResult == MessageResponseCreateDriveOs.Status.Success)
 				{
 					connectDriveResult = await _driveService.ConnectDriveAsync(taskCreateDrive.Result!.DriveId, taskCreateVm.Result!.VmId);
 				}
@@ -289,7 +297,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	
 		/* If Other is selected as the operating system - taskCreateDrive wont have a value because we are not creating a drive. */
 		if (createVmResult == MessageResponseCreateVm.Status.Success && 
-		    (!createDrive || (createDriveResult == MessageResponseCreateDrive.Status.Success && connectDriveResult == ExitCode.Success)))
+		    (!createDrive || (createDriveResult == MessageResponseCreateDriveOs.Status.Success && connectDriveResult == ExitCode.Success)))
 		{	
 			VmCreationMessageSuccessClass = true;
 			VmCreationMessage = "The virtual machine has been created successfully!";
@@ -308,7 +316,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		/* If something went wrong */
 		if (createDrive && (
 			    createVmResult != MessageResponseCreateVm.Status.Success ||
-			    createDriveResult != MessageResponseCreateDrive.Status.Success ||
+			    createDriveResult != MessageResponseCreateDriveOs.Status.Success ||
 			    connectDriveResult != ExitCode.Success)
 		   )
 		{
@@ -320,7 +328,7 @@ public partial class CreateVmViewModel : ViewModelBase
 				/* TODO: Delete the drive connection */
 			}
 			
-			if (createDriveResult == MessageResponseCreateDrive.Status.Success)
+			if (createDriveResult == MessageResponseCreateDriveOs.Status.Success)
 			{
 				tasks.Add(ClientSvc.DeleteDriveAsync(taskCreateDrive.Result!.DriveId));
 			}

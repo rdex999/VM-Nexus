@@ -30,7 +30,7 @@
 		<Border Background="#d3e6eb" Padding="7">		<!-- Also looks good #e2e7e8 -->
 			<Grid>
 				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}"
-				              Width="40" Height="40" Margin="0">
+				              Width="40" Height="40" Margin="5, 0, 0, 0">
 					<PathIcon Data="{StaticResource NavigationRegular}"></PathIcon>
 				</ToggleButton>
 
