@@ -134,7 +134,7 @@
 							               ValueChanged="VmCreationInfoChangedNumericAsync"
 							               Value="{Binding OsDriveSize}"
 							               IsEnabled="{Binding OsDriveSizeIsEnabled}"
-							               Increment="1024" Width="180" />
+							               Increment="1024" Width="180" Maximum="262144" Minimum="0"/>
 						</Grid>
 						<TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding OsDriveSizeErrorMessage}" />
 						

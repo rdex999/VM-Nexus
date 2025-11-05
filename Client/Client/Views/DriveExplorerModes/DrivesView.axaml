@@ -6,14 +6,23 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.DriveExplorerModes.DrivesView"
              x:DataType="dem:DrivesViewModel">
-		
-	<ItemsControl ItemsSource="{Binding DriveItems}" HorizontalAlignment="Stretch">
-		<ItemsControl.ItemTemplate>
-			<DataTemplate DataType="{x:Type dem:DriveItemTemplate}">
-				<Border CornerRadius="15" Background="LightBlue" Height="100" Margin="10" Padding="8">
-					<TextBlock Text="{Binding Descriptor.Name}"/>
-				</Border>
-			</DataTemplate>
-		</ItemsControl.ItemTemplate>
-	</ItemsControl>
+
+	<ScrollViewer>
+		<ScrollViewer>
+			<ItemsControl ItemsSource="{Binding DriveItems}" HorizontalAlignment="Left" Width="600">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate DataType="{x:Type dem:DriveItemTemplate}">
+						<Border CornerRadius="15" Background="#e6eeef" Height="100" Margin="10" Padding="10"
+						        BorderBrush="#cee0df" BorderThickness="1">
+							<Grid ColumnDefinitions="1.5*, *, *">
+								<TextBlock Text="{Binding Name}" FontSize="15" />
+								<TextBlock Grid.Column="1" Text="{Binding SizeString}" FontSize="15" FontWeight="DemiBold" />
+								<TextBlock Grid.Column="2" Text="{Binding DriveType}" FontSize="15" FontWeight="DemiBold" />
+							</Grid>
+						</Border>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+	</ScrollViewer>
 </UserControl>
