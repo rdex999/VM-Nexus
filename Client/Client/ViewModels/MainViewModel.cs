@@ -72,7 +72,7 @@ public partial class MainViewModel : ViewModelBase
 		{
 			new SideMenuItemTemplate("Home", new HomeViewModel(NavigationSvc, ClientSvc, driveService), "HomeRegular"),
 			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(NavigationSvc,  ClientSvc, driveService), "AddRegular"),
-			new SideMenuItemTemplate("Drives", new DriveExplorerViewModel(NavigationSvc, ClientSvc, driveService), "FolderRegular"),
+			new SideMenuItemTemplate("Drives", new DriveExplorerViewModel(NavigationSvc, ClientSvc, driveService), "StorageRegular"),
 		};
 		CurrentSideMenuItem = SideMenuItems[SideMenuIdxHome];
 		CurrentPageViewModel = SideMenuItems.First().ViewModel;
