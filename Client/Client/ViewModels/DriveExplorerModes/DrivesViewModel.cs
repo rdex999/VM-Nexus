@@ -1,23 +1,31 @@
 using System.Collections.ObjectModel;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Shared;
 using Shared.Drives;
 
 namespace Client.ViewModels.DriveExplorerModes;
 
 public class DrivesViewModel : ViewModelBase
 {
+	private readonly DriveService _driveService;
 	public ObservableCollection<DriveItemTemplate> DriveItems { get; }
 	
-	public DrivesViewModel(NavigationService navigationService, ClientService clientService)
+	public DrivesViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)
 	{
+		_driveService = driveService;
 		DriveItems = new ObservableCollection<DriveItemTemplate>();
-		
-		/* For testing */
-		DriveItems.Add(new DriveItemTemplate(0, "drive1", 26000, DriveType.Disk));
-		DriveItems.Add(new DriveItemTemplate(1, "drive2", 1024 * 32, DriveType.Disk));
-		DriveItems.Add(new DriveItemTemplate(2, "drive3", 260, DriveType.Floppy));
+		driveService.Initialized += DriveServiceOnInitialized;
+	}
+
+	private void DriveServiceOnInitialized(object? sender, ExitCode status)
+	{
+		DriveItems.Clear();
+		foreach (DriveGeneralDescriptor descriptor in _driveService.GetDrives())
+		{
+			DriveItems.Add(new DriveItemTemplate(descriptor));
+		}
 	}
 }
 
@@ -54,5 +62,13 @@ public partial class DriveItemTemplate : ObservableObject
 		Name = name;
 		Size = size;
 		DriveType = driveType;
+	}
+
+	public DriveItemTemplate(DriveGeneralDescriptor descriptor)
+	{
+		_id = descriptor.Id;
+		Name = descriptor.Name;
+		Size = descriptor.Size;
+		DriveType = descriptor.DriveType;
 	}
 }

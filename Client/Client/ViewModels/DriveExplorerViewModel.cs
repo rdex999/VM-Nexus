@@ -15,6 +15,6 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		: base(navigationService, clientService)
 	{
 		_driveService = driveService;
-		ExplorerModeViewModel = new DrivesViewModel(NavigationSvc, ClientSvc);
+		ExplorerModeViewModel = new DrivesViewModel(NavigationSvc, ClientSvc, driveService);
 	}
 }

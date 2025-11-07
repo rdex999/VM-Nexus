@@ -34,10 +34,20 @@
 						<Grid ColumnDefinitions="Auto, *" ColumnSpacing="25">
 							<Image Source="/Assets/Drive.png" Width="70" Height="70" RenderOptions.BitmapInterpolationMode="HighQuality"/>
 							
-							<Grid Grid.Column="1" ColumnDefinitions="1.5*, *, *">
+							<Grid Grid.Column="1" ColumnDefinitions="1.5*, *, *, Auto">
 								<TextBlock Text="{Binding Name}" FontSize="15" />
 								<TextBlock Grid.Column="1" Text="{Binding SizeString}" FontSize="15" FontWeight="DemiBold" />
 								<TextBlock Grid.Column="2" Text="{Binding DriveType}" FontSize="15" FontWeight="DemiBold" />
+								
+								<Button Grid.Column="3" VerticalAlignment="Top" Padding="4">
+									<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
+									
+									<Button.Flyout>
+										<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
+											<MenuItem Header="Delete"/>
+										</MenuFlyout>
+									</Button.Flyout>
+								</Button>
 							</Grid>
 						</Grid>
 					</Border>
