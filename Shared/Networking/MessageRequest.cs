@@ -202,6 +202,19 @@ public class MessageRequestListDrives : MessageRequest
 	}
 }
 
+public class MessageRequestListPathItems : MessageRequest
+{
+	public string Path { get; }
+
+	public MessageRequestListPathItems(bool generateGuid, string path)
+		: base(generateGuid)
+	{
+		Path = path;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Path);
+}
+
 public class MessageRequestVmStartup : MessageRequest
 {
 	public int VmId { get; }

@@ -310,6 +310,45 @@ public class MessageResponseListDrives : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+public class MessageResponseListPathItems : MessageResponse
+{
+	public Status Result { get; }
+	public PathItem[]? PathItems { get; }
+
+	[JsonConstructor]
+	public MessageResponseListPathItems(bool generateGuid, Guid requestId, Status result, PathItem[]? pathItems)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Result = result;
+		PathItems = pathItems;
+	}
+
+	public MessageResponseListPathItems(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		PathItems = null;
+	}
+
+	public MessageResponseListPathItems(bool generateGuid, Guid requestId, PathItem[] pathItems)
+		: base(generateGuid, requestId)
+	{
+		Result = Status.Success;
+		PathItems = pathItems;
+	}
+	
+	
+	public enum Status
+	{
+		Success,
+		InvalidPath,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
 public class MessageResponseVmStartup : MessageResponse
 {
 	public Status Result { get; }
