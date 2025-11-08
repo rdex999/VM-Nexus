@@ -22,7 +22,7 @@ public partial class HomeViewModel : ViewModelBase
 
 	private readonly DriveService _driveService;
 	
-	private VmItemTemplate _forceOffWarningVm;
+	private VmItemTemplate _forceOffWarningVm = null!;
 	
 	[ObservableProperty] 
 	private bool _forceOffWarningIsOpen = false;

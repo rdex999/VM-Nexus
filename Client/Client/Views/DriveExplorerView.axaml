@@ -12,7 +12,7 @@
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<MergeResourceInclude Source="/Resources/Geometries.axaml" />
+				<ResourceInclude Source="/Resources/Geometries.axaml" />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
@@ -21,6 +21,9 @@
 		<Grid ColumnDefinitions="Auto, Auto, *" ColumnSpacing="8">
 			<Button Background="#e8e8e8" CornerRadius="6">
 				<Button.Styles>
+					<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+						<Setter Property="Background" Value="#efefef"/>
+					</Style>
 					<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
 						<Setter Property="Background" Value="LightGray"/>
 					</Style>
@@ -32,6 +35,9 @@
 			
 			<Button Grid.Column="1" Background="#e8e8e8" CornerRadius="6">
 				<Button.Styles>
+					<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+						<Setter Property="Background" Value="#efefef"/>
+					</Style>
 					<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
 						<Setter Property="Background" Value="LightGray"/>
 					</Style>

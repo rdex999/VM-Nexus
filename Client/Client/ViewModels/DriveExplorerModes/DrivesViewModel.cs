@@ -1,7 +1,6 @@
 using System.Collections.ObjectModel;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
-using Shared;
 using Shared.Drives;
 
 namespace Client.ViewModels.DriveExplorerModes;
@@ -16,22 +15,49 @@ public class DrivesViewModel : ViewModelBase
 	{
 		_driveService = driveService;
 		DriveItems = new ObservableCollection<DriveItemTemplate>();
-		driveService.Initialized += DriveServiceOnInitialized;
+		driveService.Initialized += (_, _) => UpdateDrives();
+		ClientSvc.DriveCreated += (_, descriptor) => DriveItems.Add(new DriveItemTemplate(descriptor));
+		ClientSvc.DriveDeleted += OnDriveDeleted;
 	}
 
-	private void DriveServiceOnInitialized(object? sender, ExitCode status)
+	/// <summary>
+	/// Handles a drive deletion event.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="id">The ID of the drive that was deleted. id >= 1.</param>
+	/// <remarks>
+	/// Precondition: One of the user's drives was deleted. id >= 1. <br/>
+	/// Postcondition: Event is handled, drive is removed from display.
+	/// </remarks>
+	private void OnDriveDeleted(object? sender, int id)
+	{
+		for (int i = 0; i < DriveItems.Count; ++i)
+		{
+			if (DriveItems[i].Id == id)
+				DriveItems.RemoveAt(i);
+		}
+	}
+
+	/// <summary>
+	/// Updates the list of the user's drives.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: DriveService is initialized. <br/>
+	/// Postcondition: The user's drives are fetched and displayed.
+	/// </remarks>
+	private void UpdateDrives()
 	{
 		DriveItems.Clear();
 		foreach (DriveGeneralDescriptor descriptor in _driveService.GetDrives())
 		{
 			DriveItems.Add(new DriveItemTemplate(descriptor));
-		}
+		}	
 	}
 }
 
 public partial class DriveItemTemplate : ObservableObject
 {
-	private int _id;
+	public int Id { get; }
 
 	private int _size;
 
@@ -56,17 +82,9 @@ public partial class DriveItemTemplate : ObservableObject
 	[ObservableProperty] 
 	private DriveType _driveType;
 
-	public DriveItemTemplate(int id, string name, int size, DriveType driveType)
-	{
-		_id = id;
-		Name = name;
-		Size = size;
-		DriveType = driveType;
-	}
-
 	public DriveItemTemplate(DriveGeneralDescriptor descriptor)
 	{
-		_id = descriptor.Id;
+		Id = descriptor.Id;
 		Name = descriptor.Name;
 		Size = descriptor.Size;
 		DriveType = descriptor.DriveType;

@@ -10,7 +10,7 @@
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<MergeResourceInclude Source="/Resources/Geometries.axaml" />
+				<ResourceInclude Source="/Resources/Geometries.axaml" />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
@@ -33,20 +33,33 @@
 						</Border.Styles>
 						<Grid ColumnDefinitions="Auto, *" ColumnSpacing="25">
 							<Image Source="/Assets/Drive.png" Width="70" Height="70" RenderOptions.BitmapInterpolationMode="HighQuality"/>
-							
-							<Grid Grid.Column="1" ColumnDefinitions="1.5*, *, *, Auto">
-								<TextBlock Text="{Binding Name}" FontSize="15" />
-								<TextBlock Grid.Column="1" Text="{Binding SizeString}" FontSize="15" FontWeight="DemiBold" />
-								<TextBlock Grid.Column="2" Text="{Binding DriveType}" FontSize="15" FontWeight="DemiBold" />
+
+							<Grid Grid.Column="1" RowDefinitions="Auto, *">
+								<Grid ColumnDefinitions="1.5*, *, *, Auto">
+									<TextBlock Text="{Binding Name}" FontSize="15" />
+									<TextBlock Grid.Column="1" Text="{Binding SizeString}" FontSize="15" FontWeight="DemiBold" />
+									<TextBlock Grid.Column="2" Text="{Binding DriveType}" FontSize="15" FontWeight="DemiBold" />
+
+									<Button Grid.Column="3" VerticalAlignment="Top" Padding="4">
+										<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
+
+										<Button.Flyout>
+											<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
+												<MenuItem Header="Delete" />
+											</MenuFlyout>
+										</Button.Flyout>
+									</Button>
+								</Grid>
 								
-								<Button Grid.Column="3" VerticalAlignment="Top" Padding="4">
-									<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
-									
-									<Button.Flyout>
-										<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
-											<MenuItem Header="Delete"/>
-										</MenuFlyout>
-									</Button.Flyout>
+								<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" 
+								        Padding="26, 6" Margin="0, 0, 50, 3" CornerRadius="10"
+								        Background="#c7c7cc" FontWeight="Bold" >
+									<Button.Styles>
+										<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+											<Setter Property="Background" Value="#a7a7ac"/>
+										</Style>
+									</Button.Styles>
+									Open
 								</Button>
 							</Grid>
 						</Grid>
