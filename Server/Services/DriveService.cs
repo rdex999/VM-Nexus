@@ -4,9 +4,14 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using DiscUtils;
+using DiscUtils.Ext;
 using DiscUtils.Fat;
+using DiscUtils.HfsPlus;
+using DiscUtils.Iso9660;
 using DiscUtils.Partitions;
 using DiscUtils.Raw;
+using DiscUtils.SquashFs;
 using DiscUtils.Streams;
 using Shared;
 using Shared.Drives;
@@ -246,6 +251,16 @@ public class DriveService
 	/// </remarks>
 	public string GetDriveFilePath(int driveId) => GetVmNexusFolderPath() + "/DiskImages/" + GetDriveFileName(driveId);
 
+	/// <summary>
+	/// Lists items under the given path in the given drive.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to use. driveId >= 1.</param>
+	/// <param name="path">The path in the drive under which to list the items. path != null.</param>
+	/// <returns>An array of path items, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. The given path exists and is in valid syntax. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: On success, an array of path items representing the items under the given path is returned. On failure, null is returned.
+	/// </remarks>
 	public PathItem[]? ListItems(int driveId, string path)
 	{
 		if (driveId < 1)
@@ -253,7 +268,6 @@ public class DriveService
 		
 		string pathTrimmed = path.Trim(SharedDefinitions.DirectorySeparators);
 		string[] pathParts = pathTrimmed.Split(SharedDefinitions.DirectorySeparators);
-		int firstFsPathPart = 0;
 		
 		List<PathItem> items = new List<PathItem>();
 		Stream image = File.OpenRead(GetDriveFilePath(driveId));
@@ -297,55 +311,102 @@ public class DriveService
 			PartitionInfo partitionInfo = drive.Partitions.Partitions[partitionIndex];
 			filesystemStream = partitionInfo.Open();
 			filesystemStream.Seek(partitionInfo.FirstSector * drive.SectorSize, SeekOrigin.Begin);
-			firstFsPathPart = 1;
 		}
 		else
 		{
 			filesystemStream = drive.Content;
-			return ListItemsOnFilesystemPath(filesystemStream, pathTrimmed);
+			return ListItemsOnFilesystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()!));
 		}
-		throw new NotImplementedException();
+
+		return ListItemsOnFilesystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()[1..]!));
 	}
 
+	/// <summary>
+	/// Lists items under the given path in the given filesystem. (which is the given stream)
+	/// </summary>
+	/// <param name="stream">The stream representing the filesystem on the disk. stream != null.</param>
+	/// <param name="path">The path under which to list the items on. path != null.</param>
+	/// <returns>An array of path items representing the items under the given path, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: The given stream represents a valid and supported filesystem. The given path exists and is in valid syntax.
+	/// stream != null &amp;&amp; path != null <br/>
+	/// Postcondition: On success, an array of path items representing the items under the given path is returned. On failure, null is returned.
+	/// </remarks>
 	private PathItem[]? ListItemsOnFilesystemPath(Stream stream, string path)
 	{
 		string pathTrimmed = path.Trim(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+		DiscFileSystem? fileSystem;
 		if (FatFileSystem.Detect(stream))
 		{
-			FatFileSystem fileSystem = new FatFileSystem(stream, Ownership.None);
-			
-			string[] filePaths = fileSystem.GetFiles(pathTrimmed);
-			string[] directoryPaths = fileSystem.GetDirectories(pathTrimmed);
-			PathItem[] items = new PathItem[filePaths.Length + directoryPaths.Length];
-			int index = 0;
-			
-			foreach (string filePath in filePaths)
+			fileSystem = new FatFileSystem(stream, Ownership.None);
+		}	
+		else if (CDReader.Detect(stream))
+		{
+			fileSystem = new CDReader(stream, true);
+		}
+		else if (SquashFileSystemReader.Detect(stream))
+		{
+			fileSystem = new SquashFileSystemReader(stream);
+		}
+		else
+		{
+			try
 			{
-				DateTime accessed = fileSystem.GetLastAccessTime(filePath);
-				DateTime modified = fileSystem.GetLastWriteTime(filePath);
-				DateTime created = fileSystem.GetCreationTime(filePath);
-				long sizeBytes = fileSystem.GetFileLength(filePath);
-				items[index++] = new PathItemFile(
-					filePath.Split(SharedDefinitions.DirectorySeparators).Last(), 
-					sizeBytes, accessed, modified, created
-				);
+				fileSystem = new ExtFileSystem(stream, new FileSystemParameters());
 			}
-
-			foreach (string directoryPath in directoryPaths)
+			catch (Exception)
 			{
-				DateTime modified = fileSystem.GetLastWriteTime(directoryPath);
-				DateTime created = fileSystem.GetCreationTime(directoryPath);
-				items[index++] = new PathItemDirectory(
-					directoryPath.Split(SharedDefinitions.DirectorySeparators).Last(), 
-					modified, created
-				);
+				fileSystem = null;
 			}
-			
-			return items;
 		}
 
-		/* Unsupported filesystem. */
-		return null;
+		if (fileSystem == null)
+		{
+			try
+			{
+				fileSystem = new HfsPlusFileSystem(stream);
+			}
+			catch (Exception)
+			{
+				fileSystem = null;
+			}
+		}
+
+		if (fileSystem == null)
+		{
+			/* Unsupported filesystem. */
+			return null;
+		}
+
+		string[] filePaths = fileSystem.GetFiles(pathTrimmed);
+		string[] directoryPaths = fileSystem.GetDirectories(pathTrimmed);
+		PathItem[] items = new PathItem[filePaths.Length + directoryPaths.Length];
+		int index = 0;
+
+		foreach (string filePath in filePaths)
+		{
+			DateTime accessed = fileSystem.GetLastAccessTime(filePath);
+			DateTime modified = fileSystem.GetLastWriteTime(filePath);
+			DateTime created = fileSystem.GetCreationTime(filePath);
+			long sizeBytes = fileSystem.GetFileLength(filePath);
+			items[index++] = new PathItemFile(
+				filePath.Split(SharedDefinitions.DirectorySeparators).Last(),
+				sizeBytes, accessed, modified, created
+			);
+		}
+
+		foreach (string directoryPath in directoryPaths)
+		{
+			DateTime modified = fileSystem.GetLastWriteTime(directoryPath);
+			DateTime created = fileSystem.GetCreationTime(directoryPath);
+			items[index++] = new PathItemDirectory(
+				directoryPath.Split(SharedDefinitions.DirectorySeparators).Last(),
+				modified, created
+			);
+		}
+
+		fileSystem.Dispose();
+		return items;
 	}
 	
 	private string GetVmNexusFolderPath() => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/.VM-Nexus";
