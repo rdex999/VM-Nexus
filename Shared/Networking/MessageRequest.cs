@@ -204,15 +204,17 @@ public class MessageRequestListDrives : MessageRequest
 
 public class MessageRequestListPathItems : MessageRequest
 {
+	public int DriveId { get; }
 	public string Path { get; }
 
-	public MessageRequestListPathItems(bool generateGuid, string path)
+	public MessageRequestListPathItems(bool generateGuid, int driveId, string path)
 		: base(generateGuid)
 	{
+		DriveId = driveId;
 		Path = path;
 	}
 	
-	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Path);
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Path) && DriveId >= 1;
 }
 
 public class MessageRequestVmStartup : MessageRequest

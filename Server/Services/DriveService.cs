@@ -1,8 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using DiscUtils.Partitions;
+using DiscUtils.Raw;
+using DiscUtils.Streams;
 using Shared;
+using Shared.Drives;
 
 namespace Server.Services;
 
@@ -238,6 +243,57 @@ public class DriveService
 	/// Postcondition: The file path to the disk image file of the drive is returned.
 	/// </remarks>
 	public string GetDriveFilePath(int driveId) => GetVmNexusFolderPath() + "/DiskImages/" + GetDriveFileName(driveId);
+
+	public PathItem[]? ListItems(int driveId, string path)
+	{
+		if (driveId < 1)
+			return null;
+		
+		string trimmed = path.Trim(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+		string[] parts = trimmed.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+
+		List<PathItem> items = new List<PathItem>();
+		Stream image = File.OpenRead(GetDriveFilePath(driveId));
+		using Disk drive = new Disk(image, Ownership.Dispose);
+		Stream filesystemStream;
+		if (drive.IsPartitioned)
+		{
+			if (parts.Length == 0 || (parts.Length == 1 && string.IsNullOrEmpty(parts[0])))
+			{
+				foreach (PartitionInfo partition in drive.Partitions.Partitions)
+				{
+					if (partition is GuidPartitionInfo gptPartition)
+					{
+						items.Add(new PathItemPartitionGpt(new PartitionGptDescriptor(
+							gptPartition.Identity,
+							gptPartition.FirstSector,
+							gptPartition.LastSector,
+							(PartitionGptDescriptor.Attribute)gptPartition.Attributes,
+							gptPartition.Name
+						)));
+					} 
+					else if (partition is BiosPartitionInfo mbrPartition)
+					{
+						items.Add(new PathItemPartitionMbr(new PartitionMbrDescriptor(
+							mbrPartition.IsActive,
+							(PartitionMbrDescriptor.Type)mbrPartition.BiosType,
+							mbrPartition.FirstSector,
+							mbrPartition.SectorCount
+						)));
+					}
+				}
+				
+				return items.ToArray();
+			}
+
+			throw new NotImplementedException();
+		}
+		else
+		{
+			filesystemStream = drive.Content;
+		}
+		throw new NotImplementedException();
+	}
 	
 	private string GetVmNexusFolderPath() => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/.VM-Nexus";
 }

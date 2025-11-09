@@ -4,10 +4,18 @@ public class PartitionMbrDescriptor
 {
 	public bool Bootable { get; }
 	public Type PartitionType { get; }
-	public int StartLba { get; }
-	public int Sectors { get; }
+	public long StartLba { get; }
+	public long Sectors { get; }
+
+	public PartitionMbrDescriptor(bool bootable, Type partitionType, long startLba, long sectors)
+	{
+		Bootable = bootable;
+		PartitionType = partitionType;
+		StartLba = startLba;
+		Sectors = sectors;
+	}
 	
-	public enum Type
+	public enum Type : byte
 	{
 		NtfsOrExFat		= 0x07,
 		Linux			= 0x83,
