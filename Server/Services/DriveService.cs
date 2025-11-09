@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using DiscUtils.Fat;
 using DiscUtils.Partitions;
 using DiscUtils.Raw;
+using DiscUtils.Setup;
 using DiscUtils.Streams;
 using Shared;
 using Shared.Drives;
@@ -250,15 +252,16 @@ public class DriveService
 			return null;
 		
 		string trimmed = path.Trim(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-		string[] parts = trimmed.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-
+		string[] pathParts = trimmed.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+		int firstFsPathPart = 0;
+		
 		List<PathItem> items = new List<PathItem>();
 		Stream image = File.OpenRead(GetDriveFilePath(driveId));
 		using Disk drive = new Disk(image, Ownership.Dispose);
 		Stream filesystemStream;
 		if (drive.IsPartitioned)
 		{
-			if (parts.Length == 0 || (parts.Length == 1 && string.IsNullOrEmpty(parts[0])))
+			if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
 			{
 				foreach (PartitionInfo partition in drive.Partitions.Partitions)
 				{
@@ -269,7 +272,8 @@ public class DriveService
 							gptPartition.FirstSector,
 							gptPartition.LastSector,
 							(PartitionGptDescriptor.Attribute)gptPartition.Attributes,
-							gptPartition.Name
+							gptPartition.Name,
+							gptPartition.TypeAsString
 						)));
 					} 
 					else if (partition is BiosPartitionInfo mbrPartition)
@@ -286,7 +290,14 @@ public class DriveService
 				return items.ToArray();
 			}
 
-			throw new NotImplementedException();
+			/* First part of the path should contain the partition index if the drive is partitioned. */
+			if (!int.TryParse(pathParts[0], out int partitionIndex))
+				return null;
+			
+			PartitionInfo partitionInfo = drive.Partitions.Partitions[partitionIndex];
+			filesystemStream = partitionInfo.Open();
+			filesystemStream.Seek(partitionInfo.FirstSector * drive.SectorSize, SeekOrigin.Begin);
+			firstFsPathPart = 1;
 		}
 		else
 		{

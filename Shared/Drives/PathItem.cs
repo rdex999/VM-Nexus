@@ -35,3 +35,35 @@ public class PathItemPartitionMbr : PathItem
 		Descriptor = descriptor;
 	}
 }
+
+public class PathItemFile : PathItem
+{
+	public string Name { get; }
+	public long SizeBytes { get; }
+	public DateTime Accessed { get; }
+	public DateTime Modified { get; }
+	public DateTime Created { get; }
+
+	public PathItemFile(string name, long sizeBytes, DateTime accessed, DateTime modified, DateTime created)
+	{
+		Name = name;
+		SizeBytes = sizeBytes;
+		Accessed = accessed;
+		Modified = modified;
+		Created = created;
+	}
+}
+
+public class PathItemDirectory : PathItem
+{
+	public string Name { get; }
+	public DateTime Modified { get; }
+	public DateTime Created { get; }
+
+	public PathItemDirectory(string name, DateTime modified, DateTime created)
+	{
+		Name = name;
+		Modified = modified;
+		Created = created;
+	}
+}

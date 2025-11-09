@@ -7,14 +7,16 @@ public class PartitionGptDescriptor
 	public long EndLba { get; }
 	public Attribute Flags { get; }
 	public string Label { get; }
+	public string Type { get; }
 
-	public PartitionGptDescriptor(Guid guid, long startLba, long endLba, Attribute flags, string label)
+	public PartitionGptDescriptor(Guid guid, long startLba, long endLba, Attribute flags, string label, string type)
 	{
 		Guid = guid;
 		StartLba = startLba;
 		EndLba = endLba;
 		Flags = flags;
 		Label = label;
+		Type = type;
 	}
 	
 	public enum Attribute : long
