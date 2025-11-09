@@ -315,10 +315,10 @@ public class DriveService
 		else
 		{
 			filesystemStream = drive.Content;
-			return ListItemsOnFilesystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()!));
+			return ListItemsOnFileSystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()!));
 		}
 
-		return ListItemsOnFilesystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()[1..]!));
+		return ListItemsOnFileSystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()[1..]!));
 	}
 
 	/// <summary>
@@ -332,7 +332,7 @@ public class DriveService
 	/// stream != null &amp;&amp; path != null <br/>
 	/// Postcondition: On success, an array of path items representing the items under the given path is returned. On failure, null is returned.
 	/// </remarks>
-	private PathItem[]? ListItemsOnFilesystemPath(Stream stream, string path)
+	private PathItem[]? ListItemsOnFileSystemPath(Stream stream, string path)
 	{
 		string pathTrimmed = path.Trim(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
 		
@@ -340,6 +340,9 @@ public class DriveService
 		if (fileSystem == null)		/* Unsupported filesystem. */
 			return null;
 
+		if (!fileSystem.DirectoryExists(pathTrimmed))
+			return null;
+		
 		string[] filePaths = fileSystem.GetFiles(pathTrimmed);
 		string[] directoryPaths = fileSystem.GetDirectories(pathTrimmed);
 		PathItem[] items = new PathItem[filePaths.Length + directoryPaths.Length];
