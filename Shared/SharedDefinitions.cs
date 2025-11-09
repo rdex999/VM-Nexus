@@ -12,7 +12,8 @@ public static class SharedDefinitions
 
 	public const int CredentialsMaxLength = 64;
 	public static readonly char[] InvalidUsernameCharacters = { '"', '\'', '/', '<', '>', '|' };
-
+	public static readonly char[] DirectorySeparators = { '/', '\\' };
+	
 	public const int AudioFramesFrequency = 48000;
 	public const int AudioPacketMs = 20;
 	public const int AudioChannels = 2;
