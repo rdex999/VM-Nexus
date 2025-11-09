@@ -335,6 +335,53 @@ public class DriveService
 	private PathItem[]? ListItemsOnFilesystemPath(Stream stream, string path)
 	{
 		string pathTrimmed = path.Trim(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+		
+		DiscFileSystem? fileSystem = GetStreamFileSystem(stream);
+		if (fileSystem == null)		/* Unsupported filesystem. */
+			return null;
+
+		string[] filePaths = fileSystem.GetFiles(pathTrimmed);
+		string[] directoryPaths = fileSystem.GetDirectories(pathTrimmed);
+		PathItem[] items = new PathItem[filePaths.Length + directoryPaths.Length];
+		int index = 0;
+
+		foreach (string filePath in filePaths)
+		{
+			DateTime accessed = fileSystem.GetLastAccessTime(filePath);
+			DateTime modified = fileSystem.GetLastWriteTime(filePath);
+			DateTime created = fileSystem.GetCreationTime(filePath);
+			long sizeBytes = fileSystem.GetFileLength(filePath);
+			items[index++] = new PathItemFile(
+				filePath.Split(SharedDefinitions.DirectorySeparators).Last(),
+				sizeBytes, accessed, modified, created
+			);
+		}
+
+		foreach (string directoryPath in directoryPaths)
+		{
+			DateTime modified = fileSystem.GetLastWriteTime(directoryPath);
+			DateTime created = fileSystem.GetCreationTime(directoryPath);
+			items[index++] = new PathItemDirectory(
+				directoryPath.Split(SharedDefinitions.DirectorySeparators).Last(),
+				modified, created
+			);
+		}
+
+		fileSystem.Dispose();
+		return items;
+	}
+
+	/// <summary>
+	/// Get the filesystem object of a filesystem under the given stream. (if any)
+	/// </summary>
+	/// <param name="stream">The stream that represents a filesystem. stream != null.</param>
+	/// <returns>A filesystem object representing the underlying filesystem in the given stream, or null if the filesystem is unsupported.</returns>
+	/// <remarks>
+	/// Precondition: The given stream represents a valid and supported filesystem. stream != null. <br/>
+	/// Postcondition: On success, a filesystem object representing the underlying filesystem is returned. On failure, null is returned.
+	/// </remarks>
+	private DiscFileSystem? GetStreamFileSystem(Stream stream)
+	{
 		DiscFileSystem? fileSystem;
 		if (FatFileSystem.Detect(stream))
 		{
@@ -372,41 +419,7 @@ public class DriveService
 			}
 		}
 
-		if (fileSystem == null)
-		{
-			/* Unsupported filesystem. */
-			return null;
-		}
-
-		string[] filePaths = fileSystem.GetFiles(pathTrimmed);
-		string[] directoryPaths = fileSystem.GetDirectories(pathTrimmed);
-		PathItem[] items = new PathItem[filePaths.Length + directoryPaths.Length];
-		int index = 0;
-
-		foreach (string filePath in filePaths)
-		{
-			DateTime accessed = fileSystem.GetLastAccessTime(filePath);
-			DateTime modified = fileSystem.GetLastWriteTime(filePath);
-			DateTime created = fileSystem.GetCreationTime(filePath);
-			long sizeBytes = fileSystem.GetFileLength(filePath);
-			items[index++] = new PathItemFile(
-				filePath.Split(SharedDefinitions.DirectorySeparators).Last(),
-				sizeBytes, accessed, modified, created
-			);
-		}
-
-		foreach (string directoryPath in directoryPaths)
-		{
-			DateTime modified = fileSystem.GetLastWriteTime(directoryPath);
-			DateTime created = fileSystem.GetCreationTime(directoryPath);
-			items[index++] = new PathItemDirectory(
-				directoryPath.Split(SharedDefinitions.DirectorySeparators).Last(),
-				modified, created
-			);
-		}
-
-		fileSystem.Dispose();
-		return items;
+		return fileSystem;
 	}
 	
 	private string GetVmNexusFolderPath() => Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/.VM-Nexus";
