@@ -582,6 +582,27 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestListPathItems reqListPathItems:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseListPathItems(true, reqListPathItems.Id, MessageResponseListPathItems.Status.Failure));
+					break;
+				}
+				
+				PathItem[]? items = _driveService.ListItems(reqListPathItems.DriveId, reqListPathItems.Path);
+				if (items == null)
+				{
+					SendResponse(new MessageResponseListPathItems(true, reqListPathItems.Id, MessageResponseListPathItems.Status.InvalidPath));
+				}
+				else
+				{
+					SendResponse(new MessageResponseListPathItems(true, reqListPathItems.Id, items));
+				}
+				
+				break;
+			}
+
 			default:
 			{
 				result = ExitCode.Success;

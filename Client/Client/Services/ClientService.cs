@@ -302,9 +302,8 @@ public class ClientService : MessagingService
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnectDrive(true, driveId, vmId));
 		if (result != ExitCode.Success)
-		{
 			return MessageResponseConnectDrive.Status.Failure;
-		}
+		
 		return ((MessageResponseConnectDrive)response!).Result;
 	}
 	
@@ -319,7 +318,8 @@ public class ClientService : MessagingService
 	public async Task<MessageResponseListDriveConnections?> GetDriveConnectionsAsync()
 	{
 		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListDriveConnections(true));
-		if (response == null) return null;
+		if (response == null) 
+			return null;
 		
 		return (MessageResponseListDriveConnections)response;
 	}
@@ -335,10 +335,30 @@ public class ClientService : MessagingService
 	public async Task<MessageResponseListDrives?> GetDrivesAsync()
 	{
 		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListDrives(true));
-	
-		if (response == null) return null;
+		if (response == null) 
+			return null;
 		
 		return (MessageResponseListDrives)response;
+	}
+
+	/// <summary>
+	/// Request a list of the items under the given path in the given drive.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to use. driveId >= 1.</param>
+	/// <param name="path">The path on the given drive under which to list the items. path != null.</param>
+	/// <returns>A list of items that reside under the given path, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server, user is logged in. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: On success, a list of items representing the items under the given path in the given drive is returned.
+	/// On failure, null is returned.
+	/// </remarks>
+	public async Task<PathItem[]?> ListItemsOnDrivePathAsync(int driveId, string path)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestListPathItems(true, driveId, path));
+		if (result != ExitCode.Success) 
+			return null;
+
+		return ((MessageResponseListPathItems)response!).PathItems;
 	}
 
 	/// <summary>
