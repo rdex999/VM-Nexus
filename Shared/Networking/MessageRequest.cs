@@ -214,7 +214,7 @@ public class MessageRequestListPathItems : MessageRequest
 		Path = path;
 	}
 	
-	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Path) && DriveId >= 1;
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }
 
 public class MessageRequestVmStartup : MessageRequest

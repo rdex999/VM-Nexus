@@ -1,6 +1,10 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Shared.Drives;
 
 namespace Client.ViewModels.DriveExplorerModes;
@@ -16,10 +20,60 @@ public class DrivesViewModel : ViewModelBase
 		_driveService = driveService;
 		DriveItems = new ObservableCollection<DriveItemTemplate>();
 		driveService.Initialized += (_, _) => UpdateDrives();
-		ClientSvc.DriveCreated += (_, descriptor) => DriveItems.Add(new DriveItemTemplate(descriptor));
+		ClientSvc.DriveCreated += OnDriveCreated;
 		ClientSvc.DriveDeleted += OnDriveDeleted;
 	}
 
+	/// <summary>
+	/// Attempts to get the top level items of the drive, and redirect to a corresponding view.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to open. driveId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A drive should be opened. driveId >= 1. <br/>
+	/// Postcondition: On success, the user is redirected to a page listing the top level items on the drive.
+	/// (partitions if partitioned, root directory items if not partitioned.) <br/>
+	/// On failure, the user is not redirected to the page.
+	/// </remarks>
+	private async Task OpenDriveAsync(int driveId)
+	{
+		PathItem[]? items = await _driveService.ListItemsOnDrivePathAsync(driveId, string.Empty);
+		if (items == null)
+			return;
+		
+	}
+	
+	/// <summary>
+	/// Updates the list of the user's drives.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: DriveService is initialized. <br/>
+	/// Postcondition: The user's drives are fetched and displayed.
+	/// </remarks>
+	private void UpdateDrives()
+	{
+		DriveItems.Clear();
+		foreach (DriveGeneralDescriptor descriptor in _driveService.GetDrives())
+		{
+			DriveItems.Add(new DriveItemTemplate(descriptor));
+			DriveItems.Last().Opened += OnDriveOpenClicked;
+		}	
+	}
+
+	/// <summary>
+	/// Handles a new drive created event.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="descriptor">A descriptor of the new drive. descriptor != null.</param>
+	/// <remarks>
+	/// Precondition: A new drive was created. descriptor != null. <br/>
+	/// Postcondition: Event is handled, the drive is added to the displayed drives.
+	/// </remarks>
+	private void OnDriveCreated(object? sender, DriveGeneralDescriptor descriptor)
+	{
+		DriveItems.Add(new DriveItemTemplate(descriptor));
+		DriveItems.Last().Opened += OnDriveOpenClicked;
+	}
+	
 	/// <summary>
 	/// Handles a drive deletion event.
 	/// </summary>
@@ -34,29 +88,28 @@ public class DrivesViewModel : ViewModelBase
 		for (int i = 0; i < DriveItems.Count; ++i)
 		{
 			if (DriveItems[i].Id == id)
+			{
+				DriveItems[i].Opened -= OnDriveOpenClicked;
 				DriveItems.RemoveAt(i);
+			}
 		}
 	}
 
 	/// <summary>
-	/// Updates the list of the user's drives.
+	/// Handles a click on the open button on a drive, and a double click on a drive.
+	/// Attempts to get the top level items of the drive, and redirect to a corresponding view.
 	/// </summary>
+	/// <param name="driveId">The ID of the drive that should be opened. driveId >= 1.</param>
 	/// <remarks>
-	/// Precondition: DriveService is initialized. <br/>
-	/// Postcondition: The user's drives are fetched and displayed.
+	/// Precondition: The user has either double-clicked on a drive, or clicked on its open button. driveId >= 1. <br/>
+	/// Postcondition: Attempts to get the top level items of the drive, and redirect to a corresponding view.
 	/// </remarks>
-	private void UpdateDrives()
-	{
-		DriveItems.Clear();
-		foreach (DriveGeneralDescriptor descriptor in _driveService.GetDrives())
-		{
-			DriveItems.Add(new DriveItemTemplate(descriptor));
-		}	
-	}
+	private void OnDriveOpenClicked(int driveId) => _ = OpenDriveAsync(driveId);
 }
 
 public partial class DriveItemTemplate : ObservableObject
 {
+	public Action<int>? Opened;
 	public int Id { get; }
 
 	private int _size;
@@ -89,4 +142,14 @@ public partial class DriveItemTemplate : ObservableObject
 		Size = descriptor.Size;
 		DriveType = descriptor.DriveType;
 	}
+
+	/// <summary>
+	/// Invokes the Opened event, in order to open the drive.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The drive should be opened. The user has either clicked on the open button or double-clicked on the drive. <br/>
+	/// Postcondition: The Opened event is invoked, an attempt to open the drive is performed.
+	/// </remarks>
+	[RelayCommand]
+	public void Open() => Opened?.Invoke(Id);
 }

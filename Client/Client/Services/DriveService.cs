@@ -127,6 +127,11 @@ public class DriveService
 
 		return vms.Any(vm => vm.State == VmState.Running);
 	}
+
+	public async Task<PathItem[]?> ListItemsOnDrivePathAsync(int driveId, string path)
+	{
+		return await _clientService.ListItemsOnDrivePathAsync(driveId, path);
+	}
 	
 	private async Task<ExitCode> FetchVmsAsync()
 	{
