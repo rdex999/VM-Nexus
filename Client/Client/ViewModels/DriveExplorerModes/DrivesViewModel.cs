@@ -39,7 +39,19 @@ public class DrivesViewModel : DriveExplorerMode
 		PathItem[]? items = await _driveService.ListItemsOnDrivePathAsync(driveId, string.Empty);
 		if (items == null)
 			return;
-		
+
+		DriveGeneralDescriptor? descriptor = _driveService.GetDriveById(driveId);
+		if (descriptor == null)
+			return;
+
+		if (descriptor.PartitionTableType == PartitionTableType.Unpartitioned)
+		{
+			/* TODO: Make a FilesView and redirect to it. */
+		}
+		else
+		{
+			ChangeMode?.Invoke(new PartitionsViewModel(NavigationSvc, ClientSvc, _driveService, descriptor, items));
+		}
 	}
 	
 	/// <summary>

@@ -478,6 +478,7 @@ public sealed class ClientConnection : MessagingService
 							driveId, 
 							driveNameTrimmed, 
 							reqCreateDrive.Size, 
+							_driveService.GetDriveSectorSize(driveId),
 							reqCreateDrive.OperatingSystem == OperatingSystem.MiniCoffeeOS 
 								? DriveType.Floppy 
 								: DriveType.Disk,

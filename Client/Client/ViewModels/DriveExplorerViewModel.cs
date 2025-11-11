@@ -16,5 +16,13 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	{
 		_driveService = driveService;
 		ExplorerModeViewModel = new DrivesViewModel(NavigationSvc, ClientSvc, driveService);
+		ExplorerModeViewModel.ChangeMode += OnChangeMode;
+	}
+
+	private void OnChangeMode(DriveExplorerMode mode)
+	{
+		ExplorerModeViewModel.ChangeMode -= OnChangeMode;
+		ExplorerModeViewModel = mode;
+		ExplorerModeViewModel.ChangeMode += OnChangeMode;
 	}
 }

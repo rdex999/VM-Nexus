@@ -79,6 +79,7 @@ public class DriveService
 
 	public VmGeneralDescriptor[] GetVirtualMachines() => _virtualMachines.Values.ToArray();
 	public DriveGeneralDescriptor[] GetDrives() => _drives.Values.ToArray();
+	public DriveGeneralDescriptor? GetDriveById(int driveId) => _drives.GetValueOrDefault(driveId);
 
 	public DriveGeneralDescriptor[]? GetDrivesOnVirtualMachine(int vmId)
 	{

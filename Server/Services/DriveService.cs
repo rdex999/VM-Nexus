@@ -346,6 +346,24 @@ public class DriveService
 		
 		return PartitionTableType.Unpartitioned;
 	}
+
+	/// <summary>
+	/// Get the size (in bytes) of each sector in the given drive.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to get the sector size of. driveId >= 1.</param>
+	/// <returns>The sector size of the drive, in bytes.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. driveId >= 1. <br/>
+	/// Postcondition: On success, the sector size of the drive is returned. (in bytes) On failure, -1 is returned.
+	/// </remarks>
+	public int GetDriveSectorSize(int driveId)
+	{
+		if (driveId < 1)
+			return -1;
+		
+		using Disk drive = new Disk(GetDriveFilePath(driveId));
+		return drive.SectorSize;
+	}
 	
 	/// <summary>
 	/// Get general descriptors of all drives connected to the given virtual machine.
@@ -370,6 +388,7 @@ public class DriveService
 				descriptors[i].Id, 
 				descriptors[i].Name, 
 				descriptors[i].Size, 
+				GetDriveSectorSize(descriptors[i].Id),
 				descriptors[i].Type, 
 				GetDrivePartitionTableType(descriptors[i].Id)
 			);
@@ -401,6 +420,7 @@ public class DriveService
 				descriptors[i].Id,
 				descriptors[i].Name,
 				descriptors[i].Size,
+				GetDriveSectorSize(descriptors[i].Id),
 				descriptors[i].Type,
 				GetDrivePartitionTableType(descriptors[i].Id)
 			);
