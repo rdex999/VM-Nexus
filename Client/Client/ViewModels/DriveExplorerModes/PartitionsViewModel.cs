@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Client.Services;
 using CommunityToolkit.Mvvm.Input;
+using OpenTK.Platform.Windows;
 using Shared.Drives;
 
 namespace Client.ViewModels.DriveExplorerModes;
@@ -55,6 +56,13 @@ public class PartitionsViewModel : DriveExplorerMode
 			return;
 
 		PathItem[]? items = await _driveService.ListItemsOnDrivePathAsync(_driveDescriptor.Id, partitionIndex.ToString());
+		if (items == null)
+			return;
+		
+		ChangeMode?.Invoke(new FileSystemItemsViewModel(NavigationSvc, ClientSvc, _driveService, _driveDescriptor, 
+				partitionIndex.ToString(), items
+			)
+		);
 	}
 
 	/// <summary>

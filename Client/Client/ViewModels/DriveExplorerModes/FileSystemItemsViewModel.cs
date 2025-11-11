@@ -1,0 +1,70 @@
+using System;
+using System.Collections.ObjectModel;
+using Client.Services;
+using Shared;
+using Shared.Drives;
+
+namespace Client.ViewModels.DriveExplorerModes;
+
+public class FileSystemItemsViewModel : DriveExplorerMode
+{
+	private readonly DriveService _driveService;
+	private readonly DriveGeneralDescriptor _driveDescriptor;
+	private string _path;
+	
+	public ObservableCollection<FileSystemItemItemTemplate> Items { get; }
+	
+	public FileSystemItemsViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService, 
+		DriveGeneralDescriptor driveDescriptor, string path, PathItem[] items)
+		: base(navigationService, clientService)
+	{
+		_driveService = driveService;
+		_driveDescriptor = driveDescriptor;
+		_path = string.IsNullOrEmpty(path)
+			? path
+			: path.Trim(SharedDefinitions.DirectorySeparators) + '/';
+		
+		Items = new ObservableCollection<FileSystemItemItemTemplate>();
+
+		foreach (PathItem item in items)
+		{
+			if (item is PathItemFile file)
+				Items.Add(new FileSystemItemItemTemplate(file.Name, file.SizeBytes, file.Accessed, file.Modified, file.Created));
+			
+			else if (item is PathItemDirectory directory)
+				Items.Add(new FileSystemItemItemTemplate(directory.Name, directory.Modified, directory.Created));
+		}
+	}
+}
+
+public class FileSystemItemItemTemplate		/* FilesystemItem - item template (i know) */
+{
+	public bool IsFile { get; }				/* Is this a file or a directory? */
+	public string Name { get; }
+	public long SizeBytes { get; }			/* Only for files, -1 for directories. */
+	public DateTime? Accessed { get; }		/* Only for files, null for directories. */
+	public DateTime Modified { get; }
+	public DateTime Created { get; }
+
+	/* Use for files. */
+	public FileSystemItemItemTemplate(string name, long sizeBytes, DateTime accessed, DateTime modified, DateTime created)
+	{
+		IsFile = true;
+		Name = name;
+		SizeBytes = sizeBytes;
+		Accessed = accessed;
+		Modified = modified;
+		Created = created;
+	}
+
+	/* Use for directories. */
+	public FileSystemItemItemTemplate(string name, DateTime modified, DateTime created)
+	{
+		IsFile = false;
+		Name = name;
+		SizeBytes = -1;
+		Accessed = null;
+		Modified = modified;
+		Created = created;
+	}
+}

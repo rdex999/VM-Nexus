@@ -46,7 +46,7 @@ public class DrivesViewModel : DriveExplorerMode
 
 		if (descriptor.PartitionTableType == PartitionTableType.Unpartitioned)
 		{
-			/* TODO: Make a FilesView and redirect to it. */
+			ChangeMode?.Invoke(new FileSystemItemsViewModel(NavigationSvc, ClientSvc, _driveService, descriptor, string.Empty, items));
 		}
 		else
 		{
