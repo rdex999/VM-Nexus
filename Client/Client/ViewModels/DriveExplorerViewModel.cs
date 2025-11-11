@@ -9,7 +9,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	private readonly DriveService _driveService;
 	
 	[ObservableProperty]
-	private ViewModelBase _explorerModeViewModel;
+	private DriveExplorerMode _explorerModeViewModel;
 	
 	public DriveExplorerViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)

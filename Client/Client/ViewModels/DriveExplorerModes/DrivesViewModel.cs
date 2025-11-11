@@ -9,7 +9,7 @@ using Shared.Drives;
 
 namespace Client.ViewModels.DriveExplorerModes;
 
-public class DrivesViewModel : ViewModelBase
+public class DrivesViewModel : DriveExplorerMode
 {
 	private readonly DriveService _driveService;
 	public ObservableCollection<DriveItemTemplate> DriveItems { get; }
@@ -19,7 +19,7 @@ public class DrivesViewModel : ViewModelBase
 	{
 		_driveService = driveService;
 		DriveItems = new ObservableCollection<DriveItemTemplate>();
-		driveService.Initialized += (_, _) => UpdateDrives();
+		_driveService.Initialized += (_, _) => UpdateDrives();
 		ClientSvc.DriveCreated += OnDriveCreated;
 		ClientSvc.DriveDeleted += OnDriveDeleted;
 	}

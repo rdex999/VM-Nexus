@@ -17,6 +17,7 @@
         <entry key="Client/Client/Views/CreateVmView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/DriveExplorer.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/DriveExplorerModes/DrivesView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
+        <entry key="Client/Client/Views/DriveExplorerModes/PartitionsView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/DriveExplorerView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/HomeView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/LoginView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
