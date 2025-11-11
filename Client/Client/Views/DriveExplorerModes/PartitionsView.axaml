@@ -12,7 +12,7 @@
 			<ItemsControl.ItemTemplate>
 				<DataTemplate DataType="{x:Type dem:PartitionItemTemplate}">
 					<Border CornerRadius="15" Background="#eeeff1" Height="100" Margin="10" Padding="10" 
-					        BorderThickness="1.2">
+					        BorderThickness="1.2" DoubleTapped="OnPartitionDoubleTapped">
 						<Border.Styles>
 							<Style Selector="Border">
 								<Setter Property="BorderBrush">
@@ -37,7 +37,8 @@
 								
 								<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" 
 								        Padding="26, 6" Margin="0, 0, 50, 3" CornerRadius="10"
-								        Background="#c7c7cc" FontWeight="Bold">
+								        Background="#c7c7cc" FontWeight="Bold"
+								        Command="{Binding OpenCommand}">
 									<Button.Styles>
 										<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
 											<Setter Property="Background" Value="#a7a7ac"/>

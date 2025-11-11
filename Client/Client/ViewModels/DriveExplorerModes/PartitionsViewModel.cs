@@ -1,18 +1,18 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 using Client.Services;
-using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Shared.Drives;
 
 namespace Client.ViewModels.DriveExplorerModes;
 
-public partial class PartitionsViewModel : DriveExplorerMode
+public class PartitionsViewModel : DriveExplorerMode
 {
 	private readonly DriveService _driveService;
 	public ObservableCollection<PartitionItemTemplate> Partitions { get; }
 	private DriveGeneralDescriptor _driveDescriptor;
-
-	[ObservableProperty] 
-	private bool _isGptPartitioned;
 	
 	public PartitionsViewModel(NavigationService navigationService, ClientService clientService, 
 		DriveService driveService, DriveGeneralDescriptor driveDescriptor, PathItem[] partitions) 
@@ -44,12 +44,32 @@ public partial class PartitionsViewModel : DriveExplorerMode
 					)
 				);
 			}
+			
+			Partitions.Last().Opened += OnPartitionOpened;
 		}
 	}
+
+	private async Task OpenPartitionAsync(int partitionIndex)
+	{
+		if (partitionIndex < 0 || partitionIndex >= Partitions.Count)
+			return;
+
+		PathItem[]? items = await _driveService.ListItemsOnDrivePathAsync(_driveDescriptor.Id, partitionIndex.ToString());
+	}
+
+	/// <summary>
+	/// Handles both a double click on the partition and a click on its open button. Attempts to open the partition.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has either double-clicked on the partition or has clicked on its open button. <br/>
+	/// Postcondition: An attempt to open the partition is performed.
+	/// </remarks>
+	private void OnPartitionOpened(int partitionIndex) => _ = OpenPartitionAsync(partitionIndex);
 }
 
-public class PartitionItemTemplate
+public partial class PartitionItemTemplate
 {
+	public Action<int>? Opened;
 	public int Index { get; }
 	public int SizeMiB { get; }
 	public string SizeMiBString =>
@@ -67,4 +87,14 @@ public class PartitionItemTemplate
 		Label = label;
 		Type = type;
 	}
+
+	/// <summary>
+	/// Handles both a double click on the partition and a click on its open button. Attempts to open the partition.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has either double-clicked on the partition or has clicked on its open button. <br/>
+	/// Postcondition: An attempt to open the partition is performed.
+	/// </remarks>
+	[RelayCommand]
+	public void Open() => Opened?.Invoke(Index);
 }
