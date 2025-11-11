@@ -470,13 +470,18 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					/* Must succeed because the drive was created successfully */
-					int id = await _driveService.GetDriveIdAsync(UserId, driveNameTrimmed);		
-					SendResponse(new MessageResponseCreateDriveOs(true, reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.Success, id));
+					int driveId = await _driveService.GetDriveIdAsync(UserId, driveNameTrimmed);		
+					SendResponse(new MessageResponseCreateDriveOs(true, reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.Success, driveId));
 					
-					await _userService.NotifyDriveCreatedAsync(new DriveGeneralDescriptor(id, driveNameTrimmed, reqCreateDrive.Size, 
+					await _userService.NotifyDriveCreatedAsync(
+						new DriveGeneralDescriptor(
+							driveId, 
+							driveNameTrimmed, 
+							reqCreateDrive.Size, 
 							reqCreateDrive.OperatingSystem == OperatingSystem.MiniCoffeeOS 
 								? DriveType.Floppy 
-								: DriveType.Disk
+								: DriveType.Disk,
+							_driveService.GetDrivePartitionTableType(driveId)
 						)
 					);
 					
@@ -570,7 +575,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				DriveGeneralDescriptor[]? descriptors = await _databaseService.GetDriveGeneralDescriptorsOfUserAsync(UserId);
+				DriveGeneralDescriptor[]? descriptors = await _driveService.GetDriveGeneralDescriptorsOfUserAsync(UserId);
 				if (descriptors == null)
 				{
 					SendResponse(new MessageResponseListDrives(true, reqListDrives.Id, MessageResponseListDrives.Status.Failure));

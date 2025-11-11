@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using DiscUtils.Raw;
 using Konscious.Security.Cryptography;
 using Npgsql;
 using NpgsqlTypes;
@@ -871,57 +872,16 @@ public class DatabaseService
 	}
 
 	/// <summary>
-	/// Get general descriptors of all drives connected to the given virtual machine.
-	/// </summary>
-	/// <param name="vmId">The ID of the virtual machine that the drives are attached to. vmId >= 1.</param>
-	/// <returns>An array of general drive descriptors, describing each drive that is connected to the virtual machine. Returns null on failure.</returns>
-	/// <remarks>
-	/// Precondition: A virtual machine with the given ID exists. vmId >= 1. <br/>
-	/// Postcondition: On success, an array of general drive descriptors is returned, describing each drive that is connected to the virtual machine.
-	/// On failure, null is returned.
-	/// </remarks>
-	public async Task<DriveGeneralDescriptor[]?> GetVmDriveGeneralDescriptorsAsync(int vmId)
-	{
-		if (vmId < 1)
-		{
-			return null;
-		}
-
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
-		                                                    SELECT d.id, d.name, d.size, d.type FROM drive_connections dc 
-		                                                        JOIN drives d ON d.id = dc.drive_id 
-		                                                    	WHERE dc.vm_id = @vm_id
-		                                                    """,
-			new NpgsqlParameter("@vm_id", vmId)
-		);
-		
-		List<DriveGeneralDescriptor> descriptors = new List<DriveGeneralDescriptor>();
-		while (await reader.ReadAsync())
-		{
-			DriveGeneralDescriptor descriptor = new DriveGeneralDescriptor(
-				reader.GetInt32(0),
-				reader.GetString(1),
-				reader.GetInt32(2),
-				(DriveType)reader.GetInt32(3)
-			);
-			
-			descriptors.Add(descriptor);
-		}
-		
-		return descriptors.ToArray();
-	}
-
-	/// <summary>
-	/// Get general descriptors of all drives of the given user.
+	/// Get descriptors of all drives of the given user.
 	/// </summary>
 	/// <param name="userId">The ID of the user to get the drive descriptors of. userId >= 1.</param>
-	/// <returns>An array of drive general descriptors, or null on failure.</returns>
+	/// <returns>An array of drive descriptors, or null on failure.</returns>
 	/// <remarks>
 	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
-	/// Postcondition: On success, an array of drive general descriptors is returned. (can be empty of user doesnt have drives) <br/>
+	/// Postcondition: On success, an array of drive descriptors is returned. (can be empty of user doesnt have drives) <br/>
 	/// On failure, null is returned.
 	/// </remarks>
-	public async Task<DriveGeneralDescriptor[]?> GetDriveGeneralDescriptorsOfUserAsync(int userId)
+	public async Task<DriveDescriptor[]?> GetDriveDescriptorsOfUserAsync(int userId)
 	{
 		if (userId < 1) return null;
 
@@ -931,10 +891,10 @@ public class DatabaseService
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
-		List<DriveGeneralDescriptor> descriptors = new List<DriveGeneralDescriptor>();
+		List<DriveDescriptor> descriptors = new List<DriveDescriptor>();
 		while (await reader.ReadAsync())
 		{
-			descriptors.Add(new DriveGeneralDescriptor(
+			descriptors.Add(new DriveDescriptor(
 				reader.GetInt32(0),
 				reader.GetString(1),
 				reader.GetInt32(2),

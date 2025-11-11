@@ -13,6 +13,7 @@ using DiscUtils.Partitions;
 using DiscUtils.Raw;
 using DiscUtils.SquashFs;
 using DiscUtils.Streams;
+using Server.Drives;
 using Shared;
 using Shared.Drives;
 
@@ -319,6 +320,93 @@ public class DriveService
 		}
 
 		return ListItemsOnFileSystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()[1..]!));
+	}
+
+	/// <summary>
+	/// Get the type of partition table (if any) used in the given drive.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to check the partition table type of.</param>
+	/// <returns>The partition table type used in the drive, or -1 on failure.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. driveId >= 1. <br/>
+	/// Postcondition: On success, the type of partition table used in the given drive is returned. On failure, -1 is returned.
+	/// </remarks>
+	public PartitionTableType GetDrivePartitionTableType(int driveId)
+	{
+		if (driveId < 1)
+			return (PartitionTableType)(-1);
+		
+		using Disk drive = new Disk(GetDriveFilePath(driveId));
+		
+		if (drive.IsPartitioned && drive.Partitions is GuidPartitionTable)
+			return PartitionTableType.GuidPartitionTable;
+		
+		if (drive.IsPartitioned && drive.Partitions is BiosPartitionTable)
+			return PartitionTableType.MasterBootRecord;
+		
+		return PartitionTableType.Unpartitioned;
+	}
+	
+	/// <summary>
+	/// Get general descriptors of all drives connected to the given virtual machine.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine that the drives are attached to. vmId >= 1.</param>
+	/// <returns>An array of general drive descriptors, describing each drive that is connected to the virtual machine. Returns null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists. vmId >= 1. <br/>
+	/// Postcondition: On success, an array of general drive descriptors is returned, describing each drive that is connected to the virtual machine.
+	/// On failure, null is returned.
+	/// </remarks>
+	public async Task<DriveGeneralDescriptor[]?> GetVmDriveGeneralDescriptorsAsync(int vmId)
+	{
+		DriveDescriptor[]? descriptors = await _databaseService.GetVmDriveDescriptorsAsync(vmId);
+		if (descriptors == null)
+			return null;
+
+		DriveGeneralDescriptor[] generalDescriptors = new DriveGeneralDescriptor[descriptors.Length];
+		for (int i = 0; i < descriptors.Length; ++i)
+		{
+			generalDescriptors[i] = new DriveGeneralDescriptor(
+				descriptors[i].Id, 
+				descriptors[i].Name, 
+				descriptors[i].Size, 
+				descriptors[i].Type, 
+				GetDrivePartitionTableType(descriptors[i].Id)
+			);
+		}
+
+		return generalDescriptors;
+	}
+
+	/// <summary>
+	/// Get general descriptors of all drives of the given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user to get the drive descriptors of. userId >= 1.</param>
+	/// <returns>An array of drive general descriptors, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
+	/// Postcondition: On success, an array of drive general descriptors is returned. (can be empty of user doesnt have drives) <br/>
+	/// On failure, null is returned.
+	/// </remarks>
+	public async Task<DriveGeneralDescriptor[]?> GetDriveGeneralDescriptorsOfUserAsync(int userId)
+	{
+		DriveDescriptor[]? descriptors = await _databaseService.GetDriveDescriptorsOfUserAsync(userId);
+		if (descriptors == null)
+			return null;
+		
+		DriveGeneralDescriptor[] generalDescriptors = new DriveGeneralDescriptor[descriptors.Length];
+		for (int i = 0; i < descriptors.Length; ++i)
+		{
+			generalDescriptors[i] = new DriveGeneralDescriptor(
+				descriptors[i].Id,
+				descriptors[i].Name,
+				descriptors[i].Size,
+				descriptors[i].Type,
+				GetDrivePartitionTableType(descriptors[i].Id)
+			);
+		}
+		
+		return generalDescriptors;
 	}
 
 	/// <summary>
