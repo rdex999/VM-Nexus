@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using Avalonia.Media;
 using Client.Services;
 using Shared;
 using Shared.Drives;
@@ -45,6 +46,7 @@ public class FileSystemItemItemTemplate		/* FilesystemItem - item template (i kn
 	public DateTime? Accessed { get; }		/* Only for files, null for directories. */
 	public DateTime Modified { get; }
 	public DateTime Created { get; }
+	public Geometry Icon { get; set; } = null!;		/* Set in code-behind. */
 
 	/* Use for files. */
 	public FileSystemItemItemTemplate(string name, long sizeBytes, DateTime accessed, DateTime modified, DateTime created)

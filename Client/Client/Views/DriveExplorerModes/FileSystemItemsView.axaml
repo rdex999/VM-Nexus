@@ -6,5 +6,47 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.DriveExplorerModes.FileSystemItemsView"
              x:DataType="dem:FileSystemItemsViewModel">
-	Welcome to Avalonia!
+	
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<MergeResourceInclude Source="/Resources/Geometries.axaml"/>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</UserControl.Resources>
+	
+	<ItemsControl ItemsSource="{Binding Items}">
+		<ItemsControl.ItemsPanel>
+			<ItemsPanelTemplate>
+				<WrapPanel Orientation="Horizontal" />
+			</ItemsPanelTemplate>
+		</ItemsControl.ItemsPanel>
+		
+		<ItemsControl.ItemTemplate>
+			<DataTemplate DataType="dem:FileSystemItemItemTemplate">
+				<Border CornerRadius="15" Background="#eeeff1" Height="160" Width="160" Margin="10" Padding="10" 
+				        BorderThickness="1.2">
+					<Border.Styles>
+						<Style Selector="Border">
+							<Setter Property="BorderBrush">
+								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+									<GradientStop Offset="0" Color="#bcd8dd" />
+									<GradientStop Offset="1" Color="#c0e0e2" />
+								</LinearGradientBrush>
+							</Setter>
+						</Style>
+					</Border.Styles>
+					
+					<Grid RowDefinitions="*, Auto">
+						<PathIcon Data="{Binding Icon}" Foreground="#343839"
+						          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="110" Height="110"/>
+						
+						<TextBlock Grid.Row="1" Text="{Binding Name}" 
+						           HorizontalAlignment="Center" FontSize="16"/>
+					</Grid>
+				</Border>
+			</DataTemplate>
+		</ItemsControl.ItemTemplate>
+		
+	</ItemsControl>
 </UserControl>
