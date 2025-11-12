@@ -24,14 +24,14 @@
 		
 		<ItemsControl.ItemTemplate>
 			<DataTemplate DataType="dem:FileSystemItemItemTemplate">
-				<Border CornerRadius="15" Background="#eeeff1" Height="160" Width="160" Margin="10" Padding="10" 
+				<Border CornerRadius="15" Background="#f0f0f0" Height="160" Width="160" Margin="10" Padding="10" 
 				        BorderThickness="1.2">
 					<Border.Styles>
 						<Style Selector="Border">
 							<Setter Property="BorderBrush">
 								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-									<GradientStop Offset="0" Color="#bcd8dd" />
-									<GradientStop Offset="1" Color="#c0e0e2" />
+									<GradientStop Offset="0" Color="#d7e2ea" />
+									<GradientStop Offset="1" Color="#ced6dd" />
 								</LinearGradientBrush>
 							</Setter>
 						</Style>
@@ -39,7 +39,7 @@
 					
 					<Grid RowDefinitions="*, Auto">
 						<PathIcon Data="{Binding Icon}" Foreground="#343839"
-						          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="110" Height="110"/>
+						          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="105" Height="105"/>
 						
 						<TextBlock Grid.Row="1" Text="{Binding Name}" 
 						           HorizontalAlignment="Center" FontSize="16"/>

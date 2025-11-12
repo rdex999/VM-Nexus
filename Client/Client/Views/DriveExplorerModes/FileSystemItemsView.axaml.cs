@@ -1,3 +1,4 @@
+using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -41,10 +42,18 @@ public partial class FileSystemItemsView : UserControl
 
 		foreach (FileSystemItemItemTemplate item in vm.Items)
 		{
-			/* TODO: Add logic to put icon based on file extension. */
 			string key;
 			if (item.IsFile)
-				key = "DocumentRegular";
+			{
+				string extension = item.Name.Split('.').Last().ToLower();
+				key = extension switch
+				{
+					"txt" => "DocumentOnePageRegular",
+					"pdf" => "DocumentPdfRegular",
+					"png" or "jpeg" or "jpg" => "ImageRegular",
+					_ => "DocumentRegular"
+				};
+			}
 			else
 				key = "FolderRegular";
 
