@@ -81,6 +81,17 @@ public class DriveService
 	public DriveGeneralDescriptor[] GetDrives() => _drives.Values.ToArray();
 	public DriveGeneralDescriptor? GetDriveById(int driveId) => _drives.GetValueOrDefault(driveId);
 
+	public DriveGeneralDescriptor? GetDriveByName(string name)
+	{
+		foreach (DriveGeneralDescriptor drive in _drives.Values)
+		{
+			if (drive.Name == name) 
+				return drive;
+		}
+
+		return null;
+	}
+
 	public DriveGeneralDescriptor[]? GetDrivesOnVirtualMachine(int vmId)
 	{
 		if (vmId < 1) return null;

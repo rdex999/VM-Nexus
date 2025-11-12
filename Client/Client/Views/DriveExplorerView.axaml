@@ -46,9 +46,31 @@
 				<PathIcon Data="{StaticResource ChevronRightRegular}" Padding="5"
 				          Width="18" Height="18" Foreground="DarkGray" />
 			</Button>
-			
-			<Border Grid.Column="2" Background="#e8e8e8" CornerRadius="7">
-			</Border>
+
+			<ScrollViewer Grid.Column="2" HorizontalScrollBarVisibility="Auto">
+				<Border Background="#e8e8e8" CornerRadius="7" Padding="5">
+					<ItemsControl ItemsSource="{Binding PathParts}">
+						<ItemsControl.ItemsPanel>
+							<ItemsPanelTemplate>
+								<WrapPanel Orientation="Horizontal" />
+							</ItemsPanelTemplate>
+						</ItemsControl.ItemsPanel>
+
+						<ItemsControl.ItemTemplate>
+							<DataTemplate DataType="vm:PathPartItemTemplate">
+								<StackPanel Orientation="Horizontal">
+									<Button CornerRadius="8" Background="#cecece">
+										<TextBlock Text="{Binding Name}" />
+									</Button>
+
+									<TextBlock IsVisible="{Binding !IsLast}" Margin="6, 0"
+									           VerticalAlignment="Center" FontWeight="DemiBold" FontSize="16">/</TextBlock>
+								</StackPanel>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</Border>
+			</ScrollViewer>
 		</Grid>
 		
 		<ScrollViewer Grid.Row="1">

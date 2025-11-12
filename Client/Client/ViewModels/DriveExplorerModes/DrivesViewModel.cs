@@ -46,12 +46,14 @@ public class DrivesViewModel : DriveExplorerMode
 
 		if (descriptor.PartitionTableType == PartitionTableType.Unpartitioned)
 		{
-			ChangeMode?.Invoke(new FileSystemItemsViewModel(NavigationSvc, ClientSvc, _driveService, descriptor, string.Empty, items));
+			// ChangeMode?.Invoke(new FileSystemItemsViewModel(NavigationSvc, ClientSvc, _driveService, descriptor, string.Empty, items));
 		}
 		else
 		{
-			ChangeMode?.Invoke(new PartitionsViewModel(NavigationSvc, ClientSvc, _driveService, descriptor, items));
+			// ChangeMode?.Invoke(new PartitionsViewModel(NavigationSvc, ClientSvc, _driveService, descriptor, items));
 		}
+		
+		PathChanged?.Invoke($"{descriptor.Name}");
 	}
 	
 	/// <summary>
