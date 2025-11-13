@@ -25,7 +25,7 @@
 		<ItemsControl.ItemTemplate>
 			<DataTemplate DataType="dem:FileSystemItemItemTemplate">
 				<Border CornerRadius="15" Background="#f0f0f0" Height="160" Width="160" Margin="10" Padding="10" 
-				        BorderThickness="1.2">
+				        BorderThickness="1.2" DoubleTapped="OnFileSystemItemDoubleTapped">
 					<Border.Styles>
 						<Style Selector="Border">
 							<Setter Property="BorderBrush">
@@ -47,6 +47,5 @@
 				</Border>
 			</DataTemplate>
 		</ItemsControl.ItemTemplate>
-		
 	</ItemsControl>
 </UserControl>

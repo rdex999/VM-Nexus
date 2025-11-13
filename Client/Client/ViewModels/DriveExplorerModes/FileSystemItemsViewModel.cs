@@ -11,7 +11,7 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 {
 	private readonly DriveService _driveService;
 	private readonly DriveGeneralDescriptor _driveDescriptor;
-	private string _path;
+	private readonly string _path;
 	
 	public ObservableCollection<FileSystemItemItemTemplate> Items { get; }
 	
@@ -23,7 +23,7 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 		_driveDescriptor = driveDescriptor;
 		_path = string.IsNullOrEmpty(path)
 			? path
-			: path.Trim(SharedDefinitions.DirectorySeparators) + '/';
+			: path.Trim(SharedDefinitions.DirectorySeparators);
 		
 		Items = new ObservableCollection<FileSystemItemItemTemplate>();
 
@@ -36,11 +36,32 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 				Items.Add(new FileSystemItemItemTemplate(directory.Name, directory.Modified, directory.Created));
 		}
 	}
+
+	/// <summary>
+	/// Handles a double tap on a filesystem item.
+	/// </summary>
+	/// <param name="item"></param>
+	/// <remarks>
+	/// Precondition: A filesystem item was double-tapped. item != null. <br/>
+	/// Postcondition: If the item is a directory, an attempt to enter it is performed.
+	/// </remarks>
+	public void FileSystemItemDoubleTapped(FileSystemItemItemTemplate item)
+	{
+		if (!item.IsDirectory)
+			return;
+
+		PathChanged?.Invoke($"{_driveDescriptor.Name}/{_path}/{item.Name}");
+	}
 }
 
 public class FileSystemItemItemTemplate		/* FilesystemItem - item template (i know) */
 {
-	public bool IsFile { get; }				/* Is this a file or a directory? */
+	public bool IsFile { get; private set; }				/* Is this a file or a directory? */
+	public bool IsDirectory
+	{
+		get => !IsFile;
+		private set => IsFile = !value;
+	}
 	public string Name { get; }
 	public long SizeBytes { get; }			/* Only for files, -1 for directories. */
 	public DateTime? Accessed { get; }		/* Only for files, null for directories. */

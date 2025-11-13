@@ -30,7 +30,7 @@
 				</Button.Styles>
 				
 				<PathIcon Data="{StaticResource ChevronLeftRegular}" Padding="5"
-				          Width="18" Height="18" Foreground="DarkGray" />
+				          Width="23" Height="23" Foreground="DarkGray" />
 			</Button>
 			
 			<Button Grid.Column="1" Background="#e8e8e8" CornerRadius="6">
@@ -44,11 +44,11 @@
 				</Button.Styles>
 				
 				<PathIcon Data="{StaticResource ChevronRightRegular}" Padding="5"
-				          Width="18" Height="18" Foreground="DarkGray" />
+				          Width="23" Height="23" Foreground="DarkGray" />
 			</Button>
 
 			<ScrollViewer Grid.Column="2" HorizontalScrollBarVisibility="Auto">
-				<Border Background="#e8e8e8" CornerRadius="7" Padding="5">
+				<Border Background="#e8e8e8" CornerRadius="7" Padding="4">
 					<ItemsControl ItemsSource="{Binding PathParts}">
 						<ItemsControl.ItemsPanel>
 							<ItemsPanelTemplate>
@@ -58,8 +58,14 @@
 
 						<ItemsControl.ItemTemplate>
 							<DataTemplate DataType="vm:PathPartItemTemplate">
-								<StackPanel Orientation="Horizontal">
-									<Button CornerRadius="8" Background="#cecece">
+								<StackPanel Orientation="Horizontal" MaxWidth="200">
+									<Button CornerRadius="8" Background="Transparent" Padding="7, 5">
+										<Button.Styles>
+											<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+												<Setter Property="Background" Value="#bababa"/>
+											</Style>
+										</Button.Styles>
+										
 										<TextBlock Text="{Binding Name}" />
 									</Button>
 
