@@ -50,34 +50,53 @@
 			</Button>
 
 			<ScrollViewer Grid.Column="2" HorizontalScrollBarVisibility="Auto">
-				<Border Background="#e8e8e8" CornerRadius="7" Padding="4">
-					<ItemsControl ItemsSource="{Binding PathParts}">
-						<ItemsControl.ItemsPanel>
-							<ItemsPanelTemplate>
-								<WrapPanel Orientation="Horizontal" />
-							</ItemsPanelTemplate>
-						</ItemsControl.ItemsPanel>
+				<Border Background="#e8e8e8" CornerRadius="7" Padding="4" DoubleTapped="OnPathBarDoubleTapped">
+					<Border.KeyBindings>
+						<KeyBinding Command="{Binding EscapePressedCommand}" Gesture="Escape"/>
+					</Border.KeyBindings>
+					<Grid>
+						<ItemsControl ItemsSource="{Binding PathParts}"
+						              IsVisible="{Binding ButtonPathBarIsVisible}">
+							<ItemsControl.ItemsPanel>
+								<ItemsPanelTemplate>
+									<WrapPanel Orientation="Horizontal" />
+								</ItemsPanelTemplate>
+							</ItemsControl.ItemsPanel>
 
-						<ItemsControl.ItemTemplate>
-							<DataTemplate DataType="vm:PathPartItemTemplate">
-								<StackPanel Orientation="Horizontal" MaxWidth="200">
-									<Button CornerRadius="8" Background="Transparent" Padding="7, 5"
-									        Command="{Binding ClickCommand}">
-										<Button.Styles>
-											<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
-												<Setter Property="Background" Value="#bababa"/>
-											</Style>
-										</Button.Styles>
-										
-										<TextBlock Text="{Binding Name}" />
-									</Button>
+							<ItemsControl.ItemTemplate>
+								<DataTemplate DataType="vm:PathPartItemTemplate">
+									<StackPanel Orientation="Horizontal" MaxWidth="200">
+										<Button CornerRadius="8" Background="Transparent" Padding="7, 5"
+										        Command="{Binding ClickCommand}">
+											<Button.Styles>
+												<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+													<Setter Property="Background" Value="#bababa" />
+												</Style>
+											</Button.Styles>
 
-									<TextBlock IsVisible="{Binding !IsLast}" Margin="6, 0"
-									           VerticalAlignment="Center" FontWeight="DemiBold" FontSize="16">/</TextBlock>
-								</StackPanel>
-							</DataTemplate>
-						</ItemsControl.ItemTemplate>
-					</ItemsControl>
+											<TextBlock Text="{Binding Name}" />
+										</Button>
+
+										<TextBlock IsVisible="{Binding !IsLast}" Margin="6, 0"
+										           VerticalAlignment="Center" FontWeight="DemiBold" FontSize="16">
+											/
+										</TextBlock>
+									</StackPanel>
+								</DataTemplate>
+							</ItemsControl.ItemTemplate>
+						</ItemsControl>
+
+						<TextBox Padding="8, 0" Margin="0" BorderBrush="Transparent" BorderThickness="0" VerticalContentAlignment="Center"
+							IsVisible="{Binding !ButtonPathBarIsVisible}" 
+							Text="{Binding TextPathBarPath}" >
+						
+							<TextBox.Styles>
+								<Style Selector="TextBox /template/ Border#PART_BorderElement">
+									<Setter Property="BorderBrush" Value="Transparent"/>
+								</Style>
+							</TextBox.Styles>
+						</TextBox>
+					</Grid>
 				</Border>
 			</ScrollViewer>
 		</Grid>

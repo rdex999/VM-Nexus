@@ -27,6 +27,12 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _nextButtonIsEnabled = false;
 	
+	[ObservableProperty]
+	private bool _buttonPathBarIsVisible = true;
+
+	[ObservableProperty] 
+	private string _textPathBarPath = string.Empty;
+	
 	public DriveExplorerViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)
 	{
@@ -37,6 +43,22 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		ExplorerModeViewModel.ChangePath += OnChangePathRequested;
 	}
 
+	public void ChangeIntoTextPathBar()
+	{
+		ButtonPathBarIsVisible = false;
+		TextPathBarPath = string.Empty;
+		foreach (PathPartItemTemplate pathPart in PathParts)
+		{
+			TextPathBarPath += pathPart.Name + '/';
+		}
+	}
+
+	public void ChangeIntoButtonPathBar()
+	{
+		ButtonPathBarIsVisible = true;
+		TextPathBarPath = string.Empty;
+	}
+	
 	/// <summary>
 	/// Changes the current path in the explorer, assigns a new view and lists items if needed.
 	/// </summary>
@@ -222,6 +244,9 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		NextButtonIsEnabled = _prevPathParts.Count > 0;
 		await ChangePathAsync(path);
 	}
+
+	[RelayCommand]
+	private void EscapePressed() => ChangeIntoButtonPathBar();
 }
 
 public partial class PathPartItemTemplate : ObservableObject
