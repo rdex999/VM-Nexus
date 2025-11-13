@@ -50,21 +50,24 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 		if (!item.IsDirectory)
 			return;
 
-		PathChanged?.Invoke($"{_driveDescriptor.Name}/{_path}/{item.Name}");
+		if (string.IsNullOrEmpty(_path))
+			PathChanged?.Invoke($"{_driveDescriptor.Name}/{item.Name}");
+		else
+			PathChanged?.Invoke($"{_driveDescriptor.Name}/{_path}/{item.Name}");
 	}
 }
 
 public class FileSystemItemItemTemplate		/* FilesystemItem - item template (i know) */
 {
-	public bool IsFile { get; private set; }				/* Is this a file or a directory? */
+	public bool IsFile { get; private set; }		/* Is this a file or a directory? */
 	public bool IsDirectory
 	{
 		get => !IsFile;
 		private set => IsFile = !value;
 	}
 	public string Name { get; }
-	public long SizeBytes { get; }			/* Only for files, -1 for directories. */
-	public DateTime? Accessed { get; }		/* Only for files, null for directories. */
+	public long SizeBytes { get; }					/* Only for files, -1 for directories. */
+	public DateTime? Accessed { get; }				/* Only for files, null for directories. */
 	public DateTime Modified { get; }
 	public DateTime Created { get; }
 	public Geometry Icon { get; set; } = null!;		/* Set in code-behind. */
@@ -83,7 +86,7 @@ public class FileSystemItemItemTemplate		/* FilesystemItem - item template (i kn
 	/* Use for directories. */
 	public FileSystemItemItemTemplate(string name, DateTime modified, DateTime created)
 	{
-		IsFile = false;
+		IsDirectory = true;
 		Name = name;
 		SizeBytes = -1;
 		Accessed = null;

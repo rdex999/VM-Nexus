@@ -38,6 +38,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		}
 		
 		string driveName = pathParts[0];
+		string path = string.Join('/', pathParts[1..]);
 		DriveGeneralDescriptor? driveDescriptor = _driveService.GetDriveByName(driveName);
 		if (driveDescriptor == null)
 		{
@@ -47,14 +48,14 @@ public partial class DriveExplorerViewModel : ViewModelBase
 
 		if (driveDescriptor.PartitionTableType == PartitionTableType.Unpartitioned)
 		{
-			PathItem[]? items = await _driveService.ListItemsOnDrivePathAsync(driveDescriptor.Id, string.Empty);
+			PathItem[]? items = await _driveService.ListItemsOnDrivePathAsync(driveDescriptor.Id, path);
 			if (items == null)
 			{ 
 				await ChangePathAsync(string.Empty); 
 				return;
 			}
 
-			ChangeExplorerMode(new FileSystemItemsViewModel(NavigationSvc, ClientSvc, _driveService, driveDescriptor, driveName, items));
+			ChangeExplorerMode(new FileSystemItemsViewModel(NavigationSvc, ClientSvc, _driveService, driveDescriptor, path, items));
 		}
 		else
 		{
@@ -69,7 +70,6 @@ public partial class DriveExplorerViewModel : ViewModelBase
 			}
 			else
 			{
-				string path = string.Join('/', pathParts[1..]);
 				items = await _driveService.ListItemsOnDrivePathAsync(driveDescriptor.Id, path);
 				if (items != null)
 					mode = new FileSystemItemsViewModel(NavigationSvc, ClientSvc, _driveService, driveDescriptor, path, items);
