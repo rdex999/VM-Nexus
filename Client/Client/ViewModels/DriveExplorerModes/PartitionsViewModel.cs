@@ -59,7 +59,7 @@ public class PartitionsViewModel : DriveExplorerMode
 		if (items == null)
 			return;
 		
-		PathChanged?.Invoke($"{_driveDescriptor.Name}/{partitionIndex}");
+		ChangePath?.Invoke($"{_driveDescriptor.Name}/{partitionIndex}");
 	}
 
 	/// <summary>

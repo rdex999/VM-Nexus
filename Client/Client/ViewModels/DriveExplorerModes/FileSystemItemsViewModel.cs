@@ -51,9 +51,9 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 			return;
 
 		if (string.IsNullOrEmpty(_path))
-			PathChanged?.Invoke($"{_driveDescriptor.Name}/{item.Name}");
+			ChangePath?.Invoke($"{_driveDescriptor.Name}/{item.Name}");
 		else
-			PathChanged?.Invoke($"{_driveDescriptor.Name}/{_path}/{item.Name}");
+			ChangePath?.Invoke($"{_driveDescriptor.Name}/{_path}/{item.Name}");
 	}
 }
 

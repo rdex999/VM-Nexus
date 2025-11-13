@@ -22,6 +22,9 @@ public class DrivesViewModel : DriveExplorerMode
 		_driveService.Initialized += (_, _) => UpdateDrives();
 		ClientSvc.DriveCreated += OnDriveCreated;
 		ClientSvc.DriveDeleted += OnDriveDeleted;
+		
+		if (_driveService.IsInitialized)
+			UpdateDrives();
 	}
 
 	/// <summary>
@@ -53,7 +56,7 @@ public class DrivesViewModel : DriveExplorerMode
 			// ChangeMode?.Invoke(new PartitionsViewModel(NavigationSvc, ClientSvc, _driveService, descriptor, items));
 		}
 		
-		PathChanged?.Invoke($"{descriptor.Name}");
+		ChangePath?.Invoke($"{descriptor.Name}");
 	}
 	
 	/// <summary>
