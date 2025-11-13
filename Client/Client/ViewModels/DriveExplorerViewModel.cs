@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -114,12 +115,13 @@ public partial class DriveExplorerViewModel : ViewModelBase
 			ChangeExplorerMode(mode);
 		}
 		
-		foreach (string pathPart in pathParts)
+		for (int i = 0; i < pathParts.Length; ++i)
 		{
 			if (PathParts.LastOrDefault() != null)
 				PathParts.Last().IsLast = false;
 			
-			PathParts.Add(new PathPartItemTemplate(pathPart));
+			PathParts.Add(new PathPartItemTemplate(pathParts[i], i));
+			PathParts.Last().Clicked += OnPathPartClicked;
 		}
 	}
 
@@ -150,6 +152,25 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	/// </remarks>
 	private void OnChangePathRequested(string newPath) => _ = ChangePathAsync(newPath);
 
+	/// <summary>
+	/// Handles a click on a path part button in the path bar. Sets the current path to it.
+	/// </summary>
+	/// <param name="index">The index of the clicked path part in the path parts array. index >= 0.</param>
+	/// <remarks>
+	/// Precondition: User has clicked on a path part in the path bar. index >= 0. <br/>
+	/// Postcondition: The current path is set to the path of the clicked path part.
+	/// </remarks>
+	private void OnPathPartClicked(int index)
+	{
+		string path = string.Empty;
+		for (int i = 0; i <= index; ++i)
+		{
+			path += PathParts[i].Name + '/';
+		}
+
+		_ = ChangePathAsync(path);
+	}
+	
 	/// <summary>
 	/// Handles a click on the prev path button. Goes one path part back.
 	/// </summary>
@@ -205,14 +226,27 @@ public partial class DriveExplorerViewModel : ViewModelBase
 
 public partial class PathPartItemTemplate : ObservableObject
 {
+	public Action<int>? Clicked;
 	public string Name { get; }
-
+	private readonly int _index;
+	
 	[ObservableProperty] 
 	private bool _isLast;
 	
-	public PathPartItemTemplate(string name)
+	public PathPartItemTemplate(string name, int index)
 	{
 		Name = name;
+		_index = index;
 		IsLast = true;
 	}
+
+	/// <summary>
+	/// Handles a click on this path part. Informs the drive explorer.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on this path part. <br/>
+	/// Postcondition: The drive explorer is informed of the event.
+	/// </remarks>
+	[RelayCommand]
+	private void Click() => Clicked?.Invoke(_index);
 }

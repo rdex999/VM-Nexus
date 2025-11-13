@@ -61,7 +61,8 @@
 						<ItemsControl.ItemTemplate>
 							<DataTemplate DataType="vm:PathPartItemTemplate">
 								<StackPanel Orientation="Horizontal" MaxWidth="200">
-									<Button CornerRadius="8" Background="Transparent" Padding="7, 5">
+									<Button CornerRadius="8" Background="Transparent" Padding="7, 5"
+									        Command="{Binding ClickCommand}">
 										<Button.Styles>
 											<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
 												<Setter Property="Background" Value="#bababa"/>
