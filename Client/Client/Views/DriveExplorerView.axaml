@@ -88,13 +88,11 @@
 
 						<TextBox Padding="8, 0" Margin="0" BorderBrush="Transparent" BorderThickness="0" VerticalContentAlignment="Center"
 							IsVisible="{Binding !ButtonPathBarIsVisible}" 
-							Text="{Binding TextPathBarPath}" >
-						
-							<TextBox.Styles>
-								<Style Selector="TextBox /template/ Border#PART_BorderElement">
-									<Setter Property="BorderBrush" Value="Transparent"/>
-								</Style>
-							</TextBox.Styles>
+							Text="{Binding TextPathBarPath}">
+							
+							<TextBox.KeyBindings>
+								<KeyBinding Command="{Binding EnterPressedCommand}" Gesture="Enter"/>
+							</TextBox.KeyBindings>
 						</TextBox>
 					</Grid>
 				</Border>

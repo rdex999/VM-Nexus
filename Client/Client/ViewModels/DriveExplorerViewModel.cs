@@ -7,6 +7,7 @@ using Client.Services;
 using Client.ViewModels.DriveExplorerModes;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Shared;
 using Shared.Drives;
 
 namespace Client.ViewModels;
@@ -43,6 +44,13 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		ExplorerModeViewModel.ChangePath += OnChangePathRequested;
 	}
 
+	/// <summary>
+	/// Changes the path bar mode into text mode.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: Path bar is in text mode.
+	/// </remarks>
 	public void ChangeIntoTextPathBar()
 	{
 		ButtonPathBarIsVisible = false;
@@ -53,6 +61,13 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		}
 	}
 
+	/// <summary>
+	/// Changes the path bar mode into button mode.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: Path bar is in button mode.
+	/// </remarks>
 	public void ChangeIntoButtonPathBar()
 	{
 		ButtonPathBarIsVisible = true;
@@ -69,8 +84,8 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	/// </remarks>
 	private async Task ChangePathAsync(string newPath)
 	{
-		string newPathTrimmed = newPath.Trim('/');
-		string[] pathParts = newPathTrimmed.Split('/');
+		string newPathTrimmed = newPath.Trim(SharedDefinitions.DirectorySeparators);
+		string[] pathParts = newPathTrimmed.Split(SharedDefinitions.DirectorySeparators);
 		bool isGoingBack = pathParts.Length < PathParts.Count || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0]));
 		PathParts.Clear();
 		PrevButtonIsEnabled = pathParts.Length > 0 && !string.IsNullOrEmpty(pathParts[0]);
@@ -245,8 +260,50 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		await ChangePathAsync(path);
 	}
 
+	/// <summary>
+	/// Handles a click on the escape key while the path bar textbox is focused.
+	/// Switches the path bar into button mode.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked the escape key while the textbox of the path bar was focused. <br/>
+	/// Postcondition: Path bar is switched into button mode.
+	/// </remarks>
 	[RelayCommand]
 	private void EscapePressed() => ChangeIntoButtonPathBar();
+
+	/// <summary>
+	/// Handles a click on the enter key on the textbox of the path bar.
+	/// Attempts to enter the given path.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has pressed the enter key on the textbox of the path bar. <br/>
+	/// Postcondition: If the entered path is valid, it is entered. If invalid, no action is taken.
+	/// </remarks>
+	[RelayCommand]
+	private async Task EnterPressedAsync()
+	{
+		string path = TextPathBarPath.Trim(SharedDefinitions.DirectorySeparators);
+		string[] pathParts = path.Split(SharedDefinitions.DirectorySeparators);
+		if (string.IsNullOrEmpty(path) || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
+		{
+			ChangeIntoButtonPathBar();
+			await ChangePathAsync(string.Empty);
+			return;
+		}
+	
+		string driveName = pathParts[0];
+		DriveGeneralDescriptor? driveDescriptor = _driveService.GetDriveByName(driveName);
+		if (driveDescriptor == null)
+			return;
+		
+		string pathOnDrive = string.Join('/', pathParts[1..]);
+		PathItem[]? items = await _driveService.ListItemsOnDrivePathAsync(driveDescriptor.Id, pathOnDrive);
+		if (items == null)		/* Is this path valid? */
+			return;
+
+		ChangeIntoButtonPathBar();
+		await ChangePathAsync(path);
+	}
 }
 
 public partial class PathPartItemTemplate : ObservableObject
