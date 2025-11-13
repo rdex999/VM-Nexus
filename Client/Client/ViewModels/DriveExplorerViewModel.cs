@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +15,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	private readonly DriveService _driveService;
 	
 	public ObservableCollection<PathPartItemTemplate> PathParts { get; }
+	private Stack<string> _prevPathParts;
 	
 	[ObservableProperty]
 	private DriveExplorerMode _explorerModeViewModel;
@@ -21,11 +23,15 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	[ObservableProperty] 
 	private bool _prevButtonIsEnabled = false;
 	
+	[ObservableProperty]
+	private bool _nextButtonIsEnabled = false;
+	
 	public DriveExplorerViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)
 	{
 		_driveService = driveService;
 		PathParts = new ObservableCollection<PathPartItemTemplate>();
+		_prevPathParts = new Stack<string>();
 		ExplorerModeViewModel = new DrivesViewModel(NavigationSvc, ClientSvc, driveService);
 		ExplorerModeViewModel.ChangePath += OnChangePathRequested;
 	}
@@ -41,10 +47,20 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	private async Task ChangePathAsync(string newPath)
 	{
 		string newPathTrimmed = newPath.Trim('/');
-		PathParts.Clear();
 		string[] pathParts = newPathTrimmed.Split('/');
+		bool isGoingBack = pathParts.Length < PathParts.Count || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0]));
+		PathParts.Clear();
 		PrevButtonIsEnabled = pathParts.Length > 0 && !string.IsNullOrEmpty(pathParts[0]);
 		
+		if (_prevPathParts.Count > 0 && !isGoingBack)
+		{
+			if (_prevPathParts.Peek() == pathParts.Last())
+				_prevPathParts.Pop();
+			else
+				_prevPathParts.Clear();
+		}
+
+		NextButtonIsEnabled = _prevPathParts.Count > 0;
 		if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
 		{
 			ChangeExplorerMode(new DrivesViewModel(NavigationSvc, ClientSvc, _driveService));
@@ -149,12 +165,40 @@ public partial class DriveExplorerViewModel : ViewModelBase
 			await ChangePathAsync(string.Empty);
 			return;
 		}
-		
+	
+		_prevPathParts.Push(PathParts.Last().Name);
+		NextButtonIsEnabled = true;
 		PathPartItemTemplate[] pathParts = PathParts.ToArray()[..^1];
 		string path = string.Empty;
 		foreach (PathPartItemTemplate pathPart in pathParts)
 			path += pathPart.Name + '/';
 		
+		await ChangePathAsync(path);
+	}
+
+	/// <summary>
+	/// Handles a click on the next path button. Goes one path forward. (from the ones the user was just in)
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the next path button. <br/>
+	/// Postcondition: An attempt to enter one path forward (into the directory the user was just in) is performed.
+	/// On success, the items on the new path are listed. On failure, the path is set to "", meaning drives are listed.
+	/// </remarks>
+	[RelayCommand]
+	private async Task NextPathClick()
+	{
+		if (_prevPathParts.Count == 0)
+		{
+			NextButtonIsEnabled = false;
+			return;
+		}
+		
+		string path = string.Empty;
+		foreach (PathPartItemTemplate pathPart in PathParts)
+			path += pathPart.Name + '/';
+
+		path += _prevPathParts.Peek();
+		NextButtonIsEnabled = _prevPathParts.Count > 0;
 		await ChangePathAsync(path);
 	}
 }

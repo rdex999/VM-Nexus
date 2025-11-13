@@ -33,7 +33,9 @@
 				          Width="23" Height="23" Foreground="DarkGray" />
 			</Button>
 			
-			<Button Grid.Column="1" Background="#e8e8e8" CornerRadius="6">
+			<Button Grid.Column="1" Background="#e8e8e8" CornerRadius="6"
+			        IsEnabled="{Binding NextButtonIsEnabled}"
+			        Command="{Binding NextPathClickCommand}">
 				<Button.Styles>
 					<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
 						<Setter Property="Background" Value="#efefef"/>
