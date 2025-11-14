@@ -150,38 +150,29 @@ public class DriveService
 		return await _clientService.ListItemsOnDrivePathAsync(driveId, path);
 	}
 
-	public async Task<ExitCode> DownloadItemAsync(int driveId, string path, string downloadPath)
+	public async Task<DownloadingItem?> DownloadItemAsync(int driveId, string path, string downloadPath)
 	{
 		Stream stream;
 		try
 		{
 			stream = File.Open(downloadPath, FileMode.Create, FileAccess.Write);
 		}
-		catch (Exception e) when (e is DirectoryNotFoundException || e is FileNotFoundException)
-		{
-			return ExitCode.InvalidPath;
-		}
 		catch (Exception)
 		{
-			return ExitCode.OpeningFileFailed;
+			return null;
 		}
 
 		MessageResponseDownloadItem? response = await _clientService.StartItemDownloadAsync(driveId, path);
-		if (response == null)
-			return ExitCode.MessageNotReceived;
+		if (response == null || response.Result != MessageResponseDownloadItem.Status.Success)
+			return null;
 		
-		if (response.Result == MessageResponseDownloadItem.Status.NoSuchItem)
-			return ExitCode.InvalidDrivePath;
-		
-		if (response.Result != MessageResponseDownloadItem.Status.Success)
-			return ExitCode.ItemDownloadFailed;
-
-		DownloadingItem item = new DownloadingItem(response.ItemSize, stream);
+		DownloadingItem item = new DownloadingItem(response.StreamId, response.ItemSize, stream);
+		item.OutOfMemory += DownloadingItemOnOutOfMemory;
 		_downloadingItems.TryAdd(response.StreamId, item);
-		
-		return ExitCode.Success;
+
+		return item;
 	}
-	
+
 	private async Task<ExitCode> FetchVmsAsync()
 	{
 		_virtualMachines.Clear();
@@ -334,23 +325,33 @@ public class DriveService
 		if (_downloadingItems.TryGetValue(data.StreamId, out DownloadingItem? item))
 		{
 			item.ReceiveData(data.Data, data.Offset);
-			
+
 			if (!item.IsDownloading)
-				_downloadingItems.Remove(data.StreamId, out DownloadingItem? _);
+				_downloadingItems.Remove(data.StreamId, out _);
 		}
 	}
 	
-	private class DownloadingItem
+	private void DownloadingItemOnOutOfMemory(object? sender, EventArgs e)
 	{
-		public Action? DataReceived;
-		public Action? OutOfMemory;
+		if (sender == null || sender is not DownloadingItem item)
+			return;
+		
+		_downloadingItems.TryRemove(item.DownloadId, out _);
+	}
+	
+	public class DownloadingItem
+	{
+		public event EventHandler? DataReceived;
+		public event EventHandler? OutOfMemory;
+		public Guid DownloadId { get; }
 		public long TotalSize { get; }
 		public long BytesDownloaded { get; private set; } = 0;
 		public bool IsDownloading { get; private set; } = true;
 		private readonly Stream _destination;
 
-		public DownloadingItem(long totalSize, Stream destination)
+		public DownloadingItem(Guid downloadId, long totalSize, Stream destination)
 		{
+			DownloadId = downloadId;
 			TotalSize = totalSize;
 			_destination = destination;
 		}
@@ -360,16 +361,17 @@ public class DriveService
 			if (!IsDownloading)
 				return;
 			
-			if (offset + buffer.Length > _destination.Length)
+			if (offset >= _destination.Length)
 			{
 				try
 				{
-					_destination.SetLength(offset + buffer.Length);
+					_destination.SetLength(offset + 1);
 				}
 				catch (Exception)
 				{
 					IsDownloading = false;
-					OutOfMemory?.Invoke();
+					_destination.Dispose();
+					OutOfMemory?.Invoke(this, EventArgs.Empty);
 					return;
 				}
 			}
@@ -384,7 +386,7 @@ public class DriveService
 				_destination.Dispose();
 			}
 			
-			DataReceived?.Invoke();
+			DataReceived?.Invoke(this, EventArgs.Empty);
 		}
 	}
 }
