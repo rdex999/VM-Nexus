@@ -633,7 +633,7 @@ public sealed class ClientConnection : MessagingService
 				byte[] buffer = new byte[Math.Min(10 * 1024 * 1024 / 10, stream.Stream.Length)];
 				while (stream.Stream.Position < stream.Stream.Length)
 				{
-					int readSize = Math.Min(buffer.Length, (int)(stream.Stream.Length - stream.Stream.Position));
+					int readSize = (int)Math.Min(buffer.Length, (stream.Stream.Length - stream.Stream.Position));
 					
 					await stream.Stream.ReadExactlyAsync(buffer, 0, readSize);
 					

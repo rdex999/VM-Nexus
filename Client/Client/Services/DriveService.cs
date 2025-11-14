@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Shared;
 using Shared.Drives;
@@ -43,6 +42,7 @@ public class DriveService
 		_clientService.DriveCreated += OnDriveCreated;
 		_clientService.DriveDeleted += OnDriveDeleted;
 		_clientService.DriveConnected += OnDriveConnected;
+		_clientService.DownloadItemDataReceived += OnDownloadItemDataReceived;
 	}
 
 	public async Task<ExitCode> InitializeAsync()
@@ -329,18 +329,62 @@ public class DriveService
 	private void OnDriveConnected(object? sender, DriveConnection connection) =>
 		AddConnection(connection.DriveId, connection.VmId);
 
+	private void OnDownloadItemDataReceived(object? sender, MessageInfoDownloadItemData data)
+	{
+		if (_downloadingItems.TryGetValue(data.StreamId, out DownloadingItem? item))
+		{
+			item.ReceiveData(data.Data, data.Offset);
+			
+			if (!item.IsDownloading)
+				_downloadingItems.Remove(data.StreamId, out DownloadingItem? _);
+		}
+	}
+	
 	private class DownloadingItem
 	{
+		public Action? DataReceived;
+		public Action? OutOfMemory;
 		public long TotalSize { get; }
 		public long BytesDownloaded { get; private set; } = 0;
-		public ManualResetEventSlim DataReceived { get; }
-		private Stream _destination;
+		public bool IsDownloading { get; private set; } = true;
+		private readonly Stream _destination;
 
 		public DownloadingItem(long totalSize, Stream destination)
 		{
 			TotalSize = totalSize;
 			_destination = destination;
-			DataReceived = new ManualResetEventSlim(false);
+		}
+		
+		public void ReceiveData(byte[] buffer, long offset)
+		{
+			if (!IsDownloading)
+				return;
+			
+			if (offset + buffer.Length > _destination.Length)
+			{
+				try
+				{
+					_destination.SetLength(offset + buffer.Length);
+				}
+				catch (Exception)
+				{
+					IsDownloading = false;
+					OutOfMemory?.Invoke();
+					return;
+				}
+			}
+			
+			_destination.Seek(offset, SeekOrigin.Begin);
+			_destination.Write(buffer);
+			
+			BytesDownloaded += buffer.Length;
+			if (BytesDownloaded == TotalSize)
+			{
+				IsDownloading = false;
+				_destination.Dispose();
+			}
+			
+			DataReceived?.Invoke();
 		}
 	}
 }
