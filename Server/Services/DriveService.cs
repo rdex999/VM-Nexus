@@ -475,7 +475,7 @@ public class DriveService
 	}
 
 	/// <summary>
-	/// Get a stream of an item in a drive, or the drive itself. (disk image) Directories are not supported.
+	/// Get a read/write stream of an item in a drive, or the drive itself. (disk image) Directories are not supported.
 	/// </summary>
 	/// <param name="driveId">The ID of the drive. driveId >= 1.</param>
 	/// <param name="path">

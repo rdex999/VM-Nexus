@@ -227,5 +227,5 @@ public class MessageInfoDownloadItemData : MessageInfoTcp
 		Data = data;
 	}
 	
-	public override bool IsValidMessage() => base.IsValidMessage() && StreamId != Guid.Empty && Data.Length > 0 && Offset > 0;
+	public override bool IsValidMessage() => base.IsValidMessage() && StreamId != Guid.Empty && Data.Length > 0 && Offset >= 0;
 }

@@ -353,12 +353,23 @@ public class MessageResponseDownloadItem : MessageResponse
 {
 	public Status Result { get; }
 	public Guid StreamId { get; }
+	public long ItemSize { get; }
 
-	public MessageResponseDownloadItem(bool generateGuid, Guid requestId, Status result, Guid streamId)
+	[JsonConstructor]
+	public MessageResponseDownloadItem(bool generateGuid, Guid requestId, Status result, Guid streamId, long itemSize)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
 		StreamId = streamId;
+		ItemSize = itemSize;
+	}
+
+	public MessageResponseDownloadItem(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		StreamId = Guid.Empty;
+		ItemSize = -1;
 	}
 	
 	public enum Status
@@ -367,8 +378,8 @@ public class MessageResponseDownloadItem : MessageResponse
 		NoSuchItem,
 		Failure,
 	}
-	
-	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && StreamId != Guid.Empty;
+
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (ItemSize > 0 || ItemSize == -1);
 }
 
 public class MessageResponseVmStartup : MessageResponse

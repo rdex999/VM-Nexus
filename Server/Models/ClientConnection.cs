@@ -1,6 +1,7 @@
 using System;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Server.Drives;
 using Server.Services;
 using Server.VirtualMachines;
 using Shared;
@@ -606,6 +607,41 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseListPathItems(true, reqListPathItems.Id, items));
 				}
 				
+				break;
+			}
+
+			case MessageRequestDownloadItem reqDownloadItem:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseDownloadItem(true, reqDownloadItem.Id, MessageResponseDownloadItem.Status.Failure));
+					break;
+				}
+
+				ItemStream? stream = _driveService.GetItemStream(reqDownloadItem.DriveId, reqDownloadItem.Path);
+				if (stream == null)
+				{
+					SendResponse(new MessageResponseDownloadItem(true, reqDownloadItem.Id, MessageResponseDownloadItem.Status.NoSuchItem));
+					break;
+				}
+			
+				Guid streamGuid = Guid.NewGuid();
+				SendResponse(new MessageResponseDownloadItem(true, reqDownloadItem.Id, 
+					MessageResponseDownloadItem.Status.Success, streamGuid, stream.Stream.Length)
+				);
+
+				byte[] buffer = new byte[Math.Min(10 * 1024 * 1024 / 10, stream.Stream.Length)];
+				while (stream.Stream.Position < stream.Stream.Length)
+				{
+					int readSize = Math.Min(buffer.Length, (int)(stream.Stream.Length - stream.Stream.Position));
+					
+					await stream.Stream.ReadExactlyAsync(buffer, 0, readSize);
+					
+					SendInfo(new MessageInfoDownloadItemData(true, streamGuid, stream.Stream.Position - buffer.Length, buffer[..readSize]));
+					await Task.Delay(100);
+				}
+				
+				stream.Dispose();
 				break;
 			}
 
