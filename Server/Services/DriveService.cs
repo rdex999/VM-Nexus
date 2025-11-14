@@ -475,6 +475,101 @@ public class DriveService
 	}
 
 	/// <summary>
+	/// Get a stream of an item in a drive, or the drive itself. (disk image) Directories are not supported.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive. driveId >= 1.</param>
+	/// <param name="path">
+	/// The path on the drive, which points to the needed item. Set to an empty string to get the drive's disk image. path != null.
+	/// </param>
+	/// <param name="createFileIfNotExists">
+	/// Optional - Only valid for files. Set to true to create the file if it doesn't already exist, false otherwise. False by default.
+	/// </param>
+	/// <returns>A stream representing the item, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. The given path exists and is in valid syntax. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: On success, a stream representing the item is returned. On failure, null is returned.
+	/// </remarks>
+	public ItemStream? GetItemStream(int driveId, string path, bool createFileIfNotExists = false)
+	{
+		if (driveId < 1)
+			return null;
+
+		string trimmedPath = path.Trim(SharedDefinitions.DirectorySeparators);
+		string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
+		
+		/* Download disk image */
+		if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
+		{
+			try
+			{
+				return new ItemStream(File.Open(GetDriveFilePath(driveId), FileMode.Open));
+			}
+			catch (Exception)
+			{
+				return null;
+			}
+		}
+		
+		Disk drive;
+		try
+		{
+			drive = new Disk(GetDriveFilePath(driveId));
+		}
+		catch (Exception)
+		{
+			return null;
+		}
+
+		DiscFileSystem? fileSystem = null;
+		if (drive.IsPartitioned)
+		{
+			/* First part of the path should contain the partition index if the drive is partitioned. */
+			if (!int.TryParse(pathParts[0], out int partitionIndex) || partitionIndex < 0 || partitionIndex >= drive.Partitions.Count)
+			{
+				drive.Dispose();
+				return null;
+			}
+
+			PartitionInfo partitionInfo = drive.Partitions[partitionIndex];
+			Stream fileSystemStream = partitionInfo.Open();
+			if (pathParts.Length == 1)		/* return stream of partition. */
+			{
+				fileSystemStream.Seek(0, SeekOrigin.Begin);
+				return new ItemStream(fileSystemStream, drive);
+			}
+		
+			fileSystemStream.Seek(partitionInfo.FirstSector * drive.SectorSize, SeekOrigin.Begin);
+			fileSystem = GetStreamFileSystem(fileSystemStream);
+		}
+		
+		string fileSystemPath = string.Join('\\', pathParts.AsSpan()[1..]!);
+		if (fileSystem == null)
+		{
+			drive.Dispose();
+			return null;
+		}
+
+		if (!fileSystem.DirectoryExists(Path.GetDirectoryName(fileSystemPath)) || (!createFileIfNotExists && !fileSystem.Exists(fileSystemPath)))
+		{
+			fileSystem.Dispose();
+			drive.Dispose();
+			return null;
+		}
+
+		try
+		{
+			Stream stream = fileSystem.OpenFile(fileSystemPath, createFileIfNotExists ? FileMode.OpenOrCreate : FileMode.Open);
+			return new ItemStream(stream, drive, fileSystem);
+		}
+		catch (Exception)
+		{
+			fileSystem.Dispose();
+			drive.Dispose();
+			return null;
+		}
+	}
+
+	/// <summary>
 	/// Lists items under the given path in the given filesystem. (which is the given stream)
 	/// </summary>
 	/// <param name="stream">The stream representing the filesystem on the disk. stream != null.</param>
