@@ -212,3 +212,20 @@ public class MessageInfoDriveConnected : MessageInfoTcp
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
+
+public class MessageInfoDownloadItemData : MessageInfoTcp
+{
+	public Guid StreamId { get; }
+	public long Offset { get; }		/* The offset of the data in the file, in bytes. */
+	public byte[] Data { get; }
+
+	public MessageInfoDownloadItemData(bool generateGuid, Guid streamId, long offset, byte[] data)
+		: base(generateGuid)
+	{
+		StreamId = streamId;
+		Offset = offset;
+		Data = data;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && StreamId != Guid.Empty && Data.Length > 0 && Offset > 0;
+}

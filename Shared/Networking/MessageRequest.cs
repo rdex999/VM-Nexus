@@ -217,6 +217,21 @@ public class MessageRequestListPathItems : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }
 
+public class MessageRequestDownloadItem : MessageRequest
+{
+	public int DriveId { get; }
+	public string Path { get; }
+
+	public MessageRequestDownloadItem(bool generateGuid, int driveId, string path)
+		: base(generateGuid)
+	{
+		DriveId = driveId;
+		Path = path;
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
+}
+
 public class MessageRequestVmStartup : MessageRequest
 {
 	public int VmId { get; }

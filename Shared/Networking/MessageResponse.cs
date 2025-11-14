@@ -349,6 +349,28 @@ public class MessageResponseListPathItems : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+public class MessageResponseDownloadItem : MessageResponse
+{
+	public Status Result { get; }
+	public Guid StreamId { get; }
+
+	public MessageResponseDownloadItem(bool generateGuid, Guid requestId, Status result, Guid streamId)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		StreamId = streamId;
+	}
+	
+	public enum Status
+	{
+		Success,
+		NoSuchItem,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && StreamId != Guid.Empty;
+}
+
 public class MessageResponseVmStartup : MessageResponse
 {
 	public Status Result { get; }
