@@ -209,7 +209,15 @@ public class DriveService
 	public async Task<ExitCode> DeleteDriveAsync(int id)
 	{
 		string filePath = GetDriveFilePath(id);
-		File.Delete(filePath);
+		try
+		{
+			File.Delete(filePath);
+		}
+		catch (Exception)
+		{
+			// ignored
+		}
+
 		return await _databaseService.DeleteDriveAsync(id);
 	}
 
@@ -270,10 +278,18 @@ public class DriveService
 		string pathTrimmed = path.Trim(SharedDefinitions.DirectorySeparators);
 		string[] pathParts = pathTrimmed.Split(SharedDefinitions.DirectorySeparators);
 		
-		List<PathItem> items = new List<PathItem>();
-		Stream image = File.OpenRead(GetDriveFilePath(driveId));
-		using Disk drive = new Disk(image, Ownership.Dispose);
+		Disk drive;
+		try
+		{
+			drive = new Disk(GetDriveFilePath(driveId));
+		}
+		catch (Exception)
+		{
+			return null;
+		}
+		
 		Stream filesystemStream;
+		List<PathItem> items = new List<PathItem>();
 		if (drive.IsPartitioned)
 		{
 			if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
@@ -302,12 +318,16 @@ public class DriveService
 					}
 				}
 				
+				drive.Dispose();
 				return items.ToArray();
 			}
 
 			/* First part of the path should contain the partition index if the drive is partitioned. */
 			if (!int.TryParse(pathParts[0], out int partitionIndex))
+			{
+				drive.Dispose();
 				return null;
+			}
 			
 			PartitionInfo partitionInfo = drive.Partitions.Partitions[partitionIndex];
 			filesystemStream = partitionInfo.Open();
@@ -316,10 +336,15 @@ public class DriveService
 		else
 		{
 			filesystemStream = drive.Content;
-			return ListItemsOnFileSystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()!));
+			filesystemStream.Seek(0, SeekOrigin.Begin);		/* Docs says not guaranteed to be at any position - set to beginning. */
+			PathItem[]? resultItems = ListItemsOnFileSystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()!));
+			drive.Dispose();
+			return resultItems;
 		}
 
-		return ListItemsOnFileSystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()[1..]!));
+		PathItem[]? listedItems = ListItemsOnFileSystemPath(filesystemStream, string.Join('\\', pathParts.AsSpan()[1..]!));
+		drive.Dispose();
+		return listedItems;
 	}
 
 	/// <summary>
@@ -335,16 +360,29 @@ public class DriveService
 	{
 		if (driveId < 1)
 			return (PartitionTableType)(-1);
+	
+		Disk drive;
+		try
+		{
+			drive = new Disk(GetDriveFilePath(driveId));
+		}
+		catch (Exception)
+		{
+			return (PartitionTableType)(-1);
+		}
+
+		PartitionTableType type = PartitionTableType.Unpartitioned;
+		if (drive.IsPartitioned)
+		{
+			if (drive.Partitions is GuidPartitionTable)
+				type = PartitionTableType.GuidPartitionTable;
+			
+			if (drive.Partitions is BiosPartitionTable)
+				type = PartitionTableType.MasterBootRecord;
+		}
 		
-		using Disk drive = new Disk(GetDriveFilePath(driveId));
-		
-		if (drive.IsPartitioned && drive.Partitions is GuidPartitionTable)
-			return PartitionTableType.GuidPartitionTable;
-		
-		if (drive.IsPartitioned && drive.Partitions is BiosPartitionTable)
-			return PartitionTableType.MasterBootRecord;
-		
-		return PartitionTableType.Unpartitioned;
+		drive.Dispose();
+		return type;
 	}
 
 	/// <summary>
@@ -360,9 +398,16 @@ public class DriveService
 	{
 		if (driveId < 1)
 			return -1;
-		
-		using Disk drive = new Disk(GetDriveFilePath(driveId));
-		return drive.SectorSize;
+
+		try
+		{
+			using Disk drive = new Disk(GetDriveFilePath(driveId));
+			return drive.SectorSize;
+		}
+		catch (Exception)
+		{
+			return -1;
+		}
 	}
 	
 	/// <summary>
