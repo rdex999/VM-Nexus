@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Shared;
 using Shared.Drives;
@@ -21,6 +23,8 @@ public class DriveService
 
 	private readonly ConcurrentDictionary<int, HashSet<int>> _vmsByDriveId;
 	private readonly ConcurrentDictionary<int, HashSet<int>> _drivesByVmId;
+
+	private readonly ConcurrentDictionary<Guid, DownloadingItem> _downloadingItems;
 	
 	public DriveService(ClientService clientService)
 	{
@@ -29,6 +33,7 @@ public class DriveService
 		_drives = new ConcurrentDictionary<int, DriveGeneralDescriptor>();
 		_vmsByDriveId = new ConcurrentDictionary<int, HashSet<int>>();
 		_drivesByVmId = new ConcurrentDictionary<int, HashSet<int>>();
+		_downloadingItems = new ConcurrentDictionary<Guid, DownloadingItem>();
 		
 		_clientService.VmCreated += OnVmCreated;
 		_clientService.VmDeleted += OnVmDeleted;
@@ -143,6 +148,38 @@ public class DriveService
 	public async Task<PathItem[]?> ListItemsOnDrivePathAsync(int driveId, string path)
 	{
 		return await _clientService.ListItemsOnDrivePathAsync(driveId, path);
+	}
+
+	public async Task<ExitCode> DownloadItemAsync(int driveId, string path, string downloadPath)
+	{
+		Stream stream;
+		try
+		{
+			stream = File.Open(downloadPath, FileMode.Create, FileAccess.Write);
+		}
+		catch (Exception e) when (e is DirectoryNotFoundException || e is FileNotFoundException)
+		{
+			return ExitCode.InvalidPath;
+		}
+		catch (Exception)
+		{
+			return ExitCode.OpeningFileFailed;
+		}
+
+		MessageResponseDownloadItem? response = await _clientService.StartItemDownloadAsync(driveId, path);
+		if (response == null)
+			return ExitCode.MessageNotReceived;
+		
+		if (response.Result == MessageResponseDownloadItem.Status.NoSuchItem)
+			return ExitCode.InvalidDrivePath;
+		
+		if (response.Result != MessageResponseDownloadItem.Status.Success)
+			return ExitCode.ItemDownloadFailed;
+
+		DownloadingItem item = new DownloadingItem(response.ItemSize, stream);
+		_downloadingItems.TryAdd(response.StreamId, item);
+		
+		return ExitCode.Success;
 	}
 	
 	private async Task<ExitCode> FetchVmsAsync()
@@ -291,4 +328,19 @@ public class DriveService
 
 	private void OnDriveConnected(object? sender, DriveConnection connection) =>
 		AddConnection(connection.DriveId, connection.VmId);
+
+	private class DownloadingItem
+	{
+		public long TotalSize { get; }
+		public long BytesDownloaded { get; private set; } = 0;
+		public ManualResetEventSlim DataReceived { get; }
+		private Stream _destination;
+
+		public DownloadingItem(long totalSize, Stream destination)
+		{
+			TotalSize = totalSize;
+			_destination = destination;
+			DataReceived = new ManualResetEventSlim(false);
+		}
+	}
 }

@@ -45,5 +45,9 @@ public enum ExitCode
 	DiskImageCreationFailed,
 	NamedPipeCreationFailed,
 	OpenAlDeviceOpenFailed,
-	OpenAlInitializationFailed
+	OpenAlInitializationFailed,
+	OpeningFileFailed,
+	InvalidPath,
+	InvalidDrivePath,
+	ItemDownloadFailed,
 }

@@ -27,6 +27,7 @@ public class ClientService : MessagingService
 	public event EventHandler<DriveGeneralDescriptor>? DriveCreated;
 	public event EventHandler<int>? DriveDeleted;
 	public event EventHandler<DriveConnection>? DriveConnected;
+	public event EventHandler<MessageInfoDownloadItemData>? DownloadItemDataReceived;
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -359,6 +360,27 @@ public class ClientService : MessagingService
 			return null;
 
 		return ((MessageResponseListPathItems)response!).PathItems;
+	}
+
+	/// <summary>
+	/// Requests to start a download of the given item.
+	/// </summary>
+	/// <param name="driveId">The drive that holds the needed item. driveId >= 1.</param>
+	/// <param name="path">The path on the drive, which points to the needed item. Use an empty string for the drive's disk image. path != null.</param>
+	/// <returns>The servers response, or null on networking failure.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server, user is logged in. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: The server's response is returned, or null on networking failure. <br/>
+	/// On success, a download will start and DownloadItemDataReceived will be raised for each piece of data received.
+	/// On failure (not including networking failure) the server's response will state the error.
+	/// </remarks>
+	public async Task<MessageResponseDownloadItem?> StartItemDownloadAsync(int driveId, string path)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDownloadItem(true, driveId, path));
+		if (result != ExitCode.Success)
+			return null;
+		
+		return (MessageResponseDownloadItem)response!;
 	}
 
 	/// <summary>
@@ -706,6 +728,11 @@ public class ClientService : MessagingService
 				DriveConnected?.Invoke(this, 
 					new DriveConnection(infoDriveConnected.DriveId, infoDriveConnected.VmId)
 				);
+				break;
+			}
+			case MessageInfoDownloadItemData infoDownloadItemData:
+			{
+				DownloadItemDataReceived?.Invoke(this, infoDownloadItemData);
 				break;
 			}
 		}
