@@ -14,6 +14,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Drives;
+using Shared.Networking;
 
 namespace Client.ViewModels;
 
@@ -50,6 +51,9 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private string _itemDeletePopupConfirmText = string.Empty;
+
+	private int _itemDeleteDriveId = -1;
+	private string _itemDeletePath = string.Empty;
 	
 	public DriveExplorerViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)
@@ -324,6 +328,9 @@ public partial class DriveExplorerViewModel : ViewModelBase
 			ItemDeletePopupConfirmText = "Are you sure you want to delete " + pathTrimmed + '?';
 		}
 
+		_itemDeleteDriveId = driveId;
+		_itemDeletePath = pathTrimmed;
+		
 		ItemDeletePopupIsOpen = true;
 	}
 	
@@ -443,8 +450,39 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		await ChangePathAsync(path);
 	}
 
+	/// <summary>
+	/// Handles the item delete popup closing. Can also be called to close the popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the user has closed the popup, or closing the popup is needed. <br/>
+	/// Postcondition: Popup is closed.
+	/// </remarks>
 	[RelayCommand]
 	private void ItemDeletePopupClosed() => ItemDeletePopupIsOpen = false;
+
+	/// <summary>
+	/// Handles a click on the delete confirmation button (the one on the popup) and deletes the selected item.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the delete confirmation button. (the one on the popup) <br/>
+	/// Postcondition: Item is deleted, deletion popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private async Task ItemDeleteConfirmDeleteClickAsync()
+	{
+		string[] pathParts = _itemDeletePath.Split(SharedDefinitions.DirectorySeparators);
+
+		if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
+		{
+			await ClientSvc.DeleteDriveAsync(_itemDeleteDriveId);
+		}
+		else
+		{
+			/* TODO: Add support for other types of item. */
+		}
+		
+		ItemDeletePopupClosed();
+	}
 }
 
 public partial class PathPartItemTemplate : ObservableObject

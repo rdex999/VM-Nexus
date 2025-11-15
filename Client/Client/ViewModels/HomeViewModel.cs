@@ -307,19 +307,18 @@ public partial class HomeViewModel : ViewModelBase
 		DeleteVmPopupVmRunning = _deleteVmPopupVmDescriptor.State == VmState.Running;
 		
 		DriveGeneralDescriptor[]? drives = _driveService.GetDrivesOnVirtualMachine(descriptor.Id);
-		if (drives == null)
-		{
-			DeletePopupClosed();
-			return ExitCode.VmDoesntExist;
-		}
-
-		DeleteVmPopupHasDrives = drives.Length != 0;
 
 		DeleteVmPopupDrives.Clear();
-		foreach (DriveGeneralDescriptor drive in drives)
+		DeleteVmPopupHasDrives = drives != null && drives.Length != 0;
+
+		if (drives != null)
 		{
-			bool driveInUse = _driveService.IsDriveInUse(drive.Id);
-			DeleteVmPopupDrives.Add(new DeletionDriveItemTemplate(drive.Id, drive.Name, drive.DriveType, drive.Size, driveInUse));
+			foreach (DriveGeneralDescriptor drive in drives)
+			{
+				bool driveInUse = _driveService.IsDriveInUse(drive.Id);
+				DeleteVmPopupDrives.Add(new DeletionDriveItemTemplate(drive.Id, drive.Name, drive.DriveType, drive.Size,
+					driveInUse));
+			}
 		}
 
 		DeleteVmPopupIsOpen = true;	

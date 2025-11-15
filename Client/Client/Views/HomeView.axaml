@@ -116,7 +116,8 @@
 						Cannot delete a virtual machine while it is running.
 					</TextBlock>
 					
-					<Button FontWeight="Bold" HorizontalAlignment="Center" FontSize="16"
+					<Button FontWeight="Bold" HorizontalAlignment="Center" FontSize="16" CornerRadius="8"
+					        Margin="0, 5, 0, 0"
 					        IsEnabled="{Binding !DeleteVmPopupVmRunning}"
 					        Command="{Binding DeleteVmConfirmDeleteClickCommand}">
 						Delete
