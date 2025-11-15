@@ -7,6 +7,7 @@ public class DriveExplorerMode : ViewModelBase
 {
 	public Action<string>? ChangePath;
 	public Action<int, string>? DownloadItem;		/* Drive ID, Path */
+	public Action<int, string>? DeleteItem;
 	
 	public DriveExplorerMode(NavigationService navigationService, ClientService clientService)
 		: base(navigationService, clientService)

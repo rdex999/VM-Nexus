@@ -65,6 +65,7 @@ public class DrivesViewModel : DriveExplorerMode
 			DriveItems.Add(new DriveItemTemplate(descriptor));
 			DriveItems.Last().Opened += OnDriveOpenClicked;
 			DriveItems.Last().DownloadRequested += OnDriveDownloadRequested;
+			DriveItems.Last().DeleteRequested += OnDriveDeleteRequested;
 		}	
 	}
 
@@ -82,6 +83,7 @@ public class DrivesViewModel : DriveExplorerMode
 		DriveItems.Add(new DriveItemTemplate(descriptor));
 		DriveItems.Last().Opened += OnDriveOpenClicked;
 		DriveItems.Last().DownloadRequested += OnDriveDownloadRequested;
+		DriveItems.Last().DeleteRequested += OnDriveDeleteRequested;
 	}
 	
 	/// <summary>
@@ -101,10 +103,12 @@ public class DrivesViewModel : DriveExplorerMode
 			{
 				DriveItems[i].Opened -= OnDriveOpenClicked;
 				DriveItems[i].DownloadRequested -= OnDriveDownloadRequested;
+				DriveItems[i].DeleteRequested -= OnDriveDeleteRequested;
 				DriveItems.RemoveAt(i);
 			}
 		}
 	}
+
 
 	/// <summary>
 	/// Handles a click on the open button on a drive, and a double click on a drive.
@@ -126,12 +130,23 @@ public class DrivesViewModel : DriveExplorerMode
 	/// Postcondition: Download procedure is started, the user is asked where to save the file to.
 	/// </remarks>
 	private void OnDriveDownloadRequested(int driveId) => DownloadItem?.Invoke(driveId, string.Empty);
+
+	/// <summary>
+	/// Handles a drive delete request. Open the drive deletion dialog.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to delete. driveId >= 1.</param>
+	/// <remarks>
+	/// Precondition: User has clicked on the delete button on a drive. driveId >= 1. <br/>
+	/// Postcondition: Drive deletion dialog is displayed.
+	/// </remarks>
+	private void OnDriveDeleteRequested(int driveId) => DeleteItem?.Invoke(driveId, string.Empty);
 }
 
 public partial class DriveItemTemplate : ObservableObject
 {
 	public Action<int>? Opened;
 	public Action<int>? DownloadRequested;
+	public Action<int>? DeleteRequested;
 	public int Id { get; }
 
 	private int _size;
@@ -184,4 +199,14 @@ public partial class DriveItemTemplate : ObservableObject
 	/// </remarks>
 	[RelayCommand]
 	private void Download() => DownloadRequested?.Invoke(Id);
+
+	/// <summary>
+	/// Handles a click on the delete button of this drive. Displays delete confirmation dialog.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the delete button on this drive. <br/>
+	/// Postcondition: Drive deletion dialog is displayed.
+	/// </remarks>
+	[RelayCommand]
+	private void Delete() => DeleteRequested?.Invoke(Id);
 }

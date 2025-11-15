@@ -38,6 +38,18 @@ public partial class DriveExplorerViewModel : ViewModelBase
 
 	[ObservableProperty] 
 	private string _textPathBarPath = string.Empty;
+
+	[ObservableProperty] 
+	private bool _itemDeletePopupIsOpen = false;
+	
+	[ObservableProperty]
+	private string _itemDeletePopupTitle = string.Empty;
+
+	[ObservableProperty]
+	private string _itemDeletePopupInfoText = string.Empty;
+	
+	[ObservableProperty]
+	private string _itemDeletePopupConfirmText = string.Empty;
 	
 	public DriveExplorerViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)
@@ -48,6 +60,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		ExplorerModeViewModel = new DrivesViewModel(NavigationSvc, ClientSvc, driveService);
 		ExplorerModeViewModel.ChangePath += OnChangePathRequested;
 		ExplorerModeViewModel.DownloadItem += OnDownloadItemRequested;
+		ExplorerModeViewModel.DeleteItem += OnDeleteItemRequested;
 	}
 
 	/// <summary>
@@ -252,9 +265,11 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	{
 		ExplorerModeViewModel.ChangePath -= OnChangePathRequested;
 		ExplorerModeViewModel.DownloadItem -= OnDownloadItemRequested;
+		ExplorerModeViewModel.DeleteItem -= OnDeleteItemRequested;
 		ExplorerModeViewModel = mode;
 		ExplorerModeViewModel.ChangePath += OnChangePathRequested;
 		ExplorerModeViewModel.DownloadItem += OnDownloadItemRequested;
+		ExplorerModeViewModel.DeleteItem += OnDeleteItemRequested;
 	}
 
 	/// <summary>
@@ -278,6 +293,39 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	/// Postcondition: Download procedure is started, user will be asked where to save the item to.
 	/// </remarks>
 	private void OnDownloadItemRequested(int driveId, string path) => _ = DownloadItemAsync(driveId, path);
+
+	/// <summary>
+	/// Handles a request to delete an item. Displays the item deletion dialog.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that holds the item to delete. driveId >= 1. </param>
+	/// <param name="path">The path on the drive, points to the item to delete. path != null. </param>
+	/// <remarks>
+	/// Precondition: Use has clicked on the delete button on an item. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: The item deletion dialog is displayed.
+	/// </remarks>
+	private void OnDeleteItemRequested(int driveId, string path)
+	{
+		string pathTrimmed = path.Trim().Trim(SharedDefinitions.DirectorySeparators);
+		string[] pathParts = pathTrimmed.Split(SharedDefinitions.DirectorySeparators);
+		if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
+		{
+			DriveGeneralDescriptor? driveDescriptor = _driveService.GetDriveById(driveId);
+			if (driveDescriptor == null)
+				return;
+
+			ItemDeletePopupTitle = "Delete this drive?";
+			ItemDeletePopupInfoText = "The drive will be permanently deleted, with all of its content.";
+			ItemDeletePopupConfirmText = $"Are you sure you want to delete \"{driveDescriptor.Name}\"?";
+		}
+		else
+		{
+			ItemDeletePopupTitle = "Delete this file?";
+			ItemDeletePopupInfoText = "The file will be permanently deleted.";
+			ItemDeletePopupConfirmText = "Are you sure you want to delete " + pathTrimmed + '?';
+		}
+
+		ItemDeletePopupIsOpen = true;
+	}
 	
 	/// <summary>
 	/// Handles a click on a path part button in the path bar. Sets the current path to it.
@@ -394,6 +442,9 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		ChangeIntoButtonPathBar();
 		await ChangePathAsync(path);
 	}
+
+	[RelayCommand]
+	private void ItemDeletePopupClosed() => ItemDeletePopupIsOpen = false;
 }
 
 public partial class PathPartItemTemplate : ObservableObject
