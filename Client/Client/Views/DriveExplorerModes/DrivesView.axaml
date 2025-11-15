@@ -45,6 +45,7 @@
 
 										<Button.Flyout>
 											<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
+												<MenuItem Header="Download" Command="{Binding DownloadCommand}" />
 												<MenuItem Header="Delete" />
 											</MenuFlyout>
 										</Button.Flyout>

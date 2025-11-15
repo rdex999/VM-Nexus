@@ -1,8 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using Client.Services;
 using Client.ViewModels.DriveExplorerModes;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -14,8 +19,8 @@ namespace Client.ViewModels;
 
 public partial class DriveExplorerViewModel : ViewModelBase
 {
+	public Action<int, string>? DownloadItem;
 	private readonly DriveService _driveService;
-	
 	public ObservableCollection<PathPartItemTemplate> PathParts { get; }
 	private Stack<string> _prevPathParts;
 	
@@ -42,6 +47,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		_prevPathParts = new Stack<string>();
 		ExplorerModeViewModel = new DrivesViewModel(NavigationSvc, ClientSvc, driveService);
 		ExplorerModeViewModel.ChangePath += OnChangePathRequested;
+		ExplorerModeViewModel.DownloadItem += OnDownloadItemRequested;
 	}
 
 	/// <summary>
@@ -72,6 +78,77 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	{
 		ButtonPathBarIsVisible = true;
 		TextPathBarPath = string.Empty;
+	}
+
+	/// <summary>
+	/// Displays a save-file dialog and downloads the given item.
+	/// </summary>
+	/// <param name="driveId">The drive that holds the requested item. driveId >= 1.</param>
+	/// <param name="path">The path of the requested item on the drive. path != null.</param>
+	/// <remarks>
+	/// Precondition: User has clicked on the download button on an item. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: A save-file dialog is displayed and the file is downloaded.
+	/// </remarks>
+	private async Task DownloadItemAsync(int driveId, string path)
+	{
+		string trimmedPath = path.Trim().Trim(SharedDefinitions.DirectorySeparators);
+		string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
+
+		string suggestedFileName;
+		string suggestedFileExtension;
+		if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
+		{
+			DriveGeneralDescriptor? driveDescriptor = _driveService.GetDriveById(driveId);
+			if (driveDescriptor == null)
+				return;
+
+			suggestedFileExtension = "raw";
+			suggestedFileName = driveDescriptor.Name + '.' + suggestedFileExtension;
+		}
+		else
+		{
+			suggestedFileName = pathParts.Last();
+			string[] dotSplit = suggestedFileName.Split('.');
+			suggestedFileExtension = dotSplit.Length >= 2 ? dotSplit.Last() : string.Empty;
+		}
+
+		Stream stream;
+		IStorageProvider? provider = null;
+		IStorageFile? file = null;
+		
+		if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+			provider = desktop.MainWindow!.StorageProvider;
+		
+		else if (Application.Current?.ApplicationLifetime is ISingleViewApplicationLifetime singleViewLifetime)
+		{
+			TopLevel? topLevel = TopLevel.GetTopLevel(singleViewLifetime.MainView);
+			if (topLevel != null)
+				provider = topLevel.StorageProvider;
+		}
+
+		if (provider != null)
+		{
+			file = await provider.SaveFilePickerAsync(new FilePickerSaveOptions()
+			{
+				ShowOverwritePrompt = true,
+				SuggestedFileName = suggestedFileName,
+				DefaultExtension = string.IsNullOrEmpty(suggestedFileExtension) ? null : suggestedFileExtension,
+			});
+			
+			if (file == null)
+				return;
+			
+			stream = await file.OpenWriteAsync();
+			await _driveService.DownloadItemAsync(driveId, path, stream);
+		}
+		else
+		{
+			string destinationPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Downloads/" + suggestedFileName;
+			await _driveService.DownloadItemAsync(driveId, path, destinationPath);
+		}
+		
+		if (file != null)
+			file.Dispose();
 	}
 	
 	/// <summary>
@@ -174,8 +251,10 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	private void ChangeExplorerMode(DriveExplorerMode mode)
 	{
 		ExplorerModeViewModel.ChangePath -= OnChangePathRequested;
+		ExplorerModeViewModel.DownloadItem -= OnDownloadItemRequested;
 		ExplorerModeViewModel = mode;
 		ExplorerModeViewModel.ChangePath += OnChangePathRequested;
+		ExplorerModeViewModel.DownloadItem += OnDownloadItemRequested;
 	}
 
 	/// <summary>
@@ -189,6 +268,17 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	/// </remarks>
 	private void OnChangePathRequested(string newPath) => _ = ChangePathAsync(newPath);
 
+	/// <summary>
+	/// Handles a request to download an item. Starts the download procedure.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that holds the requested item. driveId >= 1.</param>
+	/// <param name="path">The path on the drive, points to the requested item. path != null.</param>
+	/// <remarks>
+	/// Precondition: User has clicked on the download button on an item. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: Download procedure is started, user will be asked where to save the item to.
+	/// </remarks>
+	private void OnDownloadItemRequested(int driveId, string path) => _ = DownloadItemAsync(driveId, path);
+	
 	/// <summary>
 	/// Handles a click on a path part button in the path bar. Sets the current path to it.
 	/// </summary>
@@ -282,7 +372,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task EnterPressedAsync()
 	{
-		string path = TextPathBarPath.Trim(SharedDefinitions.DirectorySeparators);
+		string path = TextPathBarPath.Trim().Trim(SharedDefinitions.DirectorySeparators);
 		string[] pathParts = path.Split(SharedDefinitions.DirectorySeparators);
 		if (string.IsNullOrEmpty(path) || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
 		{

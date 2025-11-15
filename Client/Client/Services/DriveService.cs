@@ -152,21 +152,24 @@ public class DriveService
 
 	public async Task<DownloadingItem?> DownloadItemAsync(int driveId, string path, string downloadPath)
 	{
-		Stream stream;
 		try
 		{
-			stream = File.Open(downloadPath, FileMode.Create, FileAccess.Write);
+			Stream stream = File.Open(downloadPath, FileMode.Create, FileAccess.Write);
+			return await DownloadItemAsync(driveId, path, stream);
 		}
 		catch (Exception)
 		{
 			return null;
 		}
+	}
 
+	public async Task<DownloadingItem?> DownloadItemAsync(int driveId, string path, Stream destination)
+	{
 		MessageResponseDownloadItem? response = await _clientService.StartItemDownloadAsync(driveId, path);
 		if (response == null || response.Result != MessageResponseDownloadItem.Status.Success)
 			return null;
 		
-		DownloadingItem item = new DownloadingItem(response.StreamId, response.ItemSize, stream);
+		DownloadingItem item = new DownloadingItem(response.StreamId, response.ItemSize, destination);
 		item.OutOfMemory += DownloadingItemOnOutOfMemory;
 		_downloadingItems.TryAdd(response.StreamId, item);
 

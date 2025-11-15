@@ -47,15 +47,6 @@ public class DrivesViewModel : DriveExplorerMode
 		if (descriptor == null)
 			return;
 
-		if (descriptor.PartitionTableType == PartitionTableType.Unpartitioned)
-		{
-			// ChangeMode?.Invoke(new FileSystemItemsViewModel(NavigationSvc, ClientSvc, _driveService, descriptor, string.Empty, items));
-		}
-		else
-		{
-			// ChangeMode?.Invoke(new PartitionsViewModel(NavigationSvc, ClientSvc, _driveService, descriptor, items));
-		}
-		
 		ChangePath?.Invoke($"{descriptor.Name}");
 	}
 	
@@ -73,6 +64,7 @@ public class DrivesViewModel : DriveExplorerMode
 		{
 			DriveItems.Add(new DriveItemTemplate(descriptor));
 			DriveItems.Last().Opened += OnDriveOpenClicked;
+			DriveItems.Last().DownloadRequested += OnDriveDownloadRequested;
 		}	
 	}
 
@@ -89,6 +81,7 @@ public class DrivesViewModel : DriveExplorerMode
 	{
 		DriveItems.Add(new DriveItemTemplate(descriptor));
 		DriveItems.Last().Opened += OnDriveOpenClicked;
+		DriveItems.Last().DownloadRequested += OnDriveDownloadRequested;
 	}
 	
 	/// <summary>
@@ -107,6 +100,7 @@ public class DrivesViewModel : DriveExplorerMode
 			if (DriveItems[i].Id == id)
 			{
 				DriveItems[i].Opened -= OnDriveOpenClicked;
+				DriveItems[i].DownloadRequested -= OnDriveDownloadRequested;
 				DriveItems.RemoveAt(i);
 			}
 		}
@@ -122,11 +116,22 @@ public class DrivesViewModel : DriveExplorerMode
 	/// Postcondition: Attempts to get the top level items of the drive, and redirect to a corresponding view.
 	/// </remarks>
 	private void OnDriveOpenClicked(int driveId) => _ = OpenDriveAsync(driveId);
+
+	/// <summary>
+	/// Handles a drive download request. Starts the download procedure.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to download. driveId >= 1.</param>
+	/// <remarks>
+	/// Precondition: User has clicked on the download button on a drive. driveId >= 1. <br/>
+	/// Postcondition: Download procedure is started, the user is asked where to save the file to.
+	/// </remarks>
+	private void OnDriveDownloadRequested(int driveId) => DownloadItem?.Invoke(driveId, string.Empty);
 }
 
 public partial class DriveItemTemplate : ObservableObject
 {
 	public Action<int>? Opened;
+	public Action<int>? DownloadRequested;
 	public int Id { get; }
 
 	private int _size;
@@ -169,4 +174,7 @@ public partial class DriveItemTemplate : ObservableObject
 	/// </remarks>
 	[RelayCommand]
 	public void Open() => Opened?.Invoke(Id);
+	
+	[RelayCommand]
+	private void Download() => DownloadRequested?.Invoke(Id);
 }
