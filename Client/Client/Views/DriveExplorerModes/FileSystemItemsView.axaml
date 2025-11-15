@@ -24,7 +24,7 @@
 		
 		<ItemsControl.ItemTemplate>
 			<DataTemplate DataType="dem:FileSystemItemItemTemplate">
-				<Border CornerRadius="15" Background="#f0f0f0" Height="160" Width="160" Margin="10" Padding="10" 
+				<Border CornerRadius="15" Height="160" Width="160" Margin="10" Padding="10" 
 				        BorderThickness="1.2" DoubleTapped="OnFileSystemItemDoubleTapped">
 					<Border.Styles>
 						<Style Selector="Border">
@@ -34,6 +34,11 @@
 									<GradientStop Offset="1" Color="#ced6dd" />
 								</LinearGradientBrush>
 							</Setter>
+							<Setter Property="Background" Value="#f0f0f0"/>
+							<Setter Property="ContextMenu" Value="{Binding ContextMenu}"/>
+						</Style>
+						<Style Selector="Border:pointerover">
+							<Setter Property="Background" Value="#e0e0e0"/>
 						</Style>
 					</Border.Styles>
 					

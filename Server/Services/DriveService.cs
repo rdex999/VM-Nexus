@@ -521,6 +521,7 @@ public class DriveService
 		}
 
 		DiscFileSystem? fileSystem = null;
+		string fileSystemPath;
 		if (drive.IsPartitioned)
 		{
 			/* First part of the path should contain the partition index if the drive is partitioned. */
@@ -540,9 +541,14 @@ public class DriveService
 		
 			fileSystemStream.Seek(partitionInfo.FirstSector * drive.SectorSize, SeekOrigin.Begin);
 			fileSystem = GetStreamFileSystem(fileSystemStream);
+			fileSystemPath = string.Join('\\', pathParts.AsSpan()[1..]!);
+		}
+		else
+		{
+			fileSystem = GetStreamFileSystem(drive.Content);
+			fileSystemPath = string.Join('\\', pathParts);
 		}
 		
-		string fileSystemPath = string.Join('\\', pathParts.AsSpan()[1..]!);
 		if (fileSystem == null)
 		{
 			drive.Dispose();
@@ -598,10 +604,18 @@ public class DriveService
 
 		foreach (string filePath in filePaths)
 		{
-			DateTime accessed = fileSystem.GetLastAccessTime(filePath);
-			DateTime modified = fileSystem.GetLastWriteTime(filePath);
-			DateTime created = fileSystem.GetCreationTime(filePath);
-			long sizeBytes = fileSystem.GetFileLength(filePath);
+			DateTime accessed = DateTime.MaxValue;
+			DateTime modified = DateTime.MaxValue; 
+			DateTime created = DateTime.MaxValue;
+			
+			try { accessed = fileSystem.GetLastAccessTime(filePath); } catch (Exception) { }
+			try { modified = fileSystem.GetLastWriteTime(filePath); } catch (Exception) { }
+			try { created = fileSystem.GetCreationTime(filePath); } catch (Exception) { }
+			
+			long sizeBytes = -1;
+
+			try { sizeBytes = fileSystem.GetFileLength(filePath); } catch (Exception) { }
+			
 			items[index++] = new PathItemFile(
 				filePath.Split(SharedDefinitions.DirectorySeparators).Last(),
 				sizeBytes, accessed, modified, created
@@ -610,8 +624,12 @@ public class DriveService
 
 		foreach (string directoryPath in directoryPaths)
 		{
-			DateTime modified = fileSystem.GetLastWriteTime(directoryPath);
-			DateTime created = fileSystem.GetCreationTime(directoryPath);
+			DateTime modified = DateTime.MaxValue;
+			DateTime created = DateTime.MaxValue;
+			
+			try { modified = fileSystem.GetLastWriteTime(directoryPath); } catch (Exception) { }
+			try { created = fileSystem.GetCreationTime(directoryPath); } catch (Exception) { }
+			
 			items[index++] = new PathItemDirectory(
 				directoryPath.Split(SharedDefinitions.DirectorySeparators).Last(),
 				modified, created

@@ -1,7 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using Avalonia.Controls;
 using Avalonia.Media;
 using Client.Services;
+using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Drives;
 
@@ -34,6 +37,8 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 			
 			else if (item is PathItemDirectory directory)
 				Items.Add(new FileSystemItemItemTemplate(directory.Name, directory.Modified, directory.Created));
+			
+			Items.Last().DownloadRequested += filename => DownloadItem?.Invoke(_driveDescriptor.Id, _path + '/' + filename);
 		}
 	}
 
@@ -57,8 +62,9 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 	}
 }
 
-public class FileSystemItemItemTemplate		/* FilesystemItem - item template (i know) */
+public partial class FileSystemItemItemTemplate		/* FilesystemItem - item template (i know) */
 {
+	public Action<string>? DownloadRequested;
 	public bool IsFile { get; private set; }		/* Is this a file or a directory? */
 	public bool IsDirectory
 	{
@@ -71,6 +77,7 @@ public class FileSystemItemItemTemplate		/* FilesystemItem - item template (i kn
 	public DateTime Modified { get; }
 	public DateTime Created { get; }
 	public Geometry Icon { get; set; } = null!;		/* Set in code-behind. */
+	public ContextMenu? ContextMenu { get; private set; } = null;
 
 	/* Use for files. */
 	public FileSystemItemItemTemplate(string name, long sizeBytes, DateTime accessed, DateTime modified, DateTime created)
@@ -81,6 +88,7 @@ public class FileSystemItemItemTemplate		/* FilesystemItem - item template (i kn
 		Accessed = accessed;
 		Modified = modified;
 		Created = created;
+		InitializeContextMenu();
 	}
 
 	/* Use for directories. */
@@ -92,5 +100,43 @@ public class FileSystemItemItemTemplate		/* FilesystemItem - item template (i kn
 		Accessed = null;
 		Modified = modified;
 		Created = created;
+		InitializeContextMenu();
 	}
+
+	/// <summary>
+	/// Initialize the context menu for this file/directory. <br/>
+	/// Note: Directories cannot be downloaded and thus do not have a context menu.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Called from constructor of this class. <br/>
+	/// Postcondition: If this item is a file, it will have a context menu.
+	/// If this item is a directory, it will not have a context menu.
+	/// </remarks>
+	private void InitializeContextMenu()
+	{
+		if (!IsFile)
+			return;
+
+		ContextMenu = new ContextMenu()
+		{
+			Items =
+			{
+				new MenuItem
+				{
+					Header = "Download",
+					Command = DownloadCommand
+				}
+			}
+		};
+	}
+
+	/// <summary>
+	/// Handles a click on the download button on this item. Starts download procedure.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the download button on this item. <br/>
+	/// Postcondition: Download procedure is started - save-file dialog opens.
+	/// </remarks>
+	[RelayCommand]
+	private void Download() => DownloadRequested?.Invoke(Name);
 }
