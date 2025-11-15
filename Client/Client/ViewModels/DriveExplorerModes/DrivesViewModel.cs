@@ -174,7 +174,14 @@ public partial class DriveItemTemplate : ObservableObject
 	/// </remarks>
 	[RelayCommand]
 	public void Open() => Opened?.Invoke(Id);
-	
+
+	/// <summary>
+	/// Handles a click on the download button on a drive. Opens a save-file dialog and downloads the disk image.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the download button on this drive. <br/>
+	/// Postcondition: A save-file dialog is opened and a download is started.
+	/// </remarks>
 	[RelayCommand]
 	private void Download() => DownloadRequested?.Invoke(Id);
 }

@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Client.Services;
 using CommunityToolkit.Mvvm.Input;
-using OpenTK.Platform.Windows;
 using Shared.Drives;
 
 namespace Client.ViewModels.DriveExplorerModes;
@@ -47,6 +46,7 @@ public class PartitionsViewModel : DriveExplorerMode
 			}
 			
 			Partitions.Last().Opened += OnPartitionOpened;
+			Partitions.Last().DownloadRequested += index => DownloadItem?.Invoke(_driveDescriptor.Id, index.ToString());
 		}
 	}
 
@@ -75,6 +75,7 @@ public class PartitionsViewModel : DriveExplorerMode
 public partial class PartitionItemTemplate
 {
 	public Action<int>? Opened;
+	public Action<int>? DownloadRequested;
 	public int Index { get; }
 	public int SizeMiB { get; }
 	public string SizeMiBString =>
@@ -102,4 +103,14 @@ public partial class PartitionItemTemplate
 	/// </remarks>
 	[RelayCommand]
 	public void Open() => Opened?.Invoke(Index);
+
+	/// <summary>
+	/// Handles a click on the download button on a partition. Opens a save-file dialog and downloads the disk image.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the download button on this partition. <br/>
+	/// Postcondition: A save-file dialog is opened and a download is started.
+	/// </remarks>
+	[RelayCommand]
+	public void Download() => DownloadRequested?.Invoke(Index);
 }

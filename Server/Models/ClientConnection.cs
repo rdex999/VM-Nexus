@@ -630,7 +630,8 @@ public sealed class ClientConnection : MessagingService
 					MessageResponseDownloadItem.Status.Success, streamGuid, stream.Stream.Length)
 				);
 
-				byte[] buffer = new byte[Math.Min(10 * 1024 * 1024 / 10, stream.Stream.Length)];
+				/* 30 MiB/sec */
+				byte[] buffer = new byte[Math.Min(30 * 1024 * 1024 / 10, stream.Stream.Length)];
 				while (stream.Stream.Position < stream.Stream.Length)
 				{
 					int readSize = (int)Math.Min(buffer.Length, (stream.Stream.Length - stream.Stream.Position));
