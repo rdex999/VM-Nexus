@@ -26,6 +26,7 @@ public class DriveService
 	public DriveService(DatabaseService databaseService)
 	{
 		_databaseService = databaseService;
+		DiscUtils.Complete.SetupHelper.SetupComplete();
 	}
 
 	/// <summary>
@@ -573,6 +574,98 @@ public class DriveService
 			drive.Dispose();
 			return null;
 		}
+	}
+
+	/// <summary>
+	/// Deletes the given item from the drive.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that contains the item to delete. driveId >= 1.</param>
+	/// <param name="path">The path on the drive, points to the item to delete. Must not point to a partition. path != null.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. The given path is valid, and does not point to a partition. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: On success, the given item is deleted and the returned exit code indicates success. <br/>
+	/// On failure, the item is not deleted and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> DeleteItemAsync(int driveId, string path)
+	{
+		if (driveId < 1)
+			return ExitCode.InvalidParameter;
+		
+		string trimmedPath = path.Trim(SharedDefinitions.DirectorySeparators);
+		string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
+
+		if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
+			return await DeleteDriveAsync(driveId);
+		
+		Disk drive;
+		try
+		{
+			drive = new Disk(GetDriveFilePath(driveId));
+		}
+		catch (Exception)
+		{
+			return ExitCode.DriveDoesntExist;
+		}
+		
+		DiscFileSystem? fileSystem = null;
+		string fileSystemPath;
+		if (drive.IsPartitioned)
+		{
+			/* First part of the path should contain the partition index if the drive is partitioned. */
+			if (!int.TryParse(pathParts[0], out int partitionIndex) || partitionIndex < 0 || partitionIndex >= drive.Partitions.Count)
+			{
+				drive.Dispose();
+				return ExitCode.InvalidPath;
+			}
+
+			/* Deleting partitions is not supported. */
+			if (pathParts.Length == 1)
+			{
+				drive.Dispose();
+				return ExitCode.UnsupportedOperation;
+			}
+
+			PartitionInfo partitionInfo = drive.Partitions[partitionIndex];
+			Stream fileSystemStream = partitionInfo.Open();
+			fileSystemStream.Seek(partitionInfo.FirstSector * drive.SectorSize, SeekOrigin.Begin);
+			
+			fileSystem = GetStreamFileSystem(fileSystemStream);
+			fileSystemPath = string.Join('\\', pathParts.AsSpan()[1..]!);
+		}
+		else
+		{
+			fileSystem = GetStreamFileSystem(drive.Content);
+			fileSystemPath = string.Join('\\', pathParts);
+		}
+
+		if (fileSystem == null)
+		{
+			drive.Dispose();
+			return ExitCode.UnsupportedFileSystem;
+		}
+
+		try
+		{
+			fileSystem.DeleteFile(fileSystemPath);
+		}
+		catch (NotSupportedException)
+		{
+			fileSystem.Dispose();
+			drive.Dispose();
+			return ExitCode.UnsupportedFileSystem;
+		}
+		catch (Exception)
+		{
+			fileSystem.Dispose();
+			drive.Dispose();
+			return ExitCode.InvalidPath;
+		}
+
+		fileSystem.Dispose();
+		drive.Dispose();
+		
+		return ExitCode.Success;
 	}
 
 	/// <summary>
