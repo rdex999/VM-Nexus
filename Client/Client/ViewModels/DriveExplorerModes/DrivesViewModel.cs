@@ -5,7 +5,9 @@ using System.Threading.Tasks;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Shared;
 using Shared.Drives;
+using Shared.Networking;
 
 namespace Client.ViewModels.DriveExplorerModes;
 
@@ -21,7 +23,7 @@ public class DrivesViewModel : DriveExplorerMode
 		DriveItems = new ObservableCollection<DriveItemTemplate>();
 		_driveService.Initialized += (_, _) => UpdateDrives();
 		ClientSvc.DriveCreated += OnDriveCreated;
-		ClientSvc.DriveDeleted += OnDriveDeleted;
+		ClientSvc.ItemDeleted += OnItemDeleted;
 		
 		if (_driveService.IsInitialized)
 			UpdateDrives();
@@ -85,21 +87,24 @@ public class DrivesViewModel : DriveExplorerMode
 		DriveItems.Last().DownloadRequested += OnDriveDownloadRequested;
 		DriveItems.Last().DeleteRequested += OnDriveDeleteRequested;
 	}
-	
+
 	/// <summary>
 	/// Handles a drive deletion event.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="id">The ID of the drive that was deleted. id >= 1.</param>
+	/// <param name="info">The item deletion info. info != null.</param>
 	/// <remarks>
-	/// Precondition: One of the user's drives was deleted. id >= 1. <br/>
-	/// Postcondition: Event is handled, drive is removed from display.
+	/// Precondition: One of the user's drives was deleted. info != null. <br/>
+	/// Postcondition: Event is handled, item is removed from display.
 	/// </remarks>
-	private void OnDriveDeleted(object? sender, int id)
+	private void OnItemDeleted(object? sender, MessageInfoItemDeleted info)
 	{
+		if (!Common.IsPathToDrive(info.Path))
+			return;
+		
 		for (int i = 0; i < DriveItems.Count; ++i)
 		{
-			if (DriveItems[i].Id == id)
+			if (DriveItems[i].Id == info.DriveId)
 			{
 				DriveItems[i].Opened -= OnDriveOpenClicked;
 				DriveItems[i].DownloadRequested -= OnDriveDownloadRequested;

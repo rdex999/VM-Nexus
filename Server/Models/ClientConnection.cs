@@ -629,8 +629,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				if (_driveService.IsPathToDrive(reqDeleteItem.Path))
-					await _userService.NotifyDriveDeletedAsync(reqDeleteItem.DriveId);
+				await _userService.NotifyItemDeletedAsync(reqDeleteItem.DriveId, reqDeleteItem.Path);
 				
 				result = await _driveService.DeleteItemAsync(reqDeleteItem.DriveId, reqDeleteItem.Path);
 
@@ -776,15 +775,16 @@ public sealed class ClientConnection : MessagingService
 		SendInfo(new MessageInfoDriveCreated(true, descriptor));
 
 	/// <summary>
-	/// Notifies the client that a drive was deleted.
+	/// Notifies the client that an item was deleted.
 	/// </summary>
-	/// <param name="driveId">The ID of the drive that was deleted. driveId >= 1.</param>
+	/// <param name="driveId">The ID of the drive that held the deleted item. driveId >= 1.</param>
+	/// <param name="path">The path on the drive that pointed to the item. path != null.</param>
 	/// <remarks>
-	/// Precondition: A drive was deleted. Service initialized and connected to client. driveId >= 1. <br/>
-	/// Postcondition: Client is notified that the drive was deleted.
+	/// Precondition: An item was deleted. Service initialized and connected to client. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: Client is notified that the item was deleted.
 	/// </remarks>
-	public void NotifyDriveDeleted(int driveId) =>
-		SendInfo(new MessageInfoDriveDeleted(true, driveId));
+	public void NotifyItemDeleted(int driveId, string path) =>
+		SendInfo(new MessageInfoItemDeleted(true, driveId, path));
 
 	/// <summary>
 	/// Notifies the client that a drive was connected to a virtual machine. (New VM-drive connection created)

@@ -296,4 +296,21 @@ public static class Common
 			_ => true
 		};
 	}
+	
+	/// <summary>
+	/// Does the given path point to the drive itself?
+	/// </summary>
+	/// <param name="path">The path to check. path != null.</param>
+	/// <returns>True if the path points to the drive itself, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: path != null. <br/>
+	/// Postcondition: If the path points to the drive, true is returned. False is returned otherwise.
+	/// </remarks>
+	public static bool IsPathToDrive(string path)
+	{
+		string trimmedPath = path.Trim(SharedDefinitions.DirectorySeparators);
+		string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
+
+		return pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0]));
+	}
 }

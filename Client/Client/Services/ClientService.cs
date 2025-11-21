@@ -25,7 +25,7 @@ public class ClientService : MessagingService
 	public event EventHandler<int>? VmPoweredOff;
 	public event EventHandler<int>? VmCrashed;
 	public event EventHandler<DriveGeneralDescriptor>? DriveCreated;
-	public event EventHandler<int>? DriveDeleted;
+	public event EventHandler<MessageInfoItemDeleted>? ItemDeleted;
 	public event EventHandler<DriveConnection>? DriveConnected;
 	public event EventHandler<MessageInfoDownloadItemData>? DownloadItemDataReceived;
 	
@@ -721,9 +721,9 @@ public class ClientService : MessagingService
 				DriveCreated?.Invoke(this, infoDriveCreated.Descriptor);
 				break;
 			}
-			case MessageInfoDriveDeleted infoDriveDeleted:
+			case MessageInfoItemDeleted infoItemDeleted:
 			{
-				DriveDeleted?.Invoke(this, infoDriveDeleted.DriveId);
+				ItemDeleted?.Invoke(this, infoItemDeleted);
 				break;
 			}
 			case MessageInfoDriveConnected infoDriveConnected:

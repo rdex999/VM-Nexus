@@ -69,7 +69,7 @@ public partial class HomeViewModel : ViewModelBase
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		ClientSvc.VmPoweredOff += OnVmPoweredOffOrCrashed;
 		ClientSvc.VmCrashed += OnVmPoweredOffOrCrashed;
-		ClientSvc.DriveDeleted += OnDriveDeleted;
+		ClientSvc.ItemDeleted += OnItemDeleted;
 		ClientSvc.DriveConnected += OnDriveConnected;
 	}
 	
@@ -194,17 +194,18 @@ public partial class HomeViewModel : ViewModelBase
 	}
 
 	/// <summary>
-	/// Handles a drive deleted event.
+	/// Handles an item deleted event.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="id">The ID of the drive that was deleted. id >= 1.</param>
+	/// <param name="info">The item deletion info. info != null.</param>
 	/// <remarks>
-	/// Precondition: A drive was deleted. id >= 1. <br/>
+	/// Precondition: An item was deleted. info != null. <br/>
 	/// Postcondition: Event is handled, UI informed if needed.
 	/// </remarks>
-	private void OnDriveDeleted(object? sender, int id)
+	private void OnItemDeleted(object? sender, MessageInfoItemDeleted info)
 	{
-		if (id < 1) return;
+		if (info.DriveId < 1 || !Common.IsPathToDrive(info.Path)) 
+			return;
 
 		if (DeleteVmPopupIsOpen)
 		{

@@ -8,6 +8,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Client.Services;
 using Client.ViewModels.DriveExplorerModes;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -23,7 +24,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	public Action<int, string>? DownloadItem;
 	private readonly DriveService _driveService;
 	public ObservableCollection<PathPartItemTemplate> PathParts { get; }
-	private Stack<string> _prevPathParts;
+	private readonly Stack<string> _prevPathParts;
 	
 	[ObservableProperty]
 	private DriveExplorerMode _explorerModeViewModel;
@@ -62,6 +63,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		PathParts = new ObservableCollection<PathPartItemTemplate>();
 		_prevPathParts = new Stack<string>();
 		ExplorerModeViewModel = new DrivesViewModel(NavigationSvc, ClientSvc, driveService);
+		ClientSvc.ItemDeleted += OnItemDeleted;
 		ExplorerModeViewModel.ChangePath += OnChangePathRequested;
 		ExplorerModeViewModel.DownloadItem += OnDownloadItemRequested;
 		ExplorerModeViewModel.DeleteItem += OnDeleteItemRequested;
@@ -351,6 +353,34 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		}
 
 		_ = ChangePathAsync(path);
+	}
+	
+	/// <summary>
+	/// Handles an item deletion event. Refreshes the file list if needed.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="info">The item deletion info. info != null.</param>
+	/// <remarks>
+	/// Precondition: An item was deleted. info != null. <br/>
+	/// Postcondition: Event is handled, the item list is refreshed if needed.
+	/// </remarks>
+	private void OnItemDeleted(object? sender, MessageInfoItemDeleted info)
+	{
+		/* DrivesView handles drive deletions. */
+		if (Common.IsPathToDrive(info.Path) && PathParts.Count >= 1)
+			return;
+
+		string deletedPath = info.Path.Trim().Trim(SharedDefinitions.DirectorySeparators);
+		string filename = deletedPath.Split(SharedDefinitions.DirectorySeparators).Last();
+	
+		/* Skip drive name. There must be a drive name, because of the check at the beginning of this method. */
+		string path = string.Empty;
+		for (int i = 1; i < PathParts.Count; ++i)
+			path += PathParts[i].Name + '/';
+
+		string generalPath = PathParts[0].Name + '/' + path;
+		if (path + filename == deletedPath)
+			Dispatcher.UIThread.Post(async void () => await ChangePathAsync(generalPath));
 	}
 	
 	/// <summary>

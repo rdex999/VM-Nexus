@@ -170,7 +170,7 @@ public class UserService
 		}
 	}
 
-	public async Task NotifyDriveDeletedAsync(int driveId)
+	public async Task NotifyItemDeletedAsync(int driveId, string path)
 	{
 		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToDriveAsync(driveId);
 		if (relatedUsers == null)
@@ -178,12 +178,12 @@ public class UserService
 
 		foreach (int id in relatedUsers)
 		{
-			if (_users.TryGetValue(id, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			if (!_users.TryGetValue(id, out ConcurrentDictionary<Guid, ClientConnection>? userConnections)) 
+				continue;
+			
+			foreach (ClientConnection connection in userConnections.Values)
 			{
-				foreach (ClientConnection connection in userConnections.Values)
-				{
-					connection.NotifyDriveDeleted(driveId);
-				}
+				connection.NotifyItemDeleted(driveId, path);
 			}
 		}
 	}
@@ -196,12 +196,12 @@ public class UserService
 
 		foreach (int userId in relatedUsers)
 		{
-			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			if (!_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+				continue;
+			
+			foreach (ClientConnection connection in userConnections.Values)
 			{
-				foreach (ClientConnection connection in userConnections.Values)
-				{
-					connection.NotifyDriveConnected(driveId, vmId);
-				}
+				connection.NotifyDriveConnected(driveId, vmId);
 			}
 		}
 	}
@@ -224,14 +224,14 @@ public class UserService
 	private void RemoveUserConnection(ClientConnection connection)
 	{
 		connection.Disconnected -= OnUserDisconnected;
+
+		if (!_users.TryGetValue(connection.UserId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections)) 
+			return;
 		
-		if (_users.TryGetValue(connection.UserId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+		userConnections.TryRemove(connection.ClientId, out _);
+		if (userConnections.IsEmpty)
 		{
-			userConnections.TryRemove(connection.ClientId, out _);
-			if (userConnections.IsEmpty)
-			{
-				_users.TryRemove(connection.UserId, out _);
-			}
+			_users.TryRemove(connection.UserId, out _);
 		}
 	}
 

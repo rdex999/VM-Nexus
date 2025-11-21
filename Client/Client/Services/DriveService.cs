@@ -40,7 +40,7 @@ public class DriveService
 		_clientService.VmPoweredOff += OnVmPoweredOffOrCrashed;
 		_clientService.VmCrashed += OnVmPoweredOffOrCrashed;
 		_clientService.DriveCreated += OnDriveCreated;
-		_clientService.DriveDeleted += OnDriveDeleted;
+		_clientService.ItemDeleted += OnItemDeleted;
 		_clientService.DriveConnected += OnDriveConnected;
 		_clientService.DownloadItemDataReceived += OnDownloadItemDataReceived;
 	}
@@ -305,19 +305,20 @@ public class DriveService
 	private void OnDriveCreated(object? sender, DriveGeneralDescriptor descriptor) =>
 		_drives.TryAdd(descriptor.Id, descriptor);
 
-	private void OnDriveDeleted(object? sender, int driveId)
+	private void OnItemDeleted(object? sender, MessageInfoItemDeleted info)
 	{
-		if (driveId < 1) return;
+		if (info.DriveId < 1 || !Common.IsPathToDrive(info.Path)) 
+			return;
 		
-		if (_vmsByDriveId.TryGetValue(driveId, out HashSet<int>? vms))
+		if (_vmsByDriveId.TryGetValue(info.DriveId, out HashSet<int>? vms))
 		{
 			foreach (int vmId in vms)
 			{
-				RemoveConnection(driveId, vmId);
+				RemoveConnection(info.DriveId, vmId);
 			}
 		}
 		
-		_drives.TryRemove(driveId, out DriveGeneralDescriptor? _);
+		_drives.TryRemove(info.DriveId, out DriveGeneralDescriptor? _);
 	}
 
 	private void OnDriveConnected(object? sender, DriveConnection connection) =>

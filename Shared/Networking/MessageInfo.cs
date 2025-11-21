@@ -185,19 +185,6 @@ public class MessageInfoDriveCreated : MessageInfoTcp
 	}
 }
 
-public class MessageInfoDriveDeleted : MessageInfoTcp
-{
-	public int DriveId { get; }
-
-	public MessageInfoDriveDeleted(bool generateGuid, int driveId)
-		: base(generateGuid)
-	{
-		DriveId = driveId;
-	}
-	
-	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
-}
-
 public class MessageInfoDriveConnected : MessageInfoTcp
 {
 	public int DriveId { get; }
@@ -228,4 +215,17 @@ public class MessageInfoDownloadItemData : MessageInfoTcp
 	}
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && StreamId != Guid.Empty && Data.Length > 0 && Offset >= 0;
+}
+
+public class MessageInfoItemDeleted : MessageInfoTcp
+{
+	public int DriveId { get; }
+	public string Path { get; }
+
+	public MessageInfoItemDeleted(bool generateGuid, int driveId, string path)
+		: base(generateGuid)
+	{
+		DriveId = driveId;
+		Path = path;
+	}
 }
