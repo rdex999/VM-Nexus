@@ -8,19 +8,27 @@ using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Drives;
 using Shared.Networking;
+using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Client.ViewModels.DriveExplorerModes;
 
-public class DrivesViewModel : DriveExplorerMode
+public partial class DrivesViewModel : DriveExplorerMode
 {
 	private readonly DriveService _driveService;
 	public ObservableCollection<DriveItemTemplate> DriveItems { get; }
+	public ObservableCollection<VmConnectionItemTemplate> ConPopupVmConnections { get; }
+	private int _conPopupDriveId = -1;
+	
+	[ObservableProperty] 
+	private bool _conPopupIsOpen = false;
 	
 	public DrivesViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)
 	{
 		_driveService = driveService;
 		DriveItems = new ObservableCollection<DriveItemTemplate>();
+		ConPopupVmConnections = new ObservableCollection<VmConnectionItemTemplate>();
 		_driveService.Initialized += (_, _) => UpdateDrives();
 		ClientSvc.DriveCreated += OnDriveCreated;
 		ClientSvc.ItemDeleted += OnItemDeleted;
@@ -65,9 +73,10 @@ public class DrivesViewModel : DriveExplorerMode
 		foreach (DriveGeneralDescriptor descriptor in _driveService.GetDrives())
 		{
 			DriveItems.Add(new DriveItemTemplate(descriptor));
-			DriveItems.Last().Opened += OnDriveOpenClicked;
-			DriveItems.Last().DownloadRequested += OnDriveDownloadRequested;
-			DriveItems.Last().DeleteRequested += OnDriveDeleteRequested;
+			DriveItems.Last().OpenClick += OnDriveOpenClicked;
+			DriveItems.Last().DownloadClick += OnDriveDownloadRequested;
+			DriveItems.Last().DeleteClick += OnDriveDeleteRequested;
+			DriveItems.Last().ManageVmConnectionsClick += OnManageVmConnectionsClick;
 		}	
 	}
 
@@ -83,9 +92,10 @@ public class DrivesViewModel : DriveExplorerMode
 	private void OnDriveCreated(object? sender, DriveGeneralDescriptor descriptor)
 	{
 		DriveItems.Add(new DriveItemTemplate(descriptor));
-		DriveItems.Last().Opened += OnDriveOpenClicked;
-		DriveItems.Last().DownloadRequested += OnDriveDownloadRequested;
-		DriveItems.Last().DeleteRequested += OnDriveDeleteRequested;
+		DriveItems.Last().OpenClick += OnDriveOpenClicked;
+		DriveItems.Last().DownloadClick += OnDriveDownloadRequested;
+		DriveItems.Last().DeleteClick += OnDriveDeleteRequested;
+		DriveItems.Last().ManageVmConnectionsClick += OnManageVmConnectionsClick;
 	}
 
 	/// <summary>
@@ -106,9 +116,10 @@ public class DrivesViewModel : DriveExplorerMode
 		{
 			if (DriveItems[i].Id == info.DriveId)
 			{
-				DriveItems[i].Opened -= OnDriveOpenClicked;
-				DriveItems[i].DownloadRequested -= OnDriveDownloadRequested;
-				DriveItems[i].DeleteRequested -= OnDriveDeleteRequested;
+				DriveItems[i].OpenClick -= OnDriveOpenClicked;
+				DriveItems[i].DownloadClick -= OnDriveDownloadRequested;
+				DriveItems[i].DeleteClick -= OnDriveDeleteRequested;
+				DriveItems[i].ManageVmConnectionsClick -= OnManageVmConnectionsClick;
 				DriveItems.RemoveAt(i);
 			}
 		}
@@ -145,13 +156,39 @@ public class DrivesViewModel : DriveExplorerMode
 	/// Postcondition: Drive deletion dialog is displayed.
 	/// </remarks>
 	private void OnDriveDeleteRequested(int driveId) => DeleteItem?.Invoke(driveId, string.Empty);
+
+	/// <summary>
+	/// Handles a click on the VM connections management button on a drive. Opens the VM connection management popup.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that the VM connections management button was clicked on. driveId >= 1.</param>
+	/// <remarks>
+	/// Precondition: User has clicked on the VM connections management button on a drive. driveId >= 1. <br/>
+	/// Postcondition: The VM connections management popup is open.
+	/// </remarks>
+	private void OnManageVmConnectionsClick(int driveId)
+	{
+		_conPopupDriveId = driveId;
+		/* TODO: Fetch connected virtual machines. */
+		ConPopupIsOpen = true;
+	}
+
+	/// <summary>
+	/// Either closes the VM connection popup, or called after it is closed.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the user has closed the popup, or this method was called in order to close the popup. <br/>
+	/// Postcondition: VM connection management popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private void CloseConPopup() => ConPopupIsOpen = false;
 }
 
 public partial class DriveItemTemplate : ObservableObject
 {
-	public Action<int>? Opened;
-	public Action<int>? DownloadRequested;
-	public Action<int>? DeleteRequested;
+	public Action<int>? OpenClick;
+	public Action<int>? DownloadClick;
+	public Action<int>? DeleteClick;
+	public Action<int>? ManageVmConnectionsClick;
 	public int Id { get; }
 
 	private int _size;
@@ -193,7 +230,7 @@ public partial class DriveItemTemplate : ObservableObject
 	/// Postcondition: The Opened event is invoked, an attempt to open the drive is performed.
 	/// </remarks>
 	[RelayCommand]
-	public void Open() => Opened?.Invoke(Id);
+	public void Open() => OpenClick?.Invoke(Id);
 
 	/// <summary>
 	/// Handles a click on the download button on a drive. Opens a save-file dialog and downloads the disk image.
@@ -203,7 +240,7 @@ public partial class DriveItemTemplate : ObservableObject
 	/// Postcondition: A save-file dialog is opened and a download is started.
 	/// </remarks>
 	[RelayCommand]
-	private void Download() => DownloadRequested?.Invoke(Id);
+	private void Download() => DownloadClick?.Invoke(Id);
 
 	/// <summary>
 	/// Handles a click on the delete button of this drive. Displays delete confirmation dialog.
@@ -213,5 +250,31 @@ public partial class DriveItemTemplate : ObservableObject
 	/// Postcondition: Drive deletion dialog is displayed.
 	/// </remarks>
 	[RelayCommand]
-	private void Delete() => DeleteRequested?.Invoke(Id);
+	private void Delete() => DeleteClick?.Invoke(Id);
+
+	/// <summary>
+	/// Handles a click on the manage VM connections button of this drive. Displays the connection management popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the manage VM connections button of this drive. <br/>
+	/// Postcondition: VM connection management popup is displayed.
+	/// </remarks>
+	[RelayCommand]
+	private void ManageVmConnections() => ManageVmConnectionsClick?.Invoke(Id);
+}
+
+public class VmConnectionItemTemplate : ObservableObject
+{
+	public int Id { get; }
+	public string Name { get; }
+	public string OperatingSystem { get; }
+	public CpuArchitecture CpuArchitecture { get; }
+	
+	public VmConnectionItemTemplate(int id, string name, OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture)
+	{
+		Id = id;
+		Name = name;
+		OperatingSystem = Common.SeparateStringWords(operatingSystem.ToString());
+		CpuArchitecture = cpuArchitecture;
+	}
 }

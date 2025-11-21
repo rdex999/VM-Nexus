@@ -40,7 +40,7 @@
 					</Border.Styles>
 				
 					<Border.ContextMenu>
-						<Binding Path="ContextMenu"/>
+						<Binding Path="Menu"/>
 					</Border.ContextMenu>
 					
 					<Grid RowDefinitions="*, Auto">

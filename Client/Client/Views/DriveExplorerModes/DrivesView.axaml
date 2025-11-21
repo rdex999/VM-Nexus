@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:dem="clr-namespace:Client.ViewModels.DriveExplorerModes"
+             xmlns:templated="clr-namespace:Client.Controls.Templated"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.DriveExplorerModes.DrivesView"
              x:DataType="dem:DrivesViewModel">
@@ -14,60 +15,92 @@
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
-	
-	<ScrollViewer HorizontalScrollBarVisibility="Auto">
-		<ItemsControl ItemsSource="{Binding DriveItems}" HorizontalAlignment="Left" Width="600">
-			<ItemsControl.ItemTemplate>
-				<DataTemplate DataType="{x:Type dem:DriveItemTemplate}">
-					<Border CornerRadius="15" Background="#eeeff1" Height="100" Margin="10" Padding="10" 
-					        BorderThickness="1.2" DoubleTapped="OnDriveDoubleTapped">
-						<Border.Styles>
-							<Style Selector="Border">
-								<Setter Property="BorderBrush">
-									<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-										<GradientStop Offset="0" Color="#bcd8dd" /> <!-- c0d3d2 -->
-										<GradientStop Offset="1" Color="#c0e0e2" />
-									</LinearGradientBrush>
-								</Setter>
-							</Style>
-						</Border.Styles>
-						<Grid ColumnDefinitions="Auto, *" ColumnSpacing="25">
-							<Image Source="/Assets/Drive.png" Width="70" Height="70" RenderOptions.BitmapInterpolationMode="HighQuality"/>
 
-							<Grid Grid.Column="1" RowDefinitions="Auto, *">
-								<Grid ColumnDefinitions="1.5*, *, *, Auto">
-									<TextBlock Text="{Binding Name}" FontSize="15" />
-									<TextBlock Grid.Column="1" Text="{Binding SizeString}" FontSize="15" FontWeight="DemiBold" />
-									<TextBlock Grid.Column="2" Text="{Binding DriveType}" FontSize="15" FontWeight="DemiBold" />
+	<Grid x:Name="Grid">
+		<templated:OverlayPopup IsOpen="{Binding ConPopupIsOpen}" Width="450"
+		                        PlacementTarget="Grid" Background="White" Placement="Center"
+		                        Title="Connected Virtual Machines"
+		                        ClosedCommand="{Binding CloseConPopupCommand}">
+			<StackPanel Spacing="10">
+				<TextBlock TextWrapping="Wrap" FontWeight="DemiBold">Checked virtual machines will have this drive connected to them.</TextBlock>
 
-									<Button Grid.Column="3" VerticalAlignment="Top" Padding="4">
-										<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
+				<ScrollViewer MaxHeight="410">
+					<ItemsControl ItemsSource="{Binding ConPopupVmConnections}">
+						<ItemsControl.DataTemplates>
+							<DataTemplate DataType="dem:VmConnectionItemTemplate">
+								<Border CornerRadius="11" Background="#efefef" Padding="8" Margin="7">
+									<Grid ColumnDefinitions="2*, 1.5*, *, Auto" VerticalAlignment="Center">
+										<TextBlock VerticalAlignment="Center" Text="{Binding Name}" FontWeight="DemiBold" />
+										<TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding OperatingSystem}" />
+										<TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{Binding CpuArchitecture}" />
 
-										<Button.Flyout>
-											<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
-												<MenuItem Header="Download" Command="{Binding DownloadCommand}" />
-												<MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
-											</MenuFlyout>
-										</Button.Flyout>
+										<CheckBox Grid.Column="3" VerticalAlignment="Center" />
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.DataTemplates>
+					</ItemsControl>
+				</ScrollViewer>
+				
+				<Button CornerRadius="8" FontSize="16" FontWeight="Bold" Margin="0, 4, 0, 0" HorizontalAlignment="Center">Apply</Button>
+			</StackPanel>
+		</templated:OverlayPopup>
+		
+		<ScrollViewer HorizontalScrollBarVisibility="Auto">
+			<ItemsControl ItemsSource="{Binding DriveItems}" HorizontalAlignment="Left" Width="600">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate DataType="{x:Type dem:DriveItemTemplate}">
+						<Border CornerRadius="15" Background="#eeeff1" Height="100" Margin="10" Padding="10"
+						        BorderThickness="1.2" DoubleTapped="OnDriveDoubleTapped">
+							<Border.Styles>
+								<Style Selector="Border">
+									<Setter Property="BorderBrush">
+										<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+											<GradientStop Offset="0" Color="#bcd8dd" /> <!-- c0d3d2 -->
+											<GradientStop Offset="1" Color="#c0e0e2" />
+										</LinearGradientBrush>
+									</Setter>
+								</Style>
+							</Border.Styles>
+							<Grid ColumnDefinitions="Auto, *" ColumnSpacing="25">
+								<Image Source="/Assets/Drive.png" Width="70" Height="70" RenderOptions.BitmapInterpolationMode="HighQuality" />
+
+								<Grid Grid.Column="1" RowDefinitions="Auto, *">
+									<Grid ColumnDefinitions="1.5*, *, *, Auto">
+										<TextBlock Text="{Binding Name}" FontSize="15" />
+										<TextBlock Grid.Column="1" Text="{Binding SizeString}" FontSize="15" FontWeight="DemiBold" />
+										<TextBlock Grid.Column="2" Text="{Binding DriveType}" FontSize="15" FontWeight="DemiBold" />
+
+										<Button Grid.Column="3" VerticalAlignment="Top" Padding="4">
+											<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
+
+											<Button.Flyout>
+												<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
+													<MenuItem Header="Download" Command="{Binding DownloadCommand}" />
+													<MenuItem Header="Manage connected virtual machines" Command="{Binding ManageVmConnectionsCommand}"/>
+													<MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
+												</MenuFlyout>
+											</Button.Flyout>
+										</Button>
+									</Grid>
+
+									<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+									        Padding="26, 6" Margin="0, 0, 50, 3" CornerRadius="10"
+									        Background="#c7c7cc" FontWeight="Bold"
+									        Command="{Binding OpenCommand}">
+										<Button.Styles>
+											<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+												<Setter Property="Background" Value="#a7a7ac" />
+											</Style>
+										</Button.Styles>
+										Open
 									</Button>
 								</Grid>
-								
-								<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" 
-								        Padding="26, 6" Margin="0, 0, 50, 3" CornerRadius="10"
-								        Background="#c7c7cc" FontWeight="Bold" 
-								        Command="{Binding OpenCommand}">
-									<Button.Styles>
-										<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
-											<Setter Property="Background" Value="#a7a7ac"/>
-										</Style>
-									</Button.Styles>
-									Open
-								</Button>
 							</Grid>
-						</Grid>
-					</Border>
-				</DataTemplate>
-			</ItemsControl.ItemTemplate>
-		</ItemsControl>
-	</ScrollViewer>
+						</Border>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+	</Grid>
 </UserControl>

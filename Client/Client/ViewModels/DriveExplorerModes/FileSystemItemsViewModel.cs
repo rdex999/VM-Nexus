@@ -80,7 +80,7 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 	public DateTime Modified { get; }
 	public DateTime Created { get; }
 	public Geometry Icon { get; set; } = null!;		/* Set in code-behind. */
-	public ContextMenu? ContextMenu { get; private set; } = null;
+	public ContextMenu? Menu { get; private set; } = null;
 
 	/* Use for files. */
 	public FileSystemItemItemTemplate(string name, long sizeBytes, DateTime accessed, DateTime modified, DateTime created)
@@ -120,19 +120,9 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 		if (!IsFile)
 			return;
 
-		ContextMenu = new ContextMenu()
+		Menu = new ContextMenu()
 		{
 			Background = new SolidColorBrush(Colors.White),
-			Styles =
-			{
-				new Style(x => x.OfType<ContextMenu>().Class(":pointerover"))
-				{
-					Setters =
-					{
-						new Setter(ContextMenu.BackgroundProperty, new SolidColorBrush(Colors.White))
-					}
-				}
-			},
 			Items =
 			{
 				new MenuItem
