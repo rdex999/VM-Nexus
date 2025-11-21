@@ -646,6 +646,26 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestDeleteItem reqDeleteItem:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseDeleteItem(true, reqDeleteItem.Id, MessageResponseDeleteItem.Status.Failure));
+					break;
+				}
+				
+				result = await _driveService.DeleteItemAsync(reqDeleteItem.DriveId, reqDeleteItem.Path);
+				
+				if (result == ExitCode.Success)
+					SendResponse(new MessageResponseDeleteItem(true, reqDeleteItem.Id, MessageResponseDeleteItem.Status.Success));
+				else if (result == ExitCode.InvalidPath)
+					SendResponse(new MessageResponseDeleteItem(true, reqDeleteItem.Id, MessageResponseDeleteItem.Status.NoSuchItem));
+				else
+					SendResponse(new MessageResponseDeleteItem(true, reqDeleteItem.Id, MessageResponseDeleteItem.Status.Failure));
+				
+				break;
+			}
+
 			default:
 			{
 				result = ExitCode.Success;

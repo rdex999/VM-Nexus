@@ -384,6 +384,27 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests to delete the given item.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that holds the item to delete. driveId >= 1.</param>
+	/// <param name="path">The path on the drive, points to the item to delete. Must not point to a partition. path != null.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server, user is logged in.
+	/// The given path must not point to a partition. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: On success, the given item is deleted and the returned status indicates success. <br/>
+	/// On failure, the item is not deleted and the returned status indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseDeleteItem.Status> DeleteItemAsync(int driveId, string path)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteItem(true, driveId, path));
+		if (result != ExitCode.Success)
+			return MessageResponseDeleteItem.Status.Failure;
+
+		return ((MessageResponseDeleteItem)response!).Result;
+	}
+
+	/// <summary>
 	/// Requests to power on a virtual machine.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to power on. id >= 1.</param>

@@ -50,6 +50,5 @@ public enum ExitCode
 	OpenAlInitializationFailed,
 	OpeningFileFailed,
 	InvalidPath,
-	InvalidDrivePath,
 	ItemDownloadFailed,
 }
