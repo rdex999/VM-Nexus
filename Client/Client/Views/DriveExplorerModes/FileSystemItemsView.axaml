@@ -34,13 +34,14 @@
 									<GradientStop Offset="1" Color="#ced6dd" />
 								</LinearGradientBrush>
 							</Setter>
-							<Setter Property="Background" Value="#f0f0f0"/>
-							<Setter Property="ContextMenu" Value="{Binding ContextMenu}"/>
-						</Style>
-						<Style Selector="Border:pointerover">
-							<Setter Property="Background" Value="#e0e0e0"/>
+							
+							<Setter Property="Background" Value="#f1f1f1"/>
 						</Style>
 					</Border.Styles>
+				
+					<Border.ContextMenu>
+						<Binding Path="ContextMenu"/>
+					</Border.ContextMenu>
 					
 					<Grid RowDefinitions="*, Auto">
 						<PathIcon Data="{Binding Icon}" Foreground="#343839"

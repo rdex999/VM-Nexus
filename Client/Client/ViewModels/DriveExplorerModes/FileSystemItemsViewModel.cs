@@ -2,7 +2,9 @@ using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Client.Services;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
@@ -39,6 +41,7 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 				Items.Add(new FileSystemItemItemTemplate(directory.Name, directory.Modified, directory.Created));
 			
 			Items.Last().DownloadRequested += filename => DownloadItem?.Invoke(_driveDescriptor.Id, _path + '/' + filename);
+			Items.Last().DeleteRequested += filename => DeleteItem?.Invoke(_driveDescriptor.Id, _path + '/' + filename);
 		}
 	}
 
@@ -65,6 +68,7 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 public partial class FileSystemItemItemTemplate		/* FilesystemItem - item template (i know) */
 {
 	public Action<string>? DownloadRequested;
+	public Action<string>? DeleteRequested;
 	public bool IsFile { get; private set; }		/* Is this a file or a directory? */
 	public bool IsDirectory
 	{
@@ -119,12 +123,28 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 
 		ContextMenu = new ContextMenu()
 		{
+			Background = new SolidColorBrush(Colors.White),
+			Styles =
+			{
+				new Style(x => x.OfType<ContextMenu>().Class(":pointerover"))
+				{
+					Setters =
+					{
+						new Setter(ContextMenu.BackgroundProperty, new SolidColorBrush(Colors.White))
+					}
+				}
+			},
 			Items =
 			{
 				new MenuItem
 				{
 					Header = "Download",
 					Command = DownloadCommand
+				},
+				new MenuItem
+				{
+					Header = "Delete",
+					Command = DeleteCommand
 				}
 			}
 		};
@@ -139,4 +159,7 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 	/// </remarks>
 	[RelayCommand]
 	private void Download() => DownloadRequested?.Invoke(Name);
+	
+	[RelayCommand]
+	private void Delete() => DeleteRequested?.Invoke(Name);
 }

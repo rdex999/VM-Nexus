@@ -470,10 +470,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task ItemDeleteConfirmDeleteClickAsync()
 	{
-		string[] pathParts = _itemDeletePath.Split(SharedDefinitions.DirectorySeparators);
-
 		await ClientSvc.DeleteItemAsync(_itemDeleteDriveId, _itemDeletePath);
-		
 		ItemDeletePopupClosed();
 	}
 }
