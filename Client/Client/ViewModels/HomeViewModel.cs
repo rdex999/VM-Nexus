@@ -390,12 +390,12 @@ public partial class HomeViewModel : ViewModelBase
 
 		if (deleteVmResult == MessageResponseDeleteVm.Status.Success)
 		{
-			List<Task<MessageResponseDeleteDrive.Status>> deleteDriveTasks = new List<Task<MessageResponseDeleteDrive.Status>>();
+			List<Task<MessageResponseDeleteItem.Status>> deleteDriveTasks = new List<Task<MessageResponseDeleteItem.Status>>();
 			foreach (DeletionDriveItemTemplate drive in DeleteVmPopupDrives)
 			{
 				if (drive.IsMarkedForDeletion)
 				{
-					deleteDriveTasks.Add(ClientSvc.DeleteDriveAsync(drive.Id));
+					deleteDriveTasks.Add(ClientSvc.DeleteItemAsync(drive.Id, string.Empty));
 				}
 			}
 		

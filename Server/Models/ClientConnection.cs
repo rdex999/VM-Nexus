@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Server.Drives;
@@ -494,32 +495,6 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
-			case MessageRequestDeleteDrive reqDeleteDrive:
-			{
-				if (!_isLoggedIn)
-				{
-					SendResponse(new MessageResponseDeleteDrive(true, reqDeleteDrive.Id, MessageResponseDeleteDrive.Status.Failure));
-					break;
-				}
-
-				if (await _databaseService.IsDriveExistsAsync(reqDeleteDrive.DriveId))
-				{
-					SendResponse(new MessageResponseDeleteDrive(true, reqDeleteDrive.Id, MessageResponseDeleteDrive.Status.Success));
-					
-					/* First notifying of drive deletion and then deleting the drive, because this function depends on the drive being in the database. */
-					await _userService.NotifyDriveDeletedAsync(reqDeleteDrive.DriveId);
-				
-					/* Must succeed because the drive does exist. */
-					await _driveService.DeleteDriveAsync(reqDeleteDrive.DriveId);
-				}
-				else
-				{
-					SendResponse(new MessageResponseDeleteDrive(true, reqDeleteDrive.Id, MessageResponseDeleteDrive.Status.Failure));
-				}
-				
-				break;
-			}
-			
 			case MessageRequestConnectDrive reqConnectDrive:
 			{
 				if (!_isLoggedIn)
@@ -654,8 +629,11 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				result = await _driveService.DeleteItemAsync(reqDeleteItem.DriveId, reqDeleteItem.Path);
+				if (_driveService.IsPathToDrive(reqDeleteItem.Path))
+					await _userService.NotifyDriveDeletedAsync(reqDeleteItem.DriveId);
 				
+				result = await _driveService.DeleteItemAsync(reqDeleteItem.DriveId, reqDeleteItem.Path);
+
 				if (result == ExitCode.Success)
 					SendResponse(new MessageResponseDeleteItem(true, reqDeleteItem.Id, MessageResponseDeleteItem.Status.Success));
 				else if (result == ExitCode.InvalidPath)

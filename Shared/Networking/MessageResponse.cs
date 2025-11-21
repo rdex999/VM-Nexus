@@ -212,25 +212,6 @@ public class MessageResponseCreateDriveOs : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (DriveId >= 1 || DriveId == -1);
 }
 
-public class MessageResponseDeleteDrive : MessageResponse
-{
-	public Status Result { get; }
-
-	public MessageResponseDeleteDrive(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
-	{
-		Result = result;
-	}
-	
-	public enum Status
-	{
-		Success,
-		Failure,
-	}
-	
-	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
-}
-
 public class MessageResponseConnectDrive : MessageResponse
 {
 	public Status Result { get; }

@@ -269,24 +269,6 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
-	/// Requests the server to delete a drive.
-	/// </summary>
-	/// <param name="id">The ID of the drive to delete. id >= 1.</param>
-	/// <returns>A status indicating the result of the operation.</returns>
-	/// <remarks>
-	/// Precondition: Service fully initialized and connected to the server. User is logged in. id >= 1.<br/>
-	/// Postcondition: On success, the drive is deleted and the returned exit code indicates success. <br/>
-	/// On failure, the drive is not deleted and the returned exit code indicates the error.
-	/// </remarks>
-	public async Task<MessageResponseDeleteDrive.Status> DeleteDriveAsync(int id)
-	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteDrive(true, id));
-		if (result != ExitCode.Success) return MessageResponseDeleteDrive.Status.Failure;
-
-		return ((MessageResponseDeleteDrive)response!).Result;
-	}
-
-	/// <summary>
 	/// Request to register a drive connection between the given drive and the given virtual machine.
 	/// </summary>
 	/// <param name="driveId">The ID of the drive to connect. driveId >= 1.</param>

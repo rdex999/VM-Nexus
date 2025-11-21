@@ -472,14 +472,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	{
 		string[] pathParts = _itemDeletePath.Split(SharedDefinitions.DirectorySeparators);
 
-		if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
-		{
-			await ClientSvc.DeleteDriveAsync(_itemDeleteDriveId);
-		}
-		else
-		{
-			/* TODO: Add support for other types of item. */
-		}
+		await ClientSvc.DeleteItemAsync(_itemDeleteDriveId, _itemDeletePath);
 		
 		ItemDeletePopupClosed();
 	}

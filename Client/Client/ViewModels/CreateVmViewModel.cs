@@ -330,7 +330,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			
 			if (createDriveResult == MessageResponseCreateDriveOs.Status.Success)
 			{
-				tasks.Add(ClientSvc.DeleteDriveAsync(taskCreateDrive.Result!.DriveId));
+				tasks.Add(ClientSvc.DeleteItemAsync(taskCreateDrive.Result!.DriveId, string.Empty));
 			}
 			
 			if (createVmResult == MessageResponseCreateVm.Status.Success)
