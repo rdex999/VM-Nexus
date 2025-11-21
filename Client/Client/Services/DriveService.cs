@@ -82,6 +82,16 @@ public class DriveService
 		};
 	}
 
+	public bool ConnectionExists(int driveId, int vmId)
+	{
+		if (_drivesByVmId.TryGetValue(vmId, out HashSet<int>? drives))
+		{
+			return drives.Contains(driveId);
+		}
+
+		return false;
+	}
+	
 	public VmGeneralDescriptor[] GetVirtualMachines() => _virtualMachines.Values.ToArray();
 	public DriveGeneralDescriptor[] GetDrives() => _drives.Values.ToArray();
 	public DriveGeneralDescriptor? GetDriveById(int driveId) => _drives.GetValueOrDefault(driveId);
@@ -256,16 +266,6 @@ public class DriveService
 		if (vms.Count == 0) _vmsByDriveId.Remove(driveId, out _);
 		
 		return true;
-	}
-
-	private bool ConnectionExists(int driveId, int vmId)
-	{
-		if (_drivesByVmId.TryGetValue(vmId, out HashSet<int>? drives))
-		{
-			return drives.Contains(driveId);
-		}
-
-		return false;
 	}
 	
 	private void OnVmPoweredOffOrCrashed(object? sender, int vmId)

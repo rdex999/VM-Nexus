@@ -28,20 +28,21 @@
 					<ItemsControl ItemsSource="{Binding ConPopupVmConnections}">
 						<ItemsControl.DataTemplates>
 							<DataTemplate DataType="dem:VmConnectionItemTemplate">
-								<Border CornerRadius="11" Background="#efefef" Padding="8" Margin="7">
+								<Border CornerRadius="11" Background="#efefef" Padding="11, 7, 8, 7" Margin="6">
 									<Grid ColumnDefinitions="2*, 1.5*, *, Auto" VerticalAlignment="Center">
 										<TextBlock VerticalAlignment="Center" Text="{Binding Name}" FontWeight="DemiBold" />
 										<TextBlock Grid.Column="1" VerticalAlignment="Center" Text="{Binding OperatingSystem}" />
-										<TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{Binding CpuArchitecture}" />
 
-										<CheckBox Grid.Column="3" VerticalAlignment="Center" />
+										<CheckBox Grid.Column="3" VerticalAlignment="Center"
+										          IsChecked="{Binding IsChecked}" />
 									</Grid>
 								</Border>
 							</DataTemplate>
 						</ItemsControl.DataTemplates>
 					</ItemsControl>
 				</ScrollViewer>
-				
+			
+				<TextBlock TextWrapping="Wrap">For running virtual machines, changes will take effect after the next shutdown.</TextBlock>
 				<Button CornerRadius="8" FontSize="16" FontWeight="Bold" Margin="0, 4, 0, 0" HorizontalAlignment="Center">Apply</Button>
 			</StackPanel>
 		</templated:OverlayPopup>

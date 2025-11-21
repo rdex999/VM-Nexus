@@ -168,7 +168,13 @@ public partial class DrivesViewModel : DriveExplorerMode
 	private void OnManageVmConnectionsClick(int driveId)
 	{
 		_conPopupDriveId = driveId;
-		/* TODO: Fetch connected virtual machines. */
+		VmGeneralDescriptor[] descriptors = _driveService.GetVirtualMachines();
+		ConPopupVmConnections.Clear();
+		foreach (var descriptor in descriptors)
+		{
+			bool connected = _driveService.ConnectionExists(driveId, descriptor.Id);
+			ConPopupVmConnections.Add(new VmConnectionItemTemplate(descriptor, connected));
+		}
 		ConPopupIsOpen = true;
 	}
 
@@ -263,18 +269,24 @@ public partial class DriveItemTemplate : ObservableObject
 	private void ManageVmConnections() => ManageVmConnectionsClick?.Invoke(Id);
 }
 
-public class VmConnectionItemTemplate : ObservableObject
+public partial class VmConnectionItemTemplate : ObservableObject
 {
 	public int Id { get; }
 	public string Name { get; }
 	public string OperatingSystem { get; }
-	public CpuArchitecture CpuArchitecture { get; }
-	
-	public VmConnectionItemTemplate(int id, string name, OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture)
+
+	[ObservableProperty] 
+	private bool _isChecked;
+
+	[ObservableProperty] 
+	private bool _isInUse;
+
+	public VmConnectionItemTemplate(VmGeneralDescriptor descriptor, bool connected)
 	{
-		Id = id;
-		Name = name;
-		OperatingSystem = Common.SeparateStringWords(operatingSystem.ToString());
-		CpuArchitecture = cpuArchitecture;
+		Id = descriptor.Id;
+		Name = descriptor.Name;
+		OperatingSystem = Common.SeparateStringWords(descriptor.OperatingSystem.ToString());
+		IsChecked = connected;
+		IsInUse = descriptor.State == VmState.Running;
 	}
 }
