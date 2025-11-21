@@ -382,6 +382,26 @@ public class MessageResponseDownloadItem : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (ItemSize > 0 || ItemSize == -1);
 }
 
+public class MessageResponseDeleteItem : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseDeleteItem(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		NoSuchItem,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
 public class MessageResponseVmStartup : MessageResponse
 {
 	public Status Result { get; }
