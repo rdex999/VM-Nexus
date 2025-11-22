@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics.CodeAnalysis;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Server.Drives;
@@ -522,6 +521,29 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestDisconnectDrive reqDisconnectDrive:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseDisconnectDrive(true, reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.Failure));
+					break;
+				}
+
+				result = await _driveService.DisconnectDriveAsync(reqDisconnectDrive.DriveId, reqDisconnectDrive.VmId);
+
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseDisconnectDrive(true, reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.Success));
+					await _userService.NotifyDriveDisconnected(reqDisconnectDrive.DriveId, reqDisconnectDrive.VmId);
+				}
+				else if (result == ExitCode.DriveConnectionAlreadyExists)
+					SendResponse(new MessageResponseDisconnectDrive(true, reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.NotConnected));
+				else
+					SendResponse(new MessageResponseDisconnectDrive(true, reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.Failure));
+				
+				break;
+			}
+
 			case MessageRequestListDriveConnections reqListDriveConnections:
 			{
 				if (!_isLoggedIn)
@@ -798,6 +820,19 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	public void NotifyDriveConnected(int driveId, int vmId) =>
 		SendInfo(new MessageInfoDriveConnected(true, driveId, vmId));
+
+	/// <summary>
+	/// Notifies the client that a drive was disconnected from a virtual machine. (Drive connected removed)
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that was disconnected. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine that the drive was disconnected from. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A drive was disconnected from a virtual machine. Service initialized and connected to client.
+	/// driveId >= 1. &amp;&amp; vmId >= 1. <br/>
+	/// Postcondition: Client is notified that the drive was disconnected from the virtual machine.
+	/// </remarks>
+	public void NotifyDriveDisconnected(int driveId, int vmId) =>
+		SendInfo(new MessageInfoDriveDisconnected(true, driveId, vmId));
 	
 	/// <summary>
 	/// Handles what happens after a disconnection. (sudden or regular disconnection)

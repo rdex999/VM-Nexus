@@ -200,6 +200,21 @@ public class MessageInfoDriveConnected : MessageInfoTcp
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
 
+public class MessageInfoDriveDisconnected : MessageInfoTcp
+{
+	public int DriveId { get; }
+	public int VmId { get; }
+
+	public MessageInfoDriveDisconnected(bool generateGuid, int driveId, int vmId)
+		: base(generateGuid)
+	{
+		DriveId = driveId;
+		VmId = vmId;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
+}
+
 public class MessageInfoDownloadItemData : MessageInfoTcp
 {
 	public Guid StreamId { get; }
