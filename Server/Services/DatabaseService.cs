@@ -76,6 +76,7 @@ public class DatabaseService
 			                                                 CREATE TABLE IF NOT EXISTS drive_connections (
 			                                                     drive_id INT NOT NULL REFERENCES drives(id) ON DELETE CASCADE,
 			                                                     vm_id INT NOT NULL REFERENCES virtual_machines(id) ON DELETE CASCADE,
+			                                                     connected_at TIMESTAMP NOT NULL DEFAULT now(),
 			                                                     PRIMARY KEY (drive_id, vm_id)
 			                                                 ) 
 			                                                 """);
@@ -886,6 +887,7 @@ public class DatabaseService
 		                                                    SELECT d.id, d.name, d.size, d.type FROM drive_connections dc 
 		                                                        JOIN drives d ON d.id = dc.drive_id 
 		                                                    	WHERE dc.vm_id = @vm_id
+		                                                    	ORDER BY dc.connected_at ASC
 		                                                    """,
 			new NpgsqlParameter("@vm_id", vmId)
 		);
