@@ -228,4 +228,6 @@ public class MessageInfoItemDeleted : MessageInfoTcp
 		DriveId = driveId;
 		Path = path;
 	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }

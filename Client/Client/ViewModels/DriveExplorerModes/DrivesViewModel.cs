@@ -187,6 +187,33 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// </remarks>
 	[RelayCommand]
 	private void CloseConPopup() => ConPopupIsOpen = false;
+
+	/// <summary>
+	/// Handles a click on the apply button on the VM connection management popup. Attempts to apply the new changes.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the apply button on the VM connection management popup. <br/>
+	/// Postcondition: Each virtual machine that its connection state to this drive was changed, will be updated to the new state.
+	/// On failure, an error will be shown for each failed virtual machine.
+	/// </remarks>
+	[RelayCommand]
+	private async Task ConPopupApplyClickAsync()
+	{
+		foreach (VmConnectionItemTemplate item in ConPopupVmConnections)
+		{
+			bool isConnected = _driveService.ConnectionExists(_conPopupDriveId, item.Id);
+			if (item.IsChecked && !isConnected)
+			{
+				/* TODO: Connect drive. */
+			}
+			else if (!item.IsChecked && isConnected)
+			{
+				/* TODO: Disconnect drive. */
+			}
+		}
+		
+		CloseConPopup();
+	}
 }
 
 public partial class DriveItemTemplate : ObservableObject
@@ -278,15 +305,11 @@ public partial class VmConnectionItemTemplate : ObservableObject
 	[ObservableProperty] 
 	private bool _isChecked;
 
-	[ObservableProperty] 
-	private bool _isInUse;
-
 	public VmConnectionItemTemplate(VmGeneralDescriptor descriptor, bool connected)
 	{
 		Id = descriptor.Id;
 		Name = descriptor.Name;
 		OperatingSystem = Common.SeparateStringWords(descriptor.OperatingSystem.ToString());
 		IsChecked = connected;
-		IsInUse = descriptor.State == VmState.Running;
 	}
 }

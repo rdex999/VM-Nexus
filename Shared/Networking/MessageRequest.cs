@@ -173,6 +173,21 @@ public class MessageRequestConnectDrive : MessageRequest	/* Request to mark the 
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
 
+public class MessageRequestDisconnectDrive : MessageRequest
+{
+	public int DriveId { get; }
+	public int VmId { get; }
+
+	public MessageRequestDisconnectDrive(bool generateGuid, int driveId, int vmId)
+		: base(generateGuid)
+	{
+		DriveId = driveId;
+		VmId = vmId;
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
+}
+
 public class MessageRequestListDriveConnections : MessageRequest
 {
 	public MessageRequestListDriveConnections(bool generateGuid)

@@ -43,7 +43,12 @@
 				</ScrollViewer>
 			
 				<TextBlock TextWrapping="Wrap">For running virtual machines, changes will take effect after the next shutdown.</TextBlock>
-				<Button CornerRadius="8" FontSize="16" FontWeight="Bold" Margin="0, 4, 0, 0" HorizontalAlignment="Center">Apply</Button>
+				
+				<Button CornerRadius="8" FontSize="16" FontWeight="Bold" Margin="0, 4, 0, 0" 
+				        HorizontalAlignment="Center"
+				        Command="{Binding ConPopupApplyClickCommand}">
+					Apply
+				</Button>
 			</StackPanel>
 		</templated:OverlayPopup>
 		

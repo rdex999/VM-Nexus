@@ -232,6 +232,24 @@ public class MessageResponseConnectDrive : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+public class MessageResponseDisconnectDrive : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseDisconnectDrive(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		NotConnected,
+		Failure,
+	}
+}
+
 public class MessageResponseListDriveConnections : MessageResponse
 {
 	public Status Result { get; }
