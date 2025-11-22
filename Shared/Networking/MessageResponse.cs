@@ -248,6 +248,8 @@ public class MessageResponseDisconnectDrive : MessageResponse
 		NotConnected,
 		Failure,
 	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
 public class MessageResponseListDriveConnections : MessageResponse

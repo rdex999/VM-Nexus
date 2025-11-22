@@ -44,6 +44,7 @@ public enum ExitCode
 	InvalidDriveSize,
 	UnsupportedFileSystem,
 	DriveConnectionAlreadyExists,
+	DriveConnectionDoesNotExist,
 	DiskImageCreationFailed,
 	NamedPipeCreationFailed,
 	OpenAlDeviceOpenFailed,

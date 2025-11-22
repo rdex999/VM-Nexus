@@ -239,6 +239,21 @@ public class DriveService
 		await _databaseService.ConnectDriveAsync(driveId, vmId);
 	
 	/// <summary>
+	/// Removed the given drive-VM connection. (Means that when the virtual machine starts, this drive will not be connected.)
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that is connected to the virtual machine. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine that the drive is connected to. vmId >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists, and a virtual machine with the given ID exists.
+	/// The given drive is connected to the given virtual machine. (There is a connection between the two) <br/>
+	/// Postcondition: On success, the drive-VM connection is removed and the returned exit code indicates success. <br/>
+	/// On failure, the drive-VM connection is not affected and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> DisconnectDriveAsync(int driveId, int vmId) =>
+		await _databaseService.DisconnectDriveAsync(driveId, vmId);
+	
+	/// <summary>
 	/// Get the filename of a drive (the drives disk image file) that the ID of is the given ID.
 	/// </summary>
 	/// <param name="driveId">The ID of the drive. driveId >= 1.</param>
