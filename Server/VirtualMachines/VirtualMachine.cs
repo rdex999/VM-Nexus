@@ -23,6 +23,7 @@ using Server.Drives;
 using Server.Services;
 using Shared;
 using Shared.VirtualMachines;
+using DriveType = Shared.Drives.DriveType;
 using MouseButtons = Shared.VirtualMachines.MouseButtons;
 using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 using PixelFormat = MarcusW.VncClient.PixelFormat;
@@ -761,21 +762,45 @@ public class VirtualMachine
 				)
 			));
 		}
-		
+
+		string virtioDrivePrefix = "vd";
+		string regularDrivePrefix = "sd";
+		int virtioDriveCnt = 0;
+		int regularDriveCnt = 0;
 		foreach (DriveDescriptor drive in _drives)
 		{
+			if (virtioDriveCnt % 26 == 0 && virtioDriveCnt != 0)
+				virtioDrivePrefix += 'a';
+			
+			if (regularDriveCnt % 26 == 0 && regularDriveCnt != 0)
+				regularDrivePrefix += 'a';
+			
+			string driveName;
+			if (drive.Type == DriveType.CDROM)
+			{
+				char driveLetter = (char)('a' + regularDriveCnt % 26);
+				driveName = regularDrivePrefix + driveLetter;
+				++regularDriveCnt;
+			}
+			else
+			{
+				char driveLetter = (char)('a' + virtioDriveCnt % 26);
+				driveName = virtioDrivePrefix + driveLetter;
+				++virtioDriveCnt;
+			}
+			
 			string driveFilePath = _driveService.GetDriveFilePath(drive.Id);
 			XElement disk = new XElement("disk",
 				new XAttribute("type", "file"),
-				new XAttribute("device", drive.Type == Shared.Drives.DriveType.CDROM ? "cdrom" : "disk"),
+				new XAttribute("device", drive.Type == DriveType.CDROM ? "cdrom" : "disk"),
 				new XElement("driver", new XAttribute("name", "qemu"), new XAttribute("type", "raw")),
 				new XElement("source", new XAttribute("file", driveFilePath)),
 				new XElement("target", 
-					new XAttribute("dev", drive.Type == Shared.Drives.DriveType.CDROM ? "sda" : "vda"),
-					new XAttribute("bus", drive.Type == Shared.Drives.DriveType.CDROM ? "sata" : "virtio")
+					new XAttribute("dev", driveName),
+					new XAttribute("bus", drive.Type == DriveType.CDROM ? "sata" : "virtio")
 				)
 			);
-			if (drive.Type == Shared.Drives.DriveType.CDROM)
+			if (drive.Type == DriveType.CDROM)
 			{
 				disk.Add(new XElement("readonly"));
 			}

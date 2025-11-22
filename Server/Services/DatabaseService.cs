@@ -826,7 +826,7 @@ public class DatabaseService
 		
 		int rows = await ExecuteNonQueryAsync("""
 		                                       DELETE FROM drive_connections 
-		                                              WHERE id = @drive_id
+		                                              WHERE drive_id = @drive_id
 		                                              AND vm_id = @vm_id
 		                                       """,
 			new NpgsqlParameter("@drive_id", driveId),

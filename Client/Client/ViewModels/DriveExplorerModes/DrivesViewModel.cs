@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -194,23 +195,26 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// <remarks>
 	/// Precondition: User has clicked on the apply button on the VM connection management popup. <br/>
 	/// Postcondition: Each virtual machine that its connection state to this drive was changed, will be updated to the new state.
-	/// On failure, an error will be shown for each failed virtual machine.
+	/// On failure, the VM-drive connection will not change.
 	/// </remarks>
 	[RelayCommand]
 	private async Task ConPopupApplyClickAsync()
 	{
+		List<Task<ExitCode>> connectionUpdates = new List<Task<ExitCode>>();
 		foreach (VmConnectionItemTemplate item in ConPopupVmConnections)
 		{
 			bool isConnected = _driveService.ConnectionExists(_conPopupDriveId, item.Id);
 			if (item.IsChecked && !isConnected)
 			{
-				/* TODO: Connect drive. */
+				connectionUpdates.Add(_driveService.ConnectDriveAsync(_conPopupDriveId, item.Id));
 			}
 			else if (!item.IsChecked && isConnected)
 			{
-				/* TODO: Disconnect drive. */
+				connectionUpdates.Add(_driveService.DisconnectDriveAsync(_conPopupDriveId, item.Id));
 			}
 		}
+		
+		await Task.WhenAll(connectionUpdates);
 		
 		CloseConPopup();
 	}
