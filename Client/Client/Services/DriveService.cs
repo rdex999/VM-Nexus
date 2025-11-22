@@ -42,6 +42,7 @@ public class DriveService
 		_clientService.DriveCreated += OnDriveCreated;
 		_clientService.ItemDeleted += OnItemDeleted;
 		_clientService.DriveConnected += OnDriveConnected;
+		_clientService.DriveDisconnected += OnDriveDisconnected;
 		_clientService.DownloadItemDataReceived += OnDownloadItemDataReceived;
 	}
 
@@ -79,6 +80,24 @@ public class DriveService
 			MessageResponseConnectDrive.Status.Success				=> ExitCode.Success,
 			MessageResponseConnectDrive.Status.AlreadyConnected		=> ExitCode.DriveConnectionAlreadyExists,
 			MessageResponseConnectDrive.Status.Failure				=> ExitCode.MessageFailure,
+		};
+	}
+
+	public async Task<ExitCode> DisconnectDriveAsync(int driveId, int vmId)
+	{
+		MessageResponseDisconnectDrive.Status result = await _clientService.DisconnectDriveAsync(driveId, vmId);
+
+		if (result == MessageResponseDisconnectDrive.Status.Success 
+		    || (result == MessageResponseDisconnectDrive.Status.NotConnected && ConnectionExists(driveId, vmId)))
+		{
+			RemoveConnection(driveId, vmId);
+		}
+		
+		return result switch
+		{
+			MessageResponseDisconnectDrive.Status.Success		=> ExitCode.Success,
+			MessageResponseDisconnectDrive.Status.NotConnected	=> ExitCode.DriveConnectionDoesNotExist,
+			MessageResponseDisconnectDrive.Status.Failure		=> ExitCode.MessageFailure,
 		};
 	}
 
@@ -324,6 +343,9 @@ public class DriveService
 	private void OnDriveConnected(object? sender, DriveConnection connection) =>
 		AddConnection(connection.DriveId, connection.VmId);
 
+	private void OnDriveDisconnected(object? sender, DriveConnection connection) =>
+		RemoveConnection(connection.DriveId, connection.VmId);
+	
 	private void OnDownloadItemDataReceived(object? sender, MessageInfoDownloadItemData data)
 	{
 		if (_downloadingItems.TryGetValue(data.StreamId, out DownloadingItem? item))

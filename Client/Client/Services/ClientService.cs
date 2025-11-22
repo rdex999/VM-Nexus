@@ -27,6 +27,7 @@ public class ClientService : MessagingService
 	public event EventHandler<DriveGeneralDescriptor>? DriveCreated;
 	public event EventHandler<MessageInfoItemDeleted>? ItemDeleted;
 	public event EventHandler<DriveConnection>? DriveConnected;
+	public event EventHandler<DriveConnection>? DriveDisconnected;
 	public event EventHandler<MessageInfoDownloadItemData>? DownloadItemDataReceived;
 	
 	/// <summary>
@@ -288,6 +289,28 @@ public class ClientService : MessagingService
 			return MessageResponseConnectDrive.Status.Failure;
 		
 		return ((MessageResponseConnectDrive)response!).Result;
+	}
+
+	/// <summary>
+	/// Request to remove the drive connection between the given drive and the given virtual machine.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to disconnect. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine to disconnect the drive from. vmId >= 1.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to server.
+	/// The user has a drive with the given ID, and a virtual machine with the given ID. <br/>
+	/// driveId >= 1 &amp;&amp; vmId >= 1. <br/>
+	/// Postcondition: On success, the drive connection is removed and the returned status indicates success. <br/>
+	/// On failure, the drive connection is not affected and the returned status indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseDisconnectDrive.Status> DisconnectDriveAsync(int driveId, int vmId)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDisconnectDrive(true, driveId, vmId));
+		if (result != ExitCode.Success)
+			return MessageResponseDisconnectDrive.Status.Failure;
+		
+		return ((MessageResponseDisconnectDrive)response!).Result;
 	}
 	
 	/// <summary>
@@ -730,6 +753,13 @@ public class ClientService : MessagingService
 			{
 				DriveConnected?.Invoke(this, 
 					new DriveConnection(infoDriveConnected.DriveId, infoDriveConnected.VmId)
+				);
+				break;
+			}
+			case MessageInfoDriveDisconnected infoDriveDisconnected:
+			{
+				DriveDisconnected?.Invoke(this,
+					new DriveConnection(infoDriveDisconnected.DriveId, infoDriveDisconnected.VmId)
 				);
 				break;
 			}
