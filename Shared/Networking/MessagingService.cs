@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Net.Sockets;
+using System.Text;
 
 namespace Shared.Networking;
 
@@ -15,7 +16,8 @@ public class MessagingService
 	protected Thread? MessageSenderThread;								/* Sends messages from the message queue, through the socket. */
 	private ConcurrentQueue<Message>? _messageQueue;
 	private ManualResetEventSlim? _messageAvailable;
-	
+	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
+	private const int DatagramSize = 1200;
 	public event EventHandler<ExitCode>? FailEvent;
 
 	/// <remarks>
@@ -95,7 +97,7 @@ public class MessagingService
 				HandleSuddenDisconnection(token);
 			}
 			
-			Message? message = ReceiveMessageAsync(TcpSocket!).GetAwaiter().GetResult();
+			Message? message = ReceiveMessageTcpAsync().GetAwaiter().GetResult();
 			if (message == null)
 			{
 				if (!IsConnected() && !token.IsCancellationRequested)
@@ -146,14 +148,8 @@ public class MessagingService
 	{
 		while (!token.IsCancellationRequested && IsConnected())
 		{
-			Message? message = ReceiveMessageAsync(UdpSocket!).GetAwaiter().GetResult();
-			
-			if (message == null || !message.IsValidMessage()) continue;
-			
-			if (message is MessageInfoUdp)
-			{
-				_ = HandleInfoAsync(message, token);
-			}
+			Thread.Sleep(200);
+			/* TODO: Implement this */
 		}
 	}
 
@@ -176,7 +172,7 @@ public class MessagingService
 				/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
 				while (_messageQueue!.TryDequeue(out Message? message) && !token.IsCancellationRequested)		
 				{
-					SendMessageOnSocketAsync(message).Wait(token);
+					SendMessageTcpOnSocketAsync(message).Wait(token);
 				}
 
 				if (_messageQueue.IsEmpty)
@@ -296,32 +292,19 @@ public class MessagingService
 	/// Postcondition: On success the message is fully sent, and the exit code indicates success. <br/>
 	/// On failure, the message should be considered as not sent, and the exit code will indicate the error.
 	/// </remarks>
-	private async Task<ExitCode> SendMessageOnSocketAsync(Message message)
+	private async Task<ExitCode> SendMessageTcpOnSocketAsync(Message message)
 	{
 		ExitCode result;
 		
 		byte[] bytes = Common.ToByteArrayWithType(message);
 		byte[] sizeInBytes = BitConverter.GetBytes(bytes.Length);
 
-		Socket socket;
-		if (message is MessageTcp)
-		{
-			socket = TcpSocket!;
-		} 
-		else if (message is MessageUdp)
-		{
-			socket = UdpSocket!;
-		}
-		else
-		{
-			return ExitCode.InvalidParameter;
-		}
-		result = await SendBytesExactAsync(socket, sizeInBytes);
+		result = await SendBytesExactTcpAsync(sizeInBytes);
 		
 		if (result != ExitCode.Success)
 			return result;
 		
-		result = await SendBytesExactAsync(socket, bytes);
+		result = await SendBytesExactTcpAsync(bytes);
 		
 		return result;
 	}
@@ -389,16 +372,16 @@ public class MessagingService
 	/// Precondition: The service must be fully initialized and connected to the server. <br/>
 	/// Postcondition: On success, the received message is returned. On failure, null is returned.
 	/// </remarks>
-	private async Task<Message?> ReceiveMessageAsync(Socket socket)
+	private async Task<Message?> ReceiveMessageTcpAsync()
 	{
-		byte[]? messageSizeInBytes = await ReceiveBytesExactAsync(socket, 4);
+		byte[]? messageSizeInBytes = await ReceiveBytesExactTcpAsync(4);
 		if (messageSizeInBytes == null || messageSizeInBytes.Length == 0)
 		{
 			return null;
 		}
 		int size =  BitConverter.ToInt32(messageSizeInBytes, 0);	/* If the size is 0, then its an invalid message */
 	
-		byte[]? messageBytes = await ReceiveBytesExactAsync(socket, size);
+		byte[]? messageBytes = await ReceiveBytesExactTcpAsync(size);
 		if (messageBytes == null || messageBytes.Length == 0)
 		{
 			return null;
@@ -410,7 +393,6 @@ public class MessagingService
 	/// <summary>
 	/// Sends an exact amount of bytes (the full byte array parameter) to the other side (client/server)
 	/// </summary>
-	/// <param name="socket">The socket on which to send the bytes. Must be connected. socket != null.</param>
 	/// <param name="bytes">
 	/// The byte array to send to the other side. bytes != null
 	/// </param>
@@ -418,88 +400,82 @@ public class MessagingService
 	/// An exit code indicating the result of the operation. On failure, the data should be considered as not sent.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: The service must be fully initialized and connected to the other side, socket connected, socket != null &amp;&amp; bytes != null. <br/>
+	/// Precondition: The service must be fully initialized and connected to the other side, socket connected, bytes != null. <br/>
 	/// Postcondition: On success, the byte array is fully sent to the other side, and an exit code of success is returned. <br/>
 	/// On failure, an exit code indicating the error is returned, and the data should be considered as not sent.
 	/// </remarks>
-	private async Task<ExitCode> SendBytesExactAsync(Socket socket, byte[] bytes)
+	private async Task<ExitCode> SendBytesExactTcpAsync(byte[] bytes)
 	{
 		int bytesSent = 0;
 		
-		ExitCode result = await Task.Run(() =>
+		while (bytesSent < bytes.Length)
 		{
-			while (bytesSent < bytes.Length)
-			{
-				int sent;
-				try
-				{
-					sent = TcpSocket!.Send(bytes, bytesSent, bytes.Length - bytesSent, SocketFlags.None);
-				}
-				catch (Exception)
-				{
-					return ExitCode.DisconnectedFromServer;
-				}
-
-				if (sent <= 0)
-				{
-					return ExitCode.DisconnectedFromServer;
-				}
-
-				bytesSent += sent;
-			}
-			return ExitCode.Success;
-		});
+			ReadOnlyMemory<byte> memory = new ReadOnlyMemory<byte>(bytes, bytesSent, bytes.Length - bytesSent);
 		
-		return result;
+			int sent;
+			try
+			{
+				sent = await TcpSocket!.SendAsync(memory);
+			}
+			catch (Exception)
+			{
+				return ExitCode.DisconnectedFromServer;
+			}
+
+			if (sent <= 0)
+			{
+				return ExitCode.DisconnectedFromServer;
+			}
+
+			bytesSent += sent;
+		}
+			
+		return ExitCode.Success;
 	}
 
 	/// <summary>
 	/// Waits for a specific amount of bytes to be sent to us by the other side (client/server). <br/>
 	/// In other words, this method reads an exact amount of bytes from the socket, and waits until the specified amount of bytes was read.
 	/// </summary>
-	/// <param name="socket">The socket to receive the data from. Must be connected. socket != null.</param>
 	/// <param name="size">The amount of bytes to receive. size > 0.</param>
 	/// <returns>
 	/// On success, the received bytes are returned. <br/>
 	/// On failure, null is returned, which can indicate a disconnection. That should be checked with the IsConnected() method.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: The service must be fully initialized and connected to the other side. socket != null &amp;&amp; size > 0. <br/>
+	/// Precondition: The service must be fully initialized and connected to the other side. size > 0. <br/>
 	/// Postcondition: On success, the received bytes are returned. On failure, null is returned.
 	/// </remarks>
-	private async Task<byte[]?> ReceiveBytesExactAsync(Socket socket, int size)
+	private async Task<byte[]?> ReceiveBytesExactTcpAsync(int size)
 	{
 		if (size <= 0)
 			return null;
 
-		byte[]? resultBytes = await Task.Run(() =>
+		byte[] bytes = new byte[size];
+		int bytesRead = 0;
+		while (bytesRead < size)
 		{
-			byte[] bytes = new byte[size];
-			int bytesRead = 0;
-			while (bytesRead < size)
+			Memory<byte> memory = new Memory<byte>(bytes, bytesRead, size - bytesRead);
+			
+			int currentRead;
+			try
 			{
-				int currentRead;
-				try
-				{
-					currentRead = socket.Receive(bytes, bytesRead, size - bytesRead, SocketFlags.None);
-				}
-				catch (Exception)
-				{
-					return null;
-				}
-
-				if (currentRead <= 0) /* Means that the socket was disconnected */
-				{
-					return null;
-				}
-
-				bytesRead += currentRead;
+				currentRead = await TcpSocket!.ReceiveAsync(memory);
+			}
+			catch (Exception)
+			{
+				return null;
 			}
 
-			return bytes;
-		});
-		
-		return resultBytes;
+			if (currentRead <= 0) /* Means that the socket was disconnected */
+			{
+				return null;
+			}
+
+			bytesRead += currentRead;
+		}
+
+		return bytes;
 	}
 
 	/// <summary>

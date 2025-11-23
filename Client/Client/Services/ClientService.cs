@@ -648,12 +648,14 @@ public class ClientService : MessagingService
 		/* TCP socket is connected. Now try connecting the UDP socket. */
 		try
 		{
+			UdpSocket!.Bind(new IPEndPoint(IPAddress.Any, SharedDefinitions.ClientUdpPort));
 			UdpSocket!.Connect(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerUdpPort);
 			return true;
 		}
-		catch (Exception e)
+		catch (Exception)
 		{
 			TcpSocket!.Close();
+			UdpSocket!.Close();
 			return false;
 		}
 	}

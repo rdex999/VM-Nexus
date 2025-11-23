@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using Server.Drives;
@@ -47,9 +48,12 @@ public sealed class ClientConnection : MessagingService
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
 		ClientId = Guid.NewGuid();
-		
+
+		IPAddress clientIp = ((IPEndPoint)tcpSocket.RemoteEndPoint!).Address;
 		Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-		udpSocket.Connect(tcpSocket.RemoteEndPoint!);
+		udpSocket.Bind(new IPEndPoint(IPAddress.Any, SharedDefinitions.ServerUdpPort));
+		udpSocket.Connect(clientIp, SharedDefinitions.ClientUdpPort);
+		
 		Initialize(tcpSocket, udpSocket);
 		IsServiceInitialized = true;
 		TcpCommunicationThread!.Start();
