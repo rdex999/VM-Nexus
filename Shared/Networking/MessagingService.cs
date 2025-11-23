@@ -74,6 +74,45 @@ public class MessagingService
 			
 			return payloadSize <= DatagramSize - HeaderSize;
 		}
+
+		/// <summary>
+		/// Converts the given packet data into a byte array.
+		/// </summary>
+		/// <param name="messageId">The ID of the message that this packet is a part of. messageId != null.</param>
+		/// <param name="messageSize">The size of the entier message, in bytes. messageSize > 0.</param>
+		/// <param name="offset">The offset of this packet's payload in the message. offset >= 0.</param>
+		/// <param name="payload">
+		/// The payload, the content of this packet. payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize.
+		/// </param>
+		/// <returns>A byte array representing the packet with the given data.</returns>
+		/// <remarks>
+		/// Precondition: messageId != null &amp;&amp; messageSize > 0 &amp;&amp; offset >= 0
+		/// &amp;&amp; payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize. <br/>
+		/// Postcondition: A byte array representing the packet with the given data is returned.
+		/// </remarks>
+		public static byte[] ToByteArray(Guid messageId, int messageSize, int offset, byte[] payload)
+		{
+			byte[] packet = new byte[HeaderSize + payload.Length];
+			int nextField = 0;
+		
+			MessageMagic.CopyTo(packet, nextField);
+			nextField += MessageMagic.Length;
+			
+			messageId.ToByteArray().CopyTo(packet, nextField);
+			nextField += 16;
+			
+			BitConverter.GetBytes(messageSize).CopyTo(packet, nextField);
+			nextField += sizeof(int);
+			
+			BitConverter.GetBytes(payload.Length).CopyTo(packet, nextField);
+			nextField += sizeof(int);
+			
+			BitConverter.GetBytes(offset).CopyTo(packet, nextField);
+			nextField += sizeof(int);
+			
+			payload.CopyTo(packet, nextField);
+			return packet;
+		}
 	}
 	
 	/// <remarks>
