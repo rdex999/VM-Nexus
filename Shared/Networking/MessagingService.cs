@@ -20,6 +20,62 @@ public class MessagingService
 	private const int DatagramSize = 1200;
 	public event EventHandler<ExitCode>? FailEvent;
 
+	private ref struct UdpPacket
+	{
+		public const int HeaderSize = 4 + 16 + 4 + 4 + 4;
+		public readonly ReadOnlySpan<byte> Magic;
+		public Guid MessageId { get; }
+		public int MessageSize { get; }
+		public int Offset { get; }
+		public ReadOnlySpan<byte> Payload { get; }
+
+		public UdpPacket(byte[] packet)
+		{
+			int nextField = 0;
+			
+			Magic = packet.AsSpan(nextField, MessageMagic.Length);
+			nextField += MessageMagic.Length;
+			
+			MessageId = new Guid(packet.AsSpan(nextField, 16));
+			nextField += 16;
+		
+			MessageSize = BitConverter.ToInt32(packet.AsSpan(nextField, sizeof(int)));
+			nextField += sizeof(int);
+			
+			int payloadSize = BitConverter.ToInt32(packet.AsSpan(nextField, sizeof(int)));
+			nextField += sizeof(int);
+			
+			Offset = BitConverter.ToInt32(packet.AsSpan(nextField, sizeof(int)));
+			nextField += sizeof(int);
+			
+			Payload = packet.AsSpan(nextField, payloadSize);
+		}
+
+		/// <summary>
+		/// Checks whether the given UDP packet is valid or not. (Checks magic and payload size)
+		/// </summary>
+		/// <param name="packet">The UDP packet. packet != null.</param>
+		/// <returns>True if the UDP packet is valid, false otherwise.</returns>
+		/// <remarks>
+		/// This method should be called before constructing a UdpPacket instance. <br/>
+		/// Precondition: A UDP packet was received, and validating it is required. packet != null. <br/>
+		/// Postcondition: Returns true if the UDP packet is valid, false otherwise.
+		/// </remarks>
+		public static bool IsValidPacket(byte[] packet)
+		{
+			if (packet.Length > DatagramSize || packet.Length < HeaderSize)
+				return false;
+			
+			bool validMagic = packet.AsSpan(0, MessageMagic.Length).SequenceEqual(MessageMagic);
+			if (!validMagic)
+				return false;
+			
+			int payloadSize = BitConverter.ToInt32(packet.AsSpan(24, sizeof(int)));
+			
+			return payloadSize <= DatagramSize - HeaderSize;
+		}
+	}
+	
 	/// <remarks>
 	/// Precondition: No specific preconditions. <br/>
 	/// PostCondition: Service officially uninitialized 
@@ -107,41 +163,59 @@ public class MessagingService
 				continue;	
 			}
 
-			switch (message)
-			{
-				case MessageResponse response:
-				{
-					if (_responses.TryRemove(response.RequestId, out var tcs))
-					{
-						tcs.SetResult(response);
-					}
-					break;
-				}
-				case MessageRequest request:
-				{
-					if (!request.IsValidMessage())
-					{
-						SendResponse(new MessageResponseInvalidRequestData(true, request.Id));
-						break;
-					}
-					_ = HandleRequestAsync(request, token);
-					break;
-				}
-				
-				case MessageInfoTcp:
-				case MessageInfoUdp:
-				{
-					if (message.IsValidMessage())
-					{
-						_ = HandleInfoAsync(message, token);
-					}
-					break;
-				}
-			}
+			ProcessMessage(message, token);
 		}
 		
 		Disconnect();
 		AfterDisconnection();
+	}
+
+	/// <summary>
+	/// Processes the message, redirects it to an appropriate handler.
+	/// </summary>
+	/// <param name="message">The received message. message != null.</param>
+	/// <param name="token">
+	/// The cancellation token - used for determining whether the function should return or not. Cannot be null.
+	/// Cancel the token (cts.Cancle()) only when communication should stop - on disconnection.
+	/// </param>
+	/// <remarks>
+	/// Precondition: A message was received. message != null &amp;&amp; token != null. <br/>
+	/// Postcondition: Message is redirected to appropriate handler. Handler is handling the message.
+	/// In the case of a response, it is registered as a response for a request that was sent. (if any)
+	/// </remarks>
+	private void ProcessMessage(Message message, CancellationToken token)
+	{
+		switch (message)
+		{
+			case MessageResponse response:
+			{
+				if (_responses.TryRemove(response.RequestId, out var tcs))
+				{
+					tcs.SetResult(response);
+				}
+				break;
+			}
+			case MessageRequest request:
+			{
+				if (!request.IsValidMessage())
+				{
+					SendResponse(new MessageResponseInvalidRequestData(true, request.Id));
+					break;
+				}
+				_ = HandleRequestAsync(request, token);
+				break;
+			}
+				
+			case MessageInfoTcp:
+			case MessageInfoUdp:
+			{
+				if (message.IsValidMessage())
+				{
+					_ = HandleInfoAsync(message, token);
+				}
+				break;
+			}
+		}
 	}
 
 	private void CommunicateUdp(CancellationToken token)
@@ -310,6 +384,35 @@ public class MessagingService
 	}
 	
 	/// <summary>
+	/// Waits for a message from the other side (client/server) and returns it.
+	/// </summary>
+	/// <returns>
+	/// On success, the received message is returned. On failure, null is returned. <br/>
+	/// If null is returned, it can indicate a disconnection from the other side. This should be checked with the IsConnected() method.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: The service must be fully initialized and connected to the server. <br/>
+	/// Postcondition: On success, the received message is returned. On failure, null is returned.
+	/// </remarks>
+	private async Task<Message?> ReceiveMessageTcpAsync()
+	{
+		byte[]? messageSizeInBytes = await ReceiveBytesExactTcpAsync(4);
+		if (messageSizeInBytes == null || messageSizeInBytes.Length == 0)
+		{
+			return null;
+		}
+		int size =  BitConverter.ToInt32(messageSizeInBytes, 0);	/* If the size is 0, then its an invalid message */
+	
+		byte[]? messageBytes = await ReceiveBytesExactTcpAsync(size);
+		if (messageBytes == null || messageBytes.Length == 0)
+		{
+			return null;
+		}
+
+		return (Message)Common.FromByteArrayWithType(messageBytes)!;
+	}
+	
+	/// <summary>
 	/// The initial step of handling a request. Made specifically for the Communicate() method.
 	/// </summary>
 	/// <param name="request">
@@ -359,35 +462,6 @@ public class MessagingService
 		catch (OperationCanceledException)
 		{
 		}
-	}
-
-	/// <summary>
-	/// Waits for a message from the other side (client/server) and returns it.
-	/// </summary>
-	/// <returns>
-	/// On success, the received message is returned. On failure, null is returned. <br/>
-	/// If null is returned, it can indicate a disconnection from the other side. This should be checked with the IsConnected() method.
-	/// </returns>
-	/// <remarks>
-	/// Precondition: The service must be fully initialized and connected to the server. <br/>
-	/// Postcondition: On success, the received message is returned. On failure, null is returned.
-	/// </remarks>
-	private async Task<Message?> ReceiveMessageTcpAsync()
-	{
-		byte[]? messageSizeInBytes = await ReceiveBytesExactTcpAsync(4);
-		if (messageSizeInBytes == null || messageSizeInBytes.Length == 0)
-		{
-			return null;
-		}
-		int size =  BitConverter.ToInt32(messageSizeInBytes, 0);	/* If the size is 0, then its an invalid message */
-	
-		byte[]? messageBytes = await ReceiveBytesExactTcpAsync(size);
-		if (messageBytes == null || messageBytes.Length == 0)
-		{
-			return null;
-		}
-
-		return (Message)Common.FromByteArrayWithType(messageBytes)!;
 	}
 
 	/// <summary>
