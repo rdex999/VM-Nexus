@@ -22,6 +22,7 @@ public class MessagingService
 	private ManualResetEventSlim? _messageTcpAvailable;
 	private ManualResetEventSlim? _messageUdpAvailable;
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
+	private Dictionary<Guid, IncomingMessageUdp>? _incomingUdpMessages;
 	private const int DatagramSize = 1200;
 
 	private struct UdpPacket
@@ -33,6 +34,7 @@ public class MessagingService
 		public int PayloadSize { get; }
 		public int Offset { get; }
 		public ReadOnlySpan<byte> Payload => _packet.AsSpan(HeaderSize, PayloadSize);
+		public ReadOnlySpan<byte> Packet => _packet.AsSpan();
 		private readonly byte[] _packet;
 		
 		public UdpPacket(byte[] packet)
@@ -69,7 +71,7 @@ public class MessagingService
 		/// &amp;&amp; payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize. <br/>
 		/// Postcondition: A byte array representing the packet with the given data is returned.
 		/// </remarks>
-		public UdpPacket(Guid messageId, int messageSize, int offset, byte[] payload)
+		public UdpPacket(Guid messageId, int messageSize, int offset, ReadOnlySpan<byte> payload)
 		{
 			_packet = new byte[HeaderSize + payload.Length];
 			int nextField = 0;
@@ -89,7 +91,7 @@ public class MessagingService
 			BitConverter.GetBytes(offset).CopyTo(_packet, nextField);
 			nextField += sizeof(int);
 			
-			payload.CopyTo(_packet, nextField);
+			payload.CopyTo(_packet.AsSpan(nextField));
 		}
 		
 		/// <summary>
@@ -160,7 +162,7 @@ public class MessagingService
 		///	- 2: InvalidUdpPacket		- This packet is invalid and is not written into the message. Caller should remove this message as it will never be completed. <br/>
 		///	- 3: UdpPacketDuplicate		- This packet was already received. The payload is not written once again. <br/>
 		/// - 4: MessageUdpCorrupted	- This was the last packet in the message, but one or more of the packets were corrupted which means that the whole message
-		///		is corrupted and thus cannot be formed. (The message parameter contains null) <br/>
+		///		is corrupted and thus cannot be formed. (The message parameter contains null) The caller should remove this message.<br/>
 		/// - 5: MessageUdpNotCompleted	- There are more packets to come. 
 		/// </remarks>
 		public ExitCode ReceivePacket(UdpPacket packet, out Message? message)
@@ -170,7 +172,7 @@ public class MessagingService
 			if (packet.MessageSize != _data.Length)
 				return ExitCode.InvalidUdpPacket;
 			
-			int chunk = (packet.Offset + UdpPacket.MaxPayloadSize - 1) / UdpPacket.MaxPayloadSize;
+			int chunk = packet.Offset / UdpPacket.MaxPayloadSize;
 			if (chunk >= _chunks.Length)
 				return ExitCode.InvalidUdpPacket;
 
@@ -190,7 +192,7 @@ public class MessagingService
 			_chunks[chunk] = true;
 			_bytesReceived += chunkSize;
 
-			if (_bytesReceived == packet.MessageSize)
+			if (_bytesReceived >= packet.MessageSize)
 			{
 				Message? msg = (Message?)Common.FromByteArrayWithType(_data);
 				if (msg == null)
@@ -232,6 +234,7 @@ public class MessagingService
 		_messageUdpQueue = new ConcurrentQueue<Message>();
 		_messageTcpAvailable = new ManualResetEventSlim(false);
 		_messageUdpAvailable = new ManualResetEventSlim(false);
+		_incomingUdpMessages = new Dictionary<Guid, IncomingMessageUdp>();
 	}
 
 	/// <summary>
@@ -340,15 +343,22 @@ public class MessagingService
 		AfterDisconnection();
 	}
 
+	/// <summary>
+	/// Receives UDP messages from the other side, and processes them.
+	/// </summary>
+	/// <param name="token">The cancellation token used to cancel this task. token != null.</param>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the other side. This method should be started only from the Start() method. token != null. <br/>
+	/// Postcondition: While running, receives and processes UDP messages from the other side. Returns when the given cancellation token requires cancellation.
+	/// </remarks>
 	private async Task MessageUdpReceiverAsync(CancellationToken token)
 	{
 		byte[] buffer = new byte[DatagramSize];
 		while (!token.IsCancellationRequested)
 		{
-			int packetSize;
 			try
 			{
-				packetSize = await UdpSocket!.ReceiveAsync(buffer, token).ConfigureAwait(false);
+				await UdpSocket!.ReceiveAsync(buffer, token).ConfigureAwait(false);
 			}
 			catch (Exception)
 			{
@@ -359,20 +369,116 @@ public class MessagingService
 				continue;
 
 			UdpPacket packet = new UdpPacket(buffer);
-		
 			
-			
-			/* TODO: Implement this method */
-			_messageUdpQueue!.Clear();
-			_messageUdpAvailable!.Reset();
+			ExitCode result;
+			Message? message;
+			if (_incomingUdpMessages!.TryGetValue(packet.MessageId, out IncomingMessageUdp? incoming))
+			{
+				result = incoming.ReceivePacket(packet, out message);
+			}
+			else
+			{
+				_incomingUdpMessages.TryAdd(packet.MessageId, new IncomingMessageUdp(packet, out result, out message));
+			}
+
+			switch (result)
+			{
+				case ExitCode.Success:
+					ProcessMessage(message!, token);
+					_incomingUdpMessages.Remove(packet.MessageId);
+					break;
+				
+				case ExitCode.InvalidUdpPacket or ExitCode.MessageUdpCorrupted:
+					_incomingUdpMessages.Remove(packet.MessageId);
+					break;
+			}
+		}
+	}
+	
+	/// <summary>
+	/// Runs in the MessageSenderThread. Sends messages that arrive in the message queue by the order that they arrive in.
+	/// </summary>
+	/// <param name="token">The cancellation token - used for stopping the thread's execution. token != null.</param>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the other side. (server/client) token != null.<br/>
+	/// Postcondition: Returns when the cancellation token requires cancellation - communication is finished.
+	/// </remarks>
+	private void MessageTcpSender(CancellationToken token)
+	{
+		while (!token.IsCancellationRequested)
+		{
 			try
 			{
-				await Task.Delay(200, token).ConfigureAwait(false);
+				_messageTcpAvailable!.Wait(token);		/* Wait until there is a message available */
+				
+				/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
+				while (_messageTcpQueue!.TryDequeue(out Message? message) && !token.IsCancellationRequested)		
+				{
+					SendMessageTcpOnSocketAsync(message).Wait(token);
+				}
+
+				if (_messageTcpQueue.IsEmpty)
+				{
+					_messageTcpAvailable.Reset();
+				}
 			}
 			catch (Exception)
 			{
-				return;
+				break;
 			}
+		}
+	}
+
+	/// <summary>
+	/// Sends UDP messages from the UDP message queue to the other side.
+	/// </summary>
+	/// <param name="token">The cancellation token used to cancel this task. token != null.</param>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the other side. This method should be started only from the Start() method. token != null.<br/>
+	/// Postcondition: While running, receives and processes UDP messages from the other side. Returns when the given cancellation token requires cancellation.
+	/// </remarks>
+	private void MessageUdpSender(CancellationToken token)
+	{
+		while (!token.IsCancellationRequested)
+		{
+			try
+			{
+				_messageUdpAvailable!.Wait(token);
+			}
+			catch (Exception)
+			{
+				continue;
+			}
+
+			while (_messageUdpQueue!.TryDequeue(out Message? message))
+			{
+				byte[] messageBytes = Common.ToByteArrayWithType(message);
+				int bytesSent = 0;
+				while (bytesSent < messageBytes.Length && !token.IsCancellationRequested)
+				{
+					UdpPacket packet = new UdpPacket(
+						message.Id,
+						messageBytes.Length,
+						bytesSent,
+						messageBytes.AsSpan(bytesSent, Math.Min(UdpPacket.MaxPayloadSize, messageBytes.Length - bytesSent))
+					);
+
+					int sent;
+					try
+					{
+						sent = UdpSocket!.Send(packet.Packet);
+					}
+					catch (Exception)
+					{
+						break;
+					}
+
+					bytesSent += Math.Max(0, sent - UdpPacket.HeaderSize);
+				}
+			}
+			
+			if (_messageUdpQueue.IsEmpty)
+				_messageUdpAvailable.Reset();
 		}
 	}
 	
@@ -421,49 +527,6 @@ public class MessagingService
 				}
 				break;
 			}
-		}
-	}
-
-	/// <summary>
-	/// Runs in the MessageSenderThread. Sends messages that arrive in the message queue by the order that they arrive in.
-	/// </summary>
-	/// <param name="token">The cancellation token - used for stopping the thread's execution. token != null.</param>
-	/// <remarks>
-	/// Precondition: Service fully initialized and connected to the other side. (server/client) token != null.<br/>
-	/// Postcondition: Returns when the cancellation token requires cancellation - communication is finished.
-	/// </remarks>
-	private void MessageTcpSender(CancellationToken token)
-	{
-		while (!token.IsCancellationRequested)
-		{
-			try
-			{
-				_messageTcpAvailable!.Wait(token);		/* Wait until there is a message available */
-				
-				/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
-				while (_messageTcpQueue!.TryDequeue(out Message? message) && !token.IsCancellationRequested)		
-				{
-					SendMessageTcpOnSocketAsync(message).Wait(token);
-				}
-
-				if (_messageTcpQueue.IsEmpty)
-				{
-					_messageTcpAvailable.Reset();
-				}
-			}
-			catch (Exception)
-			{
-				break;
-			}
-		}
-	}
-
-	private void MessageUdpSender(CancellationToken token)
-	{
-		while (!token.IsCancellationRequested)
-		{
-			Thread.Sleep(100);
-			/* TODO: Implement this. */
 		}
 	}
 	

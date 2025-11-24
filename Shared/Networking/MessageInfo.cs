@@ -52,7 +52,7 @@ public class MessageInfoVmDeleted : MessageInfoTcp
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
-public class MessageInfoVmScreenFrame : MessageInfoTcp		/* TODO: Switch to UDP. */
+public class MessageInfoVmScreenFrame : MessageInfoUdp
 {
 	public int VmId { get; }
 	public Size Size { get; }
@@ -71,7 +71,7 @@ public class MessageInfoVmScreenFrame : MessageInfoTcp		/* TODO: Switch to UDP. 
 	                                         CompressedFramebuffer != null && CompressedFramebuffer.Length > 0;
 }
 
-public class MessageInfoVmAudioPacket : MessageInfoTcp		/* TODO: Switch to UDP. */
+public class MessageInfoVmAudioPacket : MessageInfoUdp
 {
 	public int VmId { get; }
 	public byte[] Packet { get; }

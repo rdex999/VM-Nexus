@@ -126,8 +126,6 @@ public class MainWindowModel
 	/// </remarks>
 	private void ListenForClients(CancellationToken token, Socket socket)
 	{
-		try
-		{
 		socket.Listen();													/* Listen for incoming connections */
 		while (!token.IsCancellationRequested)
 		{
@@ -146,12 +144,6 @@ public class MainWindowModel
 			}
 		}
 		socket.Close();
-		}
-		catch (Exception e)
-		{
-			Console.WriteLine(e);
-			throw;
-		}
 	}
 
 	/// <summary>
