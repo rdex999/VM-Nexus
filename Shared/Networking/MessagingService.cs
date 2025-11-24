@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Net.Sockets;
 using System.Text;
@@ -23,37 +24,74 @@ public class MessagingService
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
 	private const int DatagramSize = 1200;
 
-	private ref struct UdpPacket
+	private struct UdpPacket
 	{
 		public const int HeaderSize = 4 + 16 + 4 + 4 + 4;
-		public readonly ReadOnlySpan<byte> Magic;
+		public const int MaxPayloadSize = DatagramSize - HeaderSize;
 		public Guid MessageId { get; }
 		public int MessageSize { get; }
+		public int PayloadSize { get; }
 		public int Offset { get; }
-		public ReadOnlySpan<byte> Payload { get; }
-
+		public ReadOnlySpan<byte> Payload => _packet.AsSpan(HeaderSize, PayloadSize);
+		private readonly byte[] _packet;
+		
 		public UdpPacket(byte[] packet)
 		{
 			int nextField = 0;
+			_packet = packet;
 			
-			Magic = packet.AsSpan(nextField, MessageMagic.Length);
 			nextField += MessageMagic.Length;
 			
 			MessageId = new Guid(packet.AsSpan(nextField, 16));
 			nextField += 16;
 		
-			MessageSize = BitConverter.ToInt32(packet.AsSpan(nextField, sizeof(int)));
+			MessageSize = BitConverter.ToInt32(_packet.AsSpan(nextField, sizeof(int)));
 			nextField += sizeof(int);
 			
-			int payloadSize = BitConverter.ToInt32(packet.AsSpan(nextField, sizeof(int)));
+			PayloadSize = BitConverter.ToInt32(_packet.AsSpan(nextField, sizeof(int)));
 			nextField += sizeof(int);
 			
-			Offset = BitConverter.ToInt32(packet.AsSpan(nextField, sizeof(int)));
-			nextField += sizeof(int);
-			
-			Payload = packet.AsSpan(nextField, payloadSize);
+			Offset = BitConverter.ToInt32(_packet.AsSpan(nextField, sizeof(int)));
 		}
 
+		/// <summary>
+		/// Instantiates a packet from the given data. (Packet content)
+		/// </summary>
+		/// <param name="messageId">The ID of the message that this packet is a part of. messageId != null.</param>
+		/// <param name="messageSize">The size of the entier message, in bytes. messageSize > 0.</param>
+		/// <param name="offset">The offset of this packet's payload in the message. offset >= 0.</param>
+		/// <param name="payload">
+		/// The payload, the content of this packet. payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize.
+		/// </param>
+		/// <returns>A byte array representing the packet with the given data.</returns>
+		/// <remarks>
+		/// Precondition: messageId != null &amp;&amp; messageSize > 0 &amp;&amp; offset >= 0
+		/// &amp;&amp; payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize. <br/>
+		/// Postcondition: A byte array representing the packet with the given data is returned.
+		/// </remarks>
+		public UdpPacket(Guid messageId, int messageSize, int offset, byte[] payload)
+		{
+			_packet = new byte[HeaderSize + payload.Length];
+			int nextField = 0;
+		
+			MessageMagic.CopyTo(_packet, nextField);
+			nextField += MessageMagic.Length;
+			
+			messageId.ToByteArray().CopyTo(_packet, nextField);
+			nextField += 16;
+			
+			BitConverter.GetBytes(messageSize).CopyTo(_packet, nextField);
+			nextField += sizeof(int);
+			
+			BitConverter.GetBytes(payload.Length).CopyTo(_packet, nextField);
+			nextField += sizeof(int);
+			
+			BitConverter.GetBytes(offset).CopyTo(_packet, nextField);
+			nextField += sizeof(int);
+			
+			payload.CopyTo(_packet, nextField);
+		}
+		
 		/// <summary>
 		/// Checks whether the given UDP packet is valid or not. (Checks magic and payload size)
 		/// </summary>
@@ -78,46 +116,94 @@ public class MessagingService
 			return payloadSize <= DatagramSize - HeaderSize;
 		}
 
-		/// <summary>
-		/// Converts the given packet data into a byte array.
-		/// </summary>
-		/// <param name="messageId">The ID of the message that this packet is a part of. messageId != null.</param>
-		/// <param name="messageSize">The size of the entier message, in bytes. messageSize > 0.</param>
-		/// <param name="offset">The offset of this packet's payload in the message. offset >= 0.</param>
-		/// <param name="payload">
-		/// The payload, the content of this packet. payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize.
-		/// </param>
-		/// <returns>A byte array representing the packet with the given data.</returns>
-		/// <remarks>
-		/// Precondition: messageId != null &amp;&amp; messageSize > 0 &amp;&amp; offset >= 0
-		/// &amp;&amp; payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize. <br/>
-		/// Postcondition: A byte array representing the packet with the given data is returned.
-		/// </remarks>
-		public static byte[] ToByteArray(Guid messageId, int messageSize, int offset, byte[] payload)
-		{
-			byte[] packet = new byte[HeaderSize + payload.Length];
-			int nextField = 0;
-		
-			MessageMagic.CopyTo(packet, nextField);
-			nextField += MessageMagic.Length;
-			
-			messageId.ToByteArray().CopyTo(packet, nextField);
-			nextField += 16;
-			
-			BitConverter.GetBytes(messageSize).CopyTo(packet, nextField);
-			nextField += sizeof(int);
-			
-			BitConverter.GetBytes(payload.Length).CopyTo(packet, nextField);
-			nextField += sizeof(int);
-			
-			BitConverter.GetBytes(offset).CopyTo(packet, nextField);
-			nextField += sizeof(int);
-			
-			payload.CopyTo(packet, nextField);
-			return packet;
-		}
 	}
 	
+	private class IncomingMessageUdp
+	{
+		public Guid MessageId { get; }
+		private readonly byte[] _data;
+		private int _bytesReceived = 0;
+		private readonly BitArray _chunks;
+
+		/// <summary>
+		/// Creates this incoming message and loads the first packet using ReceivePacket().
+		/// </summary>
+		/// <param name="result">An exit code indicating the result of receiving the first packet. (See ReceivePacket() documentation.)</param>
+		/// <param name="message">If this was the last packet, the output message is written to this pointer. Null is written otherwise.</param>
+		/// <remarks>
+		/// Precondition: A packet was received and no instance of IncomingMessageUdp exists for it. firstPacket != null. <br/>
+		/// Postcondition: This IncomingMessageUdp is created. As for the result and message parameters, see documentation of ReceivePacket().
+		/// </remarks>
+		public IncomingMessageUdp(UdpPacket firstPacket, out ExitCode result, out Message? message)
+		{
+			_data = new byte[firstPacket.MessageSize];
+			int chunks = (_data.Length + UdpPacket.MaxPayloadSize - 1) / UdpPacket.MaxPayloadSize;		/* messageSize / MaxPayloadSize (round up remainder) */
+			_chunks = new BitArray(chunks);
+			MessageId = firstPacket.MessageId;
+
+			result = ReceivePacket(firstPacket, out message);
+		}
+
+		/// <summary>
+		/// Receives the packet to form the message. Can output the message.
+		/// </summary>
+		/// <param name="packet">The packet to receive into this message. packet must be valid. packet != null.</param>
+		/// <param name="message">If this was the last packet, the output message is written to this pointer. Null is written otherwise.</param>
+		/// <returns>
+		/// An exit code indicating the result. (packet invalid, more packets to come, success.) <br/>
+		/// If success is returned, the message parameter contains the final message.
+		/// </returns>
+		/// <remarks>
+		/// Precondition: A packet was received. packet must be valid. packet != null. <br/>
+		/// Postcondition: Multiple cases, result depends on the returned exit code: <br/>
+		///	- 1: Success				- This was the last packet in the message. The message parameter contains the received message. (message != null) <br/>
+		///	- 2: InvalidUdpPacket		- This packet is invalid and is not written into the message. Caller should remove this message as it will never be completed. <br/>
+		///	- 3: UdpPacketDuplicate		- This packet was already received. The payload is not written once again. <br/>
+		/// - 4: MessageUdpCorrupted	- This was the last packet in the message, but one or more of the packets were corrupted which means that the whole message
+		///		is corrupted and thus cannot be formed. (The message parameter contains null) <br/>
+		/// - 5: MessageUdpNotCompleted	- There are more packets to come. 
+		/// </remarks>
+		public ExitCode ReceivePacket(UdpPacket packet, out Message? message)
+		{
+			message = null;
+			
+			if (packet.MessageSize != _data.Length)
+				return ExitCode.InvalidUdpPacket;
+			
+			int chunk = (packet.Offset + UdpPacket.MaxPayloadSize - 1) / UdpPacket.MaxPayloadSize;
+			if (chunk >= _chunks.Length)
+				return ExitCode.InvalidUdpPacket;
+
+			if (_chunks[chunk])
+				return ExitCode.UdpPacketDuplicate;
+
+			int chunkSize;
+			if (chunk == _chunks.Length - 1)
+				chunkSize = _data.Length % UdpPacket.MaxPayloadSize;
+			else
+				chunkSize = UdpPacket.MaxPayloadSize;
+				
+			if (packet.PayloadSize > chunkSize)
+				return ExitCode.InvalidUdpPacket;
+			
+			packet.Payload.CopyTo(_data.AsSpan(packet.Offset));
+			_chunks[chunk] = true;
+			_bytesReceived += chunkSize;
+
+			if (_bytesReceived == packet.MessageSize)
+			{
+				Message? msg = (Message?)Common.FromByteArrayWithType(_data);
+				if (msg == null)
+					return ExitCode.MessageUdpCorrupted;
+
+				message = msg;
+				return ExitCode.Success;
+			}
+
+			return ExitCode.MessageUdpNotCompleted;
+		}
+	}
+
 	/// <remarks>
 	/// Precondition: No specific preconditions. <br/>
 	/// PostCondition: Service officially uninitialized 
@@ -227,7 +313,7 @@ public class MessagingService
 			Message? message;
 			try
 			{
-				message = await ReceiveMessageTcpAsync().WaitAsync(token);
+				message = await ReceiveMessageTcpAsync().WaitAsync(token).ConfigureAwait(false);
 			}
 			catch (Exception)
 			{
@@ -238,7 +324,7 @@ public class MessagingService
 			{
 				try
 				{
-					await Task.Delay(50, token);
+					await Task.Delay(50, token).ConfigureAwait(false);
 				}
 				catch (Exception)
 				{
@@ -256,20 +342,37 @@ public class MessagingService
 
 	private async Task MessageUdpReceiverAsync(CancellationToken token)
 	{
+		byte[] buffer = new byte[DatagramSize];
 		while (!token.IsCancellationRequested)
 		{
+			int packetSize;
 			try
 			{
-				await Task.Delay(200, token);
+				packetSize = await UdpSocket!.ReceiveAsync(buffer, token).ConfigureAwait(false);
+			}
+			catch (Exception)
+			{
+				continue;
+			}
+			
+			if (!UdpPacket.IsValidPacket(buffer))
+				continue;
+
+			UdpPacket packet = new UdpPacket(buffer);
+		
+			
+			
+			/* TODO: Implement this method */
+			_messageUdpQueue!.Clear();
+			_messageUdpAvailable!.Reset();
+			try
+			{
+				await Task.Delay(200, token).ConfigureAwait(false);
 			}
 			catch (Exception)
 			{
 				return;
 			}
-			
-			/* TODO: Implement this */
-			_messageUdpQueue!.Clear();
-			_messageUdpAvailable!.Reset();
 		}
 	}
 	
@@ -360,6 +463,7 @@ public class MessagingService
 		while (!token.IsCancellationRequested)
 		{
 			Thread.Sleep(100);
+			/* TODO: Implement this. */
 		}
 	}
 	
