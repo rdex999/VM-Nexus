@@ -90,7 +90,7 @@ public class MainWindowModel
 		if (_listenerCts != null)
 			await _listenerCts.CancelAsync();
 		
-		if (_listener != null && _listener.IsAlive)
+		if (_listener != null && _listener.IsAlive && Thread.CurrentThread != _listener)
 		{
 			_listener.Join();
 		}
@@ -126,8 +126,9 @@ public class MainWindowModel
 	/// </remarks>
 	private void ListenForClients(CancellationToken token, Socket socket)
 	{
+		try
+		{
 		socket.Listen();													/* Listen for incoming connections */
-		
 		while (!token.IsCancellationRequested)
 		{
 			if (socket.Poll(10000, SelectMode.SelectRead))		/* Similar to Accept(), but blocks for a specified time. Returns true if there is a connection */
@@ -145,6 +146,12 @@ public class MainWindowModel
 			}
 		}
 		socket.Close();
+		}
+		catch (Exception e)
+		{
+			Console.WriteLine(e);
+			throw;
+		}
 	}
 
 	/// <summary>

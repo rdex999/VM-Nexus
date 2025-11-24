@@ -46,7 +46,10 @@ public class ClientService : MessagingService
 			new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
 			new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
 		);
+		
 		await ConnectToServerAsync();
+		
+		Start();
 	}
 
 	/// <summary>
@@ -569,14 +572,19 @@ public class ClientService : MessagingService
 	{
 		while (token == null || !token.Value.IsCancellationRequested)
 		{
-			bool socketConnected = SocketConnectToServer();
+			bool socketConnected = await SocketConnectToServer();
 			if (socketConnected)
 			{
 				break;
 			}
 
 			TcpSocket!.Close();
+			TcpSocket.Dispose();
 			TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			
+			UdpSocket!.Close();
+			UdpSocket.Dispose();
+			UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
 			if (token == null)
 			{
@@ -588,7 +596,7 @@ public class ClientService : MessagingService
 				{
 					await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout, token.Value);
 				}
-				catch (Exception e)
+				catch (Exception)
 				{
 					return;
 				}
@@ -602,19 +610,7 @@ public class ClientService : MessagingService
 		}
 
 		IsServiceInitialized = true;
-		if (!TcpCommunicationThread!.IsAlive)
-		{
-			TcpCommunicationThread.Start();
-		}
-		if (!UdpCommunicationThread!.IsAlive)
-		{
-			UdpCommunicationThread.Start();
-		}
-		if (!MessageSenderThread!.IsAlive)
-		{
-			MessageSenderThread.Start();
-		}
-
+		
 		Reconnected?.Invoke(this, EventArgs.Empty);
 	}
 
@@ -629,7 +625,7 @@ public class ClientService : MessagingService
 	/// Postcondition: On success, (indicated by the returned value being true) the socket will be connected to the server. <br/>
 	/// On failure, (indicated by the return value being false) the socket is not connected to the server.
 	/// </remarks>
-	private bool SocketConnectToServer()
+	private async Task<bool> SocketConnectToServer()
 	{
 		if (IsConnected() && IsInitialized())
 			return false;
@@ -637,7 +633,7 @@ public class ClientService : MessagingService
 		/* Connect to the server. On connection failure try connecting with a 3-second delay between each try. */
 		try
 		{
-			TcpSocket!.Connect(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerTcpPort);
+			await TcpSocket!.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerTcpPort);
 		}
 		catch (Exception)
 		{
@@ -649,7 +645,7 @@ public class ClientService : MessagingService
 		try
 		{
 			UdpSocket!.Bind(new IPEndPoint(IPAddress.Any, SharedDefinitions.ClientUdpPort));
-			UdpSocket!.Connect(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerUdpPort);
+			await UdpSocket!.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerUdpPort);
 			return true;
 		}
 		catch (Exception)

@@ -56,9 +56,7 @@ public sealed class ClientConnection : MessagingService
 		
 		Initialize(tcpSocket, udpSocket);
 		IsServiceInitialized = true;
-		TcpCommunicationThread!.Start();
-		UdpCommunicationThread!.Start();
-		MessageSenderThread!.Start();
+		Start();
 	}
 
 	/// <summary>
