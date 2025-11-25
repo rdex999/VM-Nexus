@@ -566,9 +566,9 @@ public class ClientService : MessagingService
 	/// Postcondition: If the cancellation token did not require canceling the operation - the service is connected to the server. <br/>
 	/// If the cancellation token required cancelling the operation, the service should be considered as not connected to the server.
 	/// </remarks>
-	private async Task ConnectToServerAsync(CancellationToken? token = null)
+	private async Task ConnectToServerAsync()
 	{
-		while (token == null || !token.Value.IsCancellationRequested)
+		while (!Cts.Token.IsCancellationRequested)
 		{
 			bool socketConnected = await SocketConnectToServer();
 			if (socketConnected)
@@ -584,29 +584,18 @@ public class ClientService : MessagingService
 			UdpSocket.Dispose();
 			UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 
-			if (token == null)
+			try
 			{
-				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout);
+				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout, Cts.Token);
 			}
-			else
+			catch (Exception)
 			{
-				try
-				{
-					await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout, token.Value);
-				}
-				catch (Exception)
-				{
-					return;
-				}
+				return;
 			}
+
 			OnFailure(ExitCode.ConnectionToServerFailed);
 		}
-
-		if (token != null && token.Value.IsCancellationRequested)
-		{
-			return;
-		}
-
+		
 		IsServiceInitialized = true;
 		
 		Reconnected?.Invoke(this, EventArgs.Empty);
@@ -631,7 +620,12 @@ public class ClientService : MessagingService
 		/* Connect to the server. On connection failure try connecting with a 3-second delay between each try. */
 		try
 		{
-			await TcpSocket!.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerTcpPort);
+			await TcpSocket!.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerTcpPort,
+				Cts.Token);
+		}
+		catch (OperationCanceledException)
+		{
+			return false;
 		}
 		catch (Exception)
 		{
@@ -788,17 +782,14 @@ public class ClientService : MessagingService
 	/// <summary>
 	/// Handles a sudden disconnection from the server. Tries to reconnect. Reconnection can be canceled by using a cancellation token. (the parameter)
 	/// </summary>
-	/// <param name="token">
-	/// Optional cancellation token, used to cancel the reconnection.
-	/// </param>
 	/// <remarks>
 	/// Precondition: A sudden disconnection from the server has occured. <br/>
 	/// Postcondition: If the given cancellation token does not require cancellation, the service will be connected to the server. <br/>
 	/// If the given cancellation token has required cancellation, the function returns and the service is considered as not connected to the server.
 	/// </remarks>
-	protected override void HandleSuddenDisconnection(CancellationToken? token = null)
+	protected override void HandleSuddenDisconnection()
 	{
-		base.HandleSuddenDisconnection(token);
-		ConnectToServerAsync(token).Wait();
+		base.HandleSuddenDisconnection();
+		ConnectToServerAsync().Wait();
 	}
 }

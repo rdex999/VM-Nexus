@@ -10,7 +10,7 @@ public class MessagingService
 	public event EventHandler<ExitCode>? FailEvent;
 	protected Socket? TcpSocket;
 	protected Socket? UdpSocket;
-	private CancellationTokenSource _cts;
+	protected readonly CancellationTokenSource Cts;
 	protected bool IsServiceInitialized;
 	private readonly ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
 	private readonly Thread _messageTcpSenderThread;
@@ -213,9 +213,9 @@ public class MessagingService
 	{
 		IsServiceInitialized = false;
 		
-		_cts = new CancellationTokenSource();
-		_messageTcpSenderThread = new Thread(() => MessageTcpSender(_cts.Token));
-		_messageUdpSenderThread = new Thread(() => MessageUdpSender(_cts.Token));
+		Cts = new CancellationTokenSource();
+		_messageTcpSenderThread = new Thread(MessageTcpSender);
+		_messageUdpSenderThread = new Thread(MessageUdpSender);
 		_responses = new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
 		_messageTcpQueue = new ConcurrentQueue<Message>();
 		_messageUdpQueue = new ConcurrentQueue<Message>();
@@ -234,7 +234,7 @@ public class MessagingService
 	/// </remarks>
 	protected void StartTcp()
 	{
-		_ = MessageTcpReceiverAsync(_cts.Token);
+		_ = MessageTcpReceiverAsync();
 		
 		if (!_messageTcpSenderThread.IsAlive)
 			_messageTcpSenderThread.Start();
@@ -250,7 +250,7 @@ public class MessagingService
 	/// </remarks>
 	protected void StartUdp()
 	{
-		_ = MessageUdpReceiverAsync(_cts.Token);
+		_ = MessageUdpReceiverAsync();
 		
 		if (!_messageUdpSenderThread.IsAlive)
 			_messageUdpSenderThread.Start();
@@ -295,15 +295,15 @@ public class MessagingService
 	/// Precondition: Service fully initialized and connected to the other side, (server/client) token != null. <br/>
 	/// Postcondition: Communication stopped and disconnected. (socket disconnected and closed)
 	/// </remarks>
-	private async Task MessageTcpReceiverAsync(CancellationToken token)
+	private async Task MessageTcpReceiverAsync()
 	{
-		while (!token.IsCancellationRequested)
+		while (!Cts.Token.IsCancellationRequested)
 		{
-			if (!IsConnected() && !token.IsCancellationRequested)
+			if (!IsConnected() && !Cts.Token.IsCancellationRequested)
 			{
 				try
 				{
-					await Task.Run(() => HandleSuddenDisconnection(token), token);
+					await Task.Run(() => HandleSuddenDisconnection(), Cts.Token);
 				}
 				catch (Exception)
 				{
@@ -314,7 +314,7 @@ public class MessagingService
 			Message? message;
 			try
 			{
-				message = await ReceiveMessageTcpAsync().WaitAsync(token).ConfigureAwait(false);
+				message = await ReceiveMessageTcpAsync().WaitAsync(Cts.Token).ConfigureAwait(false);
 			}
 			catch (Exception)
 			{
@@ -325,7 +325,7 @@ public class MessagingService
 			{
 				try
 				{
-					await Task.Delay(50, token).ConfigureAwait(false);
+					await Task.Delay(50, Cts.Token).ConfigureAwait(false);
 				}
 				catch (Exception)
 				{
@@ -334,7 +334,7 @@ public class MessagingService
 				continue;	
 			}
 
-			ProcessMessage(message, token);
+			ProcessMessage(message);
 		}
 		
 		Disconnect();
@@ -344,19 +344,18 @@ public class MessagingService
 	/// <summary>
 	/// Receives UDP messages from the other side, and processes them.
 	/// </summary>
-	/// <param name="token">The cancellation token used to cancel this task. token != null.</param>
 	/// <remarks>
-	/// Precondition: Service fully initialized and connected to the other side. This method should be started only from the Start() method. token != null. <br/>
+	/// Precondition: Service fully initialized and connected to the other side. This method should be started only from the Start() method. <br/>
 	/// Postcondition: While running, receives and processes UDP messages from the other side. Returns when the given cancellation token requires cancellation.
 	/// </remarks>
-	private async Task MessageUdpReceiverAsync(CancellationToken token)
+	private async Task MessageUdpReceiverAsync()
 	{
 		byte[] buffer = new byte[DatagramSize];
-		while (!token.IsCancellationRequested)
+		while (!Cts.Token.IsCancellationRequested)
 		{
 			try
 			{
-				await UdpSocket!.ReceiveAsync(buffer, token).ConfigureAwait(false);
+				await UdpSocket!.ReceiveAsync(buffer, Cts.Token).ConfigureAwait(false);
 			}
 			catch (Exception)
 			{
@@ -382,7 +381,7 @@ public class MessagingService
 			switch (result)
 			{
 				case ExitCode.Success:
-					ProcessMessage(message!, token);
+					ProcessMessage(message!);
 					_incomingUdpMessages.Remove(packet.MessageId);
 					break;
 				
@@ -396,23 +395,22 @@ public class MessagingService
 	/// <summary>
 	/// Runs in the MessageSenderThread. Sends messages that arrive in the message queue by the order that they arrive in.
 	/// </summary>
-	/// <param name="token">The cancellation token - used for stopping the thread's execution. token != null.</param>
 	/// <remarks>
-	/// Precondition: Service fully initialized and connected to the other side. (server/client) token != null.<br/>
+	/// Precondition: Service fully initialized and connected to the other side. (server/client) This method should only be started from the StartTcp() method.<br/>
 	/// Postcondition: Returns when the cancellation token requires cancellation - communication is finished.
 	/// </remarks>
-	private void MessageTcpSender(CancellationToken token)
+	private void MessageTcpSender()
 	{
-		while (!token.IsCancellationRequested)
+		while (!Cts.Token.IsCancellationRequested)
 		{
 			try
 			{
-				_messageTcpAvailable.Wait(token);		/* Wait until there is a message available */
+				_messageTcpAvailable.Wait(Cts.Token);		/* Wait until there is a message available */
 				
 				/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
-				while (_messageTcpQueue.TryDequeue(out Message? message) && !token.IsCancellationRequested)		
+				while (_messageTcpQueue.TryDequeue(out Message? message) && !Cts.Token.IsCancellationRequested)		
 				{
-					SendMessageTcpOnSocketAsync(message).Wait(token);
+					SendMessageTcpOnSocketAsync(message).Wait(Cts.Token);
 				}
 
 				if (_messageTcpQueue.IsEmpty)
@@ -430,18 +428,17 @@ public class MessagingService
 	/// <summary>
 	/// Sends UDP messages from the UDP message queue to the other side.
 	/// </summary>
-	/// <param name="token">The cancellation token used to cancel this task. token != null.</param>
 	/// <remarks>
-	/// Precondition: Service fully initialized and connected to the other side. This method should be started only from the Start() method. token != null.<br/>
+	/// Precondition: Service fully initialized and connected to the other side. This method should be started only from the StartUdp() method. <br/>
 	/// Postcondition: While running, receives and processes UDP messages from the other side. Returns when the given cancellation token requires cancellation.
 	/// </remarks>
-	private void MessageUdpSender(CancellationToken token)
+	private void MessageUdpSender()
 	{
-		while (!token.IsCancellationRequested)
+		while (!Cts.Token.IsCancellationRequested)
 		{
 			try
 			{
-				_messageUdpAvailable.Wait(token);
+				_messageUdpAvailable.Wait(Cts.Token);
 			}
 			catch (Exception)
 			{
@@ -452,7 +449,7 @@ public class MessagingService
 			{
 				byte[] messageBytes = Common.ToByteArrayWithType(message);
 				int bytesSent = 0;
-				while (bytesSent < messageBytes.Length && !token.IsCancellationRequested)
+				while (bytesSent < messageBytes.Length && !Cts.Token.IsCancellationRequested)
 				{
 					UdpPacket packet = new UdpPacket(
 						message.Id,
@@ -484,16 +481,12 @@ public class MessagingService
 	/// Processes the message, redirects it to an appropriate handler.
 	/// </summary>
 	/// <param name="message">The received message. message != null.</param>
-	/// <param name="token">
-	/// The cancellation token - used for determining whether the function should return or not. Cannot be null.
-	/// Cancel the token (cts.Cancle()) only when communication should stop - on disconnection.
-	/// </param>
 	/// <remarks>
-	/// Precondition: A message was received. message != null &amp;&amp; token != null. <br/>
+	/// Precondition: A message was received. message != null. <br/>
 	/// Postcondition: Message is redirected to appropriate handler. Handler is handling the message.
 	/// In the case of a response, it is registered as a response for a request that was sent. (if any)
 	/// </remarks>
-	private void ProcessMessage(Message message, CancellationToken token)
+	private void ProcessMessage(Message message)
 	{
 		switch (message)
 		{
@@ -512,7 +505,7 @@ public class MessagingService
 					SendResponse(new MessageResponseInvalidRequestData(true, request.Id));
 					break;
 				}
-				_ = HandleRequestAsync(request, token);
+				_ = HandleRequestAsync(request);
 				break;
 			}
 				
@@ -521,7 +514,7 @@ public class MessagingService
 			{
 				if (message.IsValidMessage())
 				{
-					_ = HandleInfoAsync(message, token);
+					_ = HandleInfoAsync(message);
 				}
 				break;
 			}
@@ -693,22 +686,19 @@ public class MessagingService
 	/// <param name="request">
 	///     The request to process. request != null.
 	/// </param>
-	/// <param name="token">
-	///     Used for stopping the processing of the request, as it can take time. token != null.
-	/// </param>
 	/// <remarks>
 	/// Precondition: Caller should be the Communicate() method. <br/>
 	/// Service must be initialized and connected to the other side. <br/>
-	/// token != null &amp;&amp; request != null. <br/>
+	/// request != null. <br/>
 	/// Postcondition: The request was fully processed. <br/>
 	/// If the token requests' cancellation while processing the request, <br/>
 	/// this method will return and the request should be considered not handled/processed.
 	/// </remarks>
-	private async Task HandleRequestAsync(MessageRequest request, CancellationToken token)
+	private async Task HandleRequestAsync(MessageRequest request)
 	{
 		try
 		{
-			await ProcessRequestAsync(request).WaitAsync(token);
+			await ProcessRequestAsync(request).WaitAsync(Cts.Token);
 		}
 		catch (OperationCanceledException)
 		{
@@ -719,20 +709,19 @@ public class MessagingService
 	/// The initial step of handling an info message. Made specifically for the Communicate() method.
 	/// </summary>
 	/// <param name="info">The info message to process. info != null.</param>
-	/// <param name="token">Used for stopping the processing of the info message, as it can take time. token != null.</param>
 	/// <remarks>
 	/// Precondition: Caller should be the Communicate() method. <br/>
 	/// Service must be initialized and connected to the other side. <br/>
-	/// token != null &amp;&amp; info != null. <br/>
+	/// info != null. <br/>
 	/// Postcondition: The info message was fully processed. <br/>
 	/// If the token requests' cancellation while processing the info message, <br/>
 	/// this method will return and the info message should be considered not handled/processed.
 	/// </remarks>
-	private async Task HandleInfoAsync(Message info, CancellationToken token)
+	private async Task HandleInfoAsync(Message info)
 	{
 		try
 		{
-			await ProcessInfoAsync(info).WaitAsync(token);
+			await ProcessInfoAsync(info).WaitAsync(Cts.Token);
 		}
 		catch (OperationCanceledException)
 		{
@@ -885,7 +874,7 @@ public class MessagingService
 	{
 		try
 		{
-			_cts.Cancel();
+			Cts.Cancel();
 		}
 		catch (Exception)
 		{
@@ -910,7 +899,7 @@ public class MessagingService
 		if (Thread.CurrentThread != _messageUdpSenderThread && _messageUdpSenderThread.IsAlive) 
 			_messageUdpSenderThread.Join();
 
-		_cts.Dispose();
+		Cts.Dispose();
 		
 		IsServiceInitialized = false;
 		
@@ -921,15 +910,11 @@ public class MessagingService
 	/// Handles a sudden disconnection from the other side. (client/server) <br/>
 	/// Child classes of this class can override this method to handle disconnections accordingly.
 	/// </summary>
-	/// <param name="token">
-	/// Optional parameter, can be null. <br/>
-	/// If child classes override this method, they may use the token to cancel a long-running operation. (Trying to reconnect for example)
-	/// </param>
 	/// <remarks>
-	/// Precondition: A sudden disconnection from the other side has happened. The cancellation token can be set to null - its optional.
+	/// Precondition: A sudden disconnection from the other side has happened.
 	/// Postcondition: The sudden disconnection has been handled accordingly.
 	/// </remarks>
-	protected virtual void HandleSuddenDisconnection(CancellationToken? token = null)
+	protected virtual void HandleSuddenDisconnection()
 	{
 		OnFailure(ExitCode.DisconnectedFromServer);
 		AfterDisconnection();
