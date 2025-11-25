@@ -1,4 +1,5 @@
 using System.Drawing;
+using System.Net;
 using Avalonia.Input;
 using Shared.Drives;
 using Shared.VirtualMachines;
@@ -20,6 +21,19 @@ public class MessageInfoUdp : MessageUdp
 		: base(generateGuid)
 	{
 	}
+}
+
+public class MessageInfoIdentifyUdp : MessageInfoTcp
+{
+	public int Port { get; }
+
+	public MessageInfoIdentifyUdp(bool generateGuid, int port)
+		: base(generateGuid)
+	{
+		Port = port;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Port >= IPEndPoint.MinPort && Port <= IPEndPoint.MaxPort;
 }
 
 public class MessageInfoVmCreated : MessageInfoTcp

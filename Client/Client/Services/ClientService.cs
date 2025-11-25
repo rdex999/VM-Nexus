@@ -49,7 +49,8 @@ public class ClientService : MessagingService
 		
 		await ConnectToServerAsync();
 		
-		Start();
+		StartTcp();
+		StartUdp();
 	}
 
 	/// <summary>
@@ -644,9 +645,8 @@ public class ClientService : MessagingService
 		/* TCP socket is connected. Now try connecting the UDP socket. */
 		try
 		{
-			UdpSocket!.Bind(new IPEndPoint(IPAddress.Any, SharedDefinitions.ClientUdpPort));
+			UdpSocket!.Bind(new IPEndPoint(IPAddress.Any, 0));
 			await UdpSocket!.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerUdpPort);
-			return true;
 		}
 		catch (Exception)
 		{
@@ -654,6 +654,25 @@ public class ClientService : MessagingService
 			UdpSocket!.Close();
 			return false;
 		}
+
+		if (UdpSocket.LocalEndPoint == null)
+		{
+			TcpSocket!.Close();
+			UdpSocket!.Close();
+			return false;		
+		}
+
+		int localPort = ((IPEndPoint)UdpSocket.LocalEndPoint).Port;
+		if (localPort < IPEndPoint.MinPort || localPort > IPEndPoint.MaxPort)
+		{
+			TcpSocket!.Close();
+			UdpSocket!.Close();
+			return false;				
+		}
+		
+		SendInfo(new MessageInfoIdentifyUdp(true, localPort));
+
+		return true;
 	}
 
 	/// <summary>

@@ -238,21 +238,32 @@ public class MessagingService
 	}
 
 	/// <summary>
-	/// Starts the message sender and receiver tasks and threads. Can use the service after calling this method. <br/>
-	/// Call only after Initialize() has been called.
+	/// Starts the message sender and receiver TCP task and thread. Call only after Initialize() has been called.
 	/// </summary>
 	/// <remarks>
 	/// Precondition: Initialize() was called already. <br/>
-	/// Postcondition: Message receiver and sender tasks and threads are started.
-	/// Service is considered fully initialized after calling this method.
+	/// Postcondition: Message receiver and sender TCP task and thread are started.
+	/// Sending and receiving TCP messages is possible after calling this method.
 	/// </remarks>
-	protected void Start()
+	protected void StartTcp()
 	{
 		_messageTcpReceiverTask = MessageTcpReceiverAsync(_cts!.Token);
-		_messageUdpReceiverTask = MessageUdpReceiverAsync(_cts.Token);
 		
 		if (!_messageTcpSenderThread!.IsAlive)
 			_messageTcpSenderThread!.Start();
+	}
+	
+	/// <summary>
+	/// Starts the message sender and receiver UDP task and thread. Call only after Initialize() has been called.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Initialize() was called already. <br/>
+	/// Postcondition: Message receiver and sender UDP task and thread are started.
+	/// Sending and receiving UDP messages is possible after calling this method.
+	/// </remarks>
+	protected void StartUdp()
+	{
+		_messageUdpReceiverTask = MessageUdpReceiverAsync(_cts!.Token);
 		
 		if (!_messageUdpSenderThread!.IsAlive)
 			_messageUdpSenderThread!.Start();

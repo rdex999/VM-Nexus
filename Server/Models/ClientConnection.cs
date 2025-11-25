@@ -49,14 +49,15 @@ public sealed class ClientConnection : MessagingService
 		_driveService = driveService;
 		ClientId = Guid.NewGuid();
 
-		IPAddress clientIp = ((IPEndPoint)tcpSocket.RemoteEndPoint!).Address;
 		Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+		udpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 		udpSocket.Bind(new IPEndPoint(IPAddress.Any, SharedDefinitions.ServerUdpPort));
-		udpSocket.Connect(clientIp, SharedDefinitions.ClientUdpPort);
 		
 		Initialize(tcpSocket, udpSocket);
 		IsServiceInitialized = true;
-		Start();
+	
+		/* UDP will be started once a MessageInfoIdentifyUdp is received (using TCP socket) from the client. */
+		StartTcp();
 	}
 
 	/// <summary>
@@ -700,6 +701,17 @@ public sealed class ClientConnection : MessagingService
 		ExitCode result = ExitCode.Success;
 		switch (info)
 		{
+			case MessageInfoIdentifyUdp infoIdentifyUdp:
+			{
+				if (UdpSocket!.RemoteEndPoint != null)
+					break;
+
+				IPAddress remoteIp = ((IPEndPoint)TcpSocket!.RemoteEndPoint!).Address;
+				IPEndPoint udpRemote = new IPEndPoint(remoteIp, infoIdentifyUdp.Port);
+				await UdpSocket.ConnectAsync(udpRemote);
+				StartUdp();
+				break;
+			}
 			case MessageInfoPointerMoved infoPointerMoved:
 			{
 				if (!_isLoggedIn) break;
