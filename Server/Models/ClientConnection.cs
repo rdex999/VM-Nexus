@@ -24,7 +24,6 @@ public sealed class ClientConnection : MessagingService
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
-	private const string ServerRootDirectory = "../../../";
 
 	private int _streamVmId = -1;
 
@@ -52,8 +51,10 @@ public sealed class ClientConnection : MessagingService
 		Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 		udpSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
 		udpSocket.Bind(new IPEndPoint(IPAddress.Any, SharedDefinitions.ServerUdpPort));
+
+		TcpSocket = tcpSocket;
+		UdpSocket = udpSocket;
 		
-		Initialize(tcpSocket, udpSocket);
 		IsServiceInitialized = true;
 	
 		/* UDP will be started once a MessageInfoIdentifyUdp is received (using TCP socket) from the client. */

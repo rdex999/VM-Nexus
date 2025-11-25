@@ -42,10 +42,8 @@ public class ClientService : MessagingService
 		if (IsInitialized())
 			return;
 
-		Initialize(
-			new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp),
-			new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp)
-		);
+		TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+		UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 		
 		await ConnectToServerAsync();
 		
@@ -253,7 +251,6 @@ public class ClientService : MessagingService
 	/// Requests the server to create a drive with the given parameters.
 	/// </summary>
 	/// <param name="name">The name of the drive. Must be unique for the user. name != null.</param>
-	/// <param name="type">The type of drive. (NVMe, SSD, etc)</param>
 	/// <param name="size">The size of the drive in MiB. size >= 1.</param>
 	/// <param name="operatingSystem">The operating system to install on the drive.</param>
 	/// <returns>A status indicating the result of the operation.</returns>

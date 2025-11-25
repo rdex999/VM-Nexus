@@ -10,19 +10,17 @@ public class MessagingService
 	public event EventHandler<ExitCode>? FailEvent;
 	protected Socket? TcpSocket;
 	protected Socket? UdpSocket;
-	private Task? _messageTcpReceiverTask;							/* Runs the CommunicateTcp function */
-	private Task? _messageUdpReceiverTask;							/* Runs the CommunicateUdp function */
-	private CancellationTokenSource? _cts;
+	private CancellationTokenSource _cts;
 	protected bool IsServiceInitialized;
-	private ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
-	private Thread? _messageTcpSenderThread;							/* Sends messages from the message queue, through the socket. */
-	private Thread? _messageUdpSenderThread;
-	private ConcurrentQueue<Message>? _messageTcpQueue;
-	private ConcurrentQueue<Message>? _messageUdpQueue;
-	private ManualResetEventSlim? _messageTcpAvailable;
-	private ManualResetEventSlim? _messageUdpAvailable;
+	private readonly ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
+	private readonly Thread _messageTcpSenderThread;
+	private readonly Thread _messageUdpSenderThread;
+	private readonly ConcurrentQueue<Message> _messageTcpQueue;
+	private readonly ConcurrentQueue<Message> _messageUdpQueue;
+	private readonly ManualResetEventSlim _messageTcpAvailable;
+	private readonly ManualResetEventSlim _messageUdpAvailable;
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
-	private Dictionary<Guid, IncomingMessageUdp>? _incomingUdpMessages;
+	private readonly Dictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
 	private const int DatagramSize = 1200;
 
 	private struct UdpPacket
@@ -130,6 +128,7 @@ public class MessagingService
 		/// <summary>
 		/// Creates this incoming message and loads the first packet using ReceivePacket().
 		/// </summary>
+		/// <param name="firstPacket">The first packet that was received. firstPacket != null.</param>
 		/// <param name="result">An exit code indicating the result of receiving the first packet. (See ReceivePacket() documentation.)</param>
 		/// <param name="message">If this was the last packet, the output message is written to this pointer. Null is written otherwise.</param>
 		/// <remarks>
@@ -213,23 +212,11 @@ public class MessagingService
 	public MessagingService()
 	{
 		IsServiceInitialized = false;
-	}
-
-	/// <summary>
-	/// Initializes the base service - sub services (child classes) must set IsServiceInitialized=true when initialization is completed.
-	/// </summary>
-	/// <remarks>
-	/// Precondition: Service must not be initialized <br/>
-	/// Postcondition: Base service initialized - sub services (child classes) must set IsServiceInitialized=true when initialization is completed.
-	/// </remarks>
-	protected void Initialize(Socket tcpSocket, Socket udpSocket)
-	{
-		TcpSocket = tcpSocket;
-		UdpSocket = udpSocket;
+		
 		_cts = new CancellationTokenSource();
 		_messageTcpSenderThread = new Thread(() => MessageTcpSender(_cts.Token));
 		_messageUdpSenderThread = new Thread(() => MessageUdpSender(_cts.Token));
-		_responses =  new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
+		_responses = new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
 		_messageTcpQueue = new ConcurrentQueue<Message>();
 		_messageUdpQueue = new ConcurrentQueue<Message>();
 		_messageTcpAvailable = new ManualResetEventSlim(false);
@@ -238,35 +225,35 @@ public class MessagingService
 	}
 
 	/// <summary>
-	/// Starts the message sender and receiver TCP task and thread. Call only after Initialize() has been called.
+	/// Starts the message sender and receiver TCP task and thread. Call only after both TcpSocket and UdpSocket have been initialized.
 	/// </summary>
 	/// <remarks>
-	/// Precondition: Initialize() was called already. <br/>
+	/// Precondition: TcpSocket and UdpSocket have been initialized. <br/>
 	/// Postcondition: Message receiver and sender TCP task and thread are started.
 	/// Sending and receiving TCP messages is possible after calling this method.
 	/// </remarks>
 	protected void StartTcp()
 	{
-		_messageTcpReceiverTask = MessageTcpReceiverAsync(_cts!.Token);
+		_ = MessageTcpReceiverAsync(_cts.Token);
 		
-		if (!_messageTcpSenderThread!.IsAlive)
-			_messageTcpSenderThread!.Start();
+		if (!_messageTcpSenderThread.IsAlive)
+			_messageTcpSenderThread.Start();
 	}
 	
 	/// <summary>
-	/// Starts the message sender and receiver UDP task and thread. Call only after Initialize() has been called.
+	/// Starts the message sender and receiver UDP task and thread. Call only after both TcpSocket and UdpSocket have been initialized.
 	/// </summary>
 	/// <remarks>
-	/// Precondition: Initialize() was called already. <br/>
+	/// Precondition: TcpSocket and UdpSocket have been initialized. <br/>
 	/// Postcondition: Message receiver and sender UDP task and thread are started.
 	/// Sending and receiving UDP messages is possible after calling this method.
 	/// </remarks>
 	protected void StartUdp()
 	{
-		_messageUdpReceiverTask = MessageUdpReceiverAsync(_cts!.Token);
+		_ = MessageUdpReceiverAsync(_cts.Token);
 		
-		if (!_messageUdpSenderThread!.IsAlive)
-			_messageUdpSenderThread!.Start();
+		if (!_messageUdpSenderThread.IsAlive)
+			_messageUdpSenderThread.Start();
 	}
 
 	/// <summary>
@@ -290,7 +277,7 @@ public class MessagingService
 	/// </remarks>
 	public bool IsConnected()
 	{
-		return IsInitialized() && TcpSocket!.Connected;
+		return IsInitialized() && TcpSocket != null && TcpSocket!.Connected;
 	}
 
 	/// <summary>
@@ -383,7 +370,7 @@ public class MessagingService
 			
 			ExitCode result;
 			Message? message;
-			if (_incomingUdpMessages!.TryGetValue(packet.MessageId, out IncomingMessageUdp? incoming))
+			if (_incomingUdpMessages.TryGetValue(packet.MessageId, out IncomingMessageUdp? incoming))
 			{
 				result = incoming.ReceivePacket(packet, out message);
 			}
@@ -420,10 +407,10 @@ public class MessagingService
 		{
 			try
 			{
-				_messageTcpAvailable!.Wait(token);		/* Wait until there is a message available */
+				_messageTcpAvailable.Wait(token);		/* Wait until there is a message available */
 				
 				/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
-				while (_messageTcpQueue!.TryDequeue(out Message? message) && !token.IsCancellationRequested)		
+				while (_messageTcpQueue.TryDequeue(out Message? message) && !token.IsCancellationRequested)		
 				{
 					SendMessageTcpOnSocketAsync(message).Wait(token);
 				}
@@ -454,14 +441,14 @@ public class MessagingService
 		{
 			try
 			{
-				_messageUdpAvailable!.Wait(token);
+				_messageUdpAvailable.Wait(token);
 			}
 			catch (Exception)
 			{
 				continue;
 			}
 
-			while (_messageUdpQueue!.TryDequeue(out Message? message))
+			while (_messageUdpQueue.TryDequeue(out Message? message))
 			{
 				byte[] messageBytes = Common.ToByteArrayWithType(message);
 				int bytesSent = 0;
@@ -630,13 +617,13 @@ public class MessagingService
 	{
 		if (message is MessageTcp)
 		{
-			_messageTcpQueue!.Enqueue(message);
-			_messageTcpAvailable!.Set();
+			_messageTcpQueue.Enqueue(message);
+			_messageTcpAvailable.Set();
 		}
 		else if (message is MessageUdp)
 		{
-			_messageUdpQueue!.Enqueue(message);
-			_messageUdpAvailable!.Set();
+			_messageUdpQueue.Enqueue(message);
+			_messageUdpAvailable.Set();
 		}
 	}
 
@@ -896,9 +883,13 @@ public class MessagingService
 	/// </remarks>
 	public virtual void Disconnect()
 	{
-		if (_cts != null)
+		try
 		{
 			_cts.Cancel();
+		}
+		catch (Exception)
+		{
+			return;
 		}
 
 		if (TcpSocket != null)
@@ -912,24 +903,14 @@ public class MessagingService
 			UdpSocket.Close();
 			UdpSocket.Dispose();
 		}
-		
-		if (_cts != null)
-		{
-			if (_messageTcpSenderThread != null && Thread.CurrentThread != _messageTcpSenderThread &&
-			    _messageTcpSenderThread.IsAlive)
-			{
-				_messageTcpSenderThread.Join();
-			}
 
-			if (_messageUdpSenderThread != null && Thread.CurrentThread != _messageUdpSenderThread &&
-			    _messageUdpSenderThread.IsAlive)
-			{
-				_messageUdpSenderThread.Join();
-			}
-			
-			_cts.Dispose();
-			_cts = null;
-		}
+		if (Thread.CurrentThread != _messageTcpSenderThread && _messageTcpSenderThread.IsAlive)
+			_messageTcpSenderThread.Join();
+
+		if (Thread.CurrentThread != _messageUdpSenderThread && _messageUdpSenderThread.IsAlive) 
+			_messageUdpSenderThread.Join();
+
+		_cts.Dispose();
 		
 		IsServiceInitialized = false;
 		
