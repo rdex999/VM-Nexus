@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Text;
+using System.Timers;
+using Timer = System.Timers.Timer;
 
 namespace Shared.Networking;
 
@@ -120,7 +123,9 @@ public class MessagingService
 	
 	private class IncomingMessageUdp
 	{
+		private readonly Action<Guid>? _timeout;
 		public Guid MessageId { get; }
+		private readonly Timer _timeoutTimer;
 		private readonly byte[] _data;
 		private int _bytesReceived = 0;
 		private readonly BitArray _chunks;
@@ -129,14 +134,24 @@ public class MessagingService
 		/// Creates this incoming message and loads the first packet using ReceivePacket().
 		/// </summary>
 		/// <param name="firstPacket">The first packet that was received. firstPacket != null.</param>
+		/// <param name="timeout">A callback for when this message has timed-out. When raised, this message should be removed.</param>
 		/// <param name="result">An exit code indicating the result of receiving the first packet. (See ReceivePacket() documentation.)</param>
 		/// <param name="message">If this was the last packet, the output message is written to this pointer. Null is written otherwise.</param>
 		/// <remarks>
 		/// Precondition: A packet was received and no instance of IncomingMessageUdp exists for it. firstPacket != null. <br/>
 		/// Postcondition: This IncomingMessageUdp is created. As for the result and message parameters, see documentation of ReceivePacket().
 		/// </remarks>
-		public IncomingMessageUdp(UdpPacket firstPacket, out ExitCode result, out Message? message)
+		public IncomingMessageUdp(UdpPacket firstPacket, Action<Guid> timeout, out ExitCode result, out Message? message)
 		{
+			_timeout += timeout;
+			_timeoutTimer = new Timer(TimeSpan.FromSeconds(3));
+			_timeoutTimer.Elapsed += (_, _) =>
+			{
+				_timeout?.Invoke(MessageId);
+				_timeoutTimer.Dispose();
+			};
+			_timeoutTimer.Start();
+			
 			_data = new byte[firstPacket.MessageSize];
 			int chunks = (_data.Length + UdpPacket.MaxPayloadSize - 1) / UdpPacket.MaxPayloadSize;		/* messageSize / MaxPayloadSize (round up remainder) */
 			_chunks = new BitArray(chunks);
@@ -167,13 +182,19 @@ public class MessagingService
 		public ExitCode ReceivePacket(UdpPacket packet, out Message? message)
 		{
 			message = null;
-			
+
 			if (packet.MessageSize != _data.Length)
+			{
+				Close();
 				return ExitCode.InvalidUdpPacket;
+			}
 			
 			int chunk = packet.Offset / UdpPacket.MaxPayloadSize;
 			if (chunk >= _chunks.Length)
+			{
+				Close();
 				return ExitCode.InvalidUdpPacket;
+			}
 
 			if (_chunks[chunk])
 				return ExitCode.UdpPacketDuplicate;
@@ -183,9 +204,12 @@ public class MessagingService
 				chunkSize = _data.Length % UdpPacket.MaxPayloadSize;
 			else
 				chunkSize = UdpPacket.MaxPayloadSize;
-				
+
 			if (packet.PayloadSize > chunkSize)
+			{
+				Close();
 				return ExitCode.InvalidUdpPacket;
+			}
 			
 			packet.Payload.CopyTo(_data.AsSpan(packet.Offset));
 			_chunks[chunk] = true;
@@ -193,6 +217,8 @@ public class MessagingService
 
 			if (_bytesReceived >= packet.MessageSize)
 			{
+				Close();
+				
 				Message? msg = (Message?)Common.FromByteArrayWithType(_data);
 				if (msg == null)
 					return ExitCode.MessageUdpCorrupted;
@@ -202,6 +228,19 @@ public class MessagingService
 			}
 
 			return ExitCode.MessageUdpNotCompleted;
+		}
+
+		/// <summary>
+		/// Closes this message and releases used resources.
+		/// </summary>
+		/// <remarks>
+		/// Precondition: The processing of this message has finished. (got corrupted, finished, timeout, etc.) <br/>
+		/// Postcondition: This message is closed, used resources are freed.
+		/// </remarks>
+		private void Close()
+		{
+			_timeoutTimer.Stop();
+			_timeoutTimer.Dispose();
 		}
 	}
 
@@ -375,7 +414,7 @@ public class MessagingService
 			}
 			else
 			{
-				_incomingUdpMessages.TryAdd(packet.MessageId, new IncomingMessageUdp(packet, out result, out message));
+				_incomingUdpMessages.TryAdd(packet.MessageId, new IncomingMessageUdp(packet, OnIncomingMessageTimeout, out result, out message));
 			}
 
 			switch (result)
@@ -384,14 +423,25 @@ public class MessagingService
 					ProcessMessage(message!);
 					_incomingUdpMessages.Remove(packet.MessageId);
 					break;
-				
+					
 				case ExitCode.InvalidUdpPacket or ExitCode.MessageUdpCorrupted:
 					_incomingUdpMessages.Remove(packet.MessageId);
 					break;
 			}
 		}
 	}
-	
+
+	/// <summary>
+	/// Handles a timeout for an incoming message. Removes the message and frees resources.
+	/// </summary>
+	/// <param name="messageId">The ID of the message that has timed-out. messageId != null.</param>
+	/// <remarks>
+	/// Precondition: An incoming message has timed-out. messageId != null. <br/>
+	/// Postcondition: The message is removed and used resources are freed.
+	/// </remarks>
+	private void OnIncomingMessageTimeout(Guid messageId) =>
+		_incomingUdpMessages.Remove(messageId);
+
 	/// <summary>
 	/// Runs in the MessageSenderThread. Sends messages that arrive in the message queue by the order that they arrive in.
 	/// </summary>
