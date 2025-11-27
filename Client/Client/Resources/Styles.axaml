@@ -50,6 +50,21 @@
 		<Setter Property="FontSize" Value="18"/>
 	</Style>	
 	
+	<Style Selector="Button.light">
+		<Setter Property="Background" Value="#dcdcdc"/>
+		<Setter Property="Foreground" Value="#444646"/>
+		
+		<Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="#e4e4e4"/>
+			<Setter Property="Foreground" Value="#464848"/>
+		</Style>
+		
+		<Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="#d2d2d2"/>
+			<Setter Property="Foreground" Value="#464848"/>
+		</Style>
+	</Style>
+	
 	<Style Selector="TextBlock">
 		<Setter Property="Foreground" Value="#516466"/>
 		<Setter Property="FontSize" Value="14"/>

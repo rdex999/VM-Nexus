@@ -58,7 +58,7 @@
 		
 		<templated:OverlayPopup IsOpen="{Binding NewDrivePopupIsOpen}" Height="350"
 		                        PlacementTarget="Grid" Background="White" Placement="Center"
-		                        Title="Create a New Drive"
+		                        Title="Create a New Drive" IsLightDismissEnabled="False"
 		                        ClosedCommand="{Binding CloseNewDrivePopupCommand}">
 			<Grid RowDefinitions="*, Auto" Margin="0, 10, 0, 0">
 				<StackPanel Spacing="20" HorizontalAlignment="Stretch">
@@ -72,15 +72,30 @@
 
 					<Grid ColumnDefinitions="*, *">
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Classes="form">File system</TextBlock>
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch">
-							<ComboBoxItem>Ext4 (Linux only)</ComboBoxItem>
-							<ComboBoxItem>FAT32 (Universal)</ComboBoxItem>
-							<ComboBoxItem>NTFS (Windows only)</ComboBoxItem>
-							<ComboBoxItem>ISO (Used mostly for booting)</ComboBoxItem>
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" SelectedIndex="{Binding NewDrivePopupFileSystem}">
+							<ComboBoxItem ToolTip.Placement="Right" 
+							              ToolTip.Tip="Used on linux distributions, linux only.">Ext4</ComboBoxItem>
+							
+							<ComboBoxItem ToolTip.Placement="Right" 
+							              ToolTip.Tip="Universal, most operating systems support it. Can be used as a shared drive between different operating systems.">FAT32</ComboBoxItem>
+							
+							<ComboBoxItem ToolTip.Placement="Right"
+							              ToolTip.Tip="Used in Microsoft Windows operating systems, Windows only.">NTFS</ComboBoxItem>
+							
+							<ComboBoxItem ToolTip.Placement="Right"
+							              ToolTip.Tip="A read-only filesystem, used mostly on CDs for booting.">ISO</ComboBoxItem>
 						</ComboBox>
 					</Grid>
+					
+					<Grid ColumnDefinitions="Auto, Auto, *" ColumnSpacing="10" IsVisible="{Binding NewDrivePopupIsoIsVisible}">
+						<Button VerticalAlignment="Center" FontWeight="DemiBold" CornerRadius="8" Classes="light"
+						        Command="{Binding NewDrivePopupSelectIsoClickCommand}">Select ISO</Button>
+						
+						<TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="DemiBold" Text="{Binding NewDrivePopupIsoSize}"/>
+						<TextBlock Grid.Column="2" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding NewDrivePopupIsoPath}"/>
+					</Grid>
 				</StackPanel>
-				<Button Grid.Row="1" HorizontalAlignment="Center" CornerRadius="10" 
+				<Button Grid.Row="1" HorizontalAlignment="Center" CornerRadius="10" Classes="light"
 				        FontWeight="DemiBold" FontSize="16">Create</Button>
 			</Grid>
 		</templated:OverlayPopup>

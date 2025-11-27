@@ -16,6 +16,9 @@ public class OverlayPopup : TemplatedControl
 	public static readonly StyledProperty<bool> IsOpenProperty =
 		AvaloniaProperty.Register<OverlayPopup, bool>(nameof(IsOpen));
 
+	public static readonly StyledProperty<bool> IsLightDismissEnabledProperty =
+		AvaloniaProperty.Register<OverlayPopup, bool>(nameof(IsLightDismissEnabled), defaultValue: true);
+	
 	public static readonly StyledProperty<PlacementMode> PlacementProperty =
 		AvaloniaProperty.Register<OverlayPopup, PlacementMode>(nameof(Placement));
 
@@ -39,6 +42,12 @@ public class OverlayPopup : TemplatedControl
 	{
 		get => GetValue(IsOpenProperty);
 		set => SetValue(IsOpenProperty, value);
+	}
+
+	public bool IsLightDismissEnabled
+	{
+		get => GetValue(IsLightDismissEnabledProperty);
+		set => SetValue(IsLightDismissEnabledProperty, value);
 	}
 
 	public PlacementMode Placement

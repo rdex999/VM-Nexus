@@ -1,8 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform.Storage;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -10,7 +15,7 @@ using Shared;
 using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
-using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
+using DriveType = Shared.Drives.DriveType;
 
 namespace Client.ViewModels.DriveExplorerModes;
 
@@ -23,9 +28,23 @@ public partial class DrivesViewModel : DriveExplorerMode
 	
 	[ObservableProperty] 
 	private bool _conPopupIsOpen = false;
-	
+
 	[ObservableProperty]
 	private bool _newDrivePopupIsOpen = false;
+
+	[ObservableProperty]
+	private bool _newDrivePopupIsoIsVisible = false;
+
+	[ObservableProperty] 
+	private FilesystemType _newDrivePopupFileSystem = FilesystemType.Fat32;
+
+	[ObservableProperty]
+	private string _newDrivePopupIsoSize = string.Empty;
+		
+	[ObservableProperty]
+	private string _newDrivePopupIsoPath = string.Empty;
+
+	private IStorageFile? _newDrivePopupIso;
 	
 	public DrivesViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)
@@ -183,6 +202,17 @@ public partial class DrivesViewModel : DriveExplorerMode
 	}
 
 	/// <summary>
+	/// Executed each time after NewDrivePopupFileSystem has changed. Makes ISO image file selection is visible if needed.
+	/// </summary>
+	/// <param name="value">The new value that was assigned.</param>
+	/// <remarks>
+	/// Precondition: User has selected another filesystem in the drive creation popup. <br/>
+	/// Postcondition: If the user has selected the ISO option, the ISO image file selection section is displayed.
+	/// </remarks>
+	partial void OnNewDrivePopupFileSystemChanged(FilesystemType value) =>
+		NewDrivePopupIsoIsVisible = value == FilesystemType.Iso;
+
+	/// <summary>
 	/// Either closes the VM connection popup, or called after it is closed.
 	/// </summary>
 	/// <remarks>
@@ -241,6 +271,48 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// </remarks>
 	[RelayCommand]
 	private void CloseNewDrivePopup() => NewDrivePopupIsOpen = false;
+
+	/// <summary>
+	/// Handles a click on the select ISO button on the drive creation popup.
+	/// Opens the operating system file picker and asks the user to select a file.
+	/// Displays information about the selected file.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the select ISO button on the drive creation popup. <br/>
+	/// Postcondition: A file picker is opened. After the user selects a file, its size and path are displayed as the selected ISO file.
+	/// </remarks>
+	[RelayCommand]
+	private async Task NewDrivePopupSelectIsoClick()
+	{
+		IStorageProvider storageProvider;
+		if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+			storageProvider = desktop.MainWindow!.StorageProvider;
+		
+		else if (Application.Current?.ApplicationLifetime is ISingleViewApplicationLifetime singleViewLifetime)
+		{
+			TopLevel? topLevel = TopLevel.GetTopLevel(singleViewLifetime.MainView);
+			if (topLevel == null)
+				return;
+			
+			storageProvider = topLevel.StorageProvider;
+		}
+		else
+			return;
+		
+		IReadOnlyList<IStorageFile> files = await storageProvider.OpenFilePickerAsync(new FilePickerOpenOptions { AllowMultiple = false });
+
+		if (files.Count != 1)
+			return;
+			
+		_newDrivePopupIso = files[0];
+		await using Stream file = await _newDrivePopupIso.OpenReadAsync();
+		
+		float sizeMib = file.Length / 1024f / 1024f;
+		float sizeGib = file.Length / 1024f / 1024f / 1024f;
+		
+		NewDrivePopupIsoSize = sizeMib >= 1024 ? $"{sizeGib:0.##} GiB" : $"{sizeMib:0.##} MiB";
+		NewDrivePopupIsoPath = _newDrivePopupIso.Path.LocalPath;
+	}
 }
 
 public partial class DriveItemTemplate : ObservableObject
