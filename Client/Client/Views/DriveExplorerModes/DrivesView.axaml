@@ -15,6 +15,10 @@
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
+	
+	<UserControl.Styles>
+		<StyleInclude Source="/Resources/Styles.axaml"/>
+	</UserControl.Styles>
 
 	<Grid x:Name="Grid">
 		<templated:OverlayPopup IsOpen="{Binding ConPopupIsOpen}" Width="450"
@@ -52,10 +56,40 @@
 			</StackPanel>
 		</templated:OverlayPopup>
 		
+		<templated:OverlayPopup IsOpen="{Binding NewDrivePopupIsOpen}" Height="350"
+		                        PlacementTarget="Grid" Background="White" Placement="Center"
+		                        Title="Create a New Drive"
+		                        ClosedCommand="{Binding CloseNewDrivePopupCommand}">
+			<Grid RowDefinitions="*, Auto" Margin="0, 10, 0, 0">
+				<StackPanel Spacing="20" HorizontalAlignment="Stretch">
+					<TextBox Watermark="Drive name" />
+
+					<Grid ColumnDefinitions="*, *">
+						<TextBlock VerticalAlignment="Center" Classes="form">Size (MiB)</TextBlock>
+						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch"
+						               Increment="1024" Minimum="1" Maximum="262144" Value="0"/>
+					</Grid>
+
+					<Grid ColumnDefinitions="*, *">
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Classes="form">File system</TextBlock>
+						<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+							<ComboBoxItem>Ext4 (Linux only)</ComboBoxItem>
+							<ComboBoxItem>FAT32 (Universal)</ComboBoxItem>
+							<ComboBoxItem>NTFS (Windows only)</ComboBoxItem>
+							<ComboBoxItem>ISO (Used mostly for booting)</ComboBoxItem>
+						</ComboBox>
+					</Grid>
+				</StackPanel>
+				<Button Grid.Row="1" HorizontalAlignment="Center" CornerRadius="10" 
+				        FontWeight="DemiBold" FontSize="16">Create</Button>
+			</Grid>
+		</templated:OverlayPopup>
+		
 		<ScrollViewer HorizontalScrollBarVisibility="Auto">
 			<StackPanel>
 				<Button Padding="15, 10" Margin="10" CornerRadius="10" Height="50"
-				        BorderThickness="1.5" Background="White">
+				        BorderThickness="1.5" Background="White"
+				        Command="{Binding CreateNewDriveClickCommand}">
 					<Button.Styles>
 						<Style Selector="Button">
 							<Setter Property="BorderBrush">

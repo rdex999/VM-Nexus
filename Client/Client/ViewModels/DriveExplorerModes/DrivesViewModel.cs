@@ -24,6 +24,9 @@ public partial class DrivesViewModel : DriveExplorerMode
 	[ObservableProperty] 
 	private bool _conPopupIsOpen = false;
 	
+	[ObservableProperty]
+	private bool _newDrivePopupIsOpen = false;
+	
 	public DrivesViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)
 	{
@@ -218,6 +221,26 @@ public partial class DrivesViewModel : DriveExplorerMode
 		
 		CloseConPopup();
 	}
+
+	/// <summary>
+	/// Handles a click on the Create New Drive button. Opens the drive creation popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the Create New Drive button. <br/>
+	/// Postcondition: The new drive creation popup is opened.
+	/// </remarks>
+	[RelayCommand]
+	private void CreateNewDriveClick() => NewDrivePopupIsOpen = true;
+	
+	/// <summary>
+	/// Either closes the Create New Drive popup, or called after it is closed.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the user has closed the popup, or this method was called in order to close the popup. <br/>
+	/// Postcondition: The Create New Drive popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private void CloseNewDrivePopup() => NewDrivePopupIsOpen = false;
 }
 
 public partial class DriveItemTemplate : ObservableObject
