@@ -704,12 +704,21 @@ public sealed class ClientConnection : MessagingService
 		{
 			case MessageInfoIdentifyUdp infoIdentifyUdp:
 			{
-				if (UdpSocket!.RemoteEndPoint != null)
+				if (IsUdpMessagingRunning || UdpSocket!.RemoteEndPoint != null)
 					break;
 
 				IPAddress remoteIp = ((IPEndPoint)TcpSocket!.RemoteEndPoint!).Address;
 				IPEndPoint udpRemote = new IPEndPoint(remoteIp, infoIdentifyUdp.Port);
-				await UdpSocket.ConnectAsync(udpRemote);
+
+				try
+				{
+					await UdpSocket.ConnectAsync(udpRemote);
+				}
+				catch (Exception)
+				{
+					break;
+				}
+				
 				StartUdp();
 				break;
 			}

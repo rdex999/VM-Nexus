@@ -245,27 +245,6 @@
 							</DataTemplate>
 						</ListBox.ItemTemplate>
 					</ListBox>
-
-					<!-- <Button Padding="10" Margin="10" CornerRadius="10" Width="200" Height="200" -->
-					<!--         Command=""> -->
-					<!-- 	<Button.Background> -->
-					<!-- 		<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%"> -->
-					<!-- 			<GradientStop Offset="0" Color="#a9cad1" /> -->
-					<!-- 			<GradientStop Offset="1" Color="#abd1dd" /> -->
-					<!-- 		</LinearGradientBrush> -->
-					<!-- 	</Button.Background> -->
-					<!-- -->
-					<!-- 	<Border Background="White" CornerRadius="10"> -->
-					<!-- 		<PathIcon Data="{StaticResource AddRegular}" Width="150" Height="150"> -->
-					<!-- 			<PathIcon.Foreground> -->
-					<!-- 				<LinearGradientBrush StartPoint="0%, 0%" EndPoint="45%, 45%"> -->
-					<!-- 					<GradientStop Offset="0" Color="#dadae4" /> -->
-					<!-- 					<GradientStop Offset="1" Color="#cae1ef" /> -->
-					<!-- 				</LinearGradientBrush> -->
-					<!-- 			</PathIcon.Foreground> -->
-					<!-- 		</PathIcon> -->
-					<!-- 	</Border> -->
-					<!-- </Button> -->
 				</StackPanel>
 			</ScrollViewer>
 		</Grid>

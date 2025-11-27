@@ -53,60 +53,106 @@
 		</templated:OverlayPopup>
 		
 		<ScrollViewer HorizontalScrollBarVisibility="Auto">
-			<ItemsControl ItemsSource="{Binding DriveItems}" HorizontalAlignment="Left" Width="600">
-				<ItemsControl.ItemTemplate>
-					<DataTemplate DataType="{x:Type dem:DriveItemTemplate}">
-						<Border CornerRadius="15" Background="#eeeff1" Height="100" Margin="10" Padding="10"
-						        BorderThickness="1.2" DoubleTapped="OnDriveDoubleTapped">
-							<Border.Styles>
-								<Style Selector="Border">
-									<Setter Property="BorderBrush">
-										<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-											<GradientStop Offset="0" Color="#bcd8dd" /> <!-- c0d3d2 -->
-											<GradientStop Offset="1" Color="#c0e0e2" />
-										</LinearGradientBrush>
-									</Setter>
-								</Style>
-							</Border.Styles>
-							<Grid ColumnDefinitions="Auto, *" ColumnSpacing="25">
-								<Image Source="/Assets/Drive.png" Width="70" Height="70" RenderOptions.BitmapInterpolationMode="HighQuality" />
+			<StackPanel>
+				<Button Padding="15, 10" Margin="10" CornerRadius="10" Height="50"
+				        BorderThickness="1.5" Background="White">
+					<Button.Styles>
+						<Style Selector="Button">
+							<Setter Property="BorderBrush">
+								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+									<GradientStop Offset="0" Color="#bcd8dd" />
+									<GradientStop Offset="1" Color="#c0e0e2" />
+								</LinearGradientBrush>
+							</Setter>
+							
+							<Setter Property="BorderThickness" Value="1.5" />
+						</Style>
+						
+						<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+							<Setter Property="Background" Value="#f3f3f3" />
+							
+							<Setter Property="BorderBrush">
+								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+									<GradientStop Offset="0" Color="#bcd8dd" />
+									<GradientStop Offset="1" Color="#c0e0e2" />
+								</LinearGradientBrush>
+							</Setter>
+						</Style>
 
-								<Grid Grid.Column="1" RowDefinitions="Auto, *">
-									<Grid ColumnDefinitions="1.5*, *, *, Auto">
-										<TextBlock Text="{Binding Name}" FontSize="15" />
-										<TextBlock Grid.Column="1" Text="{Binding SizeString}" FontSize="15" FontWeight="DemiBold" />
-										<TextBlock Grid.Column="2" Text="{Binding DriveType}" FontSize="15" FontWeight="DemiBold" />
+						<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+							<Setter Property="Background" Value="#eaeaea" />
+						</Style>
+					</Button.Styles>
 
-										<Button Grid.Column="3" VerticalAlignment="Top" Padding="4">
-											<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
+					<StackPanel Spacing="20" Orientation="Horizontal" VerticalAlignment="Center">
+						<PathIcon Data="{StaticResource AddRegular}" Width="30" Height="30" VerticalAlignment="Center" >
+							<PathIcon.Foreground>
+								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="45%, 45%">
+									<GradientStop Offset="0" Color="#dadae4" />
+									<GradientStop Offset="1" Color="#cae1ef" />
+								</LinearGradientBrush>
+							</PathIcon.Foreground>
+						</PathIcon>
+						
+						<TextBlock VerticalAlignment="Center" FontWeight="Bold" FontSize="16">Create new drive</TextBlock>
+					</StackPanel>
+				</Button>
+				
+				<ItemsControl ItemsSource="{Binding DriveItems}" HorizontalAlignment="Left" Width="600">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate DataType="{x:Type dem:DriveItemTemplate}">
+							<Border CornerRadius="15" Background="#eeeff1" Height="100" Margin="10" Padding="10"
+							        BorderThickness="1.2" DoubleTapped="OnDriveDoubleTapped">
+								<Border.Styles>
+									<Style Selector="Border">
+										<Setter Property="BorderBrush">
+											<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+												<GradientStop Offset="0" Color="#bcd8dd" /> <!-- c0d3d2 -->
+												<GradientStop Offset="1" Color="#c0e0e2" />
+											</LinearGradientBrush>
+										</Setter>
+									</Style>
+								</Border.Styles>
+								<Grid ColumnDefinitions="Auto, *" ColumnSpacing="25">
+									<Image Source="/Assets/Drive.png" Width="70" Height="70" RenderOptions.BitmapInterpolationMode="HighQuality" />
 
-											<Button.Flyout>
-												<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
-													<MenuItem Header="Download" Command="{Binding DownloadCommand}" />
-													<MenuItem Header="Manage connected virtual machines" Command="{Binding ManageVmConnectionsCommand}"/>
-													<MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
-												</MenuFlyout>
-											</Button.Flyout>
+									<Grid Grid.Column="1" RowDefinitions="Auto, *">
+										<Grid ColumnDefinitions="1.5*, *, *, Auto">
+											<TextBlock Text="{Binding Name}" FontSize="15" />
+											<TextBlock Grid.Column="1" Text="{Binding SizeString}" FontSize="15" FontWeight="DemiBold" />
+											<TextBlock Grid.Column="2" Text="{Binding DriveType}" FontSize="15" FontWeight="DemiBold" />
+
+											<Button Grid.Column="3" VerticalAlignment="Top" Padding="4">
+												<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
+
+												<Button.Flyout>
+													<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
+														<MenuItem Header="Download" Command="{Binding DownloadCommand}" />
+														<MenuItem Header="Manage connected virtual machines" Command="{Binding ManageVmConnectionsCommand}" />
+														<MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
+													</MenuFlyout>
+												</Button.Flyout>
+											</Button>
+										</Grid>
+
+										<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+										        Padding="26, 6" Margin="0, 0, 50, 3" CornerRadius="10"
+										        Background="#c7c7cc" FontWeight="Bold"
+										        Command="{Binding OpenCommand}">
+											<Button.Styles>
+												<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+													<Setter Property="Background" Value="#a7a7ac" />
+												</Style>
+											</Button.Styles>
+											Open
 										</Button>
 									</Grid>
-
-									<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom"
-									        Padding="26, 6" Margin="0, 0, 50, 3" CornerRadius="10"
-									        Background="#c7c7cc" FontWeight="Bold"
-									        Command="{Binding OpenCommand}">
-										<Button.Styles>
-											<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
-												<Setter Property="Background" Value="#a7a7ac" />
-											</Style>
-										</Button.Styles>
-										Open
-									</Button>
 								</Grid>
-							</Grid>
-						</Border>
-					</DataTemplate>
-				</ItemsControl.ItemTemplate>
-			</ItemsControl>
+							</Border>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</StackPanel>
 		</ScrollViewer>
 	</Grid>
 </UserControl>

@@ -22,6 +22,7 @@ public class MessagingService
 	private readonly ConcurrentQueue<Message> _messageUdpQueue;
 	private readonly ManualResetEventSlim _messageTcpAvailable;
 	private readonly ManualResetEventSlim _messageUdpAvailable;
+	protected bool IsUdpMessagingRunning = false;
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
 	private readonly Dictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
 	private const int DatagramSize = 1200;
@@ -293,6 +294,8 @@ public class MessagingService
 		
 		if (!_messageUdpSenderThread.IsAlive)
 			_messageUdpSenderThread.Start();
+
+		IsUdpMessagingRunning = true;
 	}
 
 	/// <summary>
