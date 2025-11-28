@@ -190,6 +190,10 @@ public class DriveService
 	public async Task<ExitCode> CreateFileSystemDriveAsync(int userId, string name, int sizeMb, FileSystemType fileSystem)
 	{
 		long sizeBytes = sizeMb * 1024L * 1024L;
+		Geometry diskGeometry = Geometry.FromCapacity(sizeBytes);
+		long sectors = sizeBytes / diskGeometry.BytesPerSector;
+		sizeBytes = sectors * diskGeometry.BytesPerSector;
+		
 		if (userId < 1 || sizeMb > SharedDefinitions.DriveSizeMbMax || sizeBytes < fileSystem.DriveSizeMin() || fileSystem != FileSystemType.Fat32)
 			return ExitCode.InvalidParameter;
 
@@ -209,9 +213,6 @@ public class DriveService
 			await _databaseService.DeleteDriveAsync(driveId);
 			return ExitCode.DriveDiskImageCreationFailed;
 		}
-
-		Geometry diskGeometry = Geometry.FromCapacity(sizeBytes);
-		long sectors = sizeBytes / diskGeometry.BytesPerSector;
 		
 		image.SetLength(sectors * diskGeometry.BytesPerSector);
 		await image.FlushAsync();
@@ -497,6 +498,36 @@ public class DriveService
 		{
 			return -1;
 		}
+	}
+
+	/// <summary>
+	/// Get a drive general descriptor of the drive identified by the given userId and drive name.
+	/// </summary>
+	/// <param name="userId">The ID of the user that the drive was created under. userId >= 1.</param>
+	/// <param name="driveName">The name of the drive to search for. driveName != null.</param>
+	/// <returns>A drive general descriptor of the drive, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized, userId >= 1 &amp;&amp; driveName != null. <br/>
+	/// Postcondition: On success, a drive general descriptor of the drive is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<DriveGeneralDescriptor?> GetDriveGeneralDescriptorAsync(int userId, string driveName)
+	{
+		if (userId < 1)
+			return null;
+		
+		DriveDescriptor? descriptor = await _databaseService.GetDriveDescriptorAsync(userId, driveName);
+		if (descriptor == null)
+			return null;
+		
+		int sectorSize = GetDriveSectorSize(descriptor.Id);
+		if (sectorSize < 0)
+			return null;
+		
+		PartitionTableType partitionTableType = GetDrivePartitionTableType(descriptor.Id);
+		if (partitionTableType == (PartitionTableType)(-1))
+			return null;
+		
+		return new DriveGeneralDescriptor(descriptor.Id, driveName, descriptor.Size, sectorSize, descriptor.Type, partitionTableType);
 	}
 	
 	/// <summary>

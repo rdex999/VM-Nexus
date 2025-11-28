@@ -628,6 +628,37 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Get a drive descriptor of the drive identified by the given userId and drive name.
+	/// </summary>
+	/// <param name="userId">The ID of the user that the drive was created under. userId >= 1.</param>
+	/// <param name="driveName">The name of the drive to search for. driveName != null.</param>
+	/// <returns>A drive descriptor of the drive, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized, userId >= 1 &amp;&amp; driveName != null. <br/>
+	/// Postcondition: On success, a drive descriptor of the drive is returned. On failure, null is returned.
+	/// </remarks>
+	public async Task<DriveDescriptor?> GetDriveDescriptorAsync(int userId, string driveName)
+	{
+		if (userId < 1)
+			return null;
+
+		NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT id, size, type FROM drives WHERE name = @name AND owner_id = @owner_id LIMIT 1",
+			new NpgsqlParameter("@name", driveName),
+			new NpgsqlParameter("@owner_id", userId)
+		);
+
+		if (!await reader.ReadAsync())
+			return null;
+
+		return new DriveDescriptor(
+			reader.GetInt32(0),
+			driveName,
+			reader.GetInt32(1),
+			(DriveType)reader.GetInt32(2)
+		);
+	}
+
+	/// <summary>
 	/// Check if the given user has a drive called by name.
 	/// </summary>
 	/// <param name="userId">The ID of the user to search the drive on. userId >= 1.</param>

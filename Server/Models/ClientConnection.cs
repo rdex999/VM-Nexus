@@ -498,6 +498,32 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestCreateDriveFs reqCreateDriveFs:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseCreateDriveFs(true, reqCreateDriveFs.Id, MessageResponseCreateDriveFs.Status.Failure));
+					break;
+				}
+
+				string driveName = reqCreateDriveFs.Name.Trim();
+				result = await _driveService.CreateFileSystemDriveAsync(UserId, driveName, reqCreateDriveFs.SizeMb, reqCreateDriveFs.FileSystem);
+
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseCreateDriveFs(true, reqCreateDriveFs.Id, MessageResponseCreateDriveFs.Status.Success));
+					
+					DriveGeneralDescriptor descriptor = (await _driveService.GetDriveGeneralDescriptorAsync(UserId, driveName))!;
+					await _userService.NotifyDriveCreatedAsync(descriptor);
+				}
+				else if (result == ExitCode.DriveAlreadyExists)
+					SendResponse(new MessageResponseCreateDriveFs(true, reqCreateDriveFs.Id, MessageResponseCreateDriveFs.Status.DriveAlreadyExists));
+				else
+					SendResponse(new MessageResponseCreateDriveFs(true, reqCreateDriveFs.Id, MessageResponseCreateDriveFs.Status.Failure));
+				
+				break;
+			}
+
 			case MessageRequestConnectDrive reqConnectDrive:
 			{
 				if (!_isLoggedIn)
