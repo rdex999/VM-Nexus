@@ -183,6 +183,24 @@ public class MessageResponseCheckVmExist : MessageResponse
 	}
 }
 
+public class MessageResponseCreateDriveFs : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseCreateDriveFs(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		DriveAlreadyExists,
+		Failure,
+	}
+}
+
 public class MessageResponseCreateDriveOs : MessageResponse
 {
 	public Status Result { get; }

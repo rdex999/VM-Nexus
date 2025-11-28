@@ -62,12 +62,14 @@
 		                        ClosedCommand="{Binding CloseNewDrivePopupCommand}">
 			<Grid RowDefinitions="*, Auto" Margin="0, 10, 0, 0">
 				<StackPanel Spacing="20" HorizontalAlignment="Stretch">
-					<TextBox Watermark="Drive name" />
+					<TextBox Watermark="Drive name" Text="{Binding NewDrivePopupName}"/>
 
-					<Grid ColumnDefinitions="*, *">
+					<Grid ColumnDefinitions="*, *" IsVisible="{Binding !NewDrivePopupIsoIsVisible}">
 						<TextBlock VerticalAlignment="Center" Classes="form">Size (MiB)</TextBlock>
-						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch"
-						               Increment="1024" Minimum="1" Maximum="262144" Value="0"/>
+						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" 
+						               Classes.error="{Binding NewDrivePopupSizeError}"
+						               Increment="1024" Minimum="1" Maximum="262144"
+						               Value="{Binding NewDrivePopupSizeMb}"/>
 					</Grid>
 
 					<Grid ColumnDefinitions="*, *">
@@ -95,8 +97,12 @@
 						<TextBlock Grid.Column="2" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding NewDrivePopupIsoPath}"/>
 					</Grid>
 				</StackPanel>
+				
 				<Button Grid.Row="1" HorizontalAlignment="Center" CornerRadius="10" Classes="light"
-				        FontWeight="DemiBold" FontSize="16">Create</Button>
+				        FontWeight="DemiBold" FontSize="16" Command="{Binding NewDrivePopupCreateClickCommand}"
+				        IsEnabled="{Binding NewDrivePopupCreateIsEnabled}">
+					Create
+				</Button>
 			</Grid>
 		</templated:OverlayPopup>
 		

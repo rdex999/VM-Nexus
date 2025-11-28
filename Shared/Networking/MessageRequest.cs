@@ -133,6 +133,25 @@ public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a 
 	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Name);
 }
 
+public class MessageRequestCreateDriveFs : MessageRequest
+{
+	public string Name { get; }
+	public int SizeMb { get; }
+	public FileSystemType FileSystem { get; }
+
+	public MessageRequestCreateDriveFs(bool generateGuid, string name, int sizeMb, FileSystemType fileSystem)
+		: base(generateGuid)
+	{
+		Name = name;
+		SizeMb = sizeMb;
+		FileSystem = fileSystem;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Name) 
+	                                                               && SizeMb > 0 
+	                                                               && SizeMb <= SharedDefinitions.DriveSizeMbMax;
+}
+
 public class MessageRequestCreateDriveOs : MessageRequest
 {
 	public string Name { get; }

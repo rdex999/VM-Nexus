@@ -33,10 +33,22 @@ public partial class DrivesViewModel : DriveExplorerMode
 	private bool _newDrivePopupIsOpen = false;
 
 	[ObservableProperty]
+	private bool _newDrivePopupCreateIsEnabled = false;  /* Size is 0 by default - invalid */
+	
+	[ObservableProperty]
+	private string _newDrivePopupName = string.Empty;
+
+	[ObservableProperty] 
+	private int? _newDrivePopupSizeMb = 0;
+
+	[ObservableProperty] 
+	private bool _newDrivePopupSizeError = true;	/* Size is 0 by default, invalid value */
+	
+	[ObservableProperty]
 	private bool _newDrivePopupIsoIsVisible = false;
 
 	[ObservableProperty] 
-	private FilesystemType _newDrivePopupFileSystem = FilesystemType.Fat32;
+	private FileSystemType _newDrivePopupFileSystem = FileSystemType.Fat32;
 
 	[ObservableProperty]
 	private string _newDrivePopupIsoSize = string.Empty;
@@ -202,6 +214,33 @@ public partial class DrivesViewModel : DriveExplorerMode
 	}
 
 	/// <summary>
+	/// Called when validating the drive size input field is needed. (After it's changed for example)
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Validating the drive size input field in the drive creation popup is required. (For example, after the user has changed the value) <br/>
+	/// Postcondition: If the drive size in valid, the create button is enabled. If invalid, the create button is disabled and an error indication is shown.
+	/// </remarks>
+	private void ValidateNewDrivePopupSize()
+	{
+		bool isValidSize = NewDrivePopupSizeMb != null && NewDrivePopupFileSystem != FileSystemType.Iso
+		                   && (long)NewDrivePopupSizeMb * 1024L * 1024L >= NewDrivePopupFileSystem.DriveSizeMin() 
+		                   && NewDrivePopupSizeMb <= SharedDefinitions.DriveSizeMbMax;
+		
+		NewDrivePopupCreateIsEnabled = isValidSize;
+		NewDrivePopupSizeError = !isValidSize;
+	}
+
+	/// <summary>
+	/// Called each time the value of the drive size field in the drive creation popup is changed. Validates the new size.
+	/// </summary>
+	/// <param name="value">Unused.</param>
+	/// <remarks>
+	/// Precondition: The user has changed the value of the drive size in the drive creation popup. <br/>
+	/// Postcondition: If the drive size in valid, the create button is enabled. If invalid, the create button is disabled and an error indication is shown.
+	/// </remarks>
+	partial void OnNewDrivePopupSizeMbChanged(int? value) => ValidateNewDrivePopupSize();
+
+	/// <summary>
 	/// Executed each time after NewDrivePopupFileSystem has changed. Makes ISO image file selection is visible if needed.
 	/// </summary>
 	/// <param name="value">The new value that was assigned.</param>
@@ -209,8 +248,11 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// Precondition: User has selected another filesystem in the drive creation popup. <br/>
 	/// Postcondition: If the user has selected the ISO option, the ISO image file selection section is displayed.
 	/// </remarks>
-	partial void OnNewDrivePopupFileSystemChanged(FilesystemType value) =>
-		NewDrivePopupIsoIsVisible = value == FilesystemType.Iso;
+	partial void OnNewDrivePopupFileSystemChanged(FileSystemType value)
+	{
+		ValidateNewDrivePopupSize();
+		NewDrivePopupIsoIsVisible = value == FileSystemType.Iso;
+	}
 
 	/// <summary>
 	/// Either closes the VM connection popup, or called after it is closed.
@@ -282,7 +324,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// Postcondition: A file picker is opened. After the user selects a file, its size and path are displayed as the selected ISO file.
 	/// </remarks>
 	[RelayCommand]
-	private async Task NewDrivePopupSelectIsoClick()
+	private async Task NewDrivePopupSelectIsoClickAsync()
 	{
 		IStorageProvider storageProvider;
 		if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -312,6 +354,12 @@ public partial class DrivesViewModel : DriveExplorerMode
 		
 		NewDrivePopupIsoSize = sizeMib >= 1024 ? $"{sizeGib:0.##} GiB" : $"{sizeMib:0.##} MiB";
 		NewDrivePopupIsoPath = _newDrivePopupIso.Path.LocalPath;
+	}
+
+	[RelayCommand]
+	private async Task NewDrivePopupCreateClickAsync()
+	{
+		
 	}
 }
 
