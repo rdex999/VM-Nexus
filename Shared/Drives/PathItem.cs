@@ -39,12 +39,12 @@ public class PathItemPartitionMbr : PathItem
 public class PathItemFile : PathItem
 {
 	public string Name { get; }
-	public long SizeBytes { get; }
+	public ulong SizeBytes { get; }
 	public DateTime Accessed { get; }
 	public DateTime Modified { get; }
 	public DateTime Created { get; }
 
-	public PathItemFile(string name, long sizeBytes, DateTime accessed, DateTime modified, DateTime created)
+	public PathItemFile(string name, ulong sizeBytes, DateTime accessed, DateTime modified, DateTime created)
 	{
 		Name = name;
 		SizeBytes = sizeBytes;

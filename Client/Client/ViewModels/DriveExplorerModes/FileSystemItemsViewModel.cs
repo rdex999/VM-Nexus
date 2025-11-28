@@ -75,7 +75,7 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 		private set => IsFile = !value;
 	}
 	public string Name { get; }
-	public long SizeBytes { get; }					/* Only for files, -1 for directories. */
+	public ulong SizeBytes { get; }					/* Only for files, -1 for directories. */
 	public DateTime? Accessed { get; }				/* Only for files, null for directories. */
 	public DateTime Modified { get; }
 	public DateTime Created { get; }
@@ -83,7 +83,7 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 	public ContextMenu? Menu { get; private set; } = null;
 
 	/* Use for files. */
-	public FileSystemItemItemTemplate(string name, long sizeBytes, DateTime accessed, DateTime modified, DateTime created)
+	public FileSystemItemItemTemplate(string name, ulong sizeBytes, DateTime accessed, DateTime modified, DateTime created)
 	{
 		IsFile = true;
 		Name = name;
@@ -99,7 +99,7 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 	{
 		IsDirectory = true;
 		Name = name;
-		SizeBytes = -1;
+		SizeBytes = ulong.MaxValue;
 		Accessed = null;
 		Modified = modified;
 		Created = created;

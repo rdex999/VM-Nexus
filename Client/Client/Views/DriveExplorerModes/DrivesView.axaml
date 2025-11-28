@@ -76,13 +76,7 @@
 						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Classes="form">File system</TextBlock>
 						<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" SelectedIndex="{Binding NewDrivePopupFileSystem}">
 							<ComboBoxItem ToolTip.Placement="Right" 
-							              ToolTip.Tip="Used on linux distributions, linux only.">Ext4</ComboBoxItem>
-							
-							<ComboBoxItem ToolTip.Placement="Right" 
 							              ToolTip.Tip="Universal, most operating systems support it. Can be used as a shared drive between different operating systems.">FAT32</ComboBoxItem>
-							
-							<ComboBoxItem ToolTip.Placement="Right"
-							              ToolTip.Tip="Used in Microsoft Windows operating systems, Windows only.">NTFS</ComboBoxItem>
 							
 							<ComboBoxItem ToolTip.Placement="Right"
 							              ToolTip.Tip="A read-only filesystem, used mostly on CDs for booting.">ISO</ComboBoxItem>

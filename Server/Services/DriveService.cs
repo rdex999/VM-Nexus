@@ -9,6 +9,7 @@ using DiscUtils.Ext;
 using DiscUtils.Fat;
 using DiscUtils.HfsPlus;
 using DiscUtils.Iso9660;
+using DiscUtils.Ntfs;
 using DiscUtils.Partitions;
 using DiscUtils.Raw;
 using DiscUtils.SquashFs;
@@ -16,6 +17,7 @@ using DiscUtils.Streams;
 using Server.Drives;
 using Shared;
 using Shared.Drives;
+using DriveType = Shared.Drives.DriveType;
 
 namespace Server.Services;
 
@@ -172,6 +174,74 @@ public class DriveService
 	}
 
 	/// <summary>
+	/// Creates a drive formatted with the given filesystem. Currently only FAT32 is supported.
+	/// </summary>
+	/// <param name="userId">The ID of the user to create the drive under. userId >= 1.</param>
+	/// <param name="name">The name of the new drive. name != null.</param>
+	/// <param name="sizeMb">The size of the drive to create, in MiB. Must be in valid range, according to filesystem limits.</param>
+	/// <param name="fileSystem">The filesystem to format the drive with.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. There is not such drive with the given name under the given user.
+	/// userId >= 1 &amp;&amp; name != null &amp;&amp; sizeMb in range according to filesystem. <br/>
+	/// Postcondition: On success, the drive is created and the returned exit code indicates success.
+	/// On failure, the drive is not created and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> CreateFileSystemDriveAsync(int userId, string name, int sizeMb, FileSystemType fileSystem)
+	{
+		long sizeBytes = sizeMb * 1024L * 1024L;
+		if (userId < 1 || sizeMb > SharedDefinitions.DriveSizeMbMax || sizeBytes < fileSystem.DriveSizeMin() || fileSystem != FileSystemType.Fat32)
+			return ExitCode.InvalidParameter;
+
+		ExitCode result = await _databaseService.CreateDriveAsync(userId, name, sizeMb, DriveType.Disk);
+		if (result != ExitCode.Success)
+			return result;
+		
+		int driveId = await GetDriveIdAsync(userId, name);		/* Must succeed because the drive was created successfully. */
+
+		FileStream image;
+		try
+		{
+			image = File.Create(GetDriveFilePath(driveId));
+		}
+		catch (Exception)
+		{
+			await _databaseService.DeleteDriveAsync(driveId);
+			return ExitCode.DriveDiskImageCreationFailed;
+		}
+
+		Geometry diskGeometry = Geometry.FromCapacity(sizeBytes);
+		long sectors = sizeBytes / diskGeometry.BytesPerSector;
+		
+		image.SetLength(sectors * diskGeometry.BytesPerSector);
+		await image.FlushAsync();
+		
+		try
+		{
+			switch (fileSystem)
+			{
+				case FileSystemType.Fat32:
+				{
+					using FatFileSystem fs = FatFileSystem.FormatPartition(image, string.Empty, diskGeometry, 0, (int)sectors, 0);
+					break;
+				}
+			}
+		}
+		catch (Exception)
+		{
+			await Task.WhenAll(
+				image.DisposeAsync().AsTask(),
+				_databaseService.DeleteDriveAsync(driveId)
+			);
+			
+			return ExitCode.DriveFormattingFailed;
+		}
+
+		await image.DisposeAsync();
+		return ExitCode.Success;
+	}
+
+	/// <summary>
 	/// Get the ID of a drive called name, owned by the given user.
 	/// </summary>
 	/// <param name="userId">The ID of the user to search the drive under. userId >= 1.</param>
@@ -306,7 +376,7 @@ public class DriveService
 		
 		Stream filesystemStream;
 		List<PathItem> items = new List<PathItem>();
-		if (drive.IsPartitioned)
+		if (IsDrivePartitioned(drive))
 		{
 			if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
 			{
@@ -387,8 +457,11 @@ public class DriveService
 			return (PartitionTableType)(-1);
 		}
 
+		Stream filesystemStream = drive.Content;
+		filesystemStream.Seek(0, SeekOrigin.Begin);
+		
 		PartitionTableType type = PartitionTableType.Unpartitioned;
-		if (drive.IsPartitioned)
+		if (IsDrivePartitioned(drive))
 		{
 			if (drive.Partitions is GuidPartitionTable)
 				type = PartitionTableType.GuidPartitionTable;
@@ -538,7 +611,7 @@ public class DriveService
 
 		DiscFileSystem? fileSystem = null;
 		string fileSystemPath;
-		if (drive.IsPartitioned)
+		if (IsDrivePartitioned(drive))
 		{
 			/* First part of the path should contain the partition index if the drive is partitioned. */
 			if (!int.TryParse(pathParts[0], out int partitionIndex) || partitionIndex < 0 || partitionIndex >= drive.Partitions.Count)
@@ -625,7 +698,7 @@ public class DriveService
 		
 		DiscFileSystem? fileSystem = null;
 		string fileSystemPath;
-		if (drive.IsPartitioned)
+		if (IsDrivePartitioned(drive))
 		{
 			/* First part of the path should contain the partition index if the drive is partitioned. */
 			if (!int.TryParse(pathParts[0], out int partitionIndex) || partitionIndex < 0 || partitionIndex >= drive.Partitions.Count)
@@ -684,6 +757,23 @@ public class DriveService
 	}
 
 	/// <summary>
+	/// Checks if the given drive is partitioned or not. <br/>
+	/// Do NOT use Disk.IsPartitioned - There is a bug in that, that is the reason this method exists.
+	/// </summary>
+	/// <param name="drive">The drive to check if partitioned. drive != null.</param>
+	/// <returns>True if the given drive is partitioned, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: drive != null. <br/>
+	/// Postcondition: Returns true if the given drive is partitioned, false otherwise.
+	/// </remarks>
+	private bool IsDrivePartitioned(Disk drive)
+	{
+		Stream filesystem = drive.Content;
+		filesystem.Seek(0, SeekOrigin.Begin);
+		return drive.IsPartitioned && GetStreamFileSystem(filesystem) == null;
+	}
+	
+	/// <summary>
 	/// Lists items under the given path in the given filesystem. (which is the given stream)
 	/// </summary>
 	/// <param name="stream">The stream representing the filesystem on the disk. stream != null.</param>
@@ -719,10 +809,10 @@ public class DriveService
 			try { accessed = fileSystem.GetLastAccessTime(filePath); } catch (Exception) { }
 			try { modified = fileSystem.GetLastWriteTime(filePath); } catch (Exception) { }
 			try { created = fileSystem.GetCreationTime(filePath); } catch (Exception) { }
-			
-			long sizeBytes = -1;
 
-			try { sizeBytes = fileSystem.GetFileLength(filePath); } catch (Exception) { }
+			ulong sizeBytes = ulong.MaxValue;
+
+			try { sizeBytes = (ulong)fileSystem.GetFileLength(filePath); } catch (Exception) { }
 			
 			items[index++] = new PathItemFile(
 				filePath.Split(SharedDefinitions.DirectorySeparators).Last(),

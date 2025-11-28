@@ -46,6 +46,8 @@ public enum ExitCode
 	DriveAlreadyExists,
 	DriveDoesntExist,
 	InvalidDriveSize,
+	DriveDiskImageCreationFailed,
+	DriveFormattingFailed,
 	UnsupportedFileSystem,
 	DriveConnectionAlreadyExists,
 	DriveConnectionDoesNotExist,

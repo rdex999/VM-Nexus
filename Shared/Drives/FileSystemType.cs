@@ -2,9 +2,7 @@ namespace Shared.Drives;
 
 public enum FileSystemType
 {
-    Ext4,
     Fat32,
-    Ntfs,
     Iso,
     Fat16,
 }
