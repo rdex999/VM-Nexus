@@ -348,7 +348,7 @@ public class DriveService
 	private void OnDriveDisconnected(object? sender, DriveConnection connection) =>
 		RemoveConnection(connection.DriveId, connection.VmId);
 	
-	private void OnDownloadItemDataReceived(object? sender, MessageInfoDownloadItemData data)
+	private void OnDownloadItemDataReceived(object? sender, MessageInfoDownloadData data)
 	{
 		if (_downloadingItems.TryGetValue(data.StreamId, out DownloadingItem? item))
 		{
@@ -372,28 +372,28 @@ public class DriveService
 		public event EventHandler? DataReceived;
 		public event EventHandler? OutOfMemory;
 		public Guid DownloadId { get; }
-		public long TotalSize { get; }
-		public long BytesDownloaded { get; private set; } = 0;
+		public ulong TotalSize { get; }
+		public ulong BytesDownloaded { get; private set; } = 0;
 		public bool IsDownloading { get; private set; } = true;
 		private readonly Stream _destination;
 
-		public DownloadingItem(Guid downloadId, long totalSize, Stream destination)
+		public DownloadingItem(Guid downloadId, ulong totalSize, Stream destination)
 		{
 			DownloadId = downloadId;
 			TotalSize = totalSize;
 			_destination = destination;
 		}
 		
-		public void ReceiveData(byte[] buffer, long offset)
+		public void ReceiveData(byte[] buffer, ulong offset)
 		{
 			if (!IsDownloading)
 				return;
 			
-			if (offset >= _destination.Length)
+			if (offset >= (ulong)_destination.Length)
 			{
 				try
 				{
-					_destination.SetLength(offset + 1);
+					_destination.SetLength((long)offset + 1);
 				}
 				catch (Exception)
 				{
@@ -404,10 +404,10 @@ public class DriveService
 				}
 			}
 			
-			_destination.Seek(offset, SeekOrigin.Begin);
+			_destination.Seek((long)offset, SeekOrigin.Begin);
 			_destination.Write(buffer);
 			
-			BytesDownloaded += buffer.Length;
+			BytesDownloaded += (ulong)buffer.Length;
 			if (BytesDownloaded == TotalSize)
 			{
 				IsDownloading = false;

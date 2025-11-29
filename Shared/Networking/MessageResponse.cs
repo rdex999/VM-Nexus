@@ -372,10 +372,10 @@ public class MessageResponseDownloadItem : MessageResponse
 {
 	public Status Result { get; }
 	public Guid StreamId { get; }
-	public long ItemSize { get; }
+	public ulong ItemSize { get; }
 
 	[JsonConstructor]
-	public MessageResponseDownloadItem(bool generateGuid, Guid requestId, Status result, Guid streamId, long itemSize)
+	public MessageResponseDownloadItem(bool generateGuid, Guid requestId, Status result, Guid streamId, ulong itemSize)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
@@ -388,7 +388,7 @@ public class MessageResponseDownloadItem : MessageResponse
 	{
 		Result = result;
 		StreamId = Guid.Empty;
-		ItemSize = -1;
+		ItemSize = ulong.MaxValue;
 	}
 	
 	public enum Status
@@ -398,7 +398,7 @@ public class MessageResponseDownloadItem : MessageResponse
 		Failure,
 	}
 
-	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (ItemSize > 0 || ItemSize == -1);
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
 public class MessageResponseDeleteItem : MessageResponse

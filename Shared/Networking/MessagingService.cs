@@ -984,3 +984,118 @@ public class MessagingService
 	{
 	}
 }
+
+public abstract class DownloadHandler
+{
+	public event EventHandler? Completed;
+	public event EventHandler? Failed; 
+	public Guid Id { get; private set; } = Guid.Empty;
+	public bool IsStarted => Id != Guid.Empty;
+	public bool IsDownloading { get; protected set; } = false;
+	public ulong Size { get; }
+	public ulong BytesReceived { get; protected set; } = 0;
+
+	public DownloadHandler(ulong size)
+	{
+		Size = size;
+	}
+
+	/// <summary>
+	/// Starts the download. Generates an ID for the download.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: Download is started and is identified now by a unique ID. ReceiveAsync methods can now be used.
+	/// </remarks>
+	public void Start() => Start(Guid.NewGuid());
+
+	/// <summary>
+	/// Starts the download. Sets the download ID to the given ID.
+	/// </summary>
+	/// <param name="id">The ID to identify this download with. id != null &amp;&amp; id != Guid.Empty.</param>
+	/// <remarks>
+	/// Precondition: id != null &amp;&amp; id != Guid.Empty. <br/>
+	/// Postcondition: Download is started and is identified by the given ID. ReceiveAsync methods can now be used.
+	/// </remarks>
+	public void Start(Guid id)
+	{
+		Id = id;
+		IsDownloading = true;
+	}
+
+	/// <summary>
+	/// Receives the received data. Receiving implementation varies by handler type.
+	/// </summary>
+	/// <param name="data">The received data. data != null.</param>
+	/// <remarks>
+	/// Precondition: Download data was received. data != null. <br/>
+	/// Postcondition: Data is received.
+	/// </remarks>
+	public async Task ReceiveAsync(MessageInfoDownloadData data) => await ReceiveAsync(data.Data, data.Offset);
+	
+	/// <summary>
+	/// Received the given data at the given offset. Receiving implementation varies by handler type.
+	/// </summary>
+	/// <param name="data">The received data. data != null.</param>
+	/// <param name="offset">The offset at which the received data belongs.</param>
+	/// <remarks>
+	/// Precondition: Download data was received. data != null. <br/>
+	/// Postcondition: Data is received.
+	/// </remarks>
+	public abstract Task ReceiveAsync(byte[] data, ulong offset);
+	
+	protected void RaiseCompleted() => Completed?.Invoke(this, EventArgs.Empty);
+	protected void RaiseFailed() => Failed?.Invoke(this, EventArgs.Empty);
+}
+
+public class DownloadHandlerFileSave : DownloadHandler
+{
+	private Stream _destination;
+	
+	public DownloadHandlerFileSave(ulong size, string filePath) 
+		: base(size)
+	{
+		_destination = new FileStream(filePath, FileMode.Create);
+	}
+
+	/// <summary>
+	/// Received the given data at the given offset. Writes data to file.
+	/// </summary>
+	/// <param name="data">The received data. data != null.</param>
+	/// <param name="offset">The offset at which the received data belongs.</param>
+	/// <remarks>
+	/// Precondition: Download data was received. data != null. <br/>
+	/// Postcondition: Data is received and written to the file.
+	/// </remarks>
+	public override async Task ReceiveAsync(byte[] data, ulong offset)
+	{
+		if (!IsDownloading)
+			return;
+		
+		if (offset >= (ulong)_destination.Length)
+		{
+			try
+			{
+				_destination.SetLength((long)offset + 1);
+			}
+			catch (Exception)
+			{
+				IsDownloading = false;
+				await _destination.DisposeAsync();
+				RaiseFailed();
+				return;
+			}
+		}
+
+		_destination.Seek((long)offset, SeekOrigin.Begin);
+		await _destination.WriteAsync(data);
+			
+		BytesReceived += (ulong)data.Length;
+		if (BytesReceived == Size)
+		{
+			IsDownloading = false;
+			await _destination.DisposeAsync();
+			RaiseCompleted();
+		}
+	}
+}

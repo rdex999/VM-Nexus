@@ -28,7 +28,7 @@ public class ClientService : MessagingService
 	public event EventHandler<MessageInfoItemDeleted>? ItemDeleted;
 	public event EventHandler<DriveConnection>? DriveConnected;
 	public event EventHandler<DriveConnection>? DriveDisconnected;
-	public event EventHandler<MessageInfoDownloadItemData>? DownloadItemDataReceived;
+	public event EventHandler<MessageInfoDownloadData>? DownloadItemDataReceived;
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -794,7 +794,7 @@ public class ClientService : MessagingService
 				);
 				break;
 			}
-			case MessageInfoDownloadItemData infoDownloadItemData:
+			case MessageInfoDownloadData infoDownloadItemData:
 			{
 				DownloadItemDataReceived?.Invoke(this, infoDownloadItemData);
 				break;

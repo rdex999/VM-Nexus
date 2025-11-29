@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Concurrent;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -9,6 +11,7 @@ using Shared;
 using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
+using DriveType = Shared.Drives.DriveType;
 using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Server.Models;
@@ -23,8 +26,8 @@ public sealed class ClientConnection : MessagingService
 	private readonly UserService _userService;
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
+	private readonly ConcurrentDictionary<Guid, DownloadHandler> _downloads;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
-
 	private int _streamVmId = -1;
 
 	/// <summary>
@@ -46,6 +49,7 @@ public sealed class ClientConnection : MessagingService
 		_userService = userService;
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
+		_downloads = new ConcurrentDictionary<Guid, DownloadHandler>();
 		ClientId = Guid.NewGuid();
 
 		Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -654,7 +658,7 @@ public sealed class ClientConnection : MessagingService
 			
 				Guid streamGuid = Guid.NewGuid();
 				SendResponse(new MessageResponseDownloadItem(true, reqDownloadItem.Id, 
-					MessageResponseDownloadItem.Status.Success, streamGuid, stream.Stream.Length)
+					MessageResponseDownloadItem.Status.Success, streamGuid, (ulong)stream.Stream.Length)
 				);
 
 				/* 30 MiB/sec */
@@ -665,7 +669,7 @@ public sealed class ClientConnection : MessagingService
 					
 					await stream.Stream.ReadExactlyAsync(buffer, 0, readSize);
 					
-					SendInfo(new MessageInfoDownloadItemData(true, streamGuid, stream.Stream.Position - buffer.Length, buffer[..readSize]));
+					SendInfo(new MessageInfoDownloadData(true, streamGuid, (ulong)(stream.Stream.Position - buffer.Length), buffer[..readSize]));
 					await Task.Delay(100);
 				}
 				
