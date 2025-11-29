@@ -308,7 +308,7 @@ public static class Common
 	/// </remarks>
 	public static bool IsPathToDrive(string path)
 	{
-		string trimmedPath = path.Trim(SharedDefinitions.DirectorySeparators);
+		string trimmedPath = path.Trim().Trim(SharedDefinitions.DirectorySeparators);
 		string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
 
 		return pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0]));

@@ -248,12 +248,35 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests to create a drive formatted with the given file system.
+	/// </summary>
+	/// <param name="name">The name of the new drive. Must be unique for the user. name != null.</param>
+	/// <param name="sizeMb">The size of the drive to create, in MiB. Must be in valid range for the filesystem.</param>
+	/// <param name="fileSystem">The file system to format the drive with. Must be a supported file system. (currently only FAT32) </param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. User is logged in. The given name must be unique for the user.
+	/// The given drive size must be in valid range for the file system. The given file system must be supported. name != null. <br/>
+	/// Postcondition: On success, the drive is created and the returned status indicates success.
+	/// On failure, the drive is not created and the returned status indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseCreateDriveFs.Status> CreateDriveFsAsync(string name, int sizeMb,
+		FileSystemType fileSystem)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDriveFs(true, name, sizeMb, fileSystem));
+		if (result != ExitCode.Success) 
+			return MessageResponseCreateDriveFs.Status.Failure;
+
+		return ((MessageResponseCreateDriveFs)response!).Result;
+	}
+	
+	/// <summary>
 	/// Requests the server to create a drive with the given parameters.
 	/// </summary>
 	/// <param name="name">The name of the drive. Must be unique for the user. name != null.</param>
 	/// <param name="size">The size of the drive in MiB. size >= 1.</param>
 	/// <param name="operatingSystem">The operating system to install on the drive.</param>
-	/// <returns>A status indicating the result of the operation.</returns>
+	/// <returns>The servers response, or null on networking failure.</returns>
 	/// <remarks>
 	/// Precondition: Service fully initialized and connected to the server. User is logged in. name != null &amp;&amp; size >= 1.<br/>
 	/// Postcondition: On success, the drive is created and the servers response is returned. <br/>

@@ -8,6 +8,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -55,6 +56,9 @@ public partial class DrivesViewModel : DriveExplorerMode
 		
 	[ObservableProperty]
 	private string _newDrivePopupIsoPath = string.Empty;
+
+	[ObservableProperty] 
+	private string _newDrivePopupCreateError = string.Empty;
 
 	private IStorageFile? _newDrivePopupIso;
 	
@@ -302,8 +306,15 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// Postcondition: The new drive creation popup is opened.
 	/// </remarks>
 	[RelayCommand]
-	private void CreateNewDriveClick() => NewDrivePopupIsOpen = true;
-	
+	private void CreateNewDriveClick()
+	{
+		NewDrivePopupCreateError = string.Empty;
+		NewDrivePopupIsoPath = string.Empty;
+		_newDrivePopupIso?.Dispose();
+		_newDrivePopupIso = null;
+		NewDrivePopupIsOpen = true;
+	}
+
 	/// <summary>
 	/// Either closes the Create New Drive popup, or called after it is closed.
 	/// </summary>
@@ -312,7 +323,12 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// Postcondition: The Create New Drive popup is closed.
 	/// </remarks>
 	[RelayCommand]
-	private void CloseNewDrivePopup() => NewDrivePopupIsOpen = false;
+	private void CloseNewDrivePopup()
+	{
+		_newDrivePopupIso?.Dispose();
+		_newDrivePopupIso = null;
+		NewDrivePopupIsOpen = false;
+	}
 
 	/// <summary>
 	/// Handles a click on the select ISO button on the drive creation popup.
@@ -356,10 +372,36 @@ public partial class DrivesViewModel : DriveExplorerMode
 		NewDrivePopupIsoPath = _newDrivePopupIso.Path.LocalPath;
 	}
 
+	/// <summary>
+	/// Handles a click on the create button on the drive creation popup. Attempts to create the drive.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the create button on the drive creation popup. Drive settings are valid. <br/>
+	/// Postcondition: On success, the drive is created and the popup in closed. On failure, an error message is displayed.
+	/// </remarks>
 	[RelayCommand]
 	private async Task NewDrivePopupCreateClickAsync()
 	{
-		
+		if (NewDrivePopupSizeMb == null)
+			return;
+
+		string name = NewDrivePopupName.Trim();
+		NewDrivePopupCreateError = string.Empty;
+
+		if (NewDrivePopupFileSystem != FileSystemType.Iso)
+		{
+			MessageResponseCreateDriveFs.Status result = await ClientSvc.CreateDriveFsAsync(name, NewDrivePopupSizeMb.Value, NewDrivePopupFileSystem);
+			if (result == MessageResponseCreateDriveFs.Status.Success)
+			{
+				CloseNewDrivePopup();
+				return;
+			}
+
+			if (result == MessageResponseCreateDriveFs.Status.DriveAlreadyExists)
+				NewDrivePopupCreateError = $"A drive called \"{name}\" already exists.";
+			else
+				NewDrivePopupCreateError = "Creating the drive has failed. Try again later.";
+		}
 	}
 }
 

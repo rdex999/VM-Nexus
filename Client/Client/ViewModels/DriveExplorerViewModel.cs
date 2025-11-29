@@ -367,7 +367,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	private void OnItemDeleted(object? sender, MessageInfoItemDeleted info)
 	{
 		/* DrivesView handles drive deletions. */
-		if (Common.IsPathToDrive(info.Path) && PathParts.Count >= 1)
+		if (Common.IsPathToDrive(info.Path) && PathParts.Count == 0)		/* If a drive was deleted, and were in DrivesView */
 			return;
 
 		string deletedPath = info.Path.Trim().Trim(SharedDefinitions.DirectorySeparators);

@@ -91,12 +91,16 @@
 						<TextBlock Grid.Column="2" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding NewDrivePopupIsoPath}"/>
 					</Grid>
 				</StackPanel>
-				
-				<Button Grid.Row="1" HorizontalAlignment="Center" CornerRadius="10" Classes="light"
-				        FontWeight="DemiBold" FontSize="16" Command="{Binding NewDrivePopupCreateClickCommand}"
-				        IsEnabled="{Binding NewDrivePopupCreateIsEnabled}">
-					Create
-				</Button>
+
+				<StackPanel Grid.Row="1" Spacing="10">
+					<TextBlock Text="{Binding NewDrivePopupCreateError}" Classes="error" TextWrapping="Wrap"/>
+					
+					<Button HorizontalAlignment="Center" CornerRadius="10" Classes="light"
+					        FontWeight="DemiBold" FontSize="16" Command="{Binding NewDrivePopupCreateClickCommand}"
+					        IsEnabled="{Binding NewDrivePopupCreateIsEnabled}">
+						Create
+					</Button>
+				</StackPanel>
 			</Grid>
 		</templated:OverlayPopup>
 		
