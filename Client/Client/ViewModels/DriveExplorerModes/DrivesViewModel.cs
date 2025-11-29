@@ -8,7 +8,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
-using Avalonia.Threading;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -39,6 +38,12 @@ public partial class DrivesViewModel : DriveExplorerMode
 	[ObservableProperty]
 	private string _newDrivePopupName = string.Empty;
 
+	[ObservableProperty] 
+	private bool _newDrivePopupNameValid = false;
+
+	[ObservableProperty]
+	private string _newDrivePopupNameError = string.Empty;
+	
 	[ObservableProperty] 
 	private int? _newDrivePopupSizeMb = 0;
 
@@ -218,31 +223,55 @@ public partial class DrivesViewModel : DriveExplorerMode
 	}
 
 	/// <summary>
-	/// Called when validating the drive size input field is needed. (After it's changed for example)
+	/// Called when validating the drive creation popup input fields is needed.
 	/// </summary>
 	/// <remarks>
-	/// Precondition: Validating the drive size input field in the drive creation popup is required. (For example, after the user has changed the value) <br/>
-	/// Postcondition: If the drive size in valid, the create button is enabled. If invalid, the create button is disabled and an error indication is shown.
+	/// Precondition: Validating the drive creation popup input fields is needed. (For example after a field was changed)
+	/// Postcondition: If all fields are valid, the create button is enabled. For each invalid field, an error is displayed.
 	/// </remarks>
-	private void ValidateNewDrivePopupSize()
+	private void ValidateNewDrivePopupFields()
 	{
+		string name = NewDrivePopupName.Trim();
+		bool isNameValid = false;
+		if (string.IsNullOrEmpty(name))
+			NewDrivePopupNameError = "Drive name must not be empty.";
+		else if (_driveService.DriveExists(name))
+			NewDrivePopupNameError = $"A drive called \"{name}\" already exists.";
+		else
+		{
+			isNameValid = true;
+			NewDrivePopupNameError = string.Empty;
+		}
+
+		NewDrivePopupNameValid = isNameValid;
+		
 		bool isValidSize = NewDrivePopupSizeMb != null && NewDrivePopupFileSystem != FileSystemType.Iso
 		                   && (long)NewDrivePopupSizeMb * 1024L * 1024L >= NewDrivePopupFileSystem.DriveSizeMin() 
 		                   && NewDrivePopupSizeMb <= SharedDefinitions.DriveSizeMbMax;
 		
-		NewDrivePopupCreateIsEnabled = isValidSize;
 		NewDrivePopupSizeError = !isValidSize;
+		NewDrivePopupCreateIsEnabled = isValidSize && isNameValid;
 	}
 
 	/// <summary>
-	/// Called each time the value of the drive size field in the drive creation popup is changed. Validates the new size.
+	/// Called each time the value of the drive name field in the drive creation popup is changed. Validates the input fields.
+	/// </summary>
+	/// <param name="value">Unused.</param>
+	/// <remarks>
+	/// Precondition: The user has changed the name fields in the drive creation popup. <br/>
+	/// Postcondition: If all fields are valid, the create button is enabled. For each invalid field, an error is displayed.
+	/// </remarks>
+	partial void OnNewDrivePopupNameChanged(string value) => ValidateNewDrivePopupFields();
+	
+	/// <summary>
+	/// Called each time the value of the drive size field in the drive creation popup is changed. Validates the input fields.
 	/// </summary>
 	/// <param name="value">Unused.</param>
 	/// <remarks>
 	/// Precondition: The user has changed the value of the drive size in the drive creation popup. <br/>
-	/// Postcondition: If the drive size in valid, the create button is enabled. If invalid, the create button is disabled and an error indication is shown.
+	/// Postcondition: If all fields are valid, the create button is enabled. For each invalid field, an error is displayed.
 	/// </remarks>
-	partial void OnNewDrivePopupSizeMbChanged(int? value) => ValidateNewDrivePopupSize();
+	partial void OnNewDrivePopupSizeMbChanged(int? value) => ValidateNewDrivePopupFields();
 
 	/// <summary>
 	/// Executed each time after NewDrivePopupFileSystem has changed. Makes ISO image file selection is visible if needed.
@@ -254,7 +283,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// </remarks>
 	partial void OnNewDrivePopupFileSystemChanged(FileSystemType value)
 	{
-		ValidateNewDrivePopupSize();
+		ValidateNewDrivePopupFields();
 		NewDrivePopupIsoIsVisible = value == FileSystemType.Iso;
 	}
 
@@ -308,11 +337,13 @@ public partial class DrivesViewModel : DriveExplorerMode
 	[RelayCommand]
 	private void CreateNewDriveClick()
 	{
+		NewDrivePopupName = string.Empty;
 		NewDrivePopupCreateError = string.Empty;
 		NewDrivePopupIsoPath = string.Empty;
 		_newDrivePopupIso?.Dispose();
 		_newDrivePopupIso = null;
 		NewDrivePopupIsOpen = true;
+		ValidateNewDrivePopupFields();
 	}
 
 	/// <summary>

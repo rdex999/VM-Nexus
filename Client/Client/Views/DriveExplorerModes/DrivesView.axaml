@@ -62,7 +62,16 @@
 		                        ClosedCommand="{Binding CloseNewDrivePopupCommand}">
 			<Grid RowDefinitions="*, Auto" Margin="0, 10, 0, 0">
 				<StackPanel Spacing="20" HorizontalAlignment="Stretch">
-					<TextBox Watermark="Drive name" Text="{Binding NewDrivePopupName}"/>
+					<StackPanel Spacing="8">
+						<TextBox Watermark="Drive name"
+						         Text="{Binding NewDrivePopupName}"
+						         Classes.error="{Binding !NewDrivePopupNameValid}" 
+						         Classes.success="{Binding NewDrivePopupNameValid}"/>
+						
+						<TextBlock Classes="error"
+							Text="{Binding NewDrivePopupNameError}" 
+							IsVisible="{Binding !NewDrivePopupNameValid}"/>
+					</StackPanel>
 
 					<Grid ColumnDefinitions="*, *" IsVisible="{Binding !NewDrivePopupIsoIsVisible}">
 						<TextBlock VerticalAlignment="Center" Classes="form">Size (MiB)</TextBlock>

@@ -126,6 +126,8 @@ public class DriveService
 		return null;
 	}
 
+	public bool DriveExists(string name) => GetDriveByName(name) != null;
+
 	public DriveGeneralDescriptor[]? GetDrivesOnVirtualMachine(int vmId)
 	{
 		if (vmId < 1) return null;
