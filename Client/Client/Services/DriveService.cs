@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Shared;
@@ -23,8 +22,6 @@ public class DriveService
 	private readonly ConcurrentDictionary<int, HashSet<int>> _vmsByDriveId;
 	private readonly ConcurrentDictionary<int, HashSet<int>> _drivesByVmId;
 
-	private readonly ConcurrentDictionary<Guid, DownloadingItem> _downloadingItems;
-	
 	public DriveService(ClientService clientService)
 	{
 		_clientService = clientService;
@@ -32,7 +29,6 @@ public class DriveService
 		_drives = new ConcurrentDictionary<int, DriveGeneralDescriptor>();
 		_vmsByDriveId = new ConcurrentDictionary<int, HashSet<int>>();
 		_drivesByVmId = new ConcurrentDictionary<int, HashSet<int>>();
-		_downloadingItems = new ConcurrentDictionary<Guid, DownloadingItem>();
 		
 		_clientService.VmCreated += OnVmCreated;
 		_clientService.VmDeleted += OnVmDeleted;
@@ -43,7 +39,6 @@ public class DriveService
 		_clientService.ItemDeleted += OnItemDeleted;
 		_clientService.DriveConnected += OnDriveConnected;
 		_clientService.DriveDisconnected += OnDriveDisconnected;
-		_clientService.DownloadItemDataReceived += OnDownloadItemDataReceived;
 	}
 
 	public async Task<ExitCode> InitializeAsync()
@@ -179,32 +174,6 @@ public class DriveService
 	public async Task<PathItem[]?> ListItemsOnDrivePathAsync(int driveId, string path)
 	{
 		return await _clientService.ListItemsOnDrivePathAsync(driveId, path);
-	}
-
-	public async Task<DownloadingItem?> DownloadItemAsync(int driveId, string path, string downloadPath)
-	{
-		try
-		{
-			Stream stream = File.Open(downloadPath, FileMode.Create, FileAccess.Write);
-			return await DownloadItemAsync(driveId, path, stream);
-		}
-		catch (Exception)
-		{
-			return null;
-		}
-	}
-
-	public async Task<DownloadingItem?> DownloadItemAsync(int driveId, string path, Stream destination)
-	{
-		MessageResponseDownloadItem? response = await _clientService.StartItemDownloadAsync(driveId, path);
-		if (response == null || response.Result != MessageResponseDownloadItem.Status.Success)
-			return null;
-		
-		DownloadingItem item = new DownloadingItem(response.StreamId, response.ItemSize, destination);
-		item.OutOfMemory += DownloadingItemOnOutOfMemory;
-		_downloadingItems.TryAdd(response.StreamId, item);
-
-		return item;
 	}
 
 	private async Task<ExitCode> FetchVmsAsync()
@@ -347,74 +316,4 @@ public class DriveService
 
 	private void OnDriveDisconnected(object? sender, DriveConnection connection) =>
 		RemoveConnection(connection.DriveId, connection.VmId);
-	
-	private void OnDownloadItemDataReceived(object? sender, MessageInfoDownloadData data)
-	{
-		if (_downloadingItems.TryGetValue(data.StreamId, out DownloadingItem? item))
-		{
-			item.ReceiveData(data.Data, data.Offset);
-
-			if (!item.IsDownloading)
-				_downloadingItems.Remove(data.StreamId, out _);
-		}
-	}
-	
-	private void DownloadingItemOnOutOfMemory(object? sender, EventArgs e)
-	{
-		if (sender == null || sender is not DownloadingItem item)
-			return;
-		
-		_downloadingItems.TryRemove(item.DownloadId, out _);
-	}
-	
-	public class DownloadingItem
-	{
-		public event EventHandler? DataReceived;
-		public event EventHandler? OutOfMemory;
-		public Guid DownloadId { get; }
-		public ulong TotalSize { get; }
-		public ulong BytesDownloaded { get; private set; } = 0;
-		public bool IsDownloading { get; private set; } = true;
-		private readonly Stream _destination;
-
-		public DownloadingItem(Guid downloadId, ulong totalSize, Stream destination)
-		{
-			DownloadId = downloadId;
-			TotalSize = totalSize;
-			_destination = destination;
-		}
-		
-		public void ReceiveData(byte[] buffer, ulong offset)
-		{
-			if (!IsDownloading)
-				return;
-			
-			if (offset >= (ulong)_destination.Length)
-			{
-				try
-				{
-					_destination.SetLength((long)offset + 1);
-				}
-				catch (Exception)
-				{
-					IsDownloading = false;
-					_destination.Dispose();
-					OutOfMemory?.Invoke(this, EventArgs.Empty);
-					return;
-				}
-			}
-			
-			_destination.Seek((long)offset, SeekOrigin.Begin);
-			_destination.Write(buffer);
-			
-			BytesDownloaded += (ulong)buffer.Length;
-			if (BytesDownloaded == TotalSize)
-			{
-				IsDownloading = false;
-				_destination.Dispose();
-			}
-			
-			DataReceived?.Invoke(this, EventArgs.Empty);
-		}
-	}
 }

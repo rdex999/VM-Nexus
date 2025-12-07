@@ -158,12 +158,12 @@ public partial class DriveExplorerViewModel : ViewModelBase
 				return;
 			
 			stream = await file.OpenWriteAsync();
-			await _driveService.DownloadItemAsync(driveId, path, stream);
+			await ClientSvc.StartItemDownloadAsync(driveId, path, stream);
 		}
 		else
 		{
 			string destinationPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Downloads/" + suggestedFileName;
-			await _driveService.DownloadItemAsync(driveId, path, destinationPath);
+			await ClientSvc.StartItemDownloadAsync(driveId, path, destinationPath);
 		}
 		
 		if (file != null)

@@ -25,6 +25,7 @@ public class MessagingService
 	protected bool IsUdpMessagingRunning = false;
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
 	private readonly Dictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
+	private readonly ConcurrentDictionary<Guid, DownloadHandler> _incomingDownloads;
 	private const int DatagramSize = 1200;
 
 	private struct UdpPacket
@@ -262,6 +263,7 @@ public class MessagingService
 		_messageTcpAvailable = new ManualResetEventSlim(false);
 		_messageUdpAvailable = new ManualResetEventSlim(false);
 		_incomingUdpMessages = new Dictionary<Guid, IncomingMessageUdp>();
+		_incomingDownloads = new ConcurrentDictionary<Guid, DownloadHandler>();
 	}
 
 	/// <summary>
@@ -573,7 +575,42 @@ public class MessagingService
 			}
 		}
 	}
-	
+
+	/// <summary>
+	/// Adds the given started download to the incoming downloads.
+	/// </summary>
+	/// <param name="handler">The started download. handler != null.</param>
+	/// <remarks>
+	/// Precondition: The given download handler was started. handler != null. <br/>
+	/// Postcondition: Download is added to the incoming downloads and will receive data.
+	/// </remarks>
+	protected void AddDownload(DownloadHandler handler)
+	{
+		if (_incomingDownloads.ContainsKey(handler.Id))
+			return;
+		
+		_incomingDownloads.TryAdd(handler.Id, handler);
+		handler.Completed += DownloadHandlerOnCompletedOrFailed;
+		handler.Failed += DownloadHandlerOnCompletedOrFailed;
+	}
+
+	/// <summary>
+	/// Handles both download completed and failed events. Removes the download from the incoming downloads.
+	/// </summary>
+	/// <param name="sender">The download that has ended. sender != null &amp;&amp; sender is DownloadHandler.</param>
+	/// <param name="e">Unused.</param>
+	/// <remarks>
+	/// Precondition: A download has either completed or failed. sender != null &amp;&amp; sender is DownloadHandler. <br/>
+	/// Postcondition: The download is removed from the incoming downloads.
+	/// </remarks>
+	private void DownloadHandlerOnCompletedOrFailed(object? sender, EventArgs e)
+	{
+		if (sender == null || sender is not DownloadHandler handler)
+			return;
+		
+		_incomingDownloads.TryRemove(handler.Id, out _);
+	}
+
 	/// <summary>
 	/// Sends a request to the other side (client/server) and waits for the response.
 	/// </summary>
@@ -914,6 +951,21 @@ public class MessagingService
 	/// </remarks>
 	protected virtual async Task ProcessInfoAsync(Message info)
 	{
+		switch (info)
+		{
+			case MessageInfoDownloadData downloadData:
+			{
+				if (!_incomingDownloads.TryGetValue(downloadData.StreamId, out DownloadHandler? handler))
+					return;
+
+				await handler.ReceiveAsync(downloadData);
+			
+				if (!handler.IsDownloading)	
+					DownloadHandlerOnCompletedOrFailed(handler, EventArgs.Empty);
+				
+				break;
+			}
+		}
 	}
 	
 	/// <summary>
@@ -1056,6 +1108,12 @@ public class DownloadHandlerFileSave : DownloadHandler
 		: base(size)
 	{
 		_destination = new FileStream(filePath, FileMode.Create);
+	}
+
+	public DownloadHandlerFileSave(ulong size, Stream destination)
+		: base(size)
+	{
+		_destination = destination;
 	}
 
 	/// <summary>

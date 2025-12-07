@@ -1,8 +1,8 @@
 using System;
 using System.Drawing;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Input;
 using Shared;
@@ -28,7 +28,6 @@ public class ClientService : MessagingService
 	public event EventHandler<MessageInfoItemDeleted>? ItemDeleted;
 	public event EventHandler<DriveConnection>? DriveConnected;
 	public event EventHandler<DriveConnection>? DriveDisconnected;
-	public event EventHandler<MessageInfoDownloadData>? DownloadItemDataReceived;
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -396,20 +395,64 @@ public class ClientService : MessagingService
 	/// </summary>
 	/// <param name="driveId">The drive that holds the needed item. driveId >= 1.</param>
 	/// <param name="path">The path on the drive, which points to the needed item. Use an empty string for the drive's disk image. path != null.</param>
-	/// <returns>The servers response, or null on networking failure.</returns>
+	/// <param name="destination">The destination path, where to save the item to. destination != null.</param>
+	/// <returns>A download handler that handles the download, and can be used to track progress. Returns null on failure.</returns>
 	/// <remarks>
-	/// Precondition: Service fully initialized and connected to the server, user is logged in. driveId >= 1 &amp;&amp; path != null. <br/>
-	/// Postcondition: The server's response is returned, or null on networking failure. <br/>
-	/// On success, a download will start and DownloadItemDataReceived will be raised for each piece of data received.
-	/// On failure (not including networking failure) the server's response will state the error.
+	/// Precondition: Service fully initialized and connected to the server, user is logged in. driveId >= 1 &amp;&amp; path != null. &amp;&amp; destination != null.<br/>
+	/// Postcondition: A download handler is returned, or null on failure.
 	/// </remarks>
-	public async Task<MessageResponseDownloadItem?> StartItemDownloadAsync(int driveId, string path)
+	public async Task<DownloadHandlerFileSave?> StartItemDownloadAsync(int driveId, string path, string destination)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDownloadItem(true, driveId, path));
 		if (result != ExitCode.Success)
 			return null;
+
+		MessageResponseDownloadItem res = (MessageResponseDownloadItem)response!;
+		if (res.Result != MessageResponseDownloadItem.Status.Success)
+			return null;
 		
-		return (MessageResponseDownloadItem)response!;
+		DownloadHandlerFileSave handler;
+		try
+		{
+			handler = new DownloadHandlerFileSave(res.ItemSize, destination);
+		}
+		catch (Exception)
+		{
+			return null;
+		}
+		
+		handler.Start(res.StreamId);
+		AddDownload(handler);
+
+		return handler;
+	}
+
+	/// <summary>
+	/// Requests to start a download of the given item.
+	/// </summary>
+	/// <param name="driveId">The drive that holds the needed item. driveId >= 1.</param>
+	/// <param name="path">The path on the drive, which points to the needed item. Use an empty string for the drive's disk image. path != null.</param>
+	/// <param name="destination">The stream to write the item's content to. Must be writable. destination != null.</param>
+	/// <returns>A download handler that handles the download, and can be used to track progress. Returns null on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server, user is logged in. driveId >= 1 &amp;&amp; path != null. &amp;&amp; destination != null. <br/>
+	/// Postcondition: A download handler is returned, or null on failure.
+	/// </remarks>
+	public async Task<DownloadHandlerFileSave?> StartItemDownloadAsync(int driveId, string path, Stream destination)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDownloadItem(true, driveId, path));
+		if (result != ExitCode.Success)
+			return null;
+
+		MessageResponseDownloadItem res = (MessageResponseDownloadItem)response!;
+		if (res.Result != MessageResponseDownloadItem.Status.Success)
+			return null;
+		
+		DownloadHandlerFileSave handler = new DownloadHandlerFileSave(res.ItemSize, destination);
+		handler.Start(res.StreamId);
+		AddDownload(handler);
+
+		return handler;
 	}
 
 	/// <summary>
@@ -792,11 +835,6 @@ public class ClientService : MessagingService
 				DriveDisconnected?.Invoke(this,
 					new DriveConnection(infoDriveDisconnected.DriveId, infoDriveDisconnected.VmId)
 				);
-				break;
-			}
-			case MessageInfoDownloadData infoDownloadItemData:
-			{
-				DownloadItemDataReceived?.Invoke(this, infoDownloadItemData);
 				break;
 			}
 		}

@@ -661,6 +661,8 @@ public sealed class ClientConnection : MessagingService
 					MessageResponseDownloadItem.Status.Success, streamGuid, (ulong)stream.Stream.Length)
 				);
 
+				await Task.Delay(500);
+				
 				/* 30 MiB/sec */
 				byte[] buffer = new byte[Math.Min(30 * 1024 * 1024 / 10, stream.Stream.Length)];
 				while (stream.Stream.Position < stream.Stream.Length)
