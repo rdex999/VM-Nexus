@@ -8,6 +8,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -64,6 +65,12 @@ public partial class DrivesViewModel : DriveExplorerMode
 
 	[ObservableProperty] 
 	private string _newDrivePopupCreateError = string.Empty;
+
+	[ObservableProperty] 
+	private double _newDrivePopupIsoUploadProgress;
+
+	[ObservableProperty] 
+	private bool _newDrivePopupUploadingIso = false;
 
 	private IStorageFile? _newDrivePopupIso;
 	
@@ -229,7 +236,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// Precondition: Validating the drive creation popup input fields is needed. (For example after a field was changed)
 	/// Postcondition: If all fields are valid, the create button is enabled. For each invalid field, an error is displayed.
 	/// </remarks>
-	private void ValidateNewDrivePopupFields()
+	private async Task ValidateNewDrivePopupFieldsAsync()
 	{
 		string name = NewDrivePopupName.Trim();
 		bool isNameValid = false;
@@ -244,10 +251,20 @@ public partial class DrivesViewModel : DriveExplorerMode
 		}
 
 		NewDrivePopupNameValid = isNameValid;
-		
-		bool isValidSize = NewDrivePopupSizeMb != null && NewDrivePopupFileSystem != FileSystemType.Iso
-		                   && (long)NewDrivePopupSizeMb * 1024L * 1024L >= NewDrivePopupFileSystem.DriveSizeMin() 
-		                   && NewDrivePopupSizeMb <= SharedDefinitions.DriveSizeMbMax;
+
+		bool isValidSize;
+		if (_newDrivePopupIso == null)
+		{
+			isValidSize = NewDrivePopupSizeMb != null 
+			              && (long)NewDrivePopupSizeMb * 1024L * 1024L >= NewDrivePopupFileSystem.DriveSizeMin() 
+			              && NewDrivePopupSizeMb <= SharedDefinitions.DriveSizeMbMax;
+		}
+		else
+		{
+			await using Stream iso = await _newDrivePopupIso.OpenReadAsync();
+			long isoSize = iso.Length;
+			isValidSize = isoSize >= NewDrivePopupFileSystem.DriveSizeMin() && isoSize / 1024 / 1024 <= SharedDefinitions.DriveSizeMbMax;
+		}
 		
 		NewDrivePopupSizeError = !isValidSize;
 		NewDrivePopupCreateIsEnabled = isValidSize && isNameValid;
@@ -261,7 +278,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// Precondition: The user has changed the name fields in the drive creation popup. <br/>
 	/// Postcondition: If all fields are valid, the create button is enabled. For each invalid field, an error is displayed.
 	/// </remarks>
-	partial void OnNewDrivePopupNameChanged(string value) => ValidateNewDrivePopupFields();
+	partial void OnNewDrivePopupNameChanged(string value) => _ = ValidateNewDrivePopupFieldsAsync();
 	
 	/// <summary>
 	/// Called each time the value of the drive size field in the drive creation popup is changed. Validates the input fields.
@@ -271,7 +288,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// Precondition: The user has changed the value of the drive size in the drive creation popup. <br/>
 	/// Postcondition: If all fields are valid, the create button is enabled. For each invalid field, an error is displayed.
 	/// </remarks>
-	partial void OnNewDrivePopupSizeMbChanged(int? value) => ValidateNewDrivePopupFields();
+	partial void OnNewDrivePopupSizeMbChanged(int? value) => _ = ValidateNewDrivePopupFieldsAsync();
 
 	/// <summary>
 	/// Executed each time after NewDrivePopupFileSystem has changed. Makes ISO image file selection is visible if needed.
@@ -283,7 +300,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// </remarks>
 	partial void OnNewDrivePopupFileSystemChanged(FileSystemType value)
 	{
-		ValidateNewDrivePopupFields();
+		_ = ValidateNewDrivePopupFieldsAsync();
 		NewDrivePopupIsoIsVisible = value == FileSystemType.Iso;
 	}
 
@@ -343,7 +360,8 @@ public partial class DrivesViewModel : DriveExplorerMode
 		_newDrivePopupIso?.Dispose();
 		_newDrivePopupIso = null;
 		NewDrivePopupIsOpen = true;
-		ValidateNewDrivePopupFields();
+		NewDrivePopupUploadingIso = false;
+		_ = ValidateNewDrivePopupFieldsAsync();
 	}
 
 	/// <summary>
@@ -356,6 +374,9 @@ public partial class DrivesViewModel : DriveExplorerMode
 	[RelayCommand]
 	private void CloseNewDrivePopup()
 	{
+		if (NewDrivePopupUploadingIso)
+			return;
+		
 		_newDrivePopupIso?.Dispose();
 		_newDrivePopupIso = null;
 		NewDrivePopupIsOpen = false;
@@ -401,6 +422,8 @@ public partial class DrivesViewModel : DriveExplorerMode
 		
 		NewDrivePopupIsoSize = sizeMib >= 1024 ? $"{sizeGib:0.##} GiB" : $"{sizeMib:0.##} MiB";
 		NewDrivePopupIsoPath = _newDrivePopupIso.Path.LocalPath;
+		
+		await ValidateNewDrivePopupFieldsAsync();
 	}
 
 	/// <summary>
@@ -421,6 +444,34 @@ public partial class DrivesViewModel : DriveExplorerMode
 
 		if (NewDrivePopupFileSystem == FileSystemType.Iso)
 		{
+			if (_newDrivePopupIso == null)
+			{
+				CloseNewDrivePopup();
+				return;
+			}
+
+			Stream isoImage = await _newDrivePopupIso.OpenReadAsync();		/* uploadHandler disposes isoImage */
+			MessagingService.UploadHandler? uploadHandler = await ClientSvc.CreateDriveCdromAsync(NewDrivePopupName.Trim(), isoImage);
+			if (uploadHandler == null)
+			{
+				NewDrivePopupCreateError = "Creating the drive has failed. Try again later.";
+				return;
+			}
+
+			NewDrivePopupUploadingIso = true;
+			NewDrivePopupIsoUploadProgress = 0.0;
+
+			uploadHandler.DataReceived += (sender, _) =>
+			{
+				if (sender == null || sender is not MessagingService.TransferHandler handler)
+					return;
+
+				Dispatcher.UIThread.Post(() => 
+					NewDrivePopupIsoUploadProgress = ((double)handler.BytesReceived / handler.Size) * 100.0
+				);
+			};
+
+			await uploadHandler.UploadTask;
 		}
 		else
 		{

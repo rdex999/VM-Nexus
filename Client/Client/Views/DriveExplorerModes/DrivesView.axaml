@@ -109,6 +109,9 @@
 					        IsEnabled="{Binding NewDrivePopupCreateIsEnabled}">
 						Create
 					</Button>
+					
+					<ProgressBar Value="{Binding NewDrivePopupIsoUploadProgress}" Margin="20, 5, 20, 0"
+					             IsVisible="{Binding NewDrivePopupUploadingIso}"/>
 				</StackPanel>
 			</Grid>
 		</templated:OverlayPopup>

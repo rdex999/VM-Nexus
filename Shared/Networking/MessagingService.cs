@@ -1061,6 +1061,7 @@ public class MessagingService
 		public event EventHandler? Completed;
 		public event EventHandler? Failed;
 		public event EventHandler? Ended;			/* Invoked on both Completed and Failed. */
+		public event EventHandler? DataReceived; 
 		public Guid Id { get; private set; } = Guid.Empty;
 		public bool IsStarted => Id != Guid.Empty;
 		public bool IsDownloading { get; protected set; } = false;
@@ -1132,6 +1133,15 @@ public class MessagingService
 			Failed?.Invoke(this, EventArgs.Empty);
 			Ended?.Invoke(this, EventArgs.Empty);
 		}
+		
+		/// <summary>
+		/// Raises the Data Received event.
+		/// </summary>
+		/// <remarks>
+		/// Precondition: This transfer has failed. <br/>
+		/// Postcondition: The Data Received event is raised.
+		/// </remarks>	
+		protected void RaiseDataReceived() => DataReceived?.Invoke(this, EventArgs.Empty);
 	}
 
 	public class DownloadHandlerFileSave : TransferHandler
@@ -1189,6 +1199,8 @@ public class MessagingService
 				await _destination.DisposeAsync();
 				RaiseCompleted();
 			}
+			
+			RaiseDataReceived();
 		}
 	}
 
@@ -1216,7 +1228,9 @@ public class MessagingService
 		/// </remarks>
 		public override Task ReceiveAsync(byte[] data, ulong offset)
 		{
+			BytesReceived += (ulong)data.Length;
 			_messagingService.SendInfo(new MessageInfoTransferData(true, Id, offset, data));
+			RaiseDataReceived();
 			return Task.CompletedTask;
 		}
 
@@ -1244,25 +1258,30 @@ public class MessagingService
 		/// </remarks>
 		private async Task UploadAsync()
 		{
-			/* 30 MiB/sec */
-			byte[] buffer = new byte[Math.Min(30 * 1024 * 1024 / 10, _source.Length)];
+			/* 100 MiB/sec */
+			byte[] buffer = new byte[Math.Min(20 * 1024 * 1024 / 2, _source.Length)];
 			while (_source.Position < _source.Length && IsDownloading)
 			{
 				int readSize = (int)Math.Min(buffer.Length, _source.Length - _source.Position);
 
 				await _source.ReadExactlyAsync(buffer, 0, readSize);
 
-				await ReceiveAsync(buffer[..readSize], (ulong)_source.Position);
+				await ReceiveAsync(buffer[..readSize], (ulong)_source.Position - (ulong)readSize);
 
-				await Task.Delay(100);
+				await Task.Delay(500);
 			}
-
-			await _source.DisposeAsync();
 
 			if (_source.Position == _source.Length)
 				RaiseCompleted();
 			else
 				RaiseFailed();
+			
+			try
+			{
+				await _source.DisposeAsync();
+			}
+			catch (ObjectDisposedException)
+			{ }
 		}
 	}
 }

@@ -248,6 +248,8 @@ public partial class CreateVmViewModel : ViewModelBase
 		if (!createDrive)
 		{
 			await taskCreateVm;
+			
+			createVmResult = taskCreateVm.Result?.Result ?? MessageResponseCreateVm.Status.Failure;
 		}
 		else
 		{
@@ -259,13 +261,9 @@ public partial class CreateVmViewModel : ViewModelBase
 			taskCreateDrive = ClientSvc.CreateDriveOsAsync(driveName, OsDriveSize!.Value, OperatingSystem);
 			await Task.WhenAll(taskCreateVm, taskCreateDrive);
 
-			createVmResult = taskCreateVm.Result == null
-				? MessageResponseCreateVm.Status.Failure
-				: taskCreateVm.Result.Result;
+			createVmResult = taskCreateVm.Result?.Result ?? MessageResponseCreateVm.Status.Failure;
 			
-			createDriveResult = taskCreateDrive.Result == null 
-				? MessageResponseCreateDriveOs.Status.Failure 
-				: taskCreateDrive.Result.Result;
+			createDriveResult = taskCreateDrive.Result?.Result ?? MessageResponseCreateDriveOs.Status.Failure;
 
 			if (createVmResult == MessageResponseCreateVm.Status.Success)
 			{

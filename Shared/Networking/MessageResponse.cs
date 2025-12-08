@@ -204,21 +204,21 @@ public class MessageResponseCreateDriveFs : MessageResponse
 public class MessageResponseCreateDriveCdrom : MessageResponse
 {
 	public Status Result { get; }
-	public Guid CdromDownloadId { get; }
+	public Guid CdromTransferId { get; }
 
 	[JsonConstructor]
-	public MessageResponseCreateDriveCdrom(bool generateGuid, Guid requestId, Status result, Guid cdromDownloadId)
+	public MessageResponseCreateDriveCdrom(bool generateGuid, Guid requestId, Status result, Guid cdromTransferId)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
-		CdromDownloadId = cdromDownloadId;
+		CdromTransferId = cdromTransferId;
 	}
 
 	public MessageResponseCreateDriveCdrom(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{
 		Result = result;
-		CdromDownloadId = Guid.Empty;
+		CdromTransferId = Guid.Empty;
 	}
 	
 	public enum Status

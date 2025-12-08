@@ -551,11 +551,18 @@ public sealed class ClientConnection : MessagingService
 
 				int driveId = await _databaseService.GetDriveIdAsync(UserId, name);
 				DownloadHandlerFileSave handler = new DownloadHandlerFileSave(reqCreateDriveCdrom.Size, _driveService.GetDriveFilePath(driveId));
-				Guid downloadId = CreateTransferId();
-				handler.Start(downloadId);
+				Guid transferId = CreateTransferId();
+				handler.Start(transferId);
 				AddTransfer(handler);
 				
-				SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.Success, downloadId));
+				SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.Success, transferId));
+
+				handler.Completed += async (_, _) =>
+				{
+					DriveGeneralDescriptor? descriptor = await _driveService.GetDriveGeneralDescriptorAsync(UserId, name);
+					if (descriptor != null)
+						await _userService.NotifyDriveCreatedAsync(descriptor);
+				};
 				break;
 			}
 

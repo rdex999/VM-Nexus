@@ -683,7 +683,7 @@ public class VirtualMachine
 		XElement os = new XElement("os",
 			new XElement("type", "hvm", 
 				new XAttribute("arch", cpuArch),
-				new XAttribute("machine", "pc-q35-10.0")
+				new XAttribute("machine", "pc-q35-10.1")
 			),
 			new XElement("boot", new XAttribute("dev", "cdrom")),
 			new XElement("boot", new XAttribute("dev", "hd")),
@@ -693,13 +693,9 @@ public class VirtualMachine
 			)
 		);
 
-		if (_bootMode == BootMode.Bios)
+		if (_bootMode == BootMode.Uefi)
 		{
-			// os.Add(new XElement("smbios", new XAttribute("mode", "sysinfo")));
-		}
-		else if (_bootMode == BootMode.Uefi)
-		{
-			os.Add(new XAttribute("type", "efi"));
+			// os.Add(new XAttribute("type", "efi"));
 			os.Add(new XElement("loader", "/usr/share/edk2/x64/OVMF_CODE.4m.fd",
 				new XAttribute("stateless", "yes"),
 				new XAttribute("readonly", "yes"),
@@ -734,7 +730,6 @@ public class VirtualMachine
 				new XElement("output", 
 					new XAttribute("fixedSettings", "yes"), 
 					new XAttribute("mixingEngine", "yes"), 
-					// new XAttribute("bufferLength", AudioPacketMs.ToString()),
 					
 					new XElement("settings",
 						new XAttribute("frequency", SharedDefinitions.AudioFramesFrequency.ToString()),
@@ -820,7 +815,9 @@ public class VirtualMachine
 					new XElement("acpi"),
 					new XElement("apic")
 				),
+				new XElement("vcpu", Environment.ProcessorCount, new XAttribute("placement", "static")),
 				os,
+				new XElement("cpu", new XAttribute("mode", "maximum"), new XAttribute("check", "none"), new XAttribute("migratable", "on")),
 				devices
 			)
 		);
