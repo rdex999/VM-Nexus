@@ -229,13 +229,13 @@ public class MessageInfoDriveDisconnected : MessageInfoTcp
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
 
-public class MessageInfoDownloadData : MessageInfoTcp
+public class MessageInfoTransferData : MessageInfoTcp
 {
 	public Guid StreamId { get; }
 	public ulong Offset { get; }		/* The offset of the data in the file, in bytes. */
 	public byte[] Data { get; }
 
-	public MessageInfoDownloadData(bool generateGuid, Guid streamId, ulong offset, byte[] data)
+	public MessageInfoTransferData(bool generateGuid, Guid streamId, ulong offset, byte[] data)
 		: base(generateGuid)
 	{
 		StreamId = streamId;

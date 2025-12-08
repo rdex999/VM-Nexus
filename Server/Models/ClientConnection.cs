@@ -26,7 +26,7 @@ public sealed class ClientConnection : MessagingService
 	private readonly UserService _userService;
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
-	private readonly ConcurrentDictionary<Guid, DownloadHandler> _downloads;
+	private readonly ConcurrentDictionary<Guid, TransferHandler> _downloads;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
 	private int _streamVmId = -1;
 
@@ -49,7 +49,7 @@ public sealed class ClientConnection : MessagingService
 		_userService = userService;
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
-		_downloads = new ConcurrentDictionary<Guid, DownloadHandler>();
+		_downloads = new ConcurrentDictionary<Guid, TransferHandler>();
 		ClientId = Guid.NewGuid();
 
 		Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -528,6 +528,37 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestCreateDriveCdrom reqCreateDriveCdrom:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.Failure));
+					break;
+				}
+
+				string name = reqCreateDriveCdrom.Name.Trim();
+				result = await _databaseService.CreateDriveAsync(UserId, name, (int)(reqCreateDriveCdrom.Size / 1024UL / 1024UL), DriveType.CDROM);
+				if (result == ExitCode.DriveAlreadyExists)
+				{
+					SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.DriveAlreadyExists));
+					break;				
+				}
+				if (result != ExitCode.Success)
+				{
+					SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.DriveAlreadyExists));
+					break;								
+				}
+
+				int driveId = await _databaseService.GetDriveIdAsync(UserId, name);
+				DownloadHandlerFileSave handler = new DownloadHandlerFileSave(reqCreateDriveCdrom.Size, _driveService.GetDriveFilePath(driveId));
+				Guid downloadId = CreateTransferId();
+				handler.Start(downloadId);
+				AddTransfer(handler);
+				
+				SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.Success, downloadId));
+				break;
+			}
+
 			case MessageRequestConnectDrive reqConnectDrive:
 			{
 				if (!_isLoggedIn)
@@ -663,17 +694,11 @@ public sealed class ClientConnection : MessagingService
 
 				await Task.Delay(500);
 				
-				/* 30 MiB/sec */
-				byte[] buffer = new byte[Math.Min(30 * 1024 * 1024 / 10, stream.Stream.Length)];
-				while (stream.Stream.Position < stream.Stream.Length)
-				{
-					int readSize = (int)Math.Min(buffer.Length, (stream.Stream.Length - stream.Stream.Position));
-					
-					await stream.Stream.ReadExactlyAsync(buffer, 0, readSize);
-					
-					SendInfo(new MessageInfoDownloadData(true, streamGuid, (ulong)(stream.Stream.Position - buffer.Length), buffer[..readSize]));
-					await Task.Delay(100);
-				}
+				UploadHandler handler = new UploadHandler(this, stream.Stream);
+				handler.Start(streamGuid);
+				AddTransfer(handler);
+
+				await handler.UploadTask;
 				
 				stream.Dispose();
 				break;

@@ -422,7 +422,7 @@ public class ClientService : MessagingService
 		}
 		
 		handler.Start(res.StreamId);
-		AddDownload(handler);
+		AddTransfer(handler);
 
 		return handler;
 	}
@@ -450,7 +450,7 @@ public class ClientService : MessagingService
 		
 		DownloadHandlerFileSave handler = new DownloadHandlerFileSave(res.ItemSize, destination);
 		handler.Start(res.StreamId);
-		AddDownload(handler);
+		AddTransfer(handler);
 
 		return handler;
 	}

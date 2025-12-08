@@ -25,7 +25,7 @@ public class MessagingService
 	protected bool IsUdpMessagingRunning = false;
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
 	private readonly Dictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
-	private readonly ConcurrentDictionary<Guid, DownloadHandler> _incomingDownloads;
+	private readonly ConcurrentDictionary<Guid, TransferHandler> _ongoingTransfers;
 	private const int DatagramSize = 1200;
 
 	private struct UdpPacket
@@ -263,7 +263,7 @@ public class MessagingService
 		_messageTcpAvailable = new ManualResetEventSlim(false);
 		_messageUdpAvailable = new ManualResetEventSlim(false);
 		_incomingUdpMessages = new Dictionary<Guid, IncomingMessageUdp>();
-		_incomingDownloads = new ConcurrentDictionary<Guid, DownloadHandler>();
+		_ongoingTransfers = new ConcurrentDictionary<Guid, TransferHandler>();
 	}
 
 	/// <summary>
@@ -584,14 +584,13 @@ public class MessagingService
 	/// Precondition: The given download handler was started. handler != null. <br/>
 	/// Postcondition: Download is added to the incoming downloads and will receive data.
 	/// </remarks>
-	protected void AddDownload(DownloadHandler handler)
+	protected void AddTransfer(TransferHandler handler)
 	{
-		if (_incomingDownloads.ContainsKey(handler.Id))
+		if (_ongoingTransfers.ContainsKey(handler.Id))
 			return;
 		
-		_incomingDownloads.TryAdd(handler.Id, handler);
-		handler.Completed += DownloadHandlerOnCompletedOrFailed;
-		handler.Failed += DownloadHandlerOnCompletedOrFailed;
+		_ongoingTransfers.TryAdd(handler.Id, handler);
+		handler.Ended += OnTransferEnded;
 	}
 
 	/// <summary>
@@ -602,12 +601,12 @@ public class MessagingService
 	/// Precondition: Allocating a unique ID for a new download is required. <br/>
 	/// Postcondition: A unique guid for the new download is returned.
 	/// </remarks>
-	protected Guid CreateDownloadId()
+	protected Guid CreateTransferId()
 	{
 		Guid id;
 		do
 			id = Guid.NewGuid();
-		while (_incomingDownloads.ContainsKey(id));
+		while (_ongoingTransfers.ContainsKey(id));
 
 		return id;
 	}
@@ -621,12 +620,12 @@ public class MessagingService
 	/// Precondition: A download has either completed or failed. sender != null &amp;&amp; sender is DownloadHandler. <br/>
 	/// Postcondition: The download is removed from the incoming downloads.
 	/// </remarks>
-	private void DownloadHandlerOnCompletedOrFailed(object? sender, EventArgs e)
+	private void OnTransferEnded(object? sender, EventArgs e)
 	{
-		if (sender == null || sender is not DownloadHandler handler)
+		if (sender == null || sender is not TransferHandler handler)
 			return;
 		
-		_incomingDownloads.TryRemove(handler.Id, out _);
+		_ongoingTransfers.TryRemove(handler.Id, out _);
 	}
 
 	/// <summary>
@@ -716,6 +715,9 @@ public class MessagingService
 	/// </remarks>
 	private void SendMessage(Message message)
 	{
+		if (!IsConnected())
+			return;
+		
 		if (message is MessageTcp)
 		{
 			_messageTcpQueue.Enqueue(message);
@@ -971,15 +973,15 @@ public class MessagingService
 	{
 		switch (info)
 		{
-			case MessageInfoDownloadData downloadData:
+			case MessageInfoTransferData downloadData:
 			{
-				if (!_incomingDownloads.TryGetValue(downloadData.StreamId, out DownloadHandler? handler))
+				if (!_ongoingTransfers.TryGetValue(downloadData.StreamId, out TransferHandler? handler))
 					return;
 
 				await handler.ReceiveAsync(downloadData);
 			
 				if (!handler.IsDownloading)	
-					DownloadHandlerOnCompletedOrFailed(handler, EventArgs.Empty);
+					OnTransferEnded(handler, EventArgs.Empty);
 				
 				break;
 			}
@@ -1053,125 +1055,214 @@ public class MessagingService
 	protected virtual void AfterDisconnection()
 	{
 	}
-}
 
-public abstract class DownloadHandler
-{
-	public event EventHandler? Completed;
-	public event EventHandler? Failed; 
-	public Guid Id { get; private set; } = Guid.Empty;
-	public bool IsStarted => Id != Guid.Empty;
-	public bool IsDownloading { get; protected set; } = false;
-	public ulong Size { get; }
-	public ulong BytesReceived { get; protected set; } = 0;
-
-	public DownloadHandler(ulong size)
+	public abstract class TransferHandler
 	{
-		Size = size;
-	}
+		public event EventHandler? Completed;
+		public event EventHandler? Failed;
+		public event EventHandler? Ended;			/* Invoked on both Completed and Failed. */
+		public Guid Id { get; private set; } = Guid.Empty;
+		public bool IsStarted => Id != Guid.Empty;
+		public bool IsDownloading { get; protected set; } = false;
+		public ulong Size { get; }
+		public ulong BytesReceived { get; protected set; } = 0;
 
-	/// <summary>
-	/// Starts the download. Generates an ID for the download.
-	/// </summary>
-	/// <remarks>
-	/// Precondition: No specific precondition. <br/>
-	/// Postcondition: Download is started and is identified now by a unique ID. ReceiveAsync methods can now be used.
-	/// </remarks>
-	public void Start() => Start(Guid.NewGuid());
-
-	/// <summary>
-	/// Starts the download. Sets the download ID to the given ID.
-	/// </summary>
-	/// <param name="id">The ID to identify this download with. id != null &amp;&amp; id != Guid.Empty.</param>
-	/// <remarks>
-	/// Precondition: id != null &amp;&amp; id != Guid.Empty. <br/>
-	/// Postcondition: Download is started and is identified by the given ID. ReceiveAsync methods can now be used.
-	/// </remarks>
-	public void Start(Guid id)
-	{
-		Id = id;
-		IsDownloading = true;
-	}
-
-	/// <summary>
-	/// Receives the received data. Receiving implementation varies by handler type.
-	/// </summary>
-	/// <param name="data">The received data. data != null.</param>
-	/// <remarks>
-	/// Precondition: Download data was received. data != null. <br/>
-	/// Postcondition: Data is received.
-	/// </remarks>
-	public async Task ReceiveAsync(MessageInfoDownloadData data) => await ReceiveAsync(data.Data, data.Offset);
-	
-	/// <summary>
-	/// Received the given data at the given offset. Receiving implementation varies by handler type.
-	/// </summary>
-	/// <param name="data">The received data. data != null.</param>
-	/// <param name="offset">The offset at which the received data belongs.</param>
-	/// <remarks>
-	/// Precondition: Download data was received. data != null. <br/>
-	/// Postcondition: Data is received.
-	/// </remarks>
-	public abstract Task ReceiveAsync(byte[] data, ulong offset);
-	
-	protected void RaiseCompleted() => Completed?.Invoke(this, EventArgs.Empty);
-	protected void RaiseFailed() => Failed?.Invoke(this, EventArgs.Empty);
-}
-
-public class DownloadHandlerFileSave : DownloadHandler
-{
-	private Stream _destination;
-	
-	public DownloadHandlerFileSave(ulong size, string filePath) 
-		: base(size)
-	{
-		_destination = new FileStream(filePath, FileMode.Create);
-	}
-
-	public DownloadHandlerFileSave(ulong size, Stream destination)
-		: base(size)
-	{
-		_destination = destination;
-	}
-
-	/// <summary>
-	/// Received the given data at the given offset. Writes data to file.
-	/// </summary>
-	/// <param name="data">The received data. data != null.</param>
-	/// <param name="offset">The offset at which the received data belongs.</param>
-	/// <remarks>
-	/// Precondition: Download data was received. data != null. <br/>
-	/// Postcondition: Data is received and written to the file.
-	/// </remarks>
-	public override async Task ReceiveAsync(byte[] data, ulong offset)
-	{
-		if (!IsDownloading)
-			return;
-		
-		if (offset >= (ulong)_destination.Length)
+		public TransferHandler(ulong size)
 		{
-			try
+			Size = size;
+		}
+
+		/// <summary>
+		/// Starts the transfer. Sets the transfer ID to the given ID.
+		/// </summary>
+		/// <param name="id">The ID to identify this transfer with. id != null &amp;&amp; id != Guid.Empty.</param>
+		/// <remarks>
+		/// Precondition: id != null &amp;&amp; id != Guid.Empty. <br/>
+		/// Postcondition: Transfer is started and is identified by the given ID. ReceiveAsync methods can now be used.
+		/// </remarks>
+		public virtual void Start(Guid id)
+		{
+			Id = id;
+			IsDownloading = true;
+		}
+
+		/// <summary>
+		/// Receives the received data. Receiving implementation varies by handler type.
+		/// </summary>
+		/// <param name="data">The received data. data != null.</param>
+		/// <remarks>
+		/// Precondition: Download data was received. data != null. <br/>
+		/// Postcondition: Data is received.
+		/// </remarks>
+		public async Task ReceiveAsync(MessageInfoTransferData data) => await ReceiveAsync(data.Data, data.Offset);
+
+		/// <summary>
+		/// Received the given data at the given offset. Receiving implementation varies by handler type.
+		/// </summary>
+		/// <param name="data">The received data. data != null.</param>
+		/// <param name="offset">The offset at which the received data belongs.</param>
+		/// <remarks>
+		/// Precondition: Download data was received. data != null. <br/>
+		/// Postcondition: Data is received.
+		/// </remarks>
+		public abstract Task ReceiveAsync(byte[] data, ulong offset);
+		
+		/// <summary>
+		/// Raises the Completed and Ended events.
+		/// </summary>
+		/// <remarks>
+		/// Precondition: This transfer has completed. <br/>
+		/// Postcondition: The Completed and Ended events are raised.
+		/// </remarks>
+		protected void RaiseCompleted()
+		{
+			Completed?.Invoke(this, EventArgs.Empty);
+			Ended?.Invoke(this, EventArgs.Empty);
+		}
+
+		/// <summary>
+		/// Raises the Failed and Ended events.
+		/// </summary>
+		/// <remarks>
+		/// Precondition: This transfer has failed. <br/>
+		/// Postcondition: The Failed and Ended events are raised.
+		/// </remarks>
+		protected void RaiseFailed()
+		{
+			Failed?.Invoke(this, EventArgs.Empty);
+			Ended?.Invoke(this, EventArgs.Empty);
+		}
+	}
+
+	public class DownloadHandlerFileSave : TransferHandler
+	{
+		private Stream _destination;
+
+		public DownloadHandlerFileSave(ulong size, string filePath)
+			: base(size)
+		{
+			_destination = new FileStream(filePath, FileMode.Create);
+		}
+
+		public DownloadHandlerFileSave(ulong size, Stream destination)
+			: base(size)
+		{
+			_destination = destination;
+		}
+
+		/// <summary>
+		/// Received the given data at the given offset. Writes data to file.
+		/// </summary>
+		/// <param name="data">The received data. data != null.</param>
+		/// <param name="offset">The offset at which the received data belongs.</param>
+		/// <remarks>
+		/// Precondition: Download data was received. data != null. <br/>
+		/// Postcondition: Data is received and written to the file.
+		/// </remarks>
+		public override async Task ReceiveAsync(byte[] data, ulong offset)
+		{
+			if (!IsDownloading)
+				return;
+
+			if (offset >= (ulong)_destination.Length)
 			{
-				_destination.SetLength((long)offset + 1);
+				try
+				{
+					_destination.SetLength((long)offset + 1);
+				}
+				catch (Exception)
+				{
+					IsDownloading = false;
+					await _destination.DisposeAsync();
+					RaiseFailed();
+					return;
+				}
 			}
-			catch (Exception)
+
+			_destination.Seek((long)offset, SeekOrigin.Begin);
+			await _destination.WriteAsync(data);
+
+			BytesReceived += (ulong)data.Length;
+			if (BytesReceived == Size)
 			{
 				IsDownloading = false;
 				await _destination.DisposeAsync();
-				RaiseFailed();
-				return;
+				RaiseCompleted();
 			}
 		}
+	}
 
-		_destination.Seek((long)offset, SeekOrigin.Begin);
-		await _destination.WriteAsync(data);
-			
-		BytesReceived += (ulong)data.Length;
-		if (BytesReceived == Size)
+	public class UploadHandler : TransferHandler
+	{
+		public Task UploadTask { get; private set; }
+		private readonly MessagingService _messagingService;
+		private Stream _source;
+
+		public UploadHandler(MessagingService messagingService, Stream source)
+			: base((ulong)source.Length)
 		{
-			IsDownloading = false;
-			await _destination.DisposeAsync();
-			RaiseCompleted();
+			_messagingService = messagingService;
+			_source = source;
+		}
+
+		/// <summary>
+		/// Received the given data at the given offset. Sends info message to the user side.
+		/// </summary>
+		/// <param name="data">The received data. data != null.</param>
+		/// <param name="offset">The offset at which the received data belongs.</param>
+		/// <remarks>
+		/// Precondition: Upload data was received. data != null. <br/>
+		/// Postcondition: Data is received and sent to the other side.
+		/// </remarks>
+		public override Task ReceiveAsync(byte[] data, ulong offset)
+		{
+			_messagingService.SendInfo(new MessageInfoTransferData(true, Id, offset, data));
+			return Task.CompletedTask;
+		}
+
+		/// <summary>
+		/// Starts the transfer. Sets the transfer ID to the given ID. Starts to send data to the other side.
+		/// </summary>
+		/// <param name="id">The ID to identify this upload with. id != null &amp;&amp; id != Guid.Empty.</param>
+		/// <remarks>
+		/// Precondition: id != null &amp;&amp; id != Guid.Empty. <br/>
+		/// Postcondition: Upload is started and is identified by the given ID. ReceiveAsync methods can now be used.
+		/// </remarks>
+		public override void Start(Guid id)
+		{
+			base.Start(id);
+			UploadTask = UploadAsync();
+		}
+
+		/// <summary>
+		/// Runs the main uploading loop. Reads from the stream and sends data to the other side.
+		/// </summary>
+		/// <remarks>
+		/// Precondition: The Start() method was called. <br/>
+		/// Postcondition: While running, reads data from the stream and sends it to the other side. When completed, either the upload has completed or failed.
+		/// In either case, the upload is ended.
+		/// </remarks>
+		private async Task UploadAsync()
+		{
+			/* 30 MiB/sec */
+			byte[] buffer = new byte[Math.Min(30 * 1024 * 1024 / 10, _source.Length)];
+			while (_source.Position < _source.Length && IsDownloading)
+			{
+				int readSize = (int)Math.Min(buffer.Length, _source.Length - _source.Position);
+
+				await _source.ReadExactlyAsync(buffer, 0, readSize);
+
+				await ReceiveAsync(buffer[..readSize], (ulong)_source.Position);
+
+				await Task.Delay(100);
+			}
+
+			await _source.DisposeAsync();
+
+			if (_source.Position == _source.Length)
+				RaiseCompleted();
+			else
+				RaiseFailed();
 		}
 	}
 }

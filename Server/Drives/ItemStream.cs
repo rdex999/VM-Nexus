@@ -31,7 +31,14 @@ public class ItemStream : IDisposable
 	
 	public void Dispose()
 	{
-		Stream.Dispose();
+		try
+		{
+			Stream.Dispose();
+		}
+		catch (ObjectDisposedException)
+		{
+		}
+		
 		if  (_drive != null)
 		{
 			_drive.Dispose();

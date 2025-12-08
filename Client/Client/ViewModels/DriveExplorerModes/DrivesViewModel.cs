@@ -419,7 +419,10 @@ public partial class DrivesViewModel : DriveExplorerMode
 		string name = NewDrivePopupName.Trim();
 		NewDrivePopupCreateError = string.Empty;
 
-		if (NewDrivePopupFileSystem != FileSystemType.Iso)
+		if (NewDrivePopupFileSystem == FileSystemType.Iso)
+		{
+		}
+		else
 		{
 			MessageResponseCreateDriveFs.Status result = await ClientSvc.CreateDriveFsAsync(name, NewDrivePopupSizeMb.Value, NewDrivePopupFileSystem);
 			if (result == MessageResponseCreateDriveFs.Status.Success)
