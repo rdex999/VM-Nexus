@@ -152,6 +152,22 @@ public class MessageRequestCreateDriveFs : MessageRequest
 	                                                               && SizeMb <= SharedDefinitions.DriveSizeMbMax;
 }
 
+public class MessageRequestCreateDriveCdrom : MessageRequest
+{
+	public string Name { get; }
+	public ulong Size { get; }
+
+	public MessageRequestCreateDriveCdrom(bool generateGuid, string name, ulong size)
+		: base(generateGuid)
+	{
+		Name = name;
+		Size = size;
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrWhiteSpace(Name) 
+	                                                               && Size / 1024UL / 1024UL <= SharedDefinitions.DriveSizeMbMax;
+}
+
 public class MessageRequestCreateDriveOs : MessageRequest
 {
 	public string Name { get; }

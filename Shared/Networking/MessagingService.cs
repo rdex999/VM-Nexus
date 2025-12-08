@@ -595,6 +595,24 @@ public class MessagingService
 	}
 
 	/// <summary>
+	/// Create a download ID for a new incoming download.
+	/// </summary>
+	/// <returns>A unique ID for the new incoming download.</returns>
+	/// <remarks>
+	/// Precondition: Allocating a unique ID for a new download is required. <br/>
+	/// Postcondition: A unique guid for the new download is returned.
+	/// </remarks>
+	protected Guid CreateDownloadId()
+	{
+		Guid id;
+		do
+			id = Guid.NewGuid();
+		while (_incomingDownloads.ContainsKey(id));
+
+		return id;
+	}
+
+	/// <summary>
 	/// Handles both download completed and failed events. Removes the download from the incoming downloads.
 	/// </summary>
 	/// <param name="sender">The download that has ended. sender != null &amp;&amp; sender is DownloadHandler.</param>

@@ -201,6 +201,36 @@ public class MessageResponseCreateDriveFs : MessageResponse
 	}
 }
 
+public class MessageResponseCreateDriveCdrom : MessageResponse
+{
+	public Status Result { get; }
+	public Guid CdromDownloadId { get; }
+
+	[JsonConstructor]
+	public MessageResponseCreateDriveCdrom(bool generateGuid, Guid requestId, Status result, Guid cdromDownloadId)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		CdromDownloadId = cdromDownloadId;
+	}
+
+	public MessageResponseCreateDriveCdrom(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		CdromDownloadId = Guid.Empty;
+	}
+	
+	public enum Status
+	{
+		Success,
+		DriveAlreadyExists,
+		Failure,
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
 public class MessageResponseCreateDriveOs : MessageResponse
 {
 	public Status Result { get; }
