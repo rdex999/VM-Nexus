@@ -354,12 +354,15 @@ public partial class DrivesViewModel : DriveExplorerMode
 	[RelayCommand]
 	private void CreateNewDriveClick()
 	{
+		NewDrivePopupIsOpen = true;
+		if (NewDrivePopupUploadingIso)
+			return;
+		
 		NewDrivePopupName = string.Empty;
 		NewDrivePopupCreateError = string.Empty;
 		NewDrivePopupIsoPath = string.Empty;
 		_newDrivePopupIso?.Dispose();
 		_newDrivePopupIso = null;
-		NewDrivePopupIsOpen = true;
 		NewDrivePopupUploadingIso = false;
 		_ = ValidateNewDrivePopupFieldsAsync();
 	}
@@ -374,12 +377,12 @@ public partial class DrivesViewModel : DriveExplorerMode
 	[RelayCommand]
 	private void CloseNewDrivePopup()
 	{
+		NewDrivePopupIsOpen = false;
 		if (NewDrivePopupUploadingIso)
 			return;
 		
 		_newDrivePopupIso?.Dispose();
 		_newDrivePopupIso = null;
-		NewDrivePopupIsOpen = false;
 	}
 
 	/// <summary>
@@ -472,6 +475,9 @@ public partial class DrivesViewModel : DriveExplorerMode
 			};
 
 			await uploadHandler.UploadTask;
+			
+			NewDrivePopupUploadingIso = false;
+			CloseNewDrivePopup();
 		}
 		else
 		{
