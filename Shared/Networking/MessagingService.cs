@@ -380,7 +380,7 @@ public class MessagingService
 				continue;	
 			}
 
-			ProcessMessage(message);
+			await ProcessMessageAsync(message);
 		}
 		
 		Disconnect();
@@ -427,7 +427,7 @@ public class MessagingService
 			switch (result)
 			{
 				case ExitCode.Success:
-					ProcessMessage(message!);
+					await ProcessMessageAsync(message!);
 					_incomingUdpMessages.Remove(packet.MessageId);
 					break;
 					
@@ -543,7 +543,7 @@ public class MessagingService
 	/// Postcondition: Message is redirected to appropriate handler. Handler is handling the message.
 	/// In the case of a response, it is registered as a response for a request that was sent. (if any)
 	/// </remarks>
-	private void ProcessMessage(Message message)
+	private async Task ProcessMessageAsync(Message message)
 	{
 		switch (message)
 		{
@@ -565,14 +565,19 @@ public class MessagingService
 				_ = HandleRequestAsync(request);
 				break;
 			}
+			case MessageInfoTransferData transferData:
+			{
+				if (message.IsValidMessage())
+					await HandleInfoAsync(transferData);
 				
+				break;
+			}
 			case MessageInfoTcp:
 			case MessageInfoUdp:
 			{
 				if (message.IsValidMessage())
-				{
 					_ = HandleInfoAsync(message);
-				}
+				
 				break;
 			}
 		}
@@ -1282,17 +1287,15 @@ public class MessagingService
 				await ReceiveAsync(buffer[..readSize], (ulong)_source.Position - (ulong)readSize).ConfigureAwait(false);
 				
 				double readSeconds = readSw.Elapsed.TotalSeconds <= 0 ? double.MinValue : readSw.Elapsed.TotalSeconds;
-				double uploadSeconds = uploadSw.Elapsed.TotalSeconds;
+				double uploadSeconds = uploadSw.Elapsed.TotalSeconds <= 0 ? double.MinValue : uploadSw.Elapsed.TotalSeconds;
 				double readBps = readSize / readSeconds;
-				if (readBps > uploadBps && uploadSeconds < 0.5)
-				{
-					uploadBps *= 1 + 50 / Math.Sqrt(uploadBps);
-				}
+				if (readBps > uploadBps && uploadSeconds < 1)
+					uploadBps *= 1 + 100 / Math.Sqrt(uploadBps);
 				else
-					uploadBps *= 0.5 / uploadSeconds;
+					uploadBps *= 1 / uploadSeconds;
 
-				uploadBps = Math.Max(1, uploadBps);
-				buffer = new byte[(long)Math.Ceiling(uploadBps * 0.5)];
+				uploadBps = Math.Min(Math.Max(1, uploadBps), 1 * 1024 * 1024 * 1024);
+				buffer = new byte[(long)Math.Ceiling(uploadBps)];
 			}
 
 			if (_source.Position == _source.Length)
