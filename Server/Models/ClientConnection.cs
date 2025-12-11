@@ -687,7 +687,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				ItemStream? stream = _driveService.GetItemStream(reqDownloadItem.DriveId, reqDownloadItem.Path);
+				ItemStream? stream = _driveService.GetItemStream(reqDownloadItem.DriveId, reqDownloadItem.Path, FileAccess.Read);
 				if (stream == null)
 				{
 					SendResponse(new MessageResponseDownloadItem(true, reqDownloadItem.Id, MessageResponseDownloadItem.Status.NoSuchItem));

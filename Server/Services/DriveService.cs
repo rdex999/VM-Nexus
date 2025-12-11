@@ -368,7 +368,7 @@ public class DriveService
 		Disk drive;
 		try
 		{
-			drive = new Disk(GetDriveFilePath(driveId));
+			drive = new Disk(GetDriveFilePath(driveId), FileAccess.Read);
 		}
 		catch (Exception)
 		{
@@ -451,7 +451,7 @@ public class DriveService
 		Disk drive;
 		try
 		{
-			drive = new Disk(GetDriveFilePath(driveId));
+			drive = new Disk(GetDriveFilePath(driveId), FileAccess.Read);
 		}
 		catch (Exception)
 		{
@@ -491,7 +491,7 @@ public class DriveService
 
 		try
 		{
-			using Disk drive = new Disk(GetDriveFilePath(driveId));
+			using Disk drive = new Disk(GetDriveFilePath(driveId), FileAccess.Read);
 			return drive.SectorSize;
 		}
 		catch (Exception)
@@ -601,6 +601,7 @@ public class DriveService
 	/// <param name="path">
 	/// The path on the drive, which points to the needed item. Set to an empty string to get the drive's disk image. path != null.
 	/// </param>
+	/// <param name="access">The access to the file. (read, write, readwrite)</param>
 	/// <param name="createFileIfNotExists">
 	/// Optional - Only valid for files. Set to true to create the file if it doesn't already exist, false otherwise. False by default.
 	/// </param>
@@ -609,7 +610,7 @@ public class DriveService
 	/// Precondition: A drive with the given ID exists. The given path exists and is in valid syntax. driveId >= 1 &amp;&amp; path != null. <br/>
 	/// Postcondition: On success, a stream representing the item is returned. On failure, null is returned.
 	/// </remarks>
-	public ItemStream? GetItemStream(int driveId, string path, bool createFileIfNotExists = false)
+	public ItemStream? GetItemStream(int driveId, string path, FileAccess access, bool createFileIfNotExists = false)
 	{
 		if (driveId < 1)
 			return null;
@@ -622,7 +623,7 @@ public class DriveService
 		{
 			try
 			{
-				return new ItemStream(File.Open(GetDriveFilePath(driveId), FileMode.Open));
+				return new ItemStream(File.Open(GetDriveFilePath(driveId), FileMode.Open, access));
 			}
 			catch (Exception)
 			{
@@ -633,7 +634,7 @@ public class DriveService
 		Disk drive;
 		try
 		{
-			drive = new Disk(GetDriveFilePath(driveId));
+			drive = new Disk(GetDriveFilePath(driveId), access);
 		}
 		catch (Exception)
 		{
@@ -684,7 +685,7 @@ public class DriveService
 
 		try
 		{
-			Stream stream = fileSystem.OpenFile(fileSystemPath, createFileIfNotExists ? FileMode.OpenOrCreate : FileMode.Open);
+			Stream stream = fileSystem.OpenFile(fileSystemPath, createFileIfNotExists ? FileMode.OpenOrCreate : FileMode.Open, access);
 			return new ItemStream(stream, drive, fileSystem);
 		}
 		catch (Exception)
