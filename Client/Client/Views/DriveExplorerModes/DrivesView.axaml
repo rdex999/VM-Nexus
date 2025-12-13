@@ -66,7 +66,7 @@
 				<StackPanel Spacing="20" HorizontalAlignment="Stretch">
 					<StackPanel Spacing="8">
 						<TextBox Watermark="Drive name"
-						         IsEnabled="{Binding !NewDrivePopupUploadingIso}"
+						         IsEnabled="{Binding !NewDrivePopupUploadingImage}"
 						         Text="{Binding NewDrivePopupName}"
 						         Classes.error="{Binding !NewDrivePopupNameValid}" 
 						         Classes.success="{Binding NewDrivePopupNameValid}"/>
@@ -76,7 +76,7 @@
 							IsVisible="{Binding !NewDrivePopupNameValid}"/>
 					</StackPanel>
 
-					<Grid ColumnDefinitions="*, *" IsVisible="{Binding !NewDrivePopupIsoIsVisible}">
+					<Grid ColumnDefinitions="*, *" IsVisible="{Binding !NewDrivePopupImageIsVisible}">
 						<TextBlock VerticalAlignment="Center" Classes="form">Size (MiB)</TextBlock>
 						<NumericUpDown Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" 
 						               Classes.error="{Binding NewDrivePopupSizeError}"
@@ -85,25 +85,28 @@
 					</Grid>
 
 					<Grid ColumnDefinitions="*, *">
-						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Classes="form">File system</TextBlock>
+						<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" Classes="form">Type</TextBlock>
 						<ComboBox Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Stretch" 
-						          IsEnabled="{Binding !NewDrivePopupUploadingIso}"
-						          SelectedIndex="{Binding NewDrivePopupFileSystem}">
+						          IsEnabled="{Binding !NewDrivePopupUploadingImage}"
+						          SelectedIndex="{Binding NewDrivePopupType}">
 							<ComboBoxItem ToolTip.Placement="Right" 
 							              ToolTip.Tip="Universal, most operating systems support it. Can be used as a shared drive between different operating systems.">FAT32</ComboBoxItem>
 							
 							<ComboBoxItem ToolTip.Placement="Right"
 							              ToolTip.Tip="A read-only filesystem, used mostly on CDs for booting.">ISO</ComboBoxItem>
+							
+							<ComboBoxItem ToolTip.Placement="Right"
+							              ToolTip.Tip="The drive will be created using the given disk image. (raw format)">Use disk image</ComboBoxItem>
 						</ComboBox>
 					</Grid>
 					
-					<Grid ColumnDefinitions="Auto, Auto, *" ColumnSpacing="10" IsVisible="{Binding NewDrivePopupIsoIsVisible}">
+					<Grid ColumnDefinitions="Auto, Auto, *" ColumnSpacing="10" IsVisible="{Binding NewDrivePopupImageIsVisible}">
 						<Button VerticalAlignment="Center" FontWeight="DemiBold" CornerRadius="8" Classes="light"
-						        IsEnabled="{Binding !NewDrivePopupUploadingIso}"
-						        Command="{Binding NewDrivePopupSelectIsoClickCommand}">Select ISO</Button>
+						        IsEnabled="{Binding !NewDrivePopupUploadingImage}"
+						        Command="{Binding NewDrivePopupSelectImageClickCommand}">Select Disk Image</Button>
 						
-						<TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="DemiBold" Text="{Binding NewDrivePopupIsoSize}"/>
-						<TextBlock Grid.Column="2" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding NewDrivePopupIsoPath}"/>
+						<TextBlock Grid.Column="1" VerticalAlignment="Center" FontWeight="DemiBold" Text="{Binding NewDrivePopupImageSize}"/>
+						<TextBlock Grid.Column="2" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding NewDrivePopupImagePath}"/>
 					</Grid>
 				</StackPanel>
 
@@ -117,7 +120,7 @@
 					</Button>
 					
 					<ProgressBar Value="{Binding NewDrivePopupIsoUploadProgress}" Margin="20, 5, 20, 0"
-					             IsVisible="{Binding NewDrivePopupUploadingIso}"/>
+					             IsVisible="{Binding NewDrivePopupUploadingImage}"/>
 				</StackPanel>
 			</Grid>
 		</templated:OverlayPopup>

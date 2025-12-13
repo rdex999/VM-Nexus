@@ -9,6 +9,7 @@ using Shared;
 using Shared.Drives;
 using Shared.Networking;
 using Shared.VirtualMachines;
+using DriveType = Shared.Drives.DriveType;
 using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Client.Services;
@@ -270,28 +271,29 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
-	/// Requests to create a CD-ROM drive. Starts uploading the ISO image.
+	/// Requests to create a drive from a disk image. Starts uploading the disk image.
 	/// </summary>
 	/// <param name="name">The name for the new drive. Must be unique for the user. name != null.</param>
+	/// <param name="type">The type of drive to create.</param>
 	/// <param name="iso">A stream of the ISO image. Used while uploading the ISO. Disposed when done. iso != null.</param>
 	/// <returns>An upload handler managing the upload of the ISO image, or null on failure.</returns>
 	/// <remarks>
 	/// Precondition: Service fully initialized and connected to the server. User is logged in. The given name must be unique for the user.
-	/// The given ISO image stream should be formatted with the ISO 9660 file system. name != null &amp;&amp; iso != null. <br/>
+	/// name != null &amp;&amp; iso != null. <br/>
 	/// Postcondition: On success, the upload is started and an upload handler handling the upload is returned. On failure, null is returned.
 	/// </remarks>
-	public async Task<UploadHandler?> CreateDriveCdromAsync(string name, Stream iso)
+	public async Task<UploadHandler?> CreateDriveFromImageAsync(string name, DriveType type, Stream iso)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDriveCdrom(true, name, (ulong)iso.Length));
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDriveFromImage(true, name, type, (ulong)iso.Length));
 		if (result != ExitCode.Success)
 			return null;
 
-		MessageResponseCreateDriveCdrom res = (MessageResponseCreateDriveCdrom)response!;
-		if (res.Result != MessageResponseCreateDriveCdrom.Status.Success)
+		MessageResponseCreateDriveFromImage res = (MessageResponseCreateDriveFromImage)response!;
+		if (res.Result != MessageResponseCreateDriveFromImage.Status.Success)
 			return null;
 		
 		UploadHandler handler = new UploadHandler(this, iso);
-		handler.Start(res.CdromTransferId);
+		handler.Start(res.ImageTransferId);
 
 		return handler;
 	}

@@ -52,16 +52,16 @@ public partial class DrivesViewModel : DriveExplorerMode
 	private bool _newDrivePopupSizeError = true;	/* Size is 0 by default, invalid value */
 	
 	[ObservableProperty]
-	private bool _newDrivePopupIsoIsVisible = false;
+	private bool _newDrivePopupImageIsVisible = false;
 
 	[ObservableProperty] 
-	private FileSystemType _newDrivePopupFileSystem = FileSystemType.Fat32;
+	private NewDrivePopupDriveType _newDrivePopupType = NewDrivePopupDriveType.Fat32;
 
 	[ObservableProperty]
-	private string _newDrivePopupIsoSize = string.Empty;
+	private string _newDrivePopupImageSize = string.Empty;
 		
 	[ObservableProperty]
-	private string _newDrivePopupIsoPath = string.Empty;
+	private string _newDrivePopupImagePath = string.Empty;
 
 	[ObservableProperty] 
 	private string _newDrivePopupCreateError = string.Empty;
@@ -70,9 +70,16 @@ public partial class DrivesViewModel : DriveExplorerMode
 	private double _newDrivePopupIsoUploadProgress;
 
 	[ObservableProperty] 
-	private bool _newDrivePopupUploadingIso = false;
+	private bool _newDrivePopupUploadingImage = false;
 
-	private IStorageFile? _newDrivePopupIso;
+	private IStorageFile? _newDrivePopupImage;
+
+	public enum NewDrivePopupDriveType
+	{
+		Fat32,
+		Iso,
+		DiskImage,
+	}
 	
 	public DrivesViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService)
 		: base(navigationService, clientService)
@@ -253,17 +260,22 @@ public partial class DrivesViewModel : DriveExplorerMode
 		NewDrivePopupNameValid = isNameValid;
 
 		bool isValidSize;
-		if (_newDrivePopupIso == null)
+		if (_newDrivePopupImage == null)
 		{
 			isValidSize = NewDrivePopupSizeMb != null 
-			              && (long)NewDrivePopupSizeMb * 1024L * 1024L >= NewDrivePopupFileSystem.DriveSizeMin() 
+			              && (long)NewDrivePopupSizeMb * 1024L * 1024L >= ((FileSystemType)NewDrivePopupType).DriveSizeMin() 
 			              && NewDrivePopupSizeMb <= SharedDefinitions.DriveSizeMbMax;
 		}
 		else
 		{
-			await using Stream iso = await _newDrivePopupIso.OpenReadAsync();
-			long isoSize = iso.Length;
-			isValidSize = isoSize >= NewDrivePopupFileSystem.DriveSizeMin() && isoSize / 1024 / 1024 <= SharedDefinitions.DriveSizeMbMax;
+			await using Stream image = await _newDrivePopupImage.OpenReadAsync();
+			long imageSize = image.Length;
+			isValidSize = imageSize / 1024 / 1024 <= SharedDefinitions.DriveSizeMbMax;
+			
+			if (NewDrivePopupType == NewDrivePopupDriveType.Iso)
+				isValidSize = isValidSize && imageSize >= FileSystemType.Iso.DriveSizeMin();
+			else
+				isValidSize = isValidSize && imageSize > 0;
 		}
 		
 		NewDrivePopupSizeError = !isValidSize;
@@ -298,10 +310,10 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// Precondition: User has selected another filesystem in the drive creation popup. <br/>
 	/// Postcondition: If the user has selected the ISO option, the ISO image file selection section is displayed.
 	/// </remarks>
-	partial void OnNewDrivePopupFileSystemChanged(FileSystemType value)
+	partial void OnNewDrivePopupTypeChanged(NewDrivePopupDriveType value)
 	{
 		_ = ValidateNewDrivePopupFieldsAsync();
-		NewDrivePopupIsoIsVisible = value == FileSystemType.Iso;
+		NewDrivePopupImageIsVisible = value == NewDrivePopupDriveType.Iso || value == NewDrivePopupDriveType.DiskImage;
 	}
 
 	/// <summary>
@@ -355,15 +367,15 @@ public partial class DrivesViewModel : DriveExplorerMode
 	private void CreateNewDriveClick()
 	{
 		NewDrivePopupIsOpen = true;
-		if (NewDrivePopupUploadingIso)
+		if (NewDrivePopupUploadingImage)
 			return;
 		
 		NewDrivePopupName = string.Empty;
 		NewDrivePopupCreateError = string.Empty;
-		NewDrivePopupIsoPath = string.Empty;
-		_newDrivePopupIso?.Dispose();
-		_newDrivePopupIso = null;
-		NewDrivePopupUploadingIso = false;
+		NewDrivePopupImagePath = string.Empty;
+		_newDrivePopupImage?.Dispose();
+		_newDrivePopupImage = null;
+		NewDrivePopupUploadingImage = false;
 		_ = ValidateNewDrivePopupFieldsAsync();
 	}
 
@@ -378,11 +390,11 @@ public partial class DrivesViewModel : DriveExplorerMode
 	private void CloseNewDrivePopup()
 	{
 		NewDrivePopupIsOpen = false;
-		if (NewDrivePopupUploadingIso)
+		if (NewDrivePopupUploadingImage)
 			return;
 		
-		_newDrivePopupIso?.Dispose();
-		_newDrivePopupIso = null;
+		_newDrivePopupImage?.Dispose();
+		_newDrivePopupImage = null;
 	}
 
 	/// <summary>
@@ -395,7 +407,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// Postcondition: A file picker is opened. After the user selects a file, its size and path are displayed as the selected ISO file.
 	/// </remarks>
 	[RelayCommand]
-	private async Task NewDrivePopupSelectIsoClickAsync()
+	private async Task NewDrivePopupSelectImageClickAsync()
 	{
 		IStorageProvider storageProvider;
 		if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
@@ -417,14 +429,14 @@ public partial class DrivesViewModel : DriveExplorerMode
 		if (files.Count != 1)
 			return;
 			
-		_newDrivePopupIso = files[0];
-		await using Stream file = await _newDrivePopupIso.OpenReadAsync();
+		_newDrivePopupImage = files[0];
+		await using Stream file = await _newDrivePopupImage.OpenReadAsync();
 		
 		float sizeMib = file.Length / 1024f / 1024f;
 		float sizeGib = file.Length / 1024f / 1024f / 1024f;
 		
-		NewDrivePopupIsoSize = sizeMib >= 1024 ? $"{sizeGib:0.##} GiB" : $"{sizeMib:0.##} MiB";
-		NewDrivePopupIsoPath = _newDrivePopupIso.Path.LocalPath;
+		NewDrivePopupImageSize = sizeMib >= 1024 ? $"{sizeGib:0.##} GiB" : $"{sizeMib:0.##} MiB";
+		NewDrivePopupImagePath = _newDrivePopupImage.Path.LocalPath;
 		
 		await ValidateNewDrivePopupFieldsAsync();
 	}
@@ -445,23 +457,28 @@ public partial class DrivesViewModel : DriveExplorerMode
 		string name = NewDrivePopupName.Trim();
 		NewDrivePopupCreateError = string.Empty;
 
-		if (NewDrivePopupFileSystem == FileSystemType.Iso)
+		if (NewDrivePopupType == NewDrivePopupDriveType.DiskImage || NewDrivePopupType == NewDrivePopupDriveType.Iso)
 		{
-			if (_newDrivePopupIso == null)
+			if (_newDrivePopupImage == null)
 			{
 				CloseNewDrivePopup();
 				return;
 			}
 
-			Stream isoImage = await _newDrivePopupIso.OpenReadAsync();		/* uploadHandler disposes isoImage */
-			MessagingService.UploadHandler? uploadHandler = await ClientSvc.CreateDriveCdromAsync(NewDrivePopupName.Trim(), isoImage);
+			Stream image = await _newDrivePopupImage.OpenReadAsync();		/* uploadHandler disposes isoImage */
+			MessagingService.UploadHandler? uploadHandler = await ClientSvc.CreateDriveFromImageAsync(
+				NewDrivePopupName.Trim(), 
+				NewDrivePopupType == NewDrivePopupDriveType.Iso ? DriveType.CDROM : DriveType.Disk,
+				image
+			);
+			
 			if (uploadHandler == null)
 			{
 				NewDrivePopupCreateError = "Creating the drive has failed. Try again later.";
 				return;
 			}
 
-			NewDrivePopupUploadingIso = true;
+			NewDrivePopupUploadingImage = true;
 			NewDrivePopupIsoUploadProgress = 0.0;
 
 			uploadHandler.DataReceived += (sender, _) =>
@@ -476,12 +493,12 @@ public partial class DrivesViewModel : DriveExplorerMode
 
 			await uploadHandler.UploadTask;
 			
-			NewDrivePopupUploadingIso = false;
+			NewDrivePopupUploadingImage = false;
 			CloseNewDrivePopup();
 		}
 		else
 		{
-			MessageResponseCreateDriveFs.Status result = await ClientSvc.CreateDriveFsAsync(name, NewDrivePopupSizeMb.Value, NewDrivePopupFileSystem);
+			MessageResponseCreateDriveFs.Status result = await ClientSvc.CreateDriveFsAsync(name, NewDrivePopupSizeMb.Value, (FileSystemType)NewDrivePopupType);
 			if (result == MessageResponseCreateDriveFs.Status.Success)
 			{
 				CloseNewDrivePopup();

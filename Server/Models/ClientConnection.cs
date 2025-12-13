@@ -528,34 +528,34 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
-			case MessageRequestCreateDriveCdrom reqCreateDriveCdrom:
+			case MessageRequestCreateDriveFromImage reqCreateDrive:
 			{
 				if (!_isLoggedIn)
 				{
-					SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.Failure));
+					SendResponse(new MessageResponseCreateDriveFromImage(true, reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.Failure));
 					break;
 				}
 
-				string name = reqCreateDriveCdrom.Name.Trim();
-				result = await _databaseService.CreateDriveAsync(UserId, name, (int)(reqCreateDriveCdrom.Size / 1024UL / 1024UL), DriveType.CDROM);
+				string name = reqCreateDrive.Name.Trim();
+				result = await _databaseService.CreateDriveAsync(UserId, name, (int)(reqCreateDrive.Size / 1024UL / 1024UL), reqCreateDrive.Type);
 				if (result == ExitCode.DriveAlreadyExists)
 				{
-					SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.DriveAlreadyExists));
+					SendResponse(new MessageResponseCreateDriveFromImage(true, reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.DriveAlreadyExists));
 					break;				
 				}
 				if (result != ExitCode.Success)
 				{
-					SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.DriveAlreadyExists));
+					SendResponse(new MessageResponseCreateDriveFromImage(true, reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.DriveAlreadyExists));
 					break;								
 				}
 
 				int driveId = await _databaseService.GetDriveIdAsync(UserId, name);
-				DownloadHandlerFileSave handler = new DownloadHandlerFileSave(reqCreateDriveCdrom.Size, _driveService.GetDriveFilePath(driveId));
+				DownloadHandlerFileSave handler = new DownloadHandlerFileSave(reqCreateDrive.Size, _driveService.GetDriveFilePath(driveId));
 				Guid transferId = CreateTransferId();
 				handler.Start(transferId);
 				AddTransfer(handler);
 				
-				SendResponse(new MessageResponseCreateDriveCdrom(true, reqCreateDriveCdrom.Id, MessageResponseCreateDriveCdrom.Status.Success, transferId));
+				SendResponse(new MessageResponseCreateDriveFromImage(true, reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.Success, transferId));
 
 				handler.Completed += async (_, _) =>
 				{

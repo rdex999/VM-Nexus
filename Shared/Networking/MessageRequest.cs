@@ -1,6 +1,7 @@
 using Newtonsoft.Json;
 using Shared.Drives;
 using Shared.VirtualMachines;
+using DriveType = Shared.Drives.DriveType;
 using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Shared.Networking;
@@ -152,19 +153,21 @@ public class MessageRequestCreateDriveFs : MessageRequest
 	                                                               && SizeMb <= SharedDefinitions.DriveSizeMbMax;
 }
 
-public class MessageRequestCreateDriveCdrom : MessageRequest
+public class MessageRequestCreateDriveFromImage : MessageRequest
 {
 	public string Name { get; }
+	public DriveType Type { get; }
 	public ulong Size { get; }
 
-	public MessageRequestCreateDriveCdrom(bool generateGuid, string name, ulong size)
+	public MessageRequestCreateDriveFromImage(bool generateGuid, string name, DriveType type, ulong size)
 		: base(generateGuid)
 	{
 		Name = name;
+		Type = type;
 		Size = size;
 	}
 
-	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrWhiteSpace(Name) 
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrWhiteSpace(Name) && Enum.IsDefined(typeof(DriveType), Type)
 	                                                               && Size / 1024UL / 1024UL <= SharedDefinitions.DriveSizeMbMax;
 }
 
