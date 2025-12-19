@@ -41,6 +41,15 @@ public class DriveService
 		_clientService.DriveDisconnected += OnDriveDisconnected;
 	}
 
+	/// <summary>
+	/// Initializes this service. Fetches required data.
+	/// </summary>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service is uninitialized. ClientService is initialized and connected to the server. <br/>
+	/// Postcondition: On success, the service is initialized and the returned exit code indicaes success.
+	/// On failure, the service is not initialized and the returned exit code indicates the error.
+	/// </remarks>
 	public async Task<ExitCode> InitializeAsync()
 	{
 		if (IsInitialized) return ExitCode.AlreadyInitialized;
@@ -60,6 +69,19 @@ public class DriveService
 		return result;
 	}
 
+	/// <summary>
+	/// Connects the given drive to the given virtual machine. <br/>
+	/// The drive will be connected to the virtual machine on next startup.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to connect to the virtual machine. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine to connect the drive to. vmId >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized. The given drive and virtual machine exist, and are not connected. driveId >= 1 &amp;&amp; vmId >= 1. <br/>
+	/// Postcondition: On success, the given virtual machine and drive are connected (connection is registered,
+	/// the virtual machine will have the drive connected on next startup) and the returned exit code indicates success. <br/>
+	/// On failure, the connection state of the given virtual machine and drive is left unchanged and the returned exit code indicates the error.
+	/// </remarks>
 	public async Task<ExitCode> ConnectDriveAsync(int driveId, int vmId)
 	{
 		MessageResponseConnectDrive.Status result = await _clientService.ConnectDriveAsync(driveId, vmId);
@@ -78,6 +100,18 @@ public class DriveService
 		};
 	}
 
+	/// <summary>
+	/// Disconnects the given drive from the given virtual machine.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to disconnect from the virtual machine. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine to disconnect the drive from. vmId >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized. The given virtual machine and drive exist, and are connected. driveId >= 1 &amp;&amp; vmId >= 1. <br/>
+	/// Postcondition: On success, the given virtual machine and drive are disconnected. (Connection is removed,
+	/// the virtual machine will not have the drive connected to it on next startup) <br/>
+	/// On failure, the connection state of the given virtual machine and drive is left unchanged and the returned exit code indicates the error.
+	/// </remarks>
 	public async Task<ExitCode> DisconnectDriveAsync(int driveId, int vmId)
 	{
 		MessageResponseDisconnectDrive.Status result = await _clientService.DisconnectDriveAsync(driveId, vmId);
@@ -96,6 +130,16 @@ public class DriveService
 		};
 	}
 
+	/// <summary>
+	/// Checks whether the given drive is connected to the given virtual machine.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to check. driveId >= 1.</param>
+	/// <param name="vmId">The ID of the virtual machine to check if the drive is connected to. vmId >= 1.</param>
+	/// <returns>True if the drive is connected to the virtual machine, false otherwise or on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized. The given virtual machine and drive exist. <br/>
+	/// Postcondition: Returns true if the drive is connected to the virtual machine, false otherwise or on failure.
+	/// </remarks>
 	public bool ConnectionExists(int driveId, int vmId)
 	{
 		if (_drivesByVmId.TryGetValue(vmId, out HashSet<int>? drives))
@@ -105,11 +149,47 @@ public class DriveService
 
 		return false;
 	}
-	
+
+	/// <summary>
+	/// Gets all virtual machines of the user.
+	/// </summary>
+	/// <returns>General descriptors of all the virtual machines of the user.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized. <br/>
+	/// Postcondition: An array of general virtual machine descriptors of all the virtual machines of the user is returned.
+	/// </remarks>
 	public VmGeneralDescriptor[] GetVirtualMachines() => _virtualMachines.Values.ToArray();
+	
+	/// <summary>
+	/// Gets all drives of the user.
+	/// </summary>
+	/// <returns>General drive descriptors of all the drives of the user.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized. <br/>
+	/// Postcondition: An array of general drive descriptors of all the drives of the user is returned.
+	/// </remarks>
 	public DriveGeneralDescriptor[] GetDrives() => _drives.Values.ToArray();
+	
+	/// <summary>
+	/// Get a general drive descriptor of a drive by its ID.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to get the descriptor of. driveId >= 1.</param>
+	/// <returns>A general descriptor of the drive, or null if the drive does not exist or is inaccessible.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized. driveId >= 1.<br/>
+	/// Postcondition: A general descriptor of the drive is returned, or null if the drive does not exist or is inaccessible.
+	/// </remarks>
 	public DriveGeneralDescriptor? GetDriveById(int driveId) => _drives.GetValueOrDefault(driveId);
 
+	/// <summary>
+	/// Get a general descriptor of a drive by its name.
+	/// </summary>
+	/// <param name="name">The name of the drive to get the descriptor of. name != null.</param>
+	/// <returns>A general descriptor of the drive, or null if the user does not have such a drive.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized. The user has a drive with the given name. name != null.<br/>
+	/// Postcondition: On success, a general descriptor of the drive is returned. On failure, (user doesn't have the drive) null is returned.
+	/// </remarks>
 	public DriveGeneralDescriptor? GetDriveByName(string name)
 	{
 		foreach (DriveGeneralDescriptor drive in _drives.Values)
@@ -121,8 +201,29 @@ public class DriveService
 		return null;
 	}
 
+	/// <summary>
+	/// Checks if the user has a drive with the given name.
+	/// </summary>
+	/// <param name="name">The name of the drive to check for. name != null.</param>
+	/// <returns>True if the drive exists, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: Service initialized. name != null. <br/>
+	/// Postcondition: Returns true if the drive exists, false otherwise.
+	/// </remarks>
 	public bool DriveExists(string name) => GetDriveByName(name) != null;
 
+	/// <summary>
+	/// Get general descriptors of all drives that are connected to the given virtual machine.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine to get drives of. vmId >= 1.</param>
+	/// <returns>
+	/// An array of general drive descriptors, describing each drive that is connected to the virtual machine. Null is returned on failure.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: Service initialized. A virtual machine with the given ID exists under the user. vmId >= 1. <br/>
+	/// Postcondition: On success, an array of general drive descriptors, describing each drive that is connected to the virtual machine.
+	/// On failure, null is returned.
+	/// </remarks>
 	public DriveGeneralDescriptor[]? GetDrivesOnVirtualMachine(int vmId)
 	{
 		if (vmId < 1) return null;
