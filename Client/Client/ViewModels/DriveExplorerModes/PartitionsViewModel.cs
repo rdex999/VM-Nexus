@@ -50,6 +50,14 @@ public class PartitionsViewModel : DriveExplorerMode
 		}
 	}
 
+	/// <summary>
+	/// Opens the partition and lists items under it.
+	/// </summary>
+	/// <param name="partitionIndex">The partition index. Must be a valid index. partitionIndex >= 0.</param>
+	/// <remarks>
+	/// Precondition: Either a partition was double-clicked, or its open button was clicked. partitionIndex >= 0. <br/>
+	/// Postcondition: The partition is opened and its items are listed.
+	/// </remarks>
 	private async Task OpenPartitionAsync(int partitionIndex)
 	{
 		if (partitionIndex < 0 || partitionIndex >= Partitions.Count)

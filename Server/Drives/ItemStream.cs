@@ -28,7 +28,14 @@ public class ItemStream : IDisposable
 		_drive = drive;
 		_fileSystem = fileSystem;
 	}
-	
+
+	/// <summary>
+	/// Disposes used objects and this object.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: This object, and objects used by this object are disposed.
+	/// </remarks>
 	public void Dispose()
 	{
 		try
