@@ -521,7 +521,7 @@ public partial class DriveItemTemplate : ObservableObject
 	public Action<int>? ManageVmConnectionsClick;
 	public int Id { get; }
 
-	private int _size;
+	private int _size;		/* In MiB */
 
 	public int Size
 	{

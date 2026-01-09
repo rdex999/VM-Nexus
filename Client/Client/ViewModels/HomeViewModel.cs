@@ -46,6 +46,8 @@ public partial class HomeViewModel : ViewModelBase
 	[ObservableProperty] 
 	private bool _conPopupIsOpen = false;
 	
+	private int _conPopupVmId = -1;
+	
 	public ObservableCollection<DriveConnectionItemTemplate> ConPopupDriveConnections { get; }
 	
 	/// <summary>
@@ -64,6 +66,7 @@ public partial class HomeViewModel : ViewModelBase
 	{
 		Vms = new ObservableCollection<VmItemTemplate>();
 		DeleteVmPopupDrives = new ObservableCollection<DeletionDriveItemTemplate>();
+		ConPopupDriveConnections = new ObservableCollection<DriveConnectionItemTemplate>();
 		_driveService = driveService;
 		_driveService.Initialized += (sender, code) =>
 		{
@@ -96,6 +99,7 @@ public partial class HomeViewModel : ViewModelBase
 
 				template.OpenClicked += OnVmOpenClicked;
 				template.ForceOffClicked += OnVmForceOffClicked;
+				template.ManageDriveConnectionsClicked += OnManageDriveConnectionsClick;
 				template.DeleteClicked += OnVmDeleteClicked;
 				
 				Vms.Add(template);
@@ -120,6 +124,7 @@ public partial class HomeViewModel : ViewModelBase
 
 			template.OpenClicked += OnVmOpenClicked;
 			template.ForceOffClicked += OnVmForceOffClicked;
+			template.ManageDriveConnectionsClicked += OnManageDriveConnectionsClick;
 			template.DeleteClicked += OnVmDeleteClicked;
 				
 			Vms.Add(template);
@@ -415,7 +420,7 @@ public partial class HomeViewModel : ViewModelBase
 			DeleteVmPopupInitialize(_deleteVmPopupVmDescriptor);
 		}
 	}
-	
+
 	/// <summary>
 	/// Either closes the VM-drive connection popup, or called after it is closed.
 	/// </summary>
@@ -424,13 +429,70 @@ public partial class HomeViewModel : ViewModelBase
 	/// Postcondition: VM-drive connection management popup is closed.
 	/// </remarks>
 	[RelayCommand]
-	private void CloseConPopup() => ConPopupIsOpen = false;
+	private void CloseConPopup()
+	{
+		ConPopupIsOpen = false;
+		ConPopupDriveConnections.Clear();
+	}
+
+	/// <summary>
+	/// Handles a click on the VM-drive connections management button on a virtual machine. Opens the VM-drive connection management popup.
+	/// </summary>
+	/// <param name="vmId">The ID of the virtual machine that the VM-drive connections management button was clicked on. vmId >= 1.</param>
+	/// <remarks>
+	/// Precondition: User has clicked on the VM-drive connections management button on a virtual machine. vmId >= 1. <br/>
+	/// Postcondition: The VM-drive connections management popup is open.
+	/// </remarks>
+	private void OnManageDriveConnectionsClick(int vmId)
+	{
+		_conPopupVmId = vmId;
+
+		DriveGeneralDescriptor[] drives = _driveService.GetDrives();
+		foreach (DriveGeneralDescriptor drive in drives)
+		{
+			bool connected = _driveService.ConnectionExists(drive.Id, vmId);
+			ConPopupDriveConnections.Add(new DriveConnectionItemTemplate(drive, connected));
+		}
+		
+		ConPopupIsOpen = true;
+	}
+	
+	/// <summary>
+	/// Handles a click on the apply button on the VM-drive connection management popup. Attempts to apply the new changes.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the apply button on the VM-drive connection management popup. <br/>
+	/// Postcondition: Each drive that its connection state to this virtual machine was changed (connected/disconnected), will be updated to the new state.
+	/// On failure, the VM-drive connection will not change.
+	/// </remarks>
+	[RelayCommand]
+	private async Task ConPopupApplyClickAsync()
+	{
+		List<Task<ExitCode>> connectionUpdates = new List<Task<ExitCode>>();
+		foreach (DriveConnectionItemTemplate item in ConPopupDriveConnections)
+		{
+			bool isConnected = _driveService.ConnectionExists(item.Id, _conPopupVmId);
+			if (item.IsChecked && !isConnected)
+			{
+				connectionUpdates.Add(_driveService.ConnectDriveAsync(item.Id, _conPopupVmId));
+			}
+			else if (!item.IsChecked && isConnected)
+			{
+				connectionUpdates.Add(_driveService.DisconnectDriveAsync(item.Id, _conPopupVmId));
+			}
+		}
+		
+		await Task.WhenAll(connectionUpdates);
+		
+		CloseConPopup();
+	}
 }
 
 public partial class VmItemTemplate : ObservableObject
 {
 	public Action<VmGeneralDescriptor>? OpenClicked;
 	public Action<VmItemTemplate>? ForceOffClicked;
+	public Action<int>? ManageDriveConnectionsClicked;
 	public Action<VmGeneralDescriptor>? DeleteClicked;
 	
 	public int Id { get; }
@@ -674,6 +736,16 @@ public partial class VmItemTemplate : ObservableObject
 	private void ForceOffClick() => ForceOffClicked?.Invoke(this);
 
 	/// <summary>
+	/// Handles a click on the manage drive connections button.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the manage drive connections button on this virtual machine. <br/>
+	/// Postcondition: A drive connection management popup appears.
+	/// </remarks>
+	[RelayCommand]
+	private void ManageDriveConnectionsClick() => ManageDriveConnectionsClicked?.Invoke(Id);
+	
+	/// <summary>
 	/// Handles a click on the delete button.
 	/// </summary>
 	/// <remarks>
@@ -722,10 +794,23 @@ public partial class DeletionDriveItemTemplate : ObservableObject
 
 public partial class DriveConnectionItemTemplate : ObservableObject
 {
+	public int Id { get; }
 	public string Name { get; }
-
+	public string Size { get; }
+	public DriveType DriveType { get; }
+	
 	[ObservableProperty] 
 	private bool _isChecked = false;
-	
-	public DriveConnectionItemTemplate(string name) => Name = name;
+
+	public DriveConnectionItemTemplate(DriveGeneralDescriptor descriptor, bool connected)
+	{
+		Id = descriptor.Id;
+		Name = descriptor.Name;
+		DriveType = descriptor.DriveType;
+		Size = descriptor.Size >= 1024 
+			? $"{(descriptor.Size/1024.0):0.##} GiB" 
+			: $"{descriptor.Size} MiB";
+		
+		IsChecked = connected;
+	}
 }
