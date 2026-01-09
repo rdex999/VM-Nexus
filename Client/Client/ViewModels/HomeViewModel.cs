@@ -42,6 +42,11 @@ public partial class HomeViewModel : ViewModelBase
 	public ObservableCollection<DeletionDriveItemTemplate> DeleteVmPopupDrives { get; set; }		/* Drives the user can select to delete, when deleting a VM */
 
 	private VmGeneralDescriptor _deleteVmPopupVmDescriptor = null!;
+
+	[ObservableProperty] 
+	private bool _conPopupIsOpen = false;
+	
+	public ObservableCollection<DriveConnectionItemTemplate> ConPopupDriveConnections { get; }
 	
 	/// <summary>
 	/// Initializes a new instance of HomeViewModel.
@@ -410,6 +415,16 @@ public partial class HomeViewModel : ViewModelBase
 			DeleteVmPopupInitialize(_deleteVmPopupVmDescriptor);
 		}
 	}
+	
+	/// <summary>
+	/// Either closes the VM-drive connection popup, or called after it is closed.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the user has closed the popup, or this method was called in order to close the popup. <br/>
+	/// Postcondition: VM-drive connection management popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private void CloseConPopup() => ConPopupIsOpen = false;
 }
 
 public partial class VmItemTemplate : ObservableObject
@@ -703,4 +718,14 @@ public partial class DeletionDriveItemTemplate : ObservableObject
 		IsInUse = isDriveInUse;
 		IsMarkedForDeletion = !isDriveInUse;
 	}
+}
+
+public partial class DriveConnectionItemTemplate : ObservableObject
+{
+	public string Name { get; }
+
+	[ObservableProperty] 
+	private bool _isChecked = false;
+	
+	public DriveConnectionItemTemplate(string name) => Name = name;
 }

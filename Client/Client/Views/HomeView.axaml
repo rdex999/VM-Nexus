@@ -124,6 +124,39 @@
 					</Button>
 				</StackPanel>
 			</templated:OverlayPopup>
+		
+			<templated:OverlayPopup IsOpen="{Binding ConPopupIsOpen}" Width="450"
+			                        PlacementTarget="Border" Background="White" Placement="Bottom"
+			                        Title="Connected Virtual Machines"
+			                        ClosedCommand="{Binding CloseConPopupCommand}">
+				<StackPanel Spacing="10">
+					<TextBlock TextWrapping="Wrap" FontWeight="DemiBold">Checked drives will be connected to this virtual machine.</TextBlock>
+
+					<ScrollViewer MaxHeight="410">
+						<ItemsControl ItemsSource="{Binding ConPopupDriveConnections}">
+							<ItemsControl.DataTemplates>
+								<DataTemplate DataType="vm:DriveConnectionItemTemplate">
+									<Border CornerRadius="11" Background="#efefef" Padding="11, 7, 8, 7" Margin="6">
+										<Grid ColumnDefinitions="2*, 1.5*, *, Auto" VerticalAlignment="Center">
+											<TextBlock VerticalAlignment="Center" Text="{Binding Name}" FontWeight="DemiBold" />
+
+											<CheckBox Grid.Column="3" VerticalAlignment="Center"
+											          IsChecked="{Binding IsChecked}" />
+										</Grid>
+									</Border>
+								</DataTemplate>
+							</ItemsControl.DataTemplates>
+						</ItemsControl>
+					</ScrollViewer>
+			
+					<TextBlock TextWrapping="Wrap">For running virtual machines, changes will take effect after the next shutdown.</TextBlock>
+				
+					<Button CornerRadius="8" FontSize="16" FontWeight="Bold" Margin="0, 4, 0, 0" 
+					        HorizontalAlignment="Center">
+						Apply
+					</Button>
+				</StackPanel>
+			</templated:OverlayPopup>
 			
 			<ScrollViewer AllowAutoHide="False">
 				<StackPanel>
