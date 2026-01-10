@@ -257,7 +257,7 @@ public class MessageRequestListPathItems : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }
 
-public class MessageRequestDownloadItem : MessageRequest
+public class MessageRequestDownloadItem : MessageRequest	/* Download from client perspective - client receives the item from the server. */
 {
 	public int DriveId { get; }
 	public string Path { get; }
@@ -270,6 +270,23 @@ public class MessageRequestDownloadItem : MessageRequest
 	}
 
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
+}
+
+public class MessageRequestUploadFile : MessageRequest		/* Upload from client perspective - client sends the file to the server. */
+{
+	public int DriveId { get; }
+	public string Path { get; }		/* Destination inside the drive. Includes the filename. */
+	public ulong Size { get; }		/* In bytes. */
+
+	public MessageRequestUploadFile(bool generateGuid, int driveId, string path, ulong size)
+		: base(generateGuid)
+	{
+		DriveId = driveId;
+		Path = path;
+		Size = size;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && Size > 0 && Size <= SharedDefinitions.DriveSizeMbMax * 1024UL * 1024UL;
 }
 
 public class MessageRequestDeleteItem : MessageRequest

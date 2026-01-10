@@ -398,7 +398,7 @@ public class MessageResponseListPathItems : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
-public class MessageResponseDownloadItem : MessageResponse
+public class MessageResponseDownloadItem : MessageResponse		/* Download from client perspective - client receives the item from the server. */
 {
 	public Status Result { get; }
 	public Guid StreamId { get; }
@@ -428,6 +428,35 @@ public class MessageResponseDownloadItem : MessageResponse
 		Failure,
 	}
 
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
+public class MessageResponseUploadFile : MessageResponse		/* Upload from client perspective - client sends file to server. */
+{
+	public Status Result { get; }
+	public Guid StreamId { get; }
+
+	public MessageResponseUploadFile(bool generateGuid, Guid requestId, Status result, Guid streamId)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		StreamId = streamId;
+	}
+
+	public MessageResponseUploadFile(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		StreamId = Guid.Empty;
+	}
+	
+	public enum Status
+	{
+		Success,
+		NoSuchFile,
+		Failure,
+	}
+	
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
