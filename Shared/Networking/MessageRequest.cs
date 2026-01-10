@@ -285,8 +285,9 @@ public class MessageRequestUploadFile : MessageRequest		/* Upload from client pe
 		Path = path;
 		Size = size;
 	}
-	
-	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && Size > 0 && Size <= SharedDefinitions.DriveSizeMbMax * 1024UL * 1024UL;
+
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && !string.IsNullOrEmpty(Path) &&
+	                                         Size > 0 && Size <= SharedDefinitions.DriveSizeMbMax * 1024UL * 1024UL;
 }
 
 public class MessageRequestDeleteItem : MessageRequest

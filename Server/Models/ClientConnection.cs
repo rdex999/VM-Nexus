@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Primitives;
 using Server.Drives;
 using Server.Services;
 using Server.VirtualMachines;
@@ -550,7 +551,7 @@ public sealed class ClientConnection : MessagingService
 				}
 
 				int driveId = await _databaseService.GetDriveIdAsync(UserId, name);
-				DownloadHandlerFileSave handler = new DownloadHandlerFileSave(reqCreateDrive.Size, _driveService.GetDriveFilePath(driveId));
+				DownloadHandler handler = new DownloadHandler(reqCreateDrive.Size, _driveService.GetDriveFilePath(driveId));
 				Guid transferId = CreateTransferId();
 				handler.Start(transferId);
 				AddTransfer(handler);
@@ -705,7 +706,7 @@ public sealed class ClientConnection : MessagingService
 				handler.Start(streamGuid);
 				AddTransfer(handler);
 
-				await handler.UploadTask;
+				await handler.Task;
 				
 				stream.Dispose();
 				break;
@@ -719,7 +720,55 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
+				string[] pathParts = reqUploadFile.Path.Split(SharedDefinitions.DirectorySeparators);
+				if (pathParts.Length == 0 || string.IsNullOrEmpty(pathParts[0]))
+				{
+					SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
+					break;
+				}
 				
+				string fileParentDirectory = string.Join('/', pathParts[..^1]);
+				if (!await _driveService.ItemExistsAsync(reqUploadFile.DriveId, fileParentDirectory))
+				{
+					SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.InvalidPath));
+					break;
+				}
+				
+				string filename = pathParts[^1];
+				string path = fileParentDirectory + "/" + filename;
+				int fileCopyNumber = -1;
+				while (await _driveService.ItemExistsAsync(reqUploadFile.DriveId, path))
+				{
+					int index = filename.LastIndexOf('.');
+					if (index == -1)
+						path = fileParentDirectory + "/" + filename + $" ({++fileCopyNumber})";
+					else
+						path = $"{fileParentDirectory}/{filename[..index]} ({++fileCopyNumber}).{filename[(index + 1)..]}";
+				}
+				
+				ItemStream? stream = _driveService.GetItemStream(reqUploadFile.DriveId, path, FileAccess.ReadWrite, true);
+				if (stream == null)
+				{
+					SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
+					break;
+				}
+
+				if (stream.MaxSize < reqUploadFile.Size)
+				{
+					SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.FileTooLarge));
+					stream.Dispose();
+					await _driveService.DeleteItemAsync(reqUploadFile.DriveId, reqUploadFile.Path);
+					break;
+				}
+
+				DownloadHandler handler = new DownloadHandler(reqUploadFile.Size, stream.Stream);
+				handler.Start(Guid.NewGuid());
+				AddTransfer(handler);
+				
+				SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.Success, handler.Id));
+
+				await handler.Task;
+				stream.Dispose();
 				break;
 			}
 

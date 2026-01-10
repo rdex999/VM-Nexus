@@ -491,7 +491,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 				);
 			};
 
-			await uploadHandler.UploadTask;
+			await uploadHandler.Task;
 			
 			NewDrivePopupUploadingImage = false;
 			CloseNewDrivePopup();

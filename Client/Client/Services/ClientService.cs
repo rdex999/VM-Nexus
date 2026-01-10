@@ -430,7 +430,7 @@ public class ClientService : MessagingService
 	/// Precondition: Service fully initialized and connected to the server, user is logged in. driveId >= 1 &amp;&amp; path != null. &amp;&amp; destination != null.<br/>
 	/// Postcondition: A download handler is returned, or null on failure.
 	/// </remarks>
-	public async Task<DownloadHandlerFileSave?> StartItemDownloadAsync(int driveId, string path, string destination)
+	public async Task<DownloadHandler?> StartItemDownloadAsync(int driveId, string path, string destination)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDownloadItem(true, driveId, path));
 		if (result != ExitCode.Success)
@@ -440,10 +440,10 @@ public class ClientService : MessagingService
 		if (res.Result != MessageResponseDownloadItem.Status.Success)
 			return null;
 		
-		DownloadHandlerFileSave handler;
+		DownloadHandler handler;
 		try
 		{
-			handler = new DownloadHandlerFileSave(res.ItemSize, destination);
+			handler = new DownloadHandler(res.ItemSize, destination);
 		}
 		catch (Exception)
 		{
@@ -467,7 +467,7 @@ public class ClientService : MessagingService
 	/// Precondition: Service fully initialized and connected to the server, user is logged in. driveId >= 1 &amp;&amp; path != null. &amp;&amp; destination != null. <br/>
 	/// Postcondition: A download handler is returned, or null on failure.
 	/// </remarks>
-	public async Task<DownloadHandlerFileSave?> StartItemDownloadAsync(int driveId, string path, Stream destination)
+	public async Task<DownloadHandler?> StartItemDownloadAsync(int driveId, string path, Stream destination)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDownloadItem(true, driveId, path));
 		if (result != ExitCode.Success)
@@ -477,7 +477,7 @@ public class ClientService : MessagingService
 		if (res.Result != MessageResponseDownloadItem.Status.Success)
 			return null;
 		
-		DownloadHandlerFileSave handler = new DownloadHandlerFileSave(res.ItemSize, destination);
+		DownloadHandler handler = new DownloadHandler(res.ItemSize, destination);
 		handler.Start(res.StreamId);
 		AddTransfer(handler);
 

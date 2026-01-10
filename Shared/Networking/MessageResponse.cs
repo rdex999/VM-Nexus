@@ -436,6 +436,7 @@ public class MessageResponseUploadFile : MessageResponse		/* Upload from client 
 	public Status Result { get; }
 	public Guid StreamId { get; }
 
+	[JsonConstructor]
 	public MessageResponseUploadFile(bool generateGuid, Guid requestId, Status result, Guid streamId)
 		: base(generateGuid, requestId)
 	{
@@ -453,7 +454,7 @@ public class MessageResponseUploadFile : MessageResponse		/* Upload from client 
 	public enum Status
 	{
 		Success,
-		NoSuchFile,
+		InvalidPath,
 		FileTooLarge,
 		Failure,
 	}

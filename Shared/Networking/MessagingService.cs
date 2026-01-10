@@ -1072,9 +1072,10 @@ public class MessagingService
 	{
 		public event EventHandler? Completed;
 		public event EventHandler? Failed;
-		public event EventHandler? Ended;			/* Invoked on both Completed and Failed. */
+		public event EventHandler? Ended;							/* Invoked on both Completed and Failed. */
 		public event EventHandler? DataReceived; 
 		public Guid Id { get; private set; } = Guid.Empty;
+		public Task Task { get; protected set; }					/* Usable only after Start() has been called - Its in completed state before Start() */
 		public bool IsStarted => Id != Guid.Empty;
 		public bool IsDownloading { get; protected set; } = false;
 		public ulong Size { get; }
@@ -1083,15 +1084,18 @@ public class MessagingService
 		public TransferHandler(ulong size)
 		{
 			Size = size;
+			Task = Task.CompletedTask;
 		}
 
 		/// <summary>
-		/// Starts the transfer. Sets the transfer ID to the given ID.
+		/// Starts the transfer. Sets the transfer ID to the given ID. <br/>
+		/// Implement this method in child classes to set the Task property.
 		/// </summary>
 		/// <param name="id">The ID to identify this transfer with. id != null &amp;&amp; id != Guid.Empty.</param>
 		/// <remarks>
 		/// Precondition: id != null &amp;&amp; id != Guid.Empty. <br/>
-		/// Postcondition: Transfer is started and is identified by the given ID. ReceiveAsync methods can now be used.
+		/// Postcondition: Transfer is started and is identified by the given ID. The Task property of this class instance can now be used.
+		/// ReceiveAsync methods can now be used.
 		/// </remarks>
 		public virtual void Start(Guid id)
 		{
@@ -1156,20 +1160,25 @@ public class MessagingService
 		protected void RaiseDataReceived() => DataReceived?.Invoke(this, EventArgs.Empty);
 	}
 
-	public class DownloadHandlerFileSave : TransferHandler
+	public class DownloadHandler : TransferHandler
 	{
 		private Stream _destination;
+		private TaskCompletionSource _tcs;
 
-		public DownloadHandlerFileSave(ulong size, string filePath)
+		public DownloadHandler(ulong size, string filePath)
 			: base(size)
 		{
 			_destination = new FileStream(filePath, FileMode.Create);
+			_tcs = new TaskCompletionSource();
+			Task = _tcs.Task;
 		}
 
-		public DownloadHandlerFileSave(ulong size, Stream destination)
+		public DownloadHandler(ulong size, Stream destination)
 			: base(size)
 		{
 			_destination = destination;
+			_tcs = new TaskCompletionSource();
+			Task = _tcs.Task;
 		}
 
 		/// <summary>
@@ -1196,6 +1205,7 @@ public class MessagingService
 				{
 					IsDownloading = false;
 					await _destination.DisposeAsync();
+					_tcs.SetResult();
 					RaiseFailed();
 					return;
 				}
@@ -1209,6 +1219,7 @@ public class MessagingService
 			{
 				IsDownloading = false;
 				await _destination.DisposeAsync();
+				_tcs.SetResult();
 				RaiseCompleted();
 			}
 			
@@ -1218,7 +1229,6 @@ public class MessagingService
 
 	public class UploadHandler : TransferHandler
 	{
-		public Task UploadTask { get; private set; }
 		private readonly MessagingService _messagingService;
 		private Stream _source;
 
@@ -1257,7 +1267,7 @@ public class MessagingService
 		public override void Start(Guid id)
 		{
 			base.Start(id);
-			UploadTask = UploadAsync();
+			Task = UploadAsync();
 		}
 
 		/// <summary>

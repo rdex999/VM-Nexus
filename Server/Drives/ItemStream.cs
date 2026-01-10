@@ -11,6 +11,20 @@ public class ItemStream : IDisposable
 	private Disk? _drive = null;
 	private DiscFileSystem? _fileSystem = null;
 
+	public ulong MaxSize
+	{
+		get
+		{
+			if (_drive == null)
+				return (ulong)Stream.Length;
+
+			if (_fileSystem == null)
+				return (ulong)_drive.Capacity;
+
+			return (ulong)_fileSystem.AvailableSpace;
+		}
+	}
+	
 	public ItemStream(Stream stream)
 	{
 		Stream = stream;
