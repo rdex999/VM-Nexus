@@ -485,6 +485,85 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Attempts to start an upload of the given file to the given drive at the given path in it.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to use to store the file. driveId >= 1.</param>
+	/// <param name="path">The path inside the drive to store the file in. path != null.</param>
+	/// <param name="source">The path to the source file, the file to write into the drive. source != null.</param>
+	/// <returns>A status indicating the result of the operation, and the upload handler (which is null on failure).</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. A drive with the given ID must exist.
+	/// The given path must contain the filename to save the file as. In the path parameter, the path to the file must exist, but the file itself should not exist.
+	/// The source parameter must point to a valid filesystem file. driveId >= 1 &amp;&amp; path != null &amp;&amp; source != null. <br/>
+	/// Postcondition: On success, the upload is started, a status of success and a valid upload handler are both returned.
+	/// On failure, the upload is not started, the returned status indicates the error and the upload handler is null.
+	/// </remarks>
+	public async Task<(MessageResponseUploadFile.Status, UploadHandler?)> StartFileUploadAsync(int driveId, string path, string source)
+	{
+		ulong fileSize;
+		Stream file;
+		try
+		{
+			file = File.OpenRead(source);
+		}
+		catch (Exception)
+		{
+			return (MessageResponseUploadFile.Status.Failure, null);
+		}
+		
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestUploadFile(true, driveId, path, (ulong)file.Length));
+		if (result != ExitCode.Success)
+		{
+			await file.DisposeAsync();
+			return (MessageResponseUploadFile.Status.Failure, null);
+		}
+
+		MessageResponseUploadFile res = (MessageResponseUploadFile)response!;
+		if (res.Result != MessageResponseUploadFile.Status.Success)
+		{
+			await file.DisposeAsync();
+			return (res.Result, null);
+		}
+		
+		UploadHandler handler = new UploadHandler(this, file);
+		handler.Start(res.StreamId);
+		AddTransfer(handler);
+
+		return (res.Result, handler);
+	}
+
+	/// <summary>
+	/// Attempts to start an upload of the given stream as a file into the given drive at the given path in it.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to use to store the file. driveId >= 1.</param>
+	/// <param name="path">The path inside the drive to store the file in. path != null.</param>
+	/// <param name="source">The stream to use as a file to upload into the drive. Must be readable. source != null.</param>
+	/// <returns>A status indicating the result of the operation, and the upload handler (which is null on failure).</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. A drive with the given ID must exist.
+	/// The given path must contain the filename to save the file as. In the path parameter, the path to the file must exist, but the file itself should not exist.
+	/// The source parameter must be readable. driveId >= 1 &amp;&amp; path != null &amp;&amp; source != null. <br/>
+	/// Postcondition: On success, the upload is started, a status of success and a valid upload handler are both returned.
+	/// On failure, the upload is not started, the returned status indicates the error and the upload handler is null.
+	/// </remarks>
+	public async Task<(MessageResponseUploadFile.Status, UploadHandler?)> StartFileUploadAsync(int driveId, string path, Stream source)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestUploadFile(true, driveId, path, (ulong)source.Length));
+		if (result != ExitCode.Success)
+			return (MessageResponseUploadFile.Status.Failure, null);
+
+		MessageResponseUploadFile res = (MessageResponseUploadFile)response!;
+		if (res.Result != MessageResponseUploadFile.Status.Success)
+			return (MessageResponseUploadFile.Status.Failure, null);
+		
+		UploadHandler handler = new UploadHandler(this, source);
+		handler.Start(res.StreamId);
+		AddTransfer(handler);
+
+		return (res.Result, handler);
+	}
+	
+	/// <summary>
 	/// Requests to delete the given item.
 	/// </summary>
 	/// <param name="driveId">The ID of the drive that holds the item to delete. driveId >= 1.</param>
