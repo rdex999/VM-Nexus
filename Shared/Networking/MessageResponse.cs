@@ -454,6 +454,7 @@ public class MessageResponseUploadFile : MessageResponse		/* Upload from client 
 	{
 		Success,
 		NoSuchFile,
+		FileTooLarge,
 		Failure,
 	}
 	

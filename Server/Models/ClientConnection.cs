@@ -711,6 +711,18 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestUploadFile reqUploadFile:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
+					break;
+				}
+				
+				
+				break;
+			}
+
 			case MessageRequestDeleteItem reqDeleteItem:
 			{
 				if (!_isLoggedIn)

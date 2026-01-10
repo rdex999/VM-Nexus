@@ -697,6 +697,81 @@ public class DriveService
 	}
 
 	/// <summary>
+	/// Checks whether the given item exists, be it a drive, partition, directory or a file.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to check on. driveId >= 1.</param>
+	/// <param name="path">The path on the drive, points to the item to check. path != null.</param>
+	/// <returns>True if the item exists, false otherwise or on failure.</returns>
+	/// <remarks>
+	/// Precondition: path != null. <br/>
+	/// Postcondition: On success, returns whether the given item exists, be it a drive, partition, directory or a file.
+	/// On failure, false is returned.
+	/// </remarks>
+	public async Task<bool> ItemExistsAsync(int driveId, string path)
+	{
+		if (driveId < 1 || !await _databaseService.IsDriveExistsAsync(driveId))
+			return false;
+		
+		string trimmedPath = path.Trim(SharedDefinitions.DirectorySeparators);
+		string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
+
+		if (pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0])))
+			return true;
+		
+		Disk drive;
+		try
+		{
+			drive = new Disk(GetDriveFilePath(driveId));
+		}
+		catch (Exception)
+		{
+			return false;
+		}
+
+		DiscFileSystem? fileSystem = null;
+		string fileSystemPath;
+		if (IsDrivePartitioned(drive))
+		{
+			if (!int.TryParse(pathParts[0], out int partitionIndex) || partitionIndex < 0 ||
+			    partitionIndex >= drive.Partitions.Count)
+			{
+				drive.Dispose();
+				return false;
+			}
+
+			if (pathParts.Length == 1)
+			{
+				drive.Dispose();
+				return true;
+			}
+			
+			PartitionInfo partitionInfo = drive.Partitions[partitionIndex];
+			Stream fileSystemStream = partitionInfo.Open();
+			fileSystemStream.Seek(partitionInfo.FirstSector * drive.SectorSize, SeekOrigin.Begin);
+			fileSystem = GetStreamFileSystem(fileSystemStream);
+			fileSystemPath = string.Join('\\', pathParts.AsSpan()[1..]!);
+		}
+		else
+		{
+			fileSystem = GetStreamFileSystem(drive.Content);
+			fileSystemPath = string.Join('\\', pathParts);
+		}
+		
+		if (fileSystem == null)
+		{
+			drive.Dispose();
+			return false;
+		}
+		
+		bool result = fileSystem.Exists(fileSystemPath);
+		
+		fileSystem.Dispose();
+		drive.Dispose();
+		
+		return result;
+	}
+
+	/// <summary>
 	/// Deletes the given item from the drive.
 	/// </summary>
 	/// <param name="driveId">The ID of the drive that contains the item to delete. driveId >= 1.</param>
