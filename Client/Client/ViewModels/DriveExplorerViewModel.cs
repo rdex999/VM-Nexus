@@ -165,9 +165,8 @@ public partial class DriveExplorerViewModel : ViewModelBase
 			string destinationPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Downloads/" + suggestedFileName;
 			await ClientSvc.StartItemDownloadAsync(driveId, path, destinationPath);
 		}
-		
-		if (file != null)
-			file.Dispose();
+
+		file?.Dispose();
 	}
 	
 	/// <summary>

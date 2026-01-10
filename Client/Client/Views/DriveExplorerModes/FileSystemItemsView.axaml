@@ -16,9 +16,15 @@
 	</UserControl.Resources>
 	
 	<ItemsControl ItemsSource="{Binding Items}">
+		<ItemsControl.ContextMenu>
+			<ContextMenu>
+				<MenuItem Header="Upload file" />
+			</ContextMenu>
+		</ItemsControl.ContextMenu>
+		
 		<ItemsControl.ItemsPanel>
 			<ItemsPanelTemplate>
-				<WrapPanel Orientation="Horizontal" />
+				<WrapPanel Orientation="Horizontal" Background="Transparent" />
 			</ItemsPanelTemplate>
 		</ItemsControl.ItemsPanel>
 		

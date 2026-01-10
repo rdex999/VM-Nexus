@@ -124,7 +124,7 @@
 			</Grid>
 
 			<ScrollViewer Grid.Row="1">
-				<TransitioningContentControl Content="{Binding ExplorerModeViewModel}" x:Name="MyContentControl"/>
+				<TransitioningContentControl Content="{Binding ExplorerModeViewModel}" />
 			</ScrollViewer>
 		</Grid>
 	</Grid>

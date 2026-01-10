@@ -149,6 +149,13 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 	[RelayCommand]
 	private void Download() => DownloadRequested?.Invoke(Name);
 	
+	/// <summary>
+	/// Handles a click on the delete button on this item. The delete confirmation popup is displayed.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the delete button on this item. <br/>
+	/// Postcondition: The delete confirmation popup is displayed.
+	/// </remarks>
 	[RelayCommand]
 	private void Delete() => DeleteRequested?.Invoke(Name);
 }
