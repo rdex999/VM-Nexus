@@ -18,7 +18,7 @@
 	<ItemsControl ItemsSource="{Binding Items}">
 		<ItemsControl.ContextMenu>
 			<ContextMenu>
-				<MenuItem Header="Upload file" />
+				<MenuItem Header="Upload file" Command="{Binding UploadFileClickCommand}" />
 			</ContextMenu>
 		</ItemsControl.ContextMenu>
 		

@@ -1,17 +1,23 @@
 using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Client.Services;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Drives;
+using Shared.Networking;
 
 namespace Client.ViewModels.DriveExplorerModes;
 
-public class FileSystemItemsViewModel : DriveExplorerMode
+public partial class FileSystemItemsViewModel : DriveExplorerMode
 {
 	private readonly DriveService _driveService;
 	private readonly DriveGeneralDescriptor _driveDescriptor;
@@ -61,6 +67,59 @@ public class FileSystemItemsViewModel : DriveExplorerMode
 			ChangePath?.Invoke($"{_driveDescriptor.Name}/{item.Name}");
 		else
 			ChangePath?.Invoke($"{_driveDescriptor.Name}/{_path}/{item.Name}");
+	}
+
+	/// <summary>
+	/// Displays a file picker dialog, and attempts to upload the selected file into the drive at the current path.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User is inside a drive, and has clicked on the upload button. <br/>
+	/// Postcondition: A file picker dialog appears. After the user has selected a file,
+	/// attempting to upload the file into the drive at the current path. On failure, the file is not uploaded.
+	/// </remarks>
+	[RelayCommand]
+	private async Task UploadFileClick()
+	{
+		Stream stream;
+		IStorageProvider? provider = null;
+		IStorageFile? file = null;
+		
+		if (Application.Current?.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+			provider = desktop.MainWindow!.StorageProvider;
+		
+		else if (Application.Current?.ApplicationLifetime is ISingleViewApplicationLifetime singleViewLifetime)
+		{
+			TopLevel? topLevel = TopLevel.GetTopLevel(singleViewLifetime.MainView);
+			if (topLevel != null)
+				provider = topLevel.StorageProvider;
+		}
+
+		if (provider == null)
+			return;
+
+		file = (await provider.OpenFilePickerAsync(new FilePickerOpenOptions()
+		{
+			AllowMultiple = false
+		})).FirstOrDefault();
+
+		if (file == null)
+			return;
+
+		stream = await file.OpenReadAsync();
+	
+		string path = _path + '/' + file.Name;
+		(MessageResponseUploadFile.Status result, MessagingService.UploadHandler? handler) = await ClientSvc.StartFileUploadAsync(_driveDescriptor.Id, path, stream);
+
+		if (result == MessageResponseUploadFile.Status.Success)
+			_ = handler!.Task.ContinueWith(_ => file?.Dispose());
+		else
+		{
+			await stream.DisposeAsync();
+			file.Dispose();
+		}
+		
+		/* TODO: Add MessageInfoItemCreated to refresh content. */
+		/* TODO: Add an upload/download progress bar at the bottom right corner, with error messages too. */
 	}
 }
 

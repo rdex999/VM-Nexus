@@ -719,8 +719,9 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
 					break;
 				}
-				
-				string[] pathParts = reqUploadFile.Path.Split(SharedDefinitions.DirectorySeparators);
+
+				string trimmedPath = reqUploadFile.Path.Trim(SharedDefinitions.DirectorySeparators);
+				string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
 				if (pathParts.Length == 0 || string.IsNullOrEmpty(pathParts[0]))
 				{
 					SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
