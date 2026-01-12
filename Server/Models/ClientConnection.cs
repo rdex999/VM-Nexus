@@ -775,6 +775,27 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestCreateDirectory reqCreateDirectory:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseCreateDirectory(true, reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.Failure));
+					break;
+				}
+				
+				result = _driveService.CreateDirectory(reqCreateDirectory.DriveId, reqCreateDirectory.Path);
+				if (result == ExitCode.Success)
+					SendResponse(new MessageResponseCreateDirectory(true, reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.Success));
+				
+				else if (result == ExitCode.InvalidPath)
+					SendResponse(new MessageResponseCreateDirectory(true, reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.InvalidPath));
+				
+				else
+					SendResponse(new MessageResponseCreateDirectory(true, reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.Failure));
+					
+				break;
+			}
+
 			case MessageRequestDeleteItem reqDeleteItem:
 			{
 				if (!_isLoggedIn)

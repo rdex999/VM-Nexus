@@ -760,6 +760,10 @@ public class DriveService
 
 		if (fileSystem.Exists(fileSystemPath))
 			result = ExitCode.ItemAlreadyExists;
+		
+		else if (!fileSystem.Exists(string.Join('\\', pathParts[..^1])))
+			result = ExitCode.InvalidPath;
+		
 		else
 			fileSystem.CreateDirectory(fileSystemPath);
 	

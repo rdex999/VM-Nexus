@@ -563,6 +563,27 @@ public class ClientService : MessagingService
 
 		return (res.Result, handler);
 	}
+
+	/// <summary>
+	/// Requests to create a directory in the given drive at the given path.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to create the directory in. driveId >= 1.</param>
+	/// <param name="path">The path inside the drive, where to create the directory. path != null.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. A drive with the given ID exists.
+	/// The given path up until its last part (the directory to create) exists in the given drive. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: On success, the directory is created and the returned status indicates success.
+	/// On failure, the directory is not created and the returned status indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseCreateDirectory.Status> CreateDirectoryAsync(int driveId, string path)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDirectory(true, driveId, path));
+		if (result != ExitCode.Success)
+			return MessageResponseCreateDirectory.Status.Failure;
+
+		return ((MessageResponseCreateDirectory)response!).Result;
+	}
 	
 	/// <summary>
 	/// Requests to delete the given item.
