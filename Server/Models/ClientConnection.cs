@@ -785,7 +785,10 @@ public sealed class ClientConnection : MessagingService
 				
 				result = _driveService.CreateDirectory(reqCreateDirectory.DriveId, reqCreateDirectory.Path);
 				if (result == ExitCode.Success)
+				{
 					SendResponse(new MessageResponseCreateDirectory(true, reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.Success));
+					await _userService.NotifyItemCreatedAsync(reqCreateDirectory.DriveId, reqCreateDirectory.Path);
+				}
 				
 				else if (result == ExitCode.InvalidPath)
 					SendResponse(new MessageResponseCreateDirectory(true, reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.InvalidPath));

@@ -10,6 +10,7 @@ using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 using Client.Services;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Drives;
@@ -24,6 +25,15 @@ public partial class FileSystemItemsViewModel : DriveExplorerMode
 	private readonly string _path;
 	
 	public ObservableCollection<FileSystemItemItemTemplate> Items { get; }
+
+	[ObservableProperty] 
+	private bool _directoryCreatePopupIsOpen = false;
+	
+	[ObservableProperty]
+	private string _directoryCreateName = string.Empty;
+
+	[ObservableProperty] 
+	private bool _directoryCreateError = false;
 	
 	public FileSystemItemsViewModel(NavigationService navigationService, ClientService clientService, DriveService driveService, 
 		DriveGeneralDescriptor driveDescriptor, string path, PathItem[] items)
@@ -121,6 +131,47 @@ public partial class FileSystemItemsViewModel : DriveExplorerMode
 		/* TODO: Add MessageInfoItemCreated to refresh content. */
 		/* TODO: Add an upload/download progress bar at the bottom right corner, with error messages too. */
 	}
+
+	/// <summary>
+	/// Handles a click on the create directory context menu button.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the create directory context menu button. <br/>
+	/// Postcondition: A directory creation popup is shows, prompting for the directory's name.
+	/// </remarks>
+	[RelayCommand]
+	private void CreateDirectoryClick()
+	{
+		DirectoryCreateName = "New Directory";
+		DirectoryCreatePopupIsOpen = true;
+		DirectoryCreateError = false;
+	}
+
+	/// <summary>
+	/// Handles a click on the enter key while focused on the new directory name text box. Attempts to create the directory.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the enter key while being focused on the new directory name text box. <br/>
+	/// Postcondition: An attempt to create the directory was performed. On success, the popup is closed and the directory is created.
+	/// On failure, the directory is not created and a red error indication is shown on the directory name text box.
+	/// </remarks>
+	[RelayCommand]
+	private async Task CreateDirectoryConfirmClickAsync()
+	{
+		MessageResponseCreateDirectory.Status result = await ClientSvc.CreateDirectoryAsync(_driveDescriptor.Id, _path + '/' + DirectoryCreateName);
+		DirectoryCreatePopupIsOpen = result != MessageResponseCreateDirectory.Status.Success;
+		DirectoryCreateError = DirectoryCreatePopupIsOpen;
+	}
+
+	/// <summary>
+	/// Handles a click on the escape key while being focused on the new directory name text box.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the escape key while being focused on the new directory name text box. <br/>
+	/// Postcondition: The new directory name popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	public void CreateDirectoryExitClick() => DirectoryCreatePopupIsOpen = false;
 }
 
 public partial class FileSystemItemItemTemplate		/* FilesystemItem - item template (i know) */

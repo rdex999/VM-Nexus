@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
@@ -81,5 +82,22 @@ public partial class FileSystemItemsView : UserControl
 			return;
 
 		vm.FileSystemItemDoubleTapped(item);
+	}
+
+	/// <summary>
+	/// Handles the event that the new directory popup attempts closing. Closes the popup.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="e">Unused.</param>
+	/// <remarks>
+	/// Precondition: Either the user has closed the popup, or the popup itself attempts closing. <br/>
+	/// Postcondition: The popup is closed.
+	/// </remarks>
+	private void DirectoryCreatePopupClosed(object? sender, EventArgs e)
+	{
+		if (DataContext is not FileSystemItemsViewModel vm)
+			return;
+
+		vm.CreateDirectoryExitClick();
 	}
 }

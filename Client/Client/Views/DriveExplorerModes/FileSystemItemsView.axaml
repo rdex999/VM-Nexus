@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:dem="clr-namespace:Client.ViewModels.DriveExplorerModes"
+             xmlns:templated="clr-namespace:Client.Controls.Templated"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.DriveExplorerModes.FileSystemItemsView"
              x:DataType="dem:FileSystemItemsViewModel">
@@ -14,50 +15,65 @@
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
-	
-	<ItemsControl ItemsSource="{Binding Items}">
-		<ItemsControl.ContextMenu>
-			<ContextMenu>
-				<MenuItem Header="Upload file" Command="{Binding UploadFileClickCommand}" />
-			</ContextMenu>
-		</ItemsControl.ContextMenu>
-		
-		<ItemsControl.ItemsPanel>
-			<ItemsPanelTemplate>
-				<WrapPanel Orientation="Horizontal" Background="Transparent" />
-			</ItemsPanelTemplate>
-		</ItemsControl.ItemsPanel>
-		
-		<ItemsControl.ItemTemplate>
-			<DataTemplate DataType="dem:FileSystemItemItemTemplate">
-				<Border CornerRadius="15" Height="160" Width="160" Margin="10" Padding="10" 
-				        BorderThickness="1.2" DoubleTapped="OnFileSystemItemDoubleTapped">
-					<Border.Styles>
-						<Style Selector="Border">
-							<Setter Property="BorderBrush">
-								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-									<GradientStop Offset="0" Color="#d7e2ea" />
-									<GradientStop Offset="1" Color="#ced6dd" />
-								</LinearGradientBrush>
-							</Setter>
-							
-							<Setter Property="Background" Value="#f1f1f1"/>
-						</Style>
-					</Border.Styles>
-				
-					<Border.ContextMenu>
-						<Binding Path="Menu"/>
-					</Border.ContextMenu>
-					
-					<Grid RowDefinitions="*, Auto">
-						<PathIcon Data="{Binding Icon}" Foreground="#343839"
-						          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="105" Height="105"/>
-						
-						<TextBlock Grid.Row="1" Text="{Binding Name}" 
-						           HorizontalAlignment="Center" FontSize="16"/>
-					</Grid>
-				</Border>
-			</DataTemplate>
-		</ItemsControl.ItemTemplate>
-	</ItemsControl>
+
+	<Grid x:Name="Grid">
+		<Popup Placement="Pointer" MinWidth="140" IsLightDismissEnabled="True" Closed="DirectoryCreatePopupClosed"
+		       IsOpen="{Binding DirectoryCreatePopupIsOpen}">
+			<TextBox VerticalContentAlignment="Center"
+					 Text="{Binding DirectoryCreateName}"
+			         Classes.error="{Binding DirectoryCreateError}">
+				<TextBox.KeyBindings>
+					<KeyBinding Gesture="Enter" Command="{Binding CreateDirectoryConfirmClickCommand}" />
+					<KeyBinding Gesture="Escape" Command="{Binding CreateDirectoryExitClickCommand}" />
+				</TextBox.KeyBindings>
+			</TextBox>
+		</Popup>
+
+		<ItemsControl ItemsSource="{Binding Items}">
+			<ItemsControl.ContextMenu>
+				<ContextMenu>
+					<MenuItem Header="Upload file" Command="{Binding UploadFileClickCommand}" />
+					<MenuItem Header="Create directory" Command="{Binding CreateDirectoryClickCommand}" />
+				</ContextMenu>
+			</ItemsControl.ContextMenu>
+
+			<ItemsControl.ItemsPanel>
+				<ItemsPanelTemplate>
+					<WrapPanel Orientation="Horizontal" Background="Transparent" />
+				</ItemsPanelTemplate>
+			</ItemsControl.ItemsPanel>
+
+			<ItemsControl.ItemTemplate>
+				<DataTemplate DataType="dem:FileSystemItemItemTemplate">
+					<Border CornerRadius="15" Height="160" Width="160" Margin="10" Padding="10"
+					        BorderThickness="1.2" DoubleTapped="OnFileSystemItemDoubleTapped">
+						<Border.Styles>
+							<Style Selector="Border">
+								<Setter Property="BorderBrush">
+									<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+										<GradientStop Offset="0" Color="#d7e2ea" />
+										<GradientStop Offset="1" Color="#ced6dd" />
+									</LinearGradientBrush>
+								</Setter>
+
+								<Setter Property="Background" Value="#f1f1f1" />
+							</Style>
+						</Border.Styles>
+
+						<Border.ContextMenu>
+							<Binding Path="Menu" />
+						</Border.ContextMenu>
+
+						<Grid RowDefinitions="*, Auto">
+							<PathIcon Data="{Binding Icon}" Foreground="#343839"
+							          HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="105" Height="105" />
+
+							<TextBlock Grid.Row="1" Text="{Binding Name}"
+							           HorizontalAlignment="Center" FontSize="16" />
+						</Grid>
+					</Border>
+				</DataTemplate>
+			</ItemsControl.ItemTemplate>
+		</ItemsControl>
+	</Grid>
 </UserControl>

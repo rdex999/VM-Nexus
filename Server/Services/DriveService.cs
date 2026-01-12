@@ -758,14 +758,21 @@ public class DriveService
 	
 		ExitCode result = ExitCode.Success;
 
-		if (fileSystem.Exists(fileSystemPath))
-			result = ExitCode.ItemAlreadyExists;
-		
-		else if (!fileSystem.Exists(string.Join('\\', pathParts[..^1])))
+		try
+		{
+			if (fileSystem.Exists(fileSystemPath))
+				result = ExitCode.ItemAlreadyExists;
+			
+			else if (!fileSystem.Exists(string.Join('\\', pathParts[..^1])))
+				result = ExitCode.InvalidPath;
+
+			else
+				fileSystem.CreateDirectory(fileSystemPath);
+		}
+		catch (Exception)
+		{
 			result = ExitCode.InvalidPath;
-		
-		else
-			fileSystem.CreateDirectory(fileSystemPath);
+		}
 	
 		fileSystem.Dispose();
 		drive.Dispose();
