@@ -720,7 +720,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				string trimmedPath = reqUploadFile.Path.Trim(SharedDefinitions.DirectorySeparators);
+				string trimmedPath = reqUploadFile.Path.Trim().Trim(SharedDefinitions.DirectorySeparators);
 				string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
 				if (pathParts.Length == 0 || string.IsNullOrEmpty(pathParts[0]))
 				{
@@ -770,6 +770,8 @@ public sealed class ClientConnection : MessagingService
 
 				await handler.Task;
 				stream.Dispose();
+
+				await _userService.NotifyItemCreatedAsync(reqUploadFile.DriveId, trimmedPath);
 				break;
 			}
 
@@ -946,6 +948,18 @@ public sealed class ClientConnection : MessagingService
 	public void NotifyDriveCreated(DriveGeneralDescriptor descriptor) =>
 		SendInfo(new MessageInfoDriveCreated(true, descriptor));
 
+	/// <summary>
+	/// Notifies the client that a new item was created.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that holds the new item. driveId >= 1.</param>
+	/// <param name="path">The path on the drive that points to the new item, including the item's name. (filename/directory name) path != null.</param>
+	/// <remarks>
+	/// Precondition: An item was created. Service initialized and connected to client. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: Client is notified that the item a new item was created.
+	/// </remarks>
+	public void NotifyItemCreated(int driveId, string path) =>
+		SendInfo(new MessageInfoItemCreated(true, driveId, path));
+	
 	/// <summary>
 	/// Notifies the client that an item was deleted.
 	/// </summary>

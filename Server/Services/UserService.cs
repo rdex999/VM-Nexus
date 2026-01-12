@@ -247,6 +247,33 @@ public class UserService
 	}
 
 	/// <summary>
+	/// Notifies related users that an item (file/directory in a drive) was created.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive that contains the new item. driveId >= 1.</param>
+	/// <param name="path">A path to the new item, including the item's name. (filename/directory name). path != null</param>
+	/// <remarks>
+	/// Precondition: Service initialized. The given item exists. driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: Related users are notified that the item was created.
+	/// </remarks>
+	public async Task NotifyItemCreatedAsync(int driveId, string path)
+	{
+		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToDriveAsync(driveId);
+		if (relatedUsers == null)
+			return;
+
+		foreach (int id in relatedUsers)
+		{
+			if (!_users.TryGetValue(id, out ConcurrentDictionary<Guid, ClientConnection>? userConnections)) 
+				continue;
+			
+			foreach (ClientConnection connection in userConnections.Values)
+			{
+				connection.NotifyItemCreated(driveId, path);
+			}
+		}
+	}
+	
+	/// <summary>
 	/// Notifies related users that an item (file in a drive, or the drive itself) was deleted.
 	/// </summary>
 	/// <param name="driveId">The ID of the drive that contains the (will be) deleted item. driveId >= 1.</param>
