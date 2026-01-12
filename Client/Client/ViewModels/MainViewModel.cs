@@ -26,7 +26,8 @@ public partial class MainViewModel : ViewModelBase
 	private const int SideMenuIdxHome = 0;
 	private const int SideMenuIdxCreateVm = 1;
 	private const int SideMenuIdxDrives = 2;
-	private const int SideMenuIdxVmScreen = 3;
+	private const int SideMenuIdxSubUsers = 3;
+	private const int SideMenuIdxVmScreen = 4;
 	
 	[ObservableProperty]
 	private VmTabTemplate? _selectedVmTab;
@@ -73,6 +74,7 @@ public partial class MainViewModel : ViewModelBase
 			new SideMenuItemTemplate("Home", new HomeViewModel(NavigationSvc, ClientSvc, driveService), "HomeRegular"),
 			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(NavigationSvc,  ClientSvc, driveService), "AddRegular"),
 			new SideMenuItemTemplate("Drives", new DriveExplorerViewModel(NavigationSvc, ClientSvc, driveService), "StorageRegular"),
+			new SideMenuItemTemplate("Sub Users", new SubUsersViewModel(NavigationSvc, ClientSvc), "PeopleCommunityRegular"),
 		};
 		CurrentSideMenuItem = SideMenuItems[SideMenuIdxHome];
 		CurrentPageViewModel = SideMenuItems.First().ViewModel;
