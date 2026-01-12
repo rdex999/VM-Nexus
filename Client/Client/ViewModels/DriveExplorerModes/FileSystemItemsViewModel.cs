@@ -176,26 +176,41 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 	/// </remarks>
 	private void InitializeContextMenu()
 	{
-		if (!IsFile)
-			return;
-
-		Menu = new ContextMenu()
+		if (IsFile)
 		{
-			Background = new SolidColorBrush(Colors.White),
-			Items =
+			Menu = new ContextMenu()
 			{
-				new MenuItem
+				Background = new SolidColorBrush(Colors.White),
+				Items =
 				{
-					Header = "Download",
-					Command = DownloadCommand
-				},
-				new MenuItem
-				{
-					Header = "Delete",
-					Command = DeleteCommand
+					new MenuItem
+					{
+						Header = "Download",
+						Command = DownloadCommand
+					},
+					new MenuItem
+					{
+						Header = "Delete",
+						Command = DeleteCommand
+					}
 				}
-			}
-		};
+			};
+		}
+		else
+		{
+			Menu = new ContextMenu()
+			{
+				Background = new SolidColorBrush(Colors.White),
+				Items =
+				{
+					new MenuItem
+					{
+						Header = "Delete",
+						Command = DeleteCommand
+					}
+				}
+			};
+		}
 	}
 
 	/// <summary>
@@ -216,5 +231,5 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 	/// Postcondition: The delete confirmation popup is displayed.
 	/// </remarks>
 	[RelayCommand]
-	private void Delete() => DeleteRequested?.Invoke(Name);
+	private void Delete() => DeleteRequested?.Invoke(IsFile ? Name : (Name + '/'));
 }

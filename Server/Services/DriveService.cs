@@ -840,27 +840,31 @@ public class DriveService
 			return ExitCode.UnsupportedFileSystem;
 		}
 
+		ExitCode result = ExitCode.Success;
 		try
 		{
-			fileSystem.DeleteFile(fileSystemPath);
+			if (fileSystem.FileExists(fileSystemPath))
+				fileSystem.DeleteFile(fileSystemPath);
+			
+			else if (fileSystem.DirectoryExists(fileSystemPath))
+				fileSystem.DeleteDirectory(fileSystemPath, true);
+			
+			else
+				result = ExitCode.ItemDoesntExist;
 		}
 		catch (NotSupportedException)
 		{
-			fileSystem.Dispose();
-			drive.Dispose();
-			return ExitCode.UnsupportedFileSystem;
+			result = ExitCode.UnsupportedFileSystem;
 		}
 		catch (Exception)
 		{
-			fileSystem.Dispose();
-			drive.Dispose();
-			return ExitCode.InvalidPath;
+			result = ExitCode.InvalidPath;
 		}
 
 		fileSystem.Dispose();
 		drive.Dispose();
 		
-		return ExitCode.Success;
+		return result;
 	}
 
 	/// <summary>

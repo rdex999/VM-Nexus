@@ -304,7 +304,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	/// Handles a request to delete an item. Displays the item deletion dialog.
 	/// </summary>
 	/// <param name="driveId">The ID of the drive that holds the item to delete. driveId >= 1. </param>
-	/// <param name="path">The path on the drive, points to the item to delete. path != null. </param>
+	/// <param name="path">The path on the drive, points to the item to delete. Suffix with '/' for directories. path != null. </param>
 	/// <remarks>
 	/// Precondition: Use has clicked on the delete button on an item. driveId >= 1 &amp;&amp; path != null. <br/>
 	/// Postcondition: The item deletion dialog is displayed.
@@ -325,8 +325,16 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		}
 		else
 		{
-			ItemDeletePopupTitle = "Delete this file?";
-			ItemDeletePopupInfoText = "The file will be permanently deleted.";
+			if (path.EndsWith('/'))
+			{
+				ItemDeletePopupTitle = "Delete this directory?";
+				ItemDeletePopupInfoText = "The directory and all of its content will be permanently deleted.";
+			}
+			else
+			{
+				ItemDeletePopupTitle = "Delete this file?";
+				ItemDeletePopupInfoText = "The file will be permanently deleted.";
+			}
 			ItemDeletePopupConfirmText = "Are you sure you want to delete " + pathTrimmed + '?';
 		}
 
