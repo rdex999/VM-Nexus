@@ -63,7 +63,8 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		PathParts = new ObservableCollection<PathPartItemTemplate>();
 		_prevPathParts = new Stack<string>();
 		ExplorerModeViewModel = new DrivesViewModel(NavigationSvc, ClientSvc, driveService);
-		ClientSvc.ItemDeleted += OnItemDeleted;
+		ClientSvc.ItemCreated += (_, info) => OnItemCreatedOrDeleted(info.DriveId, info.Path);
+		ClientSvc.ItemDeleted += (_, info) => OnItemCreatedOrDeleted(info.DriveId, info.Path);
 		ExplorerModeViewModel.ChangePath += OnChangePathRequested;
 		ExplorerModeViewModel.DownloadItem += OnDownloadItemRequested;
 		ExplorerModeViewModel.DeleteItem += OnDeleteItemRequested;
@@ -355,31 +356,28 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	}
 	
 	/// <summary>
-	/// Handles an item deletion event. Refreshes the file list if needed.
+	/// Handles item creation and deletion events. Refreshes the file list if needed.
 	/// </summary>
-	/// <param name="sender">Unused.</param>
-	/// <param name="info">The item deletion info. info != null.</param>
+	/// <param name="driveId">The ID of the drive that contains the new/deleted item. driveId >= 1.</param>
+	/// <param name="path">A path to the new/deleted item. path != null.</param>
 	/// <remarks>
-	/// Precondition: An item was deleted. info != null. <br/>
+	/// Precondition: An item was either created or deleted. driveId >= 1 &amp;&amp; path != null. <br/>
 	/// Postcondition: Event is handled, the item list is refreshed if needed.
 	/// </remarks>
-	private void OnItemDeleted(object? sender, MessageInfoItemDeleted info)
+	private void OnItemCreatedOrDeleted(int driveId, string path)
 	{
 		/* DrivesView handles drive deletions. */
-		if (Common.IsPathToDrive(info.Path) && PathParts.Count == 0)		/* If a drive was deleted, and were in DrivesView */
+		if (Common.IsPathToDrive(path) && PathParts.Count == 0)		/* If a drive was created/deleted, and were in DrivesView */
 			return;
+		
+		string currentPath = string.Empty;
+		for (int i = 0; i < PathParts.Count; ++i)
+			currentPath += PathParts[i].Name + '/';
 
-		string deletedPath = info.Path.Trim().Trim(SharedDefinitions.DirectorySeparators);
-		string filename = deletedPath.Split(SharedDefinitions.DirectorySeparators).Last();
-	
-		/* Skip drive name. There must be a drive name, because of the check at the beginning of this method. */
-		string path = string.Empty;
-		for (int i = 1; i < PathParts.Count; ++i)
-			path += PathParts[i].Name + '/';
-
-		string generalPath = PathParts[0].Name + '/' + path;
-		if (path + filename == deletedPath)
-			Dispatcher.UIThread.Post(async void () => await ChangePathAsync(generalPath));
+		/* There must be a drive name (PathParts[0].Name), because of the check at the beginning of this method. */
+		DriveGeneralDescriptor? descriptor = _driveService.GetDriveByName(PathParts[0].Name);
+		if (descriptor != null && descriptor.Id == driveId)
+			Dispatcher.UIThread.Post(async void () => await ChangePathAsync(currentPath));
 	}
 	
 	/// <summary>
