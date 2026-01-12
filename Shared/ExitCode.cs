@@ -58,5 +58,6 @@ public enum ExitCode
 	OpeningFileFailed,
 	InvalidPath,
 	ItemDownloadFailed,
-	ItemDoesntExist
+	ItemDoesntExist,
+	ItemAlreadyExists,
 }

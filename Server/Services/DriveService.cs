@@ -697,6 +697,79 @@ public class DriveService
 	}
 
 	/// <summary>
+	/// Create a directory at the given path in the given drive.
+	/// </summary>
+	/// <param name="driveId">The ID of the drive to create the directory in. driveId >= 1.</param>
+	/// <param name="path">The path inside the drive, where to create the directory.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. The given path, except for its last part (the directory to create), exist.
+	/// driveId >= 1 &amp;&amp; path != null. <br/>
+	/// Postcondition: On success, the directory is created and the returned exit code indicates success.
+	/// On failure, the directory is not created, and the returned exit code indicates the error.
+	/// </remarks>
+	public ExitCode CreateDirectory(int driveId, string path)
+	{
+		if (driveId < 1)
+			return ExitCode.InvalidParameter;
+
+		string trimmedPath = Common.CleanPath(path);
+		string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
+
+		Disk drive;
+		try
+		{
+			drive = new Disk(GetDriveFilePath(driveId));
+		}
+		catch (Exception)
+		{
+			return ExitCode.DriveDoesntExist;
+		}
+
+		DiscFileSystem? fileSystem = null;
+		string fileSystemPath;
+		if (IsDrivePartitioned(drive))
+		{
+			/* First part of the path should contain the partition index if the drive is partitioned. */
+			if (Common.IsPathToDrive(trimmedPath) || !int.TryParse(pathParts[0], out int partitionIndex) || partitionIndex < 0 || partitionIndex >= drive.Partitions.Count)
+			{
+				drive.Dispose();
+				return ExitCode.InvalidPath;
+			}
+
+			PartitionInfo partitionInfo = drive.Partitions[partitionIndex];
+			Stream fileSystemStream = partitionInfo.Open();
+			fileSystemStream.Seek(partitionInfo.FirstSector * drive.SectorSize, SeekOrigin.Begin);
+			
+			fileSystem = GetStreamFileSystem(fileSystemStream);
+			fileSystemPath = string.Join('\\', pathParts.AsSpan()[1..]!);
+		}
+		else
+		{
+			fileSystem = GetStreamFileSystem(drive.Content);
+			fileSystemPath = string.Join('\\', pathParts);
+		}
+
+		if (fileSystem == null)
+		{
+			drive.Dispose();
+			return ExitCode.UnsupportedFileSystem;
+		}
+	
+		ExitCode result = ExitCode.Success;
+
+		if (fileSystem.Exists(fileSystemPath))
+			result = ExitCode.ItemAlreadyExists;
+		else
+			fileSystem.CreateDirectory(fileSystemPath);
+	
+		fileSystem.Dispose();
+		drive.Dispose();
+		
+		return result;
+	}
+	
+	/// <summary>
 	/// Checks whether the given item exists, be it a drive, partition, directory or a file.
 	/// </summary>
 	/// <param name="driveId">The ID of the drive to check on. driveId >= 1.</param>
