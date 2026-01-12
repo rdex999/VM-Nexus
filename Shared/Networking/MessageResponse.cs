@@ -462,6 +462,26 @@ public class MessageResponseUploadFile : MessageResponse		/* Upload from client 
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+public class MessageResponseCreateDirectory : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseCreateDirectory(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		InvalidPath,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
 public class MessageResponseDeleteItem : MessageResponse
 {
 	public Status Result { get; }

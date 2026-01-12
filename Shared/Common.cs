@@ -296,6 +296,17 @@ public static class Common
 			_ => true
 		};
 	}
+
+	/// <summary>
+	/// Cleans the given path. Removes leading and trailing white-space and directory separators.
+	/// </summary>
+	/// <param name="path">The path to clean. path != null.</param>
+	/// <returns>A clean version of the given path.</returns>
+	/// <remarks>
+	/// Precondition: path != null. <br/>
+	/// Postcondition: A clean version of the given path is returned.
+	/// </remarks>
+	public static string CleanPath(string path) => path.Trim().Trim(SharedDefinitions.DirectorySeparators);
 	
 	/// <summary>
 	/// Does the given path point to the drive itself?
@@ -308,7 +319,7 @@ public static class Common
 	/// </remarks>
 	public static bool IsPathToDrive(string path)
 	{
-		string trimmedPath = path.Trim().Trim(SharedDefinitions.DirectorySeparators);
+		string trimmedPath = CleanPath(path);
 		string[] pathParts = trimmedPath.Split(SharedDefinitions.DirectorySeparators);
 
 		return pathParts.Length == 0 || (pathParts.Length == 1 && string.IsNullOrEmpty(pathParts[0]));
