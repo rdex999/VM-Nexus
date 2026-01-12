@@ -246,7 +246,22 @@ public class MessageInfoTransferData : MessageInfoTcp
 	public override bool IsValidMessage() => base.IsValidMessage() && StreamId != Guid.Empty && Data.Length > 0;
 }
 
-public class MessageInfoItemDeleted : MessageInfoTcp
+public class MessageInfoItemCreated : MessageInfoTcp		/* "Item" In this case does NOT include drives, as there is MessageInfoDriveCreated. */
+{
+	public int DriveId { get; }
+	public string Path { get; }
+
+	public MessageInfoItemCreated(bool generateGuid, int driveId, string path)
+		: base(generateGuid)
+	{
+		DriveId = driveId;
+		Path = path;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
+}
+
+public class MessageInfoItemDeleted : MessageInfoTcp		/* "Item" In this case includes a drive. */
 {
 	public int DriveId { get; }
 	public string Path { get; }
