@@ -64,12 +64,21 @@
 								
 								<Button.Flyout>
 									<Flyout>
-										
+										<ItemsControl ItemsSource="{Binding Permissions}">
+											<ItemsControl.DataTemplates>
+												<DataTemplate DataType="viewModels:UserPermissionItemTemplate">
+													<Border Background="#dfdfdf" CornerRadius="4" Margin="0, 4" Padding="5, 4" ToolTip.Placement="Bottom" 
+													        ToolTip.Tip="{Binding Description}">
+														<TextBlock Text="{Binding Permission}"/>
+													</Border>
+												</DataTemplate>
+											</ItemsControl.DataTemplates>
+										</ItemsControl>
 									</Flyout>
 								</Button.Flyout>
 							</Button>
 							
-							<StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Top" Spacing="10" Margin="0, 3.2, 0, 0">
+							<StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Top" Spacing="9" Margin="0, 3.2, 0, 0">
 								<TextBlock FontWeight="Bold" FontSize="15" VerticalAlignment="Center">Created at:</TextBlock>
 								<TextBlock FontSize="15" VerticalAlignment="Center" Text="{Binding Created}" />
 							</StackPanel>

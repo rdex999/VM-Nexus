@@ -46,12 +46,12 @@ public class SubUserItemTemplate : ObservableObject
 
 public class UserPermissionItemTemplate
 {
-	public UserPermissions Permission { get; }
+	public string Permission { get; }
 	public string Description { get; }
 
 	public UserPermissionItemTemplate(UserPermissions permission)
 	{
-		Permission = permission;
+		Permission = Common.SeparateStringWords(permission.ToString());
 		Description = permission.Description();
 	}
 }
