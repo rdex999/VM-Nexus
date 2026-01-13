@@ -58,4 +58,30 @@ public static class UserPermissionsExtensions
 	/// </remarks>
 	public static UserPermissions RemovePermission(this UserPermissions permissions, UserPermissions permission) =>
 		permissions & ~permission;
+
+	/// <summary>
+	/// Converts into a permission array, while each element is a single permission.
+	/// </summary>
+	/// <param name="permissions">The current permissions.</param>
+	/// <returns>A permission array, where each element is a single permission.</returns>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: A permission array is returned, in which each element is a single permission from the original given permissions.
+	/// </remarks>
+	public static UserPermissions[] ToArray(this UserPermissions permissions)
+	{
+		int p = (int)permissions;
+		UserPermissions[] prms = new UserPermissions[int.PopCount(p)];
+		int skipped = 0;
+		for (int i = 0; i < prms.Length; ++i)
+		{
+			int position = int.TrailingZeroCount(p);
+			prms[i] = (UserPermissions)(1 << (position + skipped));
+
+			p >>= position + 1;
+			skipped += position + 1;
+		}
+		
+		return prms;
+	}
 }

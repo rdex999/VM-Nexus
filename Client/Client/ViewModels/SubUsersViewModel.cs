@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -18,9 +19,9 @@ public class SubUsersViewModel : ViewModelBase
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>()
 		{
-			new SubUserItemTemplate("hey0", UserPermissions.DriveList),
-			new SubUserItemTemplate("hey1", UserPermissions.DriveItemDownload),
-			new SubUserItemTemplate("user2", UserPermissions.VirtualMachineUse),
+			new SubUserItemTemplate("hey0", UserPermissions.DriveList, new DateOnly(1999, 12, 31)),
+			new SubUserItemTemplate("hey1", UserPermissions.DriveItemDownload,  new DateOnly(1999, 12, 31)),
+			new SubUserItemTemplate("user2", UserPermissions.VirtualMachineUse,  new DateOnly(1999, 5, 4)),
 		};
 	}
 }
@@ -29,10 +30,12 @@ public class SubUserItemTemplate : ObservableObject
 {
 	public string UserName { get; }
 	public UserPermissions Permissions { get; }		/* Owner's permissions over this sub-user. */
+	public string Created { get; }
 	
-	public SubUserItemTemplate(string userName, UserPermissions permissions)
+	public SubUserItemTemplate(string userName, UserPermissions permissions, DateOnly created)
 	{
 		UserName = userName;
 		Permissions = permissions;
+		Created = created.ToString("dd/MM/yyyy");
 	}
 }
