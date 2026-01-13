@@ -1,20 +1,45 @@
+using System.ComponentModel;
+using System.Reflection;
+
 namespace Shared;
 
 [Flags]
 public enum UserPermissions
 {
+	[Description("List the user's virtual machines, along with their specifications. (name, OS, CPU, etc..)")]
 	VirtualMachineList		= 1 << 0,
-	VirtualMachineCreate	= 1 << 1,
-	VirtualMachineDelete	= 1 << 2,
-	VirtualMachineWatch		= 1 << 3,
-	VirtualMachineUse		= 1 << 4,
 	
+	[Description("Create virtual machines on the user's behalf. Includes the Virtual Machine List permission.")]
+	VirtualMachineCreate	= 1 << 1,
+	
+	[Description("Delete the user's virtual machines. Includes the Virtual Machine List permission.")]
+	VirtualMachineDelete	= 1 << 2,
+	
+	[Description("Watch the user's running virtual machines. Includes the Virtual Machine List permission.")]
+	VirtualMachineWatch		= 1 << 3,
+	
+	[Description("Use the user's virtual machines. Includes the Virtual Machine Watch, and Virtual Machine List permissions.")]
+	VirtualMachineUse		= 1 << 4,
+
+	[Description("List the user's drives, along with their specifications. (name, size, type, etc..)")]
 	DriveList				= 1 << 5,
+	
+	[Description("Create drives on the user's behalf. Includes the Drive List permission.")]
 	DriveCreate				= 1 << 6,
+	
+	[Description("Delete the user's drives. Includes the Drive List permission.")]
 	DriveDelete				= 1 << 7,
+	
+	[Description("List partitions, files, and directories on the user's drives. Includes the Drive List permission.")]
 	DriveItemList			= 1 << 8,
+	
+	[Description("Create files and directories in the user's drives. Includes the Drive Item List, and Drive List permissions.")]
 	DriveItemCreate			= 1 << 9,
+	
+	[Description("Delete files and directories from the user's drives. Includes the Drive Item List, and Drive List permissions.")]
 	DriveItemDelete			= 1 << 10,
+	
+	[Description("Download files from the user's drives, or the drives themselves. Includes the Drive Item List, and Drive List permissions.")]
 	DriveItemDownload		= 1 << 11,
 }
 
@@ -134,5 +159,27 @@ public static class UserPermissionsExtensions
 		}
 		
 		return prms;
+	}
+
+	/// <summary>
+	/// Get a description of this permission. Must be a single permission.
+	/// </summary>
+	/// <param name="permission">The current permission. Must be a single permission.</param>
+	/// <returns>A description of the permission, or the permissions .ToString() if it does not have a description.</returns>
+	/// <remarks>
+	/// Precondition: The current given permission is a single permission. <br/>
+	/// Postcondition: A description of the permission is returned, or the permissions .ToString() if it does not have a description.
+	/// </remarks>
+	public static string Description(this UserPermissions permission)
+	{
+		FieldInfo? fi = permission.GetType().GetField(permission.ToString());
+		if (fi == null)
+			return Common.SeparateStringWords(permission.ToString());
+		
+		DescriptionAttribute? attr = fi.GetCustomAttribute<DescriptionAttribute>();
+		if (attr == null)
+			return Common.SeparateStringWords(permission.ToString());
+		
+		return attr.Description;
 	}
 }

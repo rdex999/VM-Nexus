@@ -29,13 +29,29 @@ public class SubUsersViewModel : ViewModelBase
 public class SubUserItemTemplate : ObservableObject
 {
 	public string UserName { get; }
-	public UserPermissions Permissions { get; }		/* Owner's permissions over this sub-user. */
+	public UserPermissionItemTemplate[] Permissions { get; }		/* Owner's permissions over this sub-user. */
 	public string Created { get; }
 	
 	public SubUserItemTemplate(string userName, UserPermissions permissions, DateOnly created)
 	{
 		UserName = userName;
-		Permissions = permissions;
 		Created = created.ToString("dd/MM/yyyy");
+
+		UserPermissions[] prms = permissions.AddIncluded().ToArray();
+		Permissions = new UserPermissionItemTemplate[prms.Length];
+		for (int i = 0; i < prms.Length; ++i)
+			Permissions[i] = new UserPermissionItemTemplate(prms[i]);
+	}
+}
+
+public class UserPermissionItemTemplate
+{
+	public UserPermissions Permission { get; }
+	public string Description { get; }
+
+	public UserPermissionItemTemplate(UserPermissions permission)
+	{
+		Permission = permission;
+		Description = permission.Description();
 	}
 }
