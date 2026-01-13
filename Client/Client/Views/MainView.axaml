@@ -16,8 +16,8 @@
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<MergeResourceInclude Source="/Resources/Geometries.axaml" />
-				<MergeResourceInclude Source="/Resources/Colors.axaml" />
+				<ResourceInclude Source="/Resources/Geometries.axaml" />
+				<ResourceInclude Source="/Resources/Colors.axaml" />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>

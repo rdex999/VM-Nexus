@@ -38,6 +38,19 @@ public abstract partial class ViewModelBase : ObservableObject
 	}
 
 	/// <summary>
+	/// Constructor for IDE preview only!! Services are unusable.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: IDE preview usage only. Not used is production. <br/>
+	/// Postcondition: Properties set to null, object is created.
+	/// </remarks>
+	protected ViewModelBase()
+	{
+		NavigationSvc = null!;
+		ClientSvc = null!;
+	}
+
+	/// <summary>
 	/// Handles the reconnected event from the client server - occurs when the client service is reconnected to the server.
 	/// </summary>
 	/// <param name="sender"></param>

@@ -28,7 +28,7 @@
 		<StyleInclude Source="/Controls/Templated/OverlayPopup.axaml"/>
 	</UserControl.Styles>
 
-	<Border CornerRadius=" 10" Padding="15" x:Name="Border">
+	<Border CornerRadius="10" Margin="6" Padding="15" x:Name="Border">
 		<Border.Background>
 			<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
 				<GradientStop Offset="0" Color="#dffaff" />
