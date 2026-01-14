@@ -94,6 +94,28 @@ public class MessageResponseLogout : MessageResponse
 	}
 }
 
+public class MessageResponseCreateSubUser : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseCreateSubUser(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		UsernameNotAvailable,
+		InvalidUsernameSyntax,
+		InvalidEmail,
+		Failure,
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
 public class MessageResponseCreateVm : MessageResponse
 {
 	public Status Result { get; }

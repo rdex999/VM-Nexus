@@ -37,8 +37,8 @@ public class MessageRequestCreateAccount : MessageRequest
 	public MessageRequestCreateAccount(bool generateGuid, string username, string email, string password)
 		: base(generateGuid)
 	{
-		Username = username;
-		Email = email;
+		Username = username.Trim();
+		Email = email.Trim();
 		Password = password;
 	}
 
@@ -56,7 +56,7 @@ public class MessageRequestLogin : MessageRequest
 	public MessageRequestLogin(bool generateGuid, string username, string password)
 		: base(generateGuid)
 	{
-		Username = username;
+		Username = username.Trim();
 		Password = password;
 	}
 
@@ -72,6 +72,26 @@ public class MessageRequestLogout : MessageRequest
 		: base(generateGuid)
 	{
 	}
+}
+
+public class MessageRequestCreateSubUser : MessageRequest
+{
+	public string Username { get; }
+	public string Email { get; }
+	public string Password { get; }
+	public UserPermissions Permissions { get; }
+
+	public MessageRequestCreateSubUser(bool generateGuid, string username, string email, string password, UserPermissions permissions)
+		: base(generateGuid)
+	{
+		Username = username.Trim();
+		Email = email.Trim();
+		Password = password;
+		Permissions = permissions;
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Username) &&
+	                                         !string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(Password);
 }
 
 public class MessageRequestCreateVm : MessageRequest
