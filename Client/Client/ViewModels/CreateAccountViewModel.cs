@@ -114,12 +114,6 @@ public partial class CreateAccountViewModel : ViewModelBase
 				NavigationSvc.NavigateToView(new MainView() {  DataContext = new MainViewModel(NavigationSvc, ClientSvc, usernameTrimmed) });
 				break;
 			}
-			case MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty:
-			{
-				AccountCreationFailedText = "Credentials cannot be empty.";
-				AccountCreationFailedTextIsVisible = true;
-				break;
-			}
 			case MessageResponseCreateAccount.Status.UsernameNotAvailable:
 			{
 				AccountCreationFailedText = $"Username \"{usernameTrimmed}\" is not available.";

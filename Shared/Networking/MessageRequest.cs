@@ -87,7 +87,7 @@ public class MessageRequestCreateSubUser : MessageRequest
 		Username = username.Trim();
 		Email = email.Trim();
 		Password = password;
-		Permissions = permissions;
+		Permissions = permissions.AddIncluded();
 	}
 
 	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Username) &&

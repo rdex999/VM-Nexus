@@ -52,11 +52,10 @@ public class MessageResponseCreateAccount : MessageResponse
 	public enum Status
 	{
 		Success = 0,
-		Failure,
-		CredentialsCannotBeEmpty,
 		UsernameNotAvailable,
 		InvalidUsernameSyntax,
-		InvalidEmail
+		InvalidEmail,
+		Failure,
 	}
 }
 

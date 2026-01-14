@@ -106,27 +106,19 @@ public sealed class ClientConnection : MessagingService
 				
 				string usernameTrimmed = reqCreateAccount.Username.Trim();
 				string emailTrimmed = reqCreateAccount.Email.Trim();
-				
-				bool usernameAvailable = !await _databaseService.IsUserExistAsync(usernameTrimmed);
+
 				MessageResponseCreateAccount.Status status;
-				if (usernameAvailable)
+				result = await _databaseService.RegisterUserAsync(usernameTrimmed, emailTrimmed, reqCreateAccount.Password);
+				if (result == ExitCode.Success)
 				{
-					ExitCode code = await _databaseService.RegisterUserAsync(usernameTrimmed, emailTrimmed, reqCreateAccount.Password);
-					if (code == ExitCode.Success)
-					{
-						status = MessageResponseCreateAccount.Status.Success;
-						_isLoggedIn = true;
-						UserId = await _databaseService.GetUserIdAsync(usernameTrimmed);		/* Must be valid because created user successfully. */
-					}
-					else
-					{
-						status = MessageResponseCreateAccount.Status.Failure;
-					}
+					status = MessageResponseCreateAccount.Status.Success;
+					_isLoggedIn = true;
+					UserId = await _databaseService.GetUserIdAsync(usernameTrimmed);	/* Must be valid because created user successfully. */
 				}
-				else
-				{
+				else if (result == ExitCode.UserAlreadyExists)
 					status = MessageResponseCreateAccount.Status.UsernameNotAvailable;
-				}
+				else
+					status = MessageResponseCreateAccount.Status.Failure;
 				
 				SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, status));
 				break;
@@ -175,6 +167,18 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.UserNotLoggedIn));
 				}
 
+				break;
+			}
+
+			case MessageRequestCreateSubUser reqCreateSubUser:
+			{
+				if (!_isLoggedIn)
+				{
+					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Failure));
+					break;
+				}
+				
+				
 				break;
 			}
 

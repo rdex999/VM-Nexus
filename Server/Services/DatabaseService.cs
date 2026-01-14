@@ -1,11 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using DiscUtils.Raw;
 using Konscious.Security.Cryptography;
 using Npgsql;
 using NpgsqlTypes;
@@ -43,10 +41,13 @@ public class DatabaseService
 			await ExecuteNonQueryAsync($"""
 			                                      CREATE TABLE IF NOT EXISTS users (
 			                                          id SERIAL PRIMARY KEY,
+			                                          owner_id INT REFERENCES users(id) ON DELETE SET NULL,
+			                                          owner_permissions INT NOT NULL DEFAULT 0,
 			                                          username VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL, 
 			                                          email VARCHAR(254) NOT NULL,
 			                                          password_hashed BYTEA NOT NULL, 
-			                                          password_salt BYTEA NOT NULL
+			                                          password_salt BYTEA NOT NULL,
+			                                          created_at TIMESTAMP NOT NULL DEFAULT now()
 			                                      )
 			                                      """);
 
@@ -126,6 +127,8 @@ public class DatabaseService
 	/// <summary>
 	/// Creates an account with the given username and password.
 	/// </summary>
+	/// <param name="ownerId">The ID of the owner user of the new user. Optional, set to null to create without an owner. owner_id == null || owner_id >= 1.</param>
+	/// <param name="ownerPermissions">The owner's permissions over this new user. When creating without an owner, the value of this parameter has no effect.</param>
 	/// <param name="username">
 	/// The username for the new account. username != null.
 	/// </param>
@@ -140,31 +143,61 @@ public class DatabaseService
 	/// </returns>
 	/// <remarks>
 	/// Precondition: Service is connected to the database, no user with the given username exists, the given email must be valid.
-	/// username != null &amp;&amp; email != null &amp;&amp; password != null. <br/>
+	/// (owner_id == null || owner_id >= 1) &amp;&amp; username != null &amp;&amp; email != null &amp;&amp; password != null. <br/>
 	/// Postcondition: On success, the returned exit code will indicate success, and a new account is created with the given username and password. <br/>
 	/// On failure, the returned exit code indicates the error, and no account is created.
 	/// </remarks>
-	public async Task<ExitCode> RegisterUserAsync(string username, string email, string password)
+	public async Task<ExitCode> RegisterUserAsync(int? ownerId, UserPermissions ownerPermissions, string username, string email, string password)
 	{
+		if (await IsUserExistAsync(username))
+			return ExitCode.UserAlreadyExists;
+		
 		byte[] salt = GenerateSalt();
 		byte[] passwordHash = await EncryptPasswordAsync(password, salt);
 		
 		int rowCount = await ExecuteNonQueryAsync($"""
-		                                           INSERT INTO users (username, email, password_hashed, password_salt)
-		                                           		VALUES (@username, @email, @password_hashed, @password_salt)
+		                                           INSERT INTO users (owner_id, owner_permissions, username, email, password_hashed, password_salt)
+		                                           		VALUES (@owner_id, @owner_permissions, @username, @email, @password_hashed, @password_salt)
 		                                           """,
 			
+			new NpgsqlParameter("@owner_id", ownerId.HasValue ? ownerId : DBNull.Value), 
+			new NpgsqlParameter("@owner_permissions", ownerId.HasValue ? (int)ownerPermissions : 0), 
 			new NpgsqlParameter("@username", username), 
 			new NpgsqlParameter("@email", email),
 			new NpgsqlParameter("@password_hashed", passwordHash), 
 			new NpgsqlParameter("@password_salt",  salt)
 		);
 
-		if (rowCount == 1) return ExitCode.Success;
+		if (rowCount == 1) 
+			return ExitCode.Success;
 		
 		return ExitCode.DatabaseOperationFailed;
 	}
 
+	/// <summary>
+	/// Creates an account with the given username and password.
+	/// </summary>
+	/// <param name="username">
+	/// The username for the new account. username != null.
+	/// </param>
+	/// <param name="email">
+	/// The email for the new user. email != null, email must be valid.
+	/// </param>
+	/// <param name="password">
+	/// The password for the new account. password != null.
+	/// </param>
+	/// <returns>
+	/// An exit code indicating the result of the operation.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: Service is connected to the database, no user with the given username exists, the given email must be valid.
+	/// (owner_id == null || owner_id >= 1) &amp;&amp; username != null &amp;&amp; email != null &amp;&amp; password != null. <br/>
+	/// Postcondition: On success, the returned exit code will indicate success, and a new account is created with the given username and password. <br/>
+	/// On failure, the returned exit code indicates the error, and no account is created.
+	/// </remarks>
+	public async Task<ExitCode> RegisterUserAsync(string username, string email, string password) =>
+		await RegisterUserAsync(null, 0, username, email, password);
+	
 	/// <summary>
 	/// Checks if a login attempt with the given username and password is valid.
 	/// </summary>
