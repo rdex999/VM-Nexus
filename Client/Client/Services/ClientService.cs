@@ -113,7 +113,7 @@ public class ClientService : MessagingService
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateAccount(true, username, email, password));
 		if (result != ExitCode.Success)
-			return MessageResponseCreateAccount.Status.CredentialsCannotBeEmpty;
+			return MessageResponseCreateAccount.Status.Failure;
 		
 		MessageResponseCreateAccount reqCreateAccount = (MessageResponseCreateAccount)response!;
 		return reqCreateAccount.Result;
