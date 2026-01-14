@@ -95,6 +95,19 @@ public partial class DrivesViewModel : DriveExplorerMode
 			UpdateDrives();
 	}
 
+	/* Note: Use for IDE preview only. */
+	public DrivesViewModel()
+	{
+		_driveService = null!;
+		ConPopupVmConnections = new ObservableCollection<VmConnectionItemTemplate>();
+		DriveItems = new ObservableCollection<DriveItemTemplate>()
+		{
+			new DriveItemTemplate(new DriveGeneralDescriptor(1, "test_vm0 - Ubuntu", 50000, 512, DriveType.Disk, PartitionTableType.GuidPartitionTable)),
+			new DriveItemTemplate(new DriveGeneralDescriptor(2, "test_vm1 - MiniCoffeeOS", 15, 512, DriveType.Floppy, PartitionTableType.Unpartitioned)),
+			new DriveItemTemplate(new DriveGeneralDescriptor(2, "OS iso", 4192, 512, DriveType.CDROM, PartitionTableType.Unpartitioned)),
+		};
+	}
+
 	/// <summary>
 	/// Attempts to get the top level items of the drive, and redirect to a corresponding view.
 	/// </summary>

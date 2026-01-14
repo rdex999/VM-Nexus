@@ -79,6 +79,41 @@
 		</Style>
 	</Style>
 	
+	<Style Selector="Button.clean">
+		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="CornerRadius" Value="10" />
+		<Setter Property="BorderThickness" Value="1.5" />
+		
+		<Setter Property="BorderBrush">
+			<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+				<GradientStop Offset="0" Color="#bcd8dd" />
+				<GradientStop Offset="1" Color="#c0e0e2" />
+			</LinearGradientBrush>
+		</Setter>
+						
+		<Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="#f5f5f5" />
+							
+			<Setter Property="BorderBrush">
+				<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+					<GradientStop Offset="0" Color="#bcd8dd" />
+					<GradientStop Offset="1" Color="#c0e0e2" />
+				</LinearGradientBrush>
+			</Setter>
+		</Style>
+		
+		<Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+			<Setter Property="Background" Value="#eeeeee" />
+							
+			<Setter Property="BorderBrush">
+				<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+					<GradientStop Offset="0" Color="#bcd8dd" />
+					<GradientStop Offset="1" Color="#c0e0e2" />
+				</LinearGradientBrush>
+			</Setter>
+		</Style>
+	</Style>
+	
 	<Style Selector="TextBlock">
 		<Setter Property="Foreground" Value="#516466"/>
 		<Setter Property="FontSize" Value="14"/>

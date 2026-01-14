@@ -8,6 +8,12 @@
              x:Class="Client.Views.DriveExplorerModes.DrivesView"
              x:DataType="dem:DrivesViewModel">
 
+	<Design.DataContext>
+		<!-- This only sets the DataContext for the previewer in an IDE,
+		 to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+		<dem:DrivesViewModel />
+	</Design.DataContext>
+	
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
@@ -127,43 +133,15 @@
 		
 		<ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto">
 			<StackPanel>
-				<Button Padding="15, 10" Margin="10" CornerRadius="10" Height="50"
-				        BorderThickness="1.5" Background="White"
+				<Button Padding="15, 10" Margin="10" Height="50" Classes="clean"
 				        Command="{Binding CreateNewDriveClickCommand}">
-					<Button.Styles>
-						<Style Selector="Button">
-							<Setter Property="BorderBrush">
-								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-									<GradientStop Offset="0" Color="#bcd8dd" />
-									<GradientStop Offset="1" Color="#c0e0e2" />
-								</LinearGradientBrush>
-							</Setter>
-							
-							<Setter Property="BorderThickness" Value="1.5" />
-						</Style>
-						
-						<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-							<Setter Property="Background" Value="#f3f3f3" />
-							
-							<Setter Property="BorderBrush">
-								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-									<GradientStop Offset="0" Color="#bcd8dd" />
-									<GradientStop Offset="1" Color="#c0e0e2" />
-								</LinearGradientBrush>
-							</Setter>
-						</Style>
-
-						<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
-							<Setter Property="Background" Value="#eaeaea" />
-						</Style>
-					</Button.Styles>
 
 					<StackPanel Spacing="20" Orientation="Horizontal" VerticalAlignment="Center">
 						<PathIcon Data="{StaticResource AddRegular}" Width="30" Height="30" VerticalAlignment="Center" >
 							<PathIcon.Foreground>
 								<LinearGradientBrush StartPoint="0%, 0%" EndPoint="45%, 45%">
-									<GradientStop Offset="0" Color="#dadae4" />
-									<GradientStop Offset="1" Color="#cae1ef" />
+									<GradientStop Offset="0" Color="#d6d6e0" />
+									<GradientStop Offset="1" Color="#c6ddeb" />
 								</LinearGradientBrush>
 							</PathIcon.Foreground>
 						</PathIcon>

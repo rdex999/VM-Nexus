@@ -13,6 +13,7 @@ public class SubUsersViewModel : ViewModelBase
 	public SubUsersViewModel(NavigationService navigationSvc, ClientService clientSvc) 
 		: base(navigationSvc, clientSvc)
 	{
+		SubUsers = new ObservableCollection<SubUserItemTemplate>();
 	}
 
 	public SubUsersViewModel()

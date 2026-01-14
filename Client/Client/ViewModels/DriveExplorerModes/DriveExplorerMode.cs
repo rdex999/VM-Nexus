@@ -13,4 +13,9 @@ public class DriveExplorerMode : ViewModelBase
 		: base(navigationService, clientService)
 	{
 	}
+
+	/* Note: Use for IDE preview only. */
+	public DriveExplorerMode()
+	{
+	}
 }
