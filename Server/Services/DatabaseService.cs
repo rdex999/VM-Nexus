@@ -257,6 +257,47 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Get a user by its username.
+	/// </summary>
+	/// <param name="username">The username of the user to get. username != null.</param>
+	/// <returns>The found user, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service connected to database. A user with the given username exists. username != null. <br/>
+	/// Postcondition: On success, the found user is returned. On failure, (database failure, or if there is no such user) null is returned.
+	/// </remarks>
+	public async Task<User?> GetUserAsync(string username)
+	{
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+			"SELECT id, owner_id, owner_permissions, username, email, created_at FROM users WHERE username = @username",
+			new NpgsqlParameter("@username", username)
+		);
+		
+		if (!reader.Read() || reader.IsDBNull(0) || reader.IsDBNull(2) || reader.IsDBNull(3) || reader.IsDBNull(4) || reader.IsDBNull(5))
+			return null;
+
+		if (reader.IsDBNull(1))
+		{
+			return new User(
+				reader.GetInt32(0),
+				reader.GetString(3),
+				reader.GetString(4),
+				reader.GetDateTime(5)
+			);
+		}
+		else
+		{
+			return new User(
+				reader.GetInt32(0),
+				reader.GetInt32(1),
+				(UserPermissions)reader.GetInt32(2),
+				reader.GetString(3),
+				reader.GetString(4),
+				reader.GetDateTime(5)
+			);
+		}
+	}
+
+	/// <summary>
 	/// Creates a virtual machine in the database.
 	/// </summary>
 	/// <param name="userId">The ID of the owner user of the virtual machine. userId >= 1.</param>
