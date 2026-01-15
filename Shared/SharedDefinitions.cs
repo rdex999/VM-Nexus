@@ -14,8 +14,8 @@ public static class SharedDefinitions
 	public static readonly char[] InvalidUsernameCharacters = { '"', '\'', '/', '<', '>', '|' };
 	public static readonly char[] DirectorySeparators = { '/', '\\' };
 	
-	public const int AudioFramesFrequency = 48000;
-	public const int AudioPacketMs = 20;
+	public const int AudioFramesFrequency = 22050;
+	public const int AudioPacketMs = 50;
 	public const int AudioChannels = 2;
 	public const int AudioFramesPerPacket = (int)((float)AudioFramesFrequency * ((float)AudioPacketMs / 1000.0));
 	public const int AudioBytesPerPacket = AudioFramesPerPacket * AudioChannels * 2;	/* Using two channels, s16le */

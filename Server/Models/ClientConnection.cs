@@ -177,7 +177,31 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Failure));
 					break;
 				}
+
+				if (!Common.IsValidUsername(reqCreateSubUser.Username))
+				{
+					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.InvalidUsernameSyntax));
+					break;
+				}
+
+				if (!Common.IsValidEmail(reqCreateSubUser.Email))
+				{
+					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.InvalidEmail));
+					break;
+				}
 				
+				result = await _databaseService.RegisterUserAsync(UserId, reqCreateSubUser.Permissions,
+					reqCreateSubUser.Username, reqCreateSubUser.Email, reqCreateSubUser.Password);
+
+				if (result == ExitCode.Success)
+				{
+					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Success));
+					/* TODO: Notify users */
+				}
+				else if (result == ExitCode.UserAlreadyExists)
+					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.UsernameNotAvailable));
+				else
+					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Failure));
 				
 				break;
 			}

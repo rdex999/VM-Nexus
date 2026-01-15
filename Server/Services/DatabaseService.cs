@@ -191,7 +191,7 @@ public class DatabaseService
 	/// </returns>
 	/// <remarks>
 	/// Precondition: Service is connected to the database, no user with the given username exists, the given email must be valid.
-	/// (owner_id == null || owner_id >= 1) &amp;&amp; username != null &amp;&amp; email != null &amp;&amp; password != null. <br/>
+	/// username != null &amp;&amp; email != null &amp;&amp; password != null. <br/>
 	/// Postcondition: On success, the returned exit code will indicate success, and a new account is created with the given username and password. <br/>
 	/// On failure, the returned exit code indicates the error, and no account is created.
 	/// </remarks>
