@@ -171,6 +171,28 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests a list of all sub-users of the current user.
+	/// </summary>
+	/// <returns>A list of users, describing the sub-users of the current user. Returns null on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. The user is logged in. <br/>
+	/// Postcondition: On success, a list of users is returned, describing the sub-users of the current user.
+	/// On failure, null is returned.
+	/// </remarks>
+	public async Task<User[]?> GetSubUsersAsync()
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogout(true));
+		if (result != ExitCode.Success)
+			return null;
+
+		MessageResponseListSubUsers res = (MessageResponseListSubUsers)response!;
+		if (res.Result != MessageResponseListSubUsers.Status.Success)
+			return null;
+		
+		return res.Users;
+	}
+
+	/// <summary>
 	/// Sends a create VM request.
 	/// </summary>
 	/// <param name="name">The name of the new virtual machine. name != null.</param>

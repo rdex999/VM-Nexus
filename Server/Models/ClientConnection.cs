@@ -215,6 +215,25 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestListSubUsers reqListSubUsers:
+			{
+				if (!IsLoggedIn)
+				{
+					SendResponse(new MessageResponseListSubUsers(true, reqListSubUsers.Id, MessageResponseListSubUsers.Status.Failure));
+					break;
+				}
+
+				User[]? subUsers = await _databaseService.GetSubUsersAsync(User!.Id);
+				if (subUsers == null)
+				{
+					SendResponse(new MessageResponseListSubUsers(true, reqListSubUsers.Id, MessageResponseListSubUsers.Status.Failure));
+					break;				
+				}
+				
+				SendResponse(new MessageResponseListSubUsers(true, reqListSubUsers.Id, MessageResponseListSubUsers.Status.Success, subUsers));
+				break;
+			}
+
 			case MessageRequestCreateVm reqCreateVm:
 			{
 				if (!IsLoggedIn)
