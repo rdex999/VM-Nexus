@@ -94,6 +94,14 @@ public class MessageRequestCreateSubUser : MessageRequest
 	                                         !string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(Password);
 }
 
+public class MessageRequestListSubUsers : MessageRequest
+{
+	public MessageRequestListSubUsers(bool generateGuid)
+		: base(generateGuid)
+	{
+	}
+}
+
 public class MessageRequestCreateVm : MessageRequest
 {
 	public string Name { get; }

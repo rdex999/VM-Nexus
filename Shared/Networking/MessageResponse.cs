@@ -115,6 +115,37 @@ public class MessageResponseCreateSubUser : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+public class MessageResponseListSubUsers : MessageResponse
+{
+	public Status Result { get; }
+	public User[]? Users { get; }
+
+	[JsonConstructor]
+	public MessageResponseListSubUsers(bool generateGuid, Guid requestId, Status result, User[]? users)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Users = users;
+	}
+	
+	public MessageResponseListSubUsers(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+		Users = null;
+	}
+	
+	public enum Status
+	{
+		Success,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) 
+	                                                               && ((Result == Status.Success && Users != null) 
+	                                                                   || (Result != Status.Success && Users == null));
+}
+
 public class MessageResponseCreateVm : MessageResponse
 {
 	public Status Result { get; }
