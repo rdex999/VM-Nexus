@@ -181,7 +181,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<User[]?> GetSubUsersAsync()
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogout(true));
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestListSubUsers(true));
 		if (result != ExitCode.Success)
 			return null;
 

@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Shared;
 
 public class User
@@ -9,6 +11,7 @@ public class User
 	public string Email { get; }
 	public DateTime CreatedAt { get; }
 
+	[JsonConstructor]
 	public User(int id, int? ownerId, UserPermissions ownerPermissions, string username, string email, DateTime createdAt)
 	{
 		Id = id;

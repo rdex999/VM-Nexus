@@ -6,6 +6,9 @@ namespace Shared;
 [Flags]
 public enum UserPermissions
 {
+	[Description("No permissions over the user.")]
+	None = 0,
+	
 	[Description("List the user's virtual machines, along with their specifications. (name, OS, CPU, etc..)")]
 	VirtualMachineList		= 1 << 0,
 	
