@@ -298,6 +298,43 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Get all sub-users of the given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user to get the sub-users of. userId >= 1.</param>
+	/// <returns>An array of users, describing all sub-users of the given user. Returns null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
+	/// Postcondition: An array of users is returned, describing all sub-users of the given user. Returns null on failure.
+	/// </remarks>
+	public async Task<User[]?> GetSubUsersAsync(int userId)
+	{
+		if (userId < 1)
+			return null;
+		
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+			"SELECT id, owner_permissions, username, email, created_at FROM users WHERE owner_id = @owner_id",
+			new NpgsqlParameter("@owner_id", userId)
+		);
+
+		List<User> users = new List<User>();
+		while(await reader.ReadAsync())
+		{
+			User user = new User(
+				reader.GetInt32(0),
+				userId,
+				(UserPermissions)reader.GetInt32(1),
+				reader.GetString(2),
+				reader.GetString(3),
+				reader.GetDateTime(4)
+			);
+			
+			users.Add(user);
+		}
+		
+		return users.ToArray();
+	}
+
+	/// <summary>
 	/// Creates a virtual machine in the database.
 	/// </summary>
 	/// <param name="userId">The ID of the owner user of the virtual machine. userId >= 1.</param>
