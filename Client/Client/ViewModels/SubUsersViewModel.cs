@@ -45,10 +45,18 @@ public partial class SubUsersViewModel : ViewModelBase
 	[ObservableProperty]
 	private string _newSubUserPopupPasswordMessage = string.Empty;
 	
+	public UserPermissionItemTemplate[] NewSubUserPopupPermissions { get; }
+	
 	public SubUsersViewModel(NavigationService navigationSvc, ClientService clientSvc) 
 		: base(navigationSvc, clientSvc)
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>();
+
+		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
+		NewSubUserPopupPermissions = new UserPermissionItemTemplate[permissions.Length - 1];	/* The "None" permission is not included. */
+		for (int i = 0; i < NewSubUserPopupPermissions.Length; ++i)
+			NewSubUserPopupPermissions[i] = new UserPermissionItemTemplate(permissions[i + 1]);
+		
 		_ = InitializeAsync();
 	}
 
@@ -60,6 +68,11 @@ public partial class SubUsersViewModel : ViewModelBase
 			new SubUserItemTemplate("hey1", UserPermissions.DriveItemDownload,  new DateOnly(1999, 12, 31)),
 			new SubUserItemTemplate("user2", UserPermissions.VirtualMachineUse,  new DateOnly(1999, 5, 4)),
 		};
+		
+		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
+		NewSubUserPopupPermissions = new UserPermissionItemTemplate[permissions.Length - 1];	/* The "None" permission is not included. */
+		for (int i = 0; i < NewSubUserPopupPermissions.Length; ++i)
+			NewSubUserPopupPermissions[i] = new UserPermissionItemTemplate(permissions[i + 1]);
 	}
 
 	/// <summary>
@@ -80,6 +93,13 @@ public partial class SubUsersViewModel : ViewModelBase
 			SubUsers.Add(new SubUserItemTemplate(subUser.Username, subUser.OwnerPermissions, DateOnly.FromDateTime(subUser.CreatedAt)));
 	}
 
+	/// <summary>
+	/// Handles a click on the create sub user button. Opens the sub-user creation popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the create sub-user button. <br/>
+	/// Postcondition: The sub-user creation popup is opened.
+	/// </remarks>
 	[RelayCommand]
 	private void CreateSubUserClick()
 	{
@@ -95,10 +115,20 @@ public partial class SubUsersViewModel : ViewModelBase
 		NewSubUserPopupPasswordConfirm = string.Empty;
 		NewSubUserPopupPasswordValid = false;
 		NewSubUserPopupPasswordMessage = "Password cannot be empty.";
+	
+		foreach (UserPermissionItemTemplate permission in NewSubUserPopupPermissions)
+			permission.IsChecked = false;
 		
 		NewSubUserPopupIsOpen = true;
 	}
 
+	/// <summary>
+	/// Handles both closing the sub-user creation popup, and the event that it was closed.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the user has closed the popup, or closing it is required. <br/>
+	/// Postcondition: The sub-user creation popup is closed.
+	/// </remarks>
 	[RelayCommand]
 	private void CloseNewSubUserPopup() => NewSubUserPopupIsOpen = false;
 }
@@ -124,14 +154,19 @@ public class SubUserItemTemplate : ObservableObject
 	}
 }
 
-public class UserPermissionItemTemplate
+public partial class UserPermissionItemTemplate : ObservableObject
 {
-	public string Permission { get; }
+	public UserPermissions Permission { get; }
+	public string PermissionString { get; }
 	public string Description { get; }
+
+	[ObservableProperty] 
+	private bool _isChecked = false;
 
 	public UserPermissionItemTemplate(UserPermissions permission)
 	{
-		Permission = Common.SeparateStringWords(permission.ToString());
+		Permission = permission;
+		PermissionString = Common.SeparateStringWords(permission.ToString());
 		Description = permission.Description();
 	}
 }

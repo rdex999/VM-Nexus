@@ -32,7 +32,7 @@
 		                        PlacementTarget="Grid" Background="White" Placement="Center" Title="Create a New Sub-User"
 		                        ClosedCommand="{Binding CloseNewSubUserPopupCommand}">
 			<Border Padding="10, 0">
-				<Grid RowDefinitions="Auto, Auto, Auto, Auto, *" RowSpacing="12">
+				<Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, *" RowSpacing="12">
 					<StackPanel Spacing="3">
 						<TextBox Text="{Binding NewSubUserPopupUsername}" TextChanged="OnNewSubUserPopupUsernameChangedAsync"
 						         HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"
@@ -84,8 +84,35 @@
 						<TextBlock Classes="error" Text="{Binding NewSubUserPopupPasswordMessage}"
 						           IsVisible="{Binding !NewSubUserPopupPasswordValid}" />
 					</StackPanel>
+					
+					<DropDownButton Grid.Row="4" CornerRadius="6" Classes="submit">
+						Permissions
+						
+						<DropDownButton.Flyout>
+							<Flyout VerticalOffset="5">
+								<ScrollViewer Height="270">
+									<ItemsControl ItemsSource="{Binding NewSubUserPopupPermissions}" Margin="0, 0, 8, 0">
+										<ItemsControl.DataTemplates>
+											<DataTemplate DataType="viewModels:UserPermissionItemTemplate">
+												<Border Background="AliceBlue" CornerRadius="6" Margin="7" Padding="10, 2"
+												        ToolTip.Placement="Right" ToolTip.HorizontalOffset="7" 
+												        ToolTip.Tip="{Binding Description}">
+													
+													<Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
+														<TextBlock VerticalAlignment="Center" Text="{Binding PermissionString}" />
+														
+														<CheckBox Grid.Column="1" Margin="0" Padding="0" IsChecked="{Binding IsChecked}"/>
+													</Grid>
+												</Border>
+											</DataTemplate>
+										</ItemsControl.DataTemplates>
+									</ItemsControl>
+								</ScrollViewer>
+							</Flyout>
+						</DropDownButton.Flyout>
+					</DropDownButton>
 
-					<Button Grid.Row="4" VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="clean" Margin="0, 15, 0, 0">Create Sub-User</Button>
+					<Button Grid.Row="5" VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="clean" Margin="0, 15, 0, 0">Create Sub-User</Button>
 				</Grid>
 			</Border>
 		</templated:OverlayPopup>
@@ -154,7 +181,7 @@
 																        Padding="5, 4" ToolTip.Placement="Bottom"
 																        ToolTip.Tip="{Binding Description}">
 																	
-																	<TextBlock Text="{Binding Permission}" />
+																	<TextBlock Text="{Binding PermissionString}" />
 																</Border>
 															</DataTemplate>
 														</ItemsControl.DataTemplates>
