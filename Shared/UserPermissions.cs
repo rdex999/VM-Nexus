@@ -59,7 +59,7 @@ public static class UserPermissionsExtensions
 	/// Postcondition: Returns true if the given permission exists in the current permissions, false otherwise.
 	/// </remarks>
 	public static bool HasPermission(this UserPermissions permissions, UserPermissions permission) =>
-		(permissions & permission) != 0;
+		(permissions & permission) != 0 || permission == UserPermissions.None || permissions == UserPermissions.None;
 
 	/// <summary>
 	/// Adds the given permission to the current permissions.
@@ -137,6 +137,27 @@ public static class UserPermissionsExtensions
 	/// Postcondition: The original permissions along with the permissions they depend on are returned.
 	/// </remarks>
 	public static UserPermissions AddIncluded(this UserPermissions permissions) => permissions | permissions.GetIncluded();
+
+	/// <summary>
+	/// Checks whether the current permissions are valid - That all permissions, have their required permissions included.
+	/// </summary>
+	/// <param name="permissions">The current permissions.</param>
+	/// <returns>True if the current permissions are valid, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: Returns true if the current permissions are valid, false otherwise.
+	/// </remarks>
+	public static bool IsValid(this UserPermissions permissions)
+	{
+		UserPermissions[] prms = permissions.ToArray();
+		foreach (UserPermissions permission in prms)
+		{
+			if (!permissions.HasPermission(permission.GetIncluded()))
+				return false;
+		}
+		
+		return true;
+	}
 	
 	/// <summary>
 	/// Converts into a permission array, while each element is a single permission.
