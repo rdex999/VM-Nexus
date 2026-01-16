@@ -171,6 +171,31 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests to create a sub-user with the given information.
+	/// </summary>
+	/// <param name="username">The username for the new sub-user. Must be unique, no user with this username should exist. username != null.</param>
+	/// <param name="email">The email address of the new sub-user. Must be a valid email address, and in valid email syntax. email != null.</param>
+	/// <param name="password">The password of the new sub-user. password != null.</param>
+	/// <param name="permissions">The permissions of the current user over the new sub-user.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server. No user with the given username exist.
+	/// The given email is valid and is in valid email syntax. username != null &amp;&amp; email != null &amp;&amp; password != null. <br/>
+	/// Postcondition: On success, the sub-user is created and the returned status indicates success.
+	/// On failure, the sub-user is not created and the returned status indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseCreateSubUser.Status> CreateSubUserAsync(string username, string email, string password, UserPermissions permissions)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateSubUser(
+			true, username, email, password, permissions));
+
+		if (result != ExitCode.Success)
+			return MessageResponseCreateSubUser.Status.Failure;
+
+		return ((MessageResponseCreateSubUser)response!).Result;
+	}
+
+	/// <summary>
 	/// Requests a list of all sub-users of the current user.
 	/// </summary>
 	/// <returns>A list of users, describing the sub-users of the current user. Returns null on failure.</returns>

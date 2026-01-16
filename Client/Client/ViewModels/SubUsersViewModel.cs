@@ -3,13 +3,47 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Shared;
 
 namespace Client.ViewModels;
 
-public class SubUsersViewModel : ViewModelBase
+public partial class SubUsersViewModel : ViewModelBase
 {
 	public ObservableCollection<SubUserItemTemplate> SubUsers { get; set; }
+
+	[ObservableProperty]
+	private bool _newSubUserPopupIsOpen = false;
+	
+	[ObservableProperty]
+	private string _newSubUserPopupUsername = string.Empty;
+	
+	[ObservableProperty]
+	private bool _newSubUserPopupUsernameValid = false;	
+	
+	[ObservableProperty]	
+	private string _newSubUserPopupUsernameMessage = string.Empty;
+	
+	[ObservableProperty]
+	private string _newSubUserPopupEmail = string.Empty;
+	
+	[ObservableProperty]
+	private bool _newSubUserPopupEmailValid = false;
+	
+	[ObservableProperty]
+	private string _newSubUserPopupEmailMessage = string.Empty;
+	
+	[ObservableProperty]
+	private string _newSubUserPopupPassword = string.Empty;
+	
+	[ObservableProperty]
+	private string _newSubUserPopupPasswordConfirm = string.Empty;
+	
+	[ObservableProperty]
+	private bool _newSubUserPopupPasswordValid = false;	
+	
+	[ObservableProperty]
+	private string _newSubUserPopupPasswordMessage = string.Empty;
 	
 	public SubUsersViewModel(NavigationService navigationSvc, ClientService clientSvc) 
 		: base(navigationSvc, clientSvc)
@@ -45,6 +79,28 @@ public class SubUsersViewModel : ViewModelBase
 		foreach (var subUser in subUsers)
 			SubUsers.Add(new SubUserItemTemplate(subUser.Username, subUser.OwnerPermissions, DateOnly.FromDateTime(subUser.CreatedAt)));
 	}
+
+	[RelayCommand]
+	private void CreateSubUserClick()
+	{
+		NewSubUserPopupUsername = string.Empty;
+		NewSubUserPopupUsernameValid = false;
+		NewSubUserPopupUsernameMessage = "Username cannot be empty.";
+		
+		NewSubUserPopupEmail = string.Empty;
+		NewSubUserPopupEmailValid = false;
+		NewSubUserPopupEmailMessage = "Email cannot be empty.";
+		
+		NewSubUserPopupPassword = string.Empty;
+		NewSubUserPopupPasswordConfirm = string.Empty;
+		NewSubUserPopupPasswordValid = false;
+		NewSubUserPopupPasswordMessage = "Password cannot be empty.";
+		
+		NewSubUserPopupIsOpen = true;
+	}
+
+	[RelayCommand]
+	private void CloseNewSubUserPopup() => NewSubUserPopupIsOpen = false;
 }
 
 public class SubUserItemTemplate : ObservableObject
