@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -55,7 +56,11 @@ public partial class SubUsersViewModel : ViewModelBase
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
 		NewSubUserPopupPermissions = new UserPermissionItemTemplate[permissions.Length - 1];	/* The "None" permission is not included. */
 		for (int i = 0; i < NewSubUserPopupPermissions.Length; ++i)
+		{
 			NewSubUserPopupPermissions[i] = new UserPermissionItemTemplate(permissions[i + 1]);
+			NewSubUserPopupPermissions[i].Checked += OnNewSubUserPopupPermissionChecked;
+			NewSubUserPopupPermissions[i].UnChecked += OnNewSubUserPopupPermissionUnChecked;
+		}
 		
 		_ = InitializeAsync();
 	}
@@ -131,6 +136,57 @@ public partial class SubUsersViewModel : ViewModelBase
 	/// </remarks>
 	[RelayCommand]
 	private void CloseNewSubUserPopup() => NewSubUserPopupIsOpen = false;
+	
+	/// <summary>
+	/// Handles a permission check event. Checks all required permissions for the checked permission.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has checked some permission in the permissions in the new sub-user creation popup. <br/>
+	/// Postcondition: All required permissions for the checked permission are checked.
+	/// </remarks>
+	private void OnNewSubUserPopupPermissionChecked()
+	{
+		foreach (UserPermissionItemTemplate permission in NewSubUserPopupPermissions)
+		{
+			if (!permission.IsChecked)
+				continue;
+			
+			UserPermissions[] included = permission.Permission.GetIncluded().ToArray();
+			for (int i = 0; i < included.Length; ++i)
+			{
+				foreach (UserPermissionItemTemplate p in NewSubUserPopupPermissions)
+				{
+					if (p.Permission == included[i])
+						p.IsChecked = true;
+				}
+			}
+		}
+	}
+	
+	/// <summary>
+	/// Handles a permission uncheck event. Unchecks all permissions that require the unchecked permission.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has unchecked some permission in the permissions in the new sub-user creation popup. <br/>
+	/// Postcondition: All permissions that require the unchecked permission are unchecked.
+	/// </remarks>
+	private void OnNewSubUserPopupPermissionUnChecked()
+	{
+		foreach (UserPermissionItemTemplate permission in NewSubUserPopupPermissions)
+		{
+			if (permission.IsChecked)
+				continue;
+			
+			foreach (UserPermissionItemTemplate p in NewSubUserPopupPermissions)
+			{
+				if (p.Permission == permission.Permission || !p.IsChecked)
+					continue;
+
+				if (p.Permission.GetIncluded().HasPermission(permission.Permission))
+					p.IsChecked = false;
+			}
+		}
+	}
 }
 
 public class SubUserItemTemplate : ObservableObject
@@ -156,6 +212,8 @@ public class SubUserItemTemplate : ObservableObject
 
 public partial class UserPermissionItemTemplate : ObservableObject
 {
+	public Action? Checked;
+	public Action? UnChecked;
 	public UserPermissions Permission { get; }
 	public string PermissionString { get; }
 	public string Description { get; }
@@ -168,5 +226,21 @@ public partial class UserPermissionItemTemplate : ObservableObject
 		Permission = permission;
 		PermissionString = Common.SeparateStringWords(permission.ToString());
 		Description = permission.Description();
+	}
+
+	/// <summary>
+	/// Handles the event that the permission was checked or unchecked. Raises events.
+	/// </summary>
+	/// <param name="value">The new value of the IsChecked property.</param>
+	/// <remarks>
+	/// Precondition: Either the user has checked or unchecked this permission. <br/>
+	/// Postcondition: Event is handled, events are raised.
+	/// </remarks>
+	partial void OnIsCheckedChanged(bool value)
+	{
+		if (value)
+			Checked?.Invoke();
+		else
+			UnChecked?.Invoke();
 	}
 }
