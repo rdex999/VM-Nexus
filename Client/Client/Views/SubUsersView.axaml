@@ -180,7 +180,7 @@
 												Permissions
 
 												<DropDownButton.Flyout>
-													<Flyout>
+													<Flyout VerticalOffset="5">
 														<ItemsControl ItemsSource="{Binding Permissions}">
 															<ItemsControl.DataTemplates>
 																<DataTemplate DataType="viewModels:UserPermissionItemTemplate">
@@ -204,6 +204,12 @@
 										<Button Grid.Column="4" VerticalAlignment="Top" HorizontalAlignment="Right" 
 										        CornerRadius="6" Padding="5, 3" Opacity="0.8">
 											<PathIcon Data="{StaticResource CaretDownRegular}" Width="17" />
+											
+											<Button.Flyout>
+												<MenuFlyout VerticalOffset="5">
+													<MenuItem Header="Delete" />
+												</MenuFlyout>
+											</Button.Flyout>
 										</Button>
 									</Grid>
 								</Border>

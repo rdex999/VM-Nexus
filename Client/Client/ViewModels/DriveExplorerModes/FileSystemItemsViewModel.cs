@@ -60,6 +60,21 @@ public partial class FileSystemItemsViewModel : DriveExplorerMode
 		}
 	}
 
+	/* Use for IDE preview only. */
+	public FileSystemItemsViewModel()
+	{
+		_driveService = null!;
+		_driveDescriptor = null!;
+		_path = string.Empty;
+		
+		Items = new ObservableCollection<FileSystemItemItemTemplate>()
+		{
+			new FileSystemItemItemTemplate("folder", DateTime.Now, DateTime.Now),
+			new FileSystemItemItemTemplate("file", 10000, DateTime.Now, DateTime.Now, DateTime.Now),
+			new FileSystemItemItemTemplate("document.txt", 512, DateTime.Now, DateTime.Now, DateTime.Now),
+		};
+	}
+
 	/// <summary>
 	/// Handles a double tap on a filesystem item.
 	/// </summary>

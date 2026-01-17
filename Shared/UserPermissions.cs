@@ -8,42 +8,45 @@ public enum UserPermissions
 {
 	[Description("No permissions over the user.")]
 	None = 0,
+
+	[Description("Delete the user, along with all their virtual machines, drives, and sub-users in the same manner, recursively.")]
+	UserDelete				= 1 << 0,
 	
 	[Description("List the user's virtual machines, along with their specifications. (name, OS, CPU, etc..)")]
-	VirtualMachineList		= 1 << 0,
+	VirtualMachineList		= 1 << 1,
 	
 	[Description("Create virtual machines on the user's behalf. Includes the Virtual Machine List permission.")]
-	VirtualMachineCreate	= 1 << 1,
+	VirtualMachineCreate	= 1 << 2,
 	
 	[Description("Delete the user's virtual machines. Includes the Virtual Machine List permission.")]
-	VirtualMachineDelete	= 1 << 2,
+	VirtualMachineDelete	= 1 << 3,
 	
 	[Description("Watch the user's running virtual machines. Includes the Virtual Machine List permission.")]
-	VirtualMachineWatch		= 1 << 3,
+	VirtualMachineWatch		= 1 << 4,
 	
 	[Description("Use the user's virtual machines. Includes the Virtual Machine Watch, and Virtual Machine List permissions.")]
-	VirtualMachineUse		= 1 << 4,
+	VirtualMachineUse		= 1 << 5,
 
 	[Description("List the user's drives, along with their specifications. (name, size, type, etc..)")]
-	DriveList				= 1 << 5,
+	DriveList				= 1 << 6,
 	
 	[Description("Create drives on the user's behalf. Includes the Drive List permission.")]
-	DriveCreate				= 1 << 6,
+	DriveCreate				= 1 << 7,
 	
 	[Description("Delete the user's drives. Includes the Drive List permission.")]
-	DriveDelete				= 1 << 7,
+	DriveDelete				= 1 << 8,
 	
 	[Description("List partitions, files, and directories on the user's drives. Includes the Drive List permission.")]
-	DriveItemList			= 1 << 8,
+	DriveItemList			= 1 << 9,
 	
 	[Description("Create files and directories in the user's drives. Includes the Drive Item List, and Drive List permissions.")]
-	DriveItemCreate			= 1 << 9,
+	DriveItemCreate			= 1 << 10,
 	
 	[Description("Delete files and directories from the user's drives. Includes the Drive Item List, and Drive List permissions.")]
-	DriveItemDelete			= 1 << 10,
+	DriveItemDelete			= 1 << 11,
 	
 	[Description("Download files from the user's drives, or the drives themselves. Includes the Drive Item List, and Drive List permissions.")]
-	DriveItemDownload		= 1 << 11,
+	DriveItemDownload		= 1 << 12,
 }
 
 public static class UserPermissionsExtensions

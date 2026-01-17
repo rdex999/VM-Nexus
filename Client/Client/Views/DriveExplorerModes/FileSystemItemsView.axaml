@@ -8,10 +8,16 @@
              x:Class="Client.Views.DriveExplorerModes.FileSystemItemsView"
              x:DataType="dem:FileSystemItemsViewModel">
 	
+	<Design.DataContext>
+		<!-- This only sets the DataContext for the previewer in an IDE,
+		 to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+		<dem:FileSystemItemsViewModel />
+	</Design.DataContext>
+	
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<MergeResourceInclude Source="/Resources/Geometries.axaml"/>
+				<ResourceInclude Source="/Resources/Geometries.axaml"/>
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
@@ -46,7 +52,7 @@
 			<ItemsControl.ItemTemplate>
 				<DataTemplate DataType="dem:FileSystemItemItemTemplate">
 					<Border CornerRadius="15" Height="160" Width="160" Margin="10" Padding="10"
-					        BorderThickness="1.2" DoubleTapped="OnFileSystemItemDoubleTapped">
+					        BorderThickness="0.6" BoxShadow="0 0 10 0 #d8e3e8" DoubleTapped="OnFileSystemItemDoubleTapped">
 						<Border.Styles>
 							<Style Selector="Border">
 								<Setter Property="BorderBrush">
