@@ -37,8 +37,17 @@ public partial class SubUsersView : UserControl
 			subUsersViewModel.OnNewSubUserPopupEmailChanged();
 	}
 
+	/// <summary>
+	/// Handles a change in the both password and password confirmation fields of the sub-user creation popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has changed the value of the password or password confirm fields. <br/>
+	/// Postcondition: Errors and messages are displayed as needed. The create sub-user button is enabled if everything is valid.
+	/// </remarks>
 	private void OnNewSubUserPopupPasswordChanged(object? sender, TextChangedEventArgs e)
 	{
+		if (DataContext is SubUsersViewModel subUsersViewModel)
+			subUsersViewModel.OnNewSubUserPopupPasswordChanged();
 	}
 
 	private void OnNewSubUserPopupPasswordConfirmLostFocus(object? sender, RoutedEventArgs e)

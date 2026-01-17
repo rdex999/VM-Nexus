@@ -51,7 +51,8 @@
 						         Classes.error="{Binding !NewSubUserPopupEmailValid}"
 						         MaxLength="254" />
 
-						<TextBlock Text="{Binding NewSubUserPopupEmailMessage}" Classes="error" />
+						<TextBlock Classes="error" Text="{Binding NewSubUserPopupEmailMessage}" 
+						           IsVisible="{Binding !NewSubUserPopupEmailValid}"/>
 					</StackPanel>
 
 					<Grid Grid.Row="2" Margin="0, 10, 0, 0">

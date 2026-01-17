@@ -262,6 +262,30 @@ public partial class SubUsersViewModel : ViewModelBase
 	}
 
 	/// <summary>
+	/// Handles a change in the both password and password confirmation fields of the sub-user creation popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has changed the value of the password or password confirm fields. <br/>
+	/// Postcondition: Errors and messages are displayed as needed. The create sub-user button is enabled if everything is valid.
+	/// </remarks>
+	public void OnNewSubUserPopupPasswordChanged()
+	{
+		NewSubUserPopupPasswordValid = false;
+		NewSubUserPopupPasswordMessage = string.Empty;
+		
+		if (string.IsNullOrEmpty(NewSubUserPopupPassword))
+			NewSubUserPopupPasswordMessage = "Password cannot be empty.";
+		
+		else if (string.IsNullOrEmpty(NewSubUserPopupPasswordConfirm) || NewSubUserPopupPassword != NewSubUserPopupPasswordConfirm)
+			NewSubUserPopupPasswordMessage = "Passwords are not the same.";
+
+		else
+			NewSubUserPopupPasswordValid = true;
+		
+		SetupNewSubUserPopupCreateIsEnabled();
+	}
+
+	/// <summary>
 	/// Checks if all input fields are valid, and enables the create sub-user button if everything is valid.
 	/// </summary>
 	/// <remarks>
