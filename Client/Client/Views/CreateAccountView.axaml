@@ -38,6 +38,10 @@
 		</StackPanel>
 		
 		<Border Grid.Row="1" HorizontalAlignment="Center" Background="#d4eff1" CornerRadius="15" Padding="30, 5" Width="340" Height="440">
+			<Border.KeyBindings>
+				<KeyBinding Gesture="Enter" Command="{Binding CreateAccountCommand}" />
+			</Border.KeyBindings>
+			
 			<StackPanel Spacing="15">
 				<TextBlock TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" 
 				           FontSize="36" FontWeight="Bold" Foreground="{StaticResource Title}"

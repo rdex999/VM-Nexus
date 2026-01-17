@@ -75,7 +75,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		{
 			new SubUserItemTemplate("hey0", "user0@gmail.com", UserPermissions.DriveList, new DateOnly(1999, 12, 31)),
 			new SubUserItemTemplate("hey1", "user1@gmail.com", UserPermissions.DriveItemDownload,  new DateOnly(1999, 12, 31)),
-			new SubUserItemTemplate("user2", "user2@gmail.com", UserPermissions.VirtualMachineUse,  new DateOnly(1999, 5, 4)),
+			new SubUserItemTemplate("user2", "some.long.email@gmail.com", UserPermissions.VirtualMachineUse,  new DateOnly(1999, 5, 4)),
 		};
 		
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;

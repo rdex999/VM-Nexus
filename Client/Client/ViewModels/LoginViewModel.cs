@@ -97,6 +97,9 @@ public partial class LoginViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task LoginAsync()
 	{
+		if (!LoginButtonIsEnabled)
+			return;
+		
 		bool? result = await ClientSvc.LoginAsync(Username, Password);
 		if (result == null)
 		{

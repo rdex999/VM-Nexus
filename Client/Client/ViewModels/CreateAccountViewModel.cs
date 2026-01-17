@@ -102,6 +102,9 @@ public partial class CreateAccountViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task CreateAccountAsync()
 	{
+		if (!CreateAccountIsEnabled)
+			return;
+		
 		AccountCreationFailedTextIsVisible = false;
 
 		string usernameTrimmed = Username.Trim();
