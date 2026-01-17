@@ -56,6 +56,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>();
+		ClientSvc.SubUserCreated += (sender, user) => SubUsers.Add(new SubUserItemTemplate(user));
 
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
 		NewSubUserPopupPermissions = new UserPermissionItemTemplate[permissions.Length - 1];	/* The "None" permission is not included. */
@@ -73,9 +74,14 @@ public partial class SubUsersViewModel : ViewModelBase
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>()
 		{
-			new SubUserItemTemplate("hey0", "user0@gmail.com", UserPermissions.DriveList, new DateOnly(1999, 12, 31)),
-			new SubUserItemTemplate("hey1", "user1@gmail.com", UserPermissions.DriveItemDownload,  new DateOnly(1999, 12, 31)),
-			new SubUserItemTemplate("user2", "some.long.email@gmail.com", UserPermissions.VirtualMachineUse,  new DateOnly(1999, 5, 4)),
+			new SubUserItemTemplate(new User(2, 1, UserPermissions.DriveList | UserPermissions.UserDelete, 
+				"hey0", "user0@gmail.com", new DateTime(1999, 12, 5))),
+			
+			new SubUserItemTemplate(new User(3, 1, UserPermissions.DriveList | UserPermissions.DriveItemDownload, 
+				"hey0", "user1@gmail.com", new DateTime(1999, 12, 5))),
+			
+			new SubUserItemTemplate(new User(4, 1, UserPermissions.DriveList | UserPermissions.VirtualMachineWatch, 
+				"hey0", "some.long.email@gmail.com", new DateTime(1999, 12, 5))),
 		};
 		
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
@@ -99,7 +105,7 @@ public partial class SubUsersViewModel : ViewModelBase
 
 		SubUsers.Clear();
 		foreach (var subUser in subUsers)
-			SubUsers.Add(new SubUserItemTemplate(subUser.Username, subUser.Email, subUser.OwnerPermissions, DateOnly.FromDateTime(subUser.CreatedAt)));
+			SubUsers.Add(new SubUserItemTemplate(subUser));
 	}
 
 	/// <summary>
@@ -338,13 +344,13 @@ public class SubUserItemTemplate : ObservableObject
 	public UserPermissionItemTemplate[] Permissions { get; }		/* Owner's permissions over this sub-user. */
 	public string Created { get; }
 	
-	public SubUserItemTemplate(string userName, string email, UserPermissions permissions, DateOnly created)
+	public SubUserItemTemplate(User user)
 	{
-		UserName = userName;
-		Email = email;
-		Created = created.ToString("dd/MM/yyyy");
+		UserName = user.Username;
+		Email = user.Email;
+		Created = user.CreatedAt.ToString("dd/MM/yyyy");
 
-		UserPermissions[] prms = permissions.AddIncluded().ToArray();
+		UserPermissions[] prms = user.OwnerPermissions.AddIncluded().ToArray();
 		Permissions = new UserPermissionItemTemplate[Math.Max(prms.Length, 1)];
 		for (int i = 0; i < prms.Length; ++i)
 			Permissions[i] = new UserPermissionItemTemplate(prms[i]);

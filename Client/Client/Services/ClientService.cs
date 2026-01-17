@@ -18,6 +18,7 @@ namespace Client.Services;
 public class ClientService : MessagingService
 {
 	public event EventHandler? Reconnected;
+	public event EventHandler<User>? SubUserCreated;
 	public event EventHandler<VmGeneralDescriptor>? VmCreated;
 	public event EventHandler<int>? VmDeleted;
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
@@ -954,6 +955,11 @@ public class ClientService : MessagingService
 		
 		switch (info)
 		{
+			case MessageInfoSubUserCreated infoSubUserCreated:
+			{
+				SubUserCreated?.Invoke(this, infoSubUserCreated.SubUser);
+				break;
+			}
 			case MessageInfoVmCreated infoVmCreated:
 			{
 				VmCreated?.Invoke(this, infoVmCreated.Descriptor);
