@@ -73,9 +73,9 @@ public partial class SubUsersViewModel : ViewModelBase
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>()
 		{
-			new SubUserItemTemplate("hey0", UserPermissions.DriveList, new DateOnly(1999, 12, 31)),
-			new SubUserItemTemplate("hey1", UserPermissions.DriveItemDownload,  new DateOnly(1999, 12, 31)),
-			new SubUserItemTemplate("user2", UserPermissions.VirtualMachineUse,  new DateOnly(1999, 5, 4)),
+			new SubUserItemTemplate("hey0", "user0@gmail.com", UserPermissions.DriveList, new DateOnly(1999, 12, 31)),
+			new SubUserItemTemplate("hey1", "user1@gmail.com", UserPermissions.DriveItemDownload,  new DateOnly(1999, 12, 31)),
+			new SubUserItemTemplate("user2", "user2@gmail.com", UserPermissions.VirtualMachineUse,  new DateOnly(1999, 5, 4)),
 		};
 		
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
@@ -99,7 +99,7 @@ public partial class SubUsersViewModel : ViewModelBase
 
 		SubUsers.Clear();
 		foreach (var subUser in subUsers)
-			SubUsers.Add(new SubUserItemTemplate(subUser.Username, subUser.OwnerPermissions, DateOnly.FromDateTime(subUser.CreatedAt)));
+			SubUsers.Add(new SubUserItemTemplate(subUser.Username, subUser.Email, subUser.OwnerPermissions, DateOnly.FromDateTime(subUser.CreatedAt)));
 	}
 
 	/// <summary>
@@ -334,12 +334,14 @@ public partial class SubUsersViewModel : ViewModelBase
 public class SubUserItemTemplate : ObservableObject
 {
 	public string UserName { get; }
+	public string Email { get; }
 	public UserPermissionItemTemplate[] Permissions { get; }		/* Owner's permissions over this sub-user. */
 	public string Created { get; }
 	
-	public SubUserItemTemplate(string userName, UserPermissions permissions, DateOnly created)
+	public SubUserItemTemplate(string userName, string email, UserPermissions permissions, DateOnly created)
 	{
 		UserName = userName;
+		Email = email;
 		Created = created.ToString("dd/MM/yyyy");
 
 		UserPermissions[] prms = permissions.AddIncluded().ToArray();

@@ -126,8 +126,8 @@
 		<Border CornerRadius="15" Margin="5" Padding="4">
 			<Border.Background>
 				<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-					<GradientStop Offset="0" Color="#f6f6f6" />
-					<GradientStop Offset="1" Color="#dffaff" />
+					<GradientStop Offset="0" Color="#fafafa" />
+					<GradientStop Offset="1" Color="#ddf7ff" />
 				</LinearGradientBrush>
 			</Border.Background>
 			
@@ -152,57 +152,57 @@
 					<ItemsControl Grid.Row="1" ItemsSource="{Binding SubUsers}">
 						<ItemsControl.DataTemplates>
 							<DataTemplate DataType="viewModels:SubUserItemTemplate">
-								<Border Padding="10" Margin="10" Background="#ebfaf8" CornerRadius="15" HorizontalAlignment="Left"
-								        BorderBrush="LightGray" BorderThickness="1.2" Width="620">
-									<Grid ColumnDefinitions="Auto, Auto, Auto, Auto, *, Auto" ColumnSpacing="25">
+								<Border Padding="10" Margin="10" Background="#edf7f7" CornerRadius="15" HorizontalAlignment="Left"
+								        BorderBrush="LightGray" BorderThickness="0" Width="620" BoxShadow="0 0 14 0 #B0BAC5">
+									<Grid ColumnDefinitions="Auto, Auto, Auto, Auto, *" ColumnSpacing="25">
 										<Border CornerRadius="100" Background="#cbf4e5"
 										        BorderBrush="#c9dbd4" BorderThickness="0.8" Padding="15">
 											<PathIcon Data="{StaticResource PersonRegular}" Width="35" Height="35" />
 										</Border>
 					
 										<Grid Grid.Column="1" RowDefinitions="*, Auto" RowSpacing="10">
-											<TextBlock FontSize="16" FontWeight="Bold" VerticalAlignment="Center" HorizontalAlignment="Center"
+											<TextBlock FontSize="16" FontWeight="Bold" VerticalAlignment="Top" HorizontalAlignment="Center"
 											           Text="{Binding UserName}" />
 					
-											<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" Opacity="0.75"
+											<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" Classes="submit_dark"
 											        CornerRadius="8" FontWeight="Bold" FontSize="15" Padding="19, 4">
 												Login
 											</Button>
 										</Grid>
-					
-										<Button Grid.Column="2" CornerRadius="5" Opacity="0.8" VerticalAlignment="Top" Padding="6, 3">
-											<Grid ColumnDefinitions="*, Auto" ColumnSpacing="10">
-												<TextBlock Foreground="Black" VerticalAlignment="Center">Permissions</TextBlock>
-					
-												<PathIcon Grid.Column="1" Data="{StaticResource CaretDownRegular}" Width="16"
-												          Foreground="Black" VerticalAlignment="Center" />
-											</Grid>
-					
-											<Button.Flyout>
-												<Flyout>
-													<ItemsControl ItemsSource="{Binding Permissions}">
-														<ItemsControl.DataTemplates>
-															<DataTemplate DataType="viewModels:UserPermissionItemTemplate">
-																<Border Background="#dfdfdf" CornerRadius="4" Margin="0, 4"
-																        Padding="5, 4" ToolTip.Placement="Bottom"
-																        ToolTip.Tip="{Binding Description}">
-																	
-																	<TextBlock Text="{Binding PermissionString}" />
-																</Border>
-															</DataTemplate>
-														</ItemsControl.DataTemplates>
-													</ItemsControl>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
-					
-										<StackPanel Grid.Column="3" Orientation="Horizontal" VerticalAlignment="Top" Spacing="9"
-										            Margin="0, 3.2, 0, 0">
-											<TextBlock FontWeight="Bold" FontSize="15" VerticalAlignment="Center">Created at:</TextBlock>
-											<TextBlock FontSize="15" VerticalAlignment="Center" Text="{Binding Created}" />
-										</StackPanel>
-					
-										<Button Grid.Column="5" VerticalAlignment="Top" CornerRadius="6" Padding="5, 3" Opacity="0.8">
+
+										<Grid Grid.Column="2" RowDefinitions="*, Auto" RowSpacing="10">
+											<StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Top" Spacing="9">
+												<TextBlock FontWeight="Bold" FontSize="15">Created at:</TextBlock>
+												<TextBlock FontSize="15" Text="{Binding Created}" />
+											</StackPanel>
+
+											<DropDownButton Grid.Row="1" CornerRadius="5" Opacity="0.78" VerticalAlignment="Bottom" Padding="7, 0" Margin="0">
+												Permissions
+
+												<DropDownButton.Flyout>
+													<Flyout>
+														<ItemsControl ItemsSource="{Binding Permissions}">
+															<ItemsControl.DataTemplates>
+																<DataTemplate DataType="viewModels:UserPermissionItemTemplate">
+																	<Border Background="#dfdfdf" CornerRadius="4" Margin="0, 4"
+																	        Padding="5, 4" ToolTip.Placement="Bottom"
+																	        ToolTip.Tip="{Binding Description}">
+
+																		<TextBlock Text="{Binding PermissionString}" />
+																	</Border>
+																</DataTemplate>
+															</ItemsControl.DataTemplates>
+														</ItemsControl>
+													</Flyout>
+												</DropDownButton.Flyout>
+											</DropDownButton>
+										</Grid>
+										
+										<TextBlock Grid.Column="3" VerticalAlignment="Top"
+										           FontSize="15" Text="{Binding Email}"/>
+										
+										<Button Grid.Column="4" VerticalAlignment="Top" HorizontalAlignment="Right" 
+										        CornerRadius="6" Padding="5, 3" Opacity="0.8">
 											<PathIcon Data="{StaticResource CaretDownRegular}" Width="17" />
 										</Button>
 									</Grid>

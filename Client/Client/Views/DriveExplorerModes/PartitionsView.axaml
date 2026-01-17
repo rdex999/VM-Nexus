@@ -20,7 +20,7 @@
 			<ItemsControl.ItemTemplate>
 				<DataTemplate DataType="{x:Type dem:PartitionItemTemplate}">
 					<Border CornerRadius="15" Background="#eeeff1" Height="100" Margin="10" Padding="10" 
-					        BorderThickness="1.2" DoubleTapped="OnPartitionDoubleTapped">
+					        BorderThickness="0.7" BoxShadow="0 0 15 0 #c0c0c0" DoubleTapped="OnPartitionDoubleTapped">
 						<Border.Styles>
 							<Style Selector="Border">
 								<Setter Property="BorderBrush">
