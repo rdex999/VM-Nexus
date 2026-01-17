@@ -89,7 +89,7 @@
 						Permissions
 						
 						<DropDownButton.Flyout>
-							<Flyout VerticalOffset="5">
+							<Flyout VerticalOffset="-5" Placement="Top">
 								<ScrollViewer Height="270">
 									<ItemsControl ItemsSource="{Binding NewSubUserPopupPermissions}" Margin="0, 0, 8, 0">
 										<ItemsControl.DataTemplates>

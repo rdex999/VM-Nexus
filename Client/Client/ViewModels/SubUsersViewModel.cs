@@ -230,11 +230,33 @@ public partial class SubUsersViewModel : ViewModelBase
 				NewSubUserPopupUsernameMessage = $"Username {username} is available.";
 			}
 			else if(available.HasValue && !available.Value)
-			{
-				NewSubUserPopupUsernameValid = false;
 				NewSubUserPopupUsernameMessage = $"Username {username} is not available.";
-			}
 		}
+		
+		SetupNewSubUserPopupCreateIsEnabled();
+	}
+	
+	/// <summary>
+	/// Handles a change in the email field of the sub-user creation popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has changed the value of the email field. <br/>
+	/// Postcondition: Errors and messages are displayed as needed. The create sub-user button is enabled if everything is valid.
+	/// </remarks>
+	public void OnNewSubUserPopupEmailChanged()
+	{
+		string email = NewSubUserPopupEmail.Trim();
+		NewSubUserPopupEmailValid = false;
+		NewSubUserPopupEmailMessage = string.Empty;
+		
+		if (string.IsNullOrEmpty(email))
+			NewSubUserPopupEmailMessage = "Email cannot be empty.";
+		
+		else if (!Common.IsValidEmail(email))
+			NewSubUserPopupEmailMessage = "Invalid email address.";
+		
+		else
+			NewSubUserPopupEmailValid = true;
 		
 		SetupNewSubUserPopupCreateIsEnabled();
 	}
