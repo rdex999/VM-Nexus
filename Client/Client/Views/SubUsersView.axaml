@@ -112,7 +112,8 @@
 						</DropDownButton.Flyout>
 					</DropDownButton>
 
-					<Button Grid.Row="5" VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="clean" Margin="0, 15, 0, 0">Create Sub-User</Button>
+					<Button Grid.Row="5" VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="clean" 
+					        Margin="0, 15, 0, 0" IsEnabled="{Binding NewSubUserPopupCreateIsEnabled}">Create Sub-User</Button>
 				</Grid>
 			</Border>
 		</templated:OverlayPopup>

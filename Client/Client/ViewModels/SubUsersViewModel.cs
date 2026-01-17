@@ -45,6 +45,9 @@ public partial class SubUsersViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private string _newSubUserPopupPasswordMessage = string.Empty;
+
+	[ObservableProperty]
+	private bool _newSubUserPopupCreateIsEnabled = false;
 	
 	public UserPermissionItemTemplate[] NewSubUserPopupPermissions { get; }
 	
@@ -186,6 +189,71 @@ public partial class SubUsersViewModel : ViewModelBase
 					p.IsChecked = false;
 			}
 		}
+	}
+
+	/// <summary>
+	/// Handles a change in the username field of the sub-user creation popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has changed the value of the username field. <br/>
+	/// Postcondition: Errors and messages are displayed as needed. The create sub-user button is enabled if everything is valid.
+	/// </remarks>
+	public async Task OnNewSubUserPopupUsernameChangedAsync()
+	{
+		string username = NewSubUserPopupUsername.Trim();
+		NewSubUserPopupUsernameMessage = string.Empty;
+		NewSubUserPopupUsernameValid = false;
+		
+		if (string.IsNullOrEmpty(username))
+			NewSubUserPopupUsernameMessage = "Username cannot be empty.";
+		
+		else if (!Common.IsValidUsername(username))
+		{
+			string invalidChars = string.Empty;
+			for(int i = 0; i < SharedDefinitions.InvalidUsernameCharacters.Length; i++)
+			{
+				invalidChars += SharedDefinitions.InvalidUsernameCharacters[i];
+				if (i == SharedDefinitions.InvalidUsernameCharacters.Length - 1)
+					invalidChars += '.';
+				else
+					invalidChars += ", ";
+			}
+			NewSubUserPopupUsernameMessage = "Username cannot contain: " + invalidChars;
+		}
+		else
+		{
+			bool? available = await ClientSvc.IsUsernameAvailableAsync(username);
+			
+			if (available.HasValue && available.Value)
+			{
+				NewSubUserPopupUsernameValid = true;
+				NewSubUserPopupUsernameMessage = $"Username {username} is available.";
+			}
+			else if(available.HasValue && !available.Value)
+			{
+				NewSubUserPopupUsernameValid = false;
+				NewSubUserPopupUsernameMessage = $"Username {username} is not available.";
+			}
+		}
+		
+		SetupNewSubUserPopupCreateIsEnabled();
+	}
+
+	/// <summary>
+	/// Checks if all input fields are valid, and enables the create sub-user button if everything is valid.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: If all input fields in the sub-user creation popup are valid, the create sub-user button is enbaled.
+	/// Otherwise, the button is not enabled.
+	/// </remarks>
+	private void SetupNewSubUserPopupCreateIsEnabled()
+	{
+		NewSubUserPopupCreateIsEnabled = NewSubUserPopupUsernameValid && NewSubUserPopupEmailValid
+		                                                              && NewSubUserPopupPasswordValid
+		                                                              && !string.IsNullOrEmpty(NewSubUserPopupPassword)
+		                                                              && !string.IsNullOrEmpty(NewSubUserPopupPasswordConfirm)
+		                                                              && NewSubUserPopupPassword == NewSubUserPopupPasswordConfirm;
 	}
 }
 
