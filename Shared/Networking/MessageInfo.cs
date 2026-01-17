@@ -36,6 +36,17 @@ public class MessageInfoIdentifyUdp : MessageInfoTcp
 	public override bool IsValidMessage() => base.IsValidMessage() && Port >= IPEndPoint.MinPort && Port <= IPEndPoint.MaxPort;
 }
 
+public class MessageInfoSubUserCreated : MessageInfoTcp
+{
+	public User SubUser { get; }
+
+	public MessageInfoSubUserCreated(bool generateGuid, User subUser)
+		: base(generateGuid)
+	{
+		SubUser = subUser;
+	}
+}
+
 public class MessageInfoVmCreated : MessageInfoTcp
 {
 	public VmGeneralDescriptor Descriptor { get; }

@@ -205,7 +205,10 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Success));
-					/* TODO: Notify users */
+
+					User? subUser = await _databaseService.GetUserAsync(reqCreateSubUser.Username);
+					if (subUser != null)
+						await _userService.NotifySubUserCreatedAsync(subUser);
 				}
 				else if (result == ExitCode.UserAlreadyExists)
 					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.UsernameNotAvailable));
@@ -968,6 +971,17 @@ public sealed class ClientConnection : MessagingService
 		}
 	}
 
+	/// <summary>
+	/// Notifies the client that a new sub-user was created.
+	/// </summary>
+	/// <param name="subUser">The new sub-user that was created. subUser != null.</param>
+	/// <remarks>
+	/// Precondition: A new sub-user was created. Service initialized and connected to client. subUser != null. <br/>
+	/// Postcondition: Client is notified that a new sub-user was created.
+	/// </remarks>
+	public void NotifySubUserCreated(User subUser) =>
+		SendInfo(new MessageInfoSubUserCreated(true, subUser));
+	
 	/// <summary>
 	/// Notifies the client that a virtual machine was created.
 	/// </summary>

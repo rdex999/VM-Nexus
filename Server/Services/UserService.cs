@@ -87,6 +87,23 @@ public class UserService
 		RemoveUserConnection(connection);
 		UserLoggedOut?.Invoke(this, connection);
 	}
+
+	/// <summary>
+	/// Notifies all connections (ClientConnection) of the owner user of the new sub-user.
+	/// </summary>
+	/// <param name="subUser">The new sub-user that was created. subUser != null.</param>
+	/// <remarks>
+	/// Precondition: Service initialized. A new sub-user was created. subUser != null. <br/>
+	/// Postcondition: All connections (ClientConnection) of the owner user are notified of the new sub-user.
+	/// </remarks>
+	public async Task NotifySubUserCreatedAsync(User subUser)
+	{
+		if (!_users.TryGetValue(subUser.OwnerId!.Value, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			return;
+		
+		foreach (ClientConnection connection in userConnections.Values)
+			connection.NotifySubUserCreated(subUser);
+	}
 	
 	/// <summary>
 	/// Notifies related users of a virtual machine creation event.

@@ -17,8 +17,8 @@ public class User
 		Id = id;
 		OwnerId = ownerId;
 		OwnerPermissions = ownerPermissions;
-		Username = username;
-		Email = email;
+		Username = username.Trim();
+		Email = email.Trim();
 		CreatedAt = createdAt;
 	}
 
@@ -27,8 +27,8 @@ public class User
 		Id = id;
 		OwnerId = null;
 		OwnerPermissions = 0;
-		Username = username;
-		Email = email;
+		Username = username.Trim();
+		Email = email.Trim();
 		CreatedAt = createdAt;
 	}
 }
