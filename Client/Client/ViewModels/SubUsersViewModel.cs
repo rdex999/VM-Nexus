@@ -6,6 +6,7 @@ using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
+using Shared.Networking;
 
 namespace Client.ViewModels;
 
@@ -300,6 +301,33 @@ public partial class SubUsersViewModel : ViewModelBase
 		                                                              && !string.IsNullOrEmpty(NewSubUserPopupPassword)
 		                                                              && !string.IsNullOrEmpty(NewSubUserPopupPasswordConfirm)
 		                                                              && NewSubUserPopupPassword == NewSubUserPopupPasswordConfirm;
+	}
+
+	/// <summary>
+	/// Handles a click on the create button in the sub-user creation popup. Creates the sub-user.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the create button in the sub-user creation popup. <br/>
+	/// Postcondition: The sub-user is created according to the given data. (username, email, etc…)
+	/// Failure should not happen as the button is only enabled if everything is valid.
+	/// </remarks>
+	[RelayCommand]
+	private async Task CreateNewSubUserPopupClickAsync()
+	{
+		UserPermissions permissions = UserPermissions.None;
+		foreach (UserPermissionItemTemplate p in NewSubUserPopupPermissions)
+			if (p.IsChecked)
+				permissions = permissions.AddPermission(p.Permission.AddIncluded());
+
+		if (!permissions.IsValid())
+		{
+			CloseNewSubUserPopup();
+			return;
+		}
+		
+		/* Should always succeed because the button is only enabled if everything is valid. */
+		await ClientSvc.CreateSubUserAsync(NewSubUserPopupUsername, NewSubUserPopupEmail, NewSubUserPopupPassword, permissions);
+		CloseNewSubUserPopup();
 	}
 }
 

@@ -50,7 +50,15 @@ public partial class SubUsersView : UserControl
 			subUsersViewModel.OnNewSubUserPopupPasswordChanged();
 	}
 
-	private void OnNewSubUserPopupPasswordConfirmLostFocus(object? sender, RoutedEventArgs e)
-	{
-	}
+	/// <summary>
+	/// Handles lost focus event in the password confirm input field. This is done to untoggle the reveal password button.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="e">Unused.</param>
+	/// <remarks>
+	/// Precondition: The password confirm input field has lost focus. <br/>
+	/// Postcondition: The reveal password toggle button is untoggled.
+	/// </remarks>
+	private void OnNewSubUserPopupPasswordConfirmLostFocus(object? sender, RoutedEventArgs e) =>
+		PasswordStateButton.IsChecked = false;
 }

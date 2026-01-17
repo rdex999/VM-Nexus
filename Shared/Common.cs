@@ -115,7 +115,7 @@ public static class Common
 		 */
 		
 		int localEndIdx = email.IndexOf('@');
-		if (localEndIdx > 64 || localEndIdx == -1)
+		if (localEndIdx > 64 || localEndIdx <= 0)
 		{
 			return false;
 		}
