@@ -44,6 +44,12 @@ public partial class MainViewModel : ViewModelBase
 	[ObservableProperty] 
 	private bool _isSubUser;
 	
+	[ObservableProperty]
+	private SubUser? _subUser = null;
+
+	[ObservableProperty] 
+	private UserPermissionItemTemplate[]? _ownerPermissions;
+	
 	/// <summary>
 	/// Creates the MainViewModel object. Initializes UI.
 	/// </summary>
@@ -67,6 +73,15 @@ public partial class MainViewModel : ViewModelBase
 
 		AccountMenuTitle = $"Welcome, {ClientSvc.User!.Username}.";
 		IsSubUser = ClientSvc.User is SubUser;
+		if (IsSubUser)
+		{
+			SubUser = (SubUser)ClientSvc.User;
+			
+			UserPermissions[] permissions = SubUser.OwnerPermissions.ToArray();
+			OwnerPermissions = new UserPermissionItemTemplate[permissions.Length];
+			for (int i = 0; i < permissions.Length; ++i)
+				OwnerPermissions[i] = new UserPermissionItemTemplate(permissions[i]);
+		}
 
 		DriveService driveService = new DriveService(ClientSvc);
 		
@@ -97,12 +112,17 @@ public partial class MainViewModel : ViewModelBase
 
 	/* Use for IDE preview only. */
 	public MainViewModel()
-		: base(new NavigationService(), new ClientService(new SubUser(2, 1, 
-			(UserPermissions.DriveItemList | UserPermissions.VirtualMachineList).AddIncluded(),
-			"owner", "owner@gmail.com", "sub_user", "user@gmail.com", DateTime.Now)))
 	{
-		AccountMenuTitle = $"Welcome, {ClientSvc.User!.Username}.";
 		IsSubUser = true;
+		SubUser = new SubUser(2, 1, 
+		(UserPermissions.DriveItemList | UserPermissions.VirtualMachineList).AddIncluded(),
+		"owner", "owner@gmail.com", "sub_user", "user@gmail.com", DateTime.Now);
+		AccountMenuTitle = $"Welcome, {SubUser.Username}.";
+		
+		UserPermissions[] permissions = SubUser.OwnerPermissions.ToArray();
+		OwnerPermissions = new UserPermissionItemTemplate[permissions.Length];
+		for (int i = 0; i < permissions.Length; ++i)
+			OwnerPermissions[i] = new UserPermissionItemTemplate(permissions[i]);
 		
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{

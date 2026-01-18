@@ -52,6 +52,25 @@
 							<TextBlock Foreground="Black" FontSize="15" VerticalAlignment="Center">Permissions</TextBlock>
 							<PathIcon Data="{StaticResource ChevronDownRegular}" Foreground="#5f6a7c" Width="20" />
 						</StackPanel>
+						
+						<Button.Flyout>
+							<Flyout VerticalOffset="5">
+								<ScrollViewer MaxHeight="240">
+									<ItemsControl ItemsSource="{Binding OwnerPermissions}">
+										<ItemsControl.DataTemplates>
+											<DataTemplate DataType="vm:UserPermissionItemTemplate">
+												<Border Background="#dbdde0" CornerRadius="5" Margin="5, 5" Padding="6"
+												        ToolTip.Placement="Left" ToolTip.HorizontalOffset="-5" ToolTip.VerticalOffset="1"
+												        ToolTip.Tip="{Binding Description}"
+												        BoxShadow="0 0 4 0 LightGray">
+													<TextBlock Foreground="#303030" Text="{Binding PermissionString}" />
+												</Border>
+											</DataTemplate>
+										</ItemsControl.DataTemplates>
+									</ItemsControl>
+								</ScrollViewer>
+							</Flyout>
+						</Button.Flyout>
 					</Button>
 					
 					<Button CornerRadius="200" Width="45" Height="45" Background="#96c2b6" 
@@ -68,9 +87,9 @@
 						<Button.Flyout>
 							<Flyout Placement="Bottom" VerticalOffset="10">
 								<StackPanel Spacing="3">
-									<TextBlock FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center">owner_user</TextBlock>
+									<TextBlock FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center" Text="{Binding SubUser.OwnerUsername}"/>
 									<MenuItem Header="-"/>
-									<TextBlock Foreground="Black">owner@gmail.com</TextBlock>
+									<TextBlock Foreground="Black" Text="{Binding SubUser.OwnerEmail}"/>
 								</StackPanel>
 							</Flyout>
 						</Button.Flyout>
@@ -93,7 +112,7 @@
 						</Button.Styles>
 						
 						<Button.Flyout>
-							<MenuFlyout Placement="BottomEdgeAlignedLeft" VerticalOffset="10">
+							<MenuFlyout Placement="BottomEdgeAlignedRight" VerticalOffset="10">
 								<MenuItem Header="{Binding AccountMenuTitle}" IsHitTestVisible="False">
 									<MenuItem.Template>
 										<ControlTemplate>

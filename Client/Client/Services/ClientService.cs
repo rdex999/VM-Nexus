@@ -39,12 +39,6 @@ public class ClientService : MessagingService
 	{
 	}
 	
-	/* Use for IDE preview only. */
-	public ClientService(User user)
-	{
-		User = user;
-	}
-	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
 	/// </summary>
