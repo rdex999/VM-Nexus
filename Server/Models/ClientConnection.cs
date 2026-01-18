@@ -21,8 +21,21 @@ public sealed class ClientConnection : MessagingService
 {
 	public event EventHandler? Disconnected;
 	public Guid ClientId { get; private init; }
-	public User? ActualUser { get; private set; }
-	public SubUser? User { get; private set; }
+	public User? ActualUser { get; private set; }		/* The user itself - if logged in as sub-user, this is the owner. */
+	public SubUser? User { get; private set; }			/* The sub-user. Null if not logged in as a sub-user. */
+	public User? ActionUser								/* The user that actions such as creating a VM, deleting a drive, will be done as. */
+	{
+		get
+		{
+			if (User != null)
+				return User;
+			
+			if (ActualUser != null)
+				return ActualUser;
+
+			return null;
+		}
+	}
 	public bool IsLoggedIn => ActualUser != null;
 	public bool IsLoggedInAsSubUser => User != null && ActualUser != null;	
 	
@@ -69,6 +82,56 @@ public sealed class ClientConnection : MessagingService
 		StartTcp();
 	}
 
+	/// <summary>
+	/// Checks if the current login state and user has a permission. <br/>
+	/// A user not logged in - has no permissions. <br/>
+	/// A user logged in as itself - has all permissions. <br/>
+	/// A user logged in as a sub-user (logged into a sub-user, from the owners account) - has the owners permissions.
+	/// </summary>
+	/// <param name="permission">The permission to check if available.</param>
+	/// <returns>True if the permission is available, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: Returns true if the permission is available, false otherwise.
+	/// </remarks>
+	public bool HasPermission(UserPermissions permission) =>
+		(IsLoggedIn && !IsLoggedInAsSubUser) || (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission));
+
+
+	/// <summary>
+	/// Checks if the current login state and user has a permission and access to a virtual machine. <br/>
+	/// A user not logged in - has no permissions. <br/>
+	/// A user logged in as itself - has all permissions. <br/>
+	/// A user logged in as a sub-user (logged into a sub-user, from the owners account) - has the owners permissions.
+	/// </summary>
+	/// <param name="permission">The permission to check if available.</param>
+	/// <param name="vmId">The ID of the virtual machine to check if the user has access to. vmId >= 1.</param>
+	/// <returns>True if the permission is available, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: A virtual machine with the given ID exists. vmId >= 1. <br/>
+	/// Postcondition: Returns true if the permission is available and the virtual machine is accessible, false otherwise.
+	/// </remarks>
+	public async Task<bool> HasPermissionVmOwnerAsync(UserPermissions permission, int vmId) => 
+		(IsLoggedIn && !IsLoggedInAsSubUser) 
+		|| (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission) && await _databaseService.GetVmOwnerIdAsync(vmId) == User!.Id);
+	
+	/// <summary>
+	/// Checks if the current login state and user has a permission and access to a drive. <br/>
+	/// A user not logged in - has no permissions. <br/>
+	/// A user logged in as itself - has all permissions. <br/>
+	/// A user logged in as a sub-user (logged into a sub-user, from the owners account) - has the owners permissions.
+	/// </summary>
+	/// <param name="permission">The permission to check if available.</param>
+	/// <param name="driveId">The ID of the drive to check if the user has access to. driveId >= 1.</param>
+	/// <returns>True if the permission is available, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: A drive with the given ID exists. driveId >= 1. <br/>
+	/// Postcondition: Returns true if the permission is available and the drive is accessible, false otherwise.
+	/// </remarks>
+	public async Task<bool> HasPermissionDriveOwnerAsync(UserPermissions permission, int driveId) => 
+		(IsLoggedIn && !IsLoggedInAsSubUser) 
+		|| (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission) && await _databaseService.GetDriveOwnerIdAsync(driveId) == User!.Id);
+	
 	/// <summary>
 	/// Handles requests from the client.
 	/// </summary>
@@ -177,9 +240,13 @@ public sealed class ClientConnection : MessagingService
 			{
 				if (IsLoggedIn)
 				{
-					_userService.Logout(this);
-					ActualUser = null;
-					User = null;
+					if (IsLoggedInAsSubUser)
+						User = null;
+					else
+					{
+						_userService.Logout(this);
+						ActualUser = null;
+					}
 					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
 				}
 				else
@@ -207,7 +274,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateSubUser reqCreateSubUser:
 			{
-				if (!IsLoggedIn)
+				if (!IsLoggedIn || IsLoggedInAsSubUser)
 				{
 					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Failure));
 					break;
@@ -265,14 +332,14 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateVm reqCreateVm:
 			{
-				if (!IsLoggedIn)
+				if (!HasPermission(UserPermissions.VirtualMachineCreate))
 				{
 					SendResponse(new MessageResponseCreateVm(true, reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
 					break;
 				}
 			
 				string vmNameTrimmed = reqCreateVm.Name.Trim();
-				result = await _virtualMachineService.CreateVirtualMachineAsync(ActualUser!.Id, vmNameTrimmed,
+				result = await _virtualMachineService.CreateVirtualMachineAsync(ActionUser!.Id, vmNameTrimmed,
 					reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, reqCreateVm.BootMode);
 				
 				if (result == ExitCode.VmAlreadyExists)
@@ -287,7 +354,7 @@ public sealed class ClientConnection : MessagingService
 					break;				
 				}
 
-				int id = await _databaseService.GetVmIdAsync(ActualUser.Id, vmNameTrimmed);		/* Must be valid because we just successfully created the VM */
+				int id = await _databaseService.GetVmIdAsync(ActionUser.Id, vmNameTrimmed);		/* Must be valid because we just successfully created the VM */
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
 				
 				await _userService.NotifyVirtualMachineCreatedAsync(
@@ -299,7 +366,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestDeleteVm reqDeleteVm:
 			{
-				if (!IsLoggedIn)
+				if (!HasPermission(UserPermissions.VirtualMachineDelete) || await _databaseService.GetVmOwnerIdAsync(reqDeleteVm.VmId) != ActionUser!.Id)
 				{
 					SendResponse(new MessageResponseDeleteVm(true, reqDeleteVm.Id, MessageResponseDeleteVm.Status.Failure));
 					break;
@@ -331,13 +398,13 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestListVms reqListVms:
 			{
-				if (!IsLoggedIn)
+				if (!HasPermission(UserPermissions.VirtualMachineList))
 				{
 					SendResponse(new MessageResponseListVms(true, reqListVms.Id, MessageResponseListVms.Status.Failure));
 					break;
 				}
 				
-				VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(ActualUser!.Id);
+				VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(ActionUser!.Id);
 				if (vms == null)
 				{
 					SendResponse(new MessageResponseListVms(true, reqListVms.Id, MessageResponseListVms.Status.Failure));
@@ -351,21 +418,21 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCheckVmExist reqCheckVmExist:
 			{
-				if (!IsLoggedIn)
+				if (!HasPermission(UserPermissions.VirtualMachineList))
 				{
 					SendResponse(new MessageResponseCheckVmExist(true, reqCheckVmExist.Id, false));
 					break;
 				}
-				
+			
 				SendResponse(new MessageResponseCheckVmExist(true,  reqCheckVmExist.Id, 
-					IsLoggedIn && await _virtualMachineService.IsVmExistsAsync(ActualUser!.Id, reqCheckVmExist.Name.Trim()))
+					IsLoggedIn && await _virtualMachineService.IsVmExistsAsync(ActionUser!.Id, reqCheckVmExist.Name.Trim()))
 				);
 				break;
 			}
 
 			case MessageRequestVmStartup reqVmStartup:
 			{
-				if (!IsLoggedIn)
+				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineUse, reqVmStartup.VmId))
 				{
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
 					break;
@@ -401,38 +468,33 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestVmShutdown reqVmShutdown:
 			{
-				if (!IsLoggedIn)
+				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineUse, reqVmShutdown.VmId))
 				{
 					SendResponse(new MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.Failure));
+					break;
 				}
 				
 				Task<ExitCode> task = _virtualMachineService.PowerOffVirtualMachineAsync(reqVmShutdown.VmId);
 				if (task.IsCompleted)
 				{
 					if (task.Result == ExitCode.Success)
-					{
 						SendResponse(new MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.Success));
-					}
+					
 					else if (task.Result == ExitCode.VmIsShutDown)
-					{
 						SendResponse(new MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.VmIsShutDown));
-					}
+					
 					else
-					{
 						SendResponse(new MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.Failure));
-					}
 				}
 				else
-				{
 					SendResponse(new  MessageResponseVmShutdown(true, reqVmShutdown.Id, MessageResponseVmShutdown.Status.Success));
-				}
 				
 				break;
 			}
 
 			case MessageRequestVmForceOff reqVmForceOff:
 			{
-				if (!IsLoggedIn)
+				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineUse, reqVmForceOff.VmId))
 				{
 					SendResponse(new MessageResponseVmForceOff(true, reqVmForceOff.Id, MessageResponseVmForceOff.Status.Failure));
 					break;
@@ -457,10 +519,9 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestVmStreamStart reqVmStreamStart:
 			{
-				if (!IsLoggedIn)
+				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineWatch, reqVmStreamStart.VmId))
 				{
-					SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id, 
-						MessageResponseVmStreamStart.Status.Failure));
+					SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id, MessageResponseVmStreamStart.Status.Failure));
 					break;
 				}
 
@@ -520,7 +581,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestVmStreamStop reqVmStreamStop:
 			{
-				if (!IsLoggedIn)
+				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineWatch, reqVmStreamStop.VmId))
 				{
 					SendResponse(new MessageResponseVmStreamStop(true, reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.Failure));
 					break;
@@ -553,7 +614,7 @@ public sealed class ClientConnection : MessagingService
 			
 			case MessageRequestCreateDriveOs reqCreateDrive:
 			{
-				if (!IsLoggedIn)
+				if (!HasPermission(UserPermissions.DriveCreate))
 				{
 					SendResponse(new MessageResponseCreateDriveOs(true, reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.Failure));
 					break;
@@ -561,7 +622,7 @@ public sealed class ClientConnection : MessagingService
 				
 				string driveNameTrimmed = reqCreateDrive.Name.Trim();
 
-				result = await _driveService.CreateOperatingSystemDriveAsync(ActualUser!.Id, driveNameTrimmed, reqCreateDrive.OperatingSystem, reqCreateDrive.Size);
+				result = await _driveService.CreateOperatingSystemDriveAsync(ActionUser!.Id, driveNameTrimmed, reqCreateDrive.OperatingSystem, reqCreateDrive.Size);
 				
 				if (result == ExitCode.DriveAlreadyExists)
 				{
@@ -571,7 +632,7 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					/* Must succeed because the drive was created successfully */
-					int driveId = await _driveService.GetDriveIdAsync(ActualUser.Id, driveNameTrimmed);		
+					int driveId = await _driveService.GetDriveIdAsync(ActionUser.Id, driveNameTrimmed);		
 					SendResponse(new MessageResponseCreateDriveOs(true, reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.Success, driveId));
 					
 					await _userService.NotifyDriveCreatedAsync(
@@ -596,20 +657,20 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateDriveFs reqCreateDriveFs:
 			{
-				if (!IsLoggedIn)
+				if (!HasPermission(UserPermissions.DriveCreate))
 				{
 					SendResponse(new MessageResponseCreateDriveFs(true, reqCreateDriveFs.Id, MessageResponseCreateDriveFs.Status.Failure));
 					break;
 				}
 
 				string driveName = reqCreateDriveFs.Name.Trim();
-				result = await _driveService.CreateFileSystemDriveAsync(ActualUser!.Id, driveName, reqCreateDriveFs.SizeMb, reqCreateDriveFs.FileSystem);
+				result = await _driveService.CreateFileSystemDriveAsync(ActionUser!.Id, driveName, reqCreateDriveFs.SizeMb, reqCreateDriveFs.FileSystem);
 
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseCreateDriveFs(true, reqCreateDriveFs.Id, MessageResponseCreateDriveFs.Status.Success));
 					
-					DriveGeneralDescriptor descriptor = (await _driveService.GetDriveGeneralDescriptorAsync(ActualUser.Id, driveName))!;
+					DriveGeneralDescriptor descriptor = (await _driveService.GetDriveGeneralDescriptorAsync(ActionUser.Id, driveName))!;
 					await _userService.NotifyDriveCreatedAsync(descriptor);
 				}
 				else if (result == ExitCode.DriveAlreadyExists)
@@ -622,14 +683,14 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateDriveFromImage reqCreateDrive:
 			{
-				if (!IsLoggedIn)
+				if (!HasPermission(UserPermissions.DriveCreate))
 				{
 					SendResponse(new MessageResponseCreateDriveFromImage(true, reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.Failure));
 					break;
 				}
 
 				string name = reqCreateDrive.Name.Trim();
-				result = await _databaseService.CreateDriveAsync(ActualUser!.Id, name, (int)(reqCreateDrive.Size / 1024UL / 1024UL), reqCreateDrive.Type);
+				result = await _databaseService.CreateDriveAsync(ActionUser!.Id, name, (int)(reqCreateDrive.Size / 1024UL / 1024UL), reqCreateDrive.Type);
 				if (result == ExitCode.DriveAlreadyExists)
 				{
 					SendResponse(new MessageResponseCreateDriveFromImage(true, reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.DriveAlreadyExists));
@@ -641,7 +702,7 @@ public sealed class ClientConnection : MessagingService
 					break;								
 				}
 
-				int driveId = await _databaseService.GetDriveIdAsync(ActualUser.Id, name);
+				int driveId = await _databaseService.GetDriveIdAsync(ActionUser.Id, name);
 				DownloadHandler handler = new DownloadHandler(reqCreateDrive.Size, _driveService.GetDriveFilePath(driveId));
 				Guid transferId = CreateTransferId();
 				handler.Start(transferId);
@@ -651,7 +712,7 @@ public sealed class ClientConnection : MessagingService
 
 				handler.Completed += async (_, _) =>
 				{
-					DriveGeneralDescriptor? descriptor = await _driveService.GetDriveGeneralDescriptorAsync(ActualUser.Id, name);
+					DriveGeneralDescriptor? descriptor = await _driveService.GetDriveGeneralDescriptorAsync(ActionUser.Id, name);
 					if (descriptor != null)
 						await _userService.NotifyDriveCreatedAsync(descriptor);
 				};
@@ -660,6 +721,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestConnectDrive reqConnectDrive:
 			{
+				/* TODO: Add DriveConnect permission and check for it here. */
 				if (!IsLoggedIn)
 				{
 					SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, MessageResponseConnectDrive.Status.Failure));
@@ -687,6 +749,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestDisconnectDrive reqDisconnectDrive:
 			{
+				/* TODO: Add DriveDisconnect permission and check for it here. */
 				if (!IsLoggedIn)
 				{
 					SendResponse(new MessageResponseDisconnectDrive(true, reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.Failure));
@@ -710,13 +773,14 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestListDriveConnections reqListDriveConnections:
 			{
+				/* TODO: Add DriveConnectionList permission and check for it here. */
 				if (!IsLoggedIn)
 				{
 					SendResponse(new MessageResponseListDriveConnections(true, reqListDriveConnections.Id, MessageResponseListDriveConnections.Status.Failure));
 					break;
 				}
 				
-				DriveConnection[]? connections = await _databaseService.GetDriveConnectionsOfUserAsync(ActualUser!.Id);
+				DriveConnection[]? connections = await _databaseService.GetDriveConnectionsOfUserAsync(ActionUser!.Id);
 				if (connections == null)
 				{
 					SendResponse(new MessageResponseListDriveConnections(true, reqListDriveConnections.Id, 
@@ -732,13 +796,13 @@ public sealed class ClientConnection : MessagingService
 			
 			case MessageRequestListDrives reqListDrives:
 			{
-				if (!IsLoggedIn)
+				if (!HasPermission(UserPermissions.DriveList))
 				{
 					SendResponse(new MessageResponseListDrives(true, reqListDrives.Id, MessageResponseListDrives.Status.Failure));
 					break;
 				}
 				
-				DriveGeneralDescriptor[]? descriptors = await _driveService.GetDriveGeneralDescriptorsOfUserAsync(ActualUser!.Id);
+				DriveGeneralDescriptor[]? descriptors = await _driveService.GetDriveGeneralDescriptorsOfUserAsync(ActionUser!.Id);
 				if (descriptors == null)
 				{
 					SendResponse(new MessageResponseListDrives(true, reqListDrives.Id, MessageResponseListDrives.Status.Failure));
@@ -752,7 +816,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestListPathItems reqListPathItems:
 			{
-				if (!IsLoggedIn)
+				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemList, reqListPathItems.DriveId))
 				{
 					SendResponse(new MessageResponseListPathItems(true, reqListPathItems.Id, MessageResponseListPathItems.Status.Failure));
 					break;
@@ -760,20 +824,17 @@ public sealed class ClientConnection : MessagingService
 				
 				PathItem[]? items = _driveService.ListItems(reqListPathItems.DriveId, reqListPathItems.Path);
 				if (items == null)
-				{
 					SendResponse(new MessageResponseListPathItems(true, reqListPathItems.Id, MessageResponseListPathItems.Status.InvalidPath));
-				}
+				
 				else
-				{
 					SendResponse(new MessageResponseListPathItems(true, reqListPathItems.Id, items));
-				}
 				
 				break;
 			}
 
 			case MessageRequestDownloadItem reqDownloadItem:
 			{
-				if (!IsLoggedIn)
+				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemDownload, reqDownloadItem.DriveId))
 				{
 					SendResponse(new MessageResponseDownloadItem(true, reqDownloadItem.Id, MessageResponseDownloadItem.Status.Failure));
 					break;
@@ -805,6 +866,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestUploadFile reqUploadFile:
 			{
+				/* TODO: Add DriveItemUpload permission and check for it here. */
 				if (!IsLoggedIn)
 				{
 					SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
@@ -868,7 +930,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateDirectory reqCreateDirectory:
 			{
-				if (!IsLoggedIn)
+				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemCreate, reqCreateDirectory.DriveId))
 				{
 					SendResponse(new MessageResponseCreateDirectory(true, reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.Failure));
 					break;
@@ -892,7 +954,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestDeleteItem reqDeleteItem:
 			{
-				if (!IsLoggedIn)
+				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemDelete, reqDeleteItem.DriveId))
 				{
 					SendResponse(new MessageResponseDeleteItem(true, reqDeleteItem.Id, MessageResponseDeleteItem.Status.Failure));
 					break;
@@ -904,8 +966,10 @@ public sealed class ClientConnection : MessagingService
 
 				if (result == ExitCode.Success)
 					SendResponse(new MessageResponseDeleteItem(true, reqDeleteItem.Id, MessageResponseDeleteItem.Status.Success));
+				
 				else if (result == ExitCode.InvalidPath)
 					SendResponse(new MessageResponseDeleteItem(true, reqDeleteItem.Id, MessageResponseDeleteItem.Status.NoSuchItem));
+				
 				else
 					SendResponse(new MessageResponseDeleteItem(true, reqDeleteItem.Id, MessageResponseDeleteItem.Status.Failure));
 				
@@ -967,20 +1031,26 @@ public sealed class ClientConnection : MessagingService
 			}
 			case MessageInfoPointerMoved infoPointerMoved:
 			{
-				if (!IsLoggedIn) break;
+				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineUse, infoPointerMoved.VmId))
+					break;
+				
 				result = _virtualMachineService.EnqueuePointerMovement(infoPointerMoved.VmId, infoPointerMoved.Position);
 				break;
 			}
 			case MessageInfoPointerButtonEvent infoPointerButtonEvent:
 			{
-				if (!IsLoggedIn) break;
+				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineUse, infoPointerButtonEvent.VmId))
+					break;
+				
 				result = _virtualMachineService.EnqueuePointerButtonEvent(infoPointerButtonEvent.VmId,
 					infoPointerButtonEvent.Position, infoPointerButtonEvent.PressedButtons);
 				break;
 			}
 			case MessageInfoKeyboardKeyEvent infoKeyboardKeyEvent:
 			{
-				if (!IsLoggedIn) break;
+				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineUse, infoKeyboardKeyEvent.VmId))
+					break;
+				
 				result = _virtualMachineService.EnqueueKeyboardKeyEvent(infoKeyboardKeyEvent.VmId,
 					infoKeyboardKeyEvent.Key, infoKeyboardKeyEvent.KeyDown);
 				break;

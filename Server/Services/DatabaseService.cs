@@ -563,13 +563,15 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int> GetVmOwnerIdAsync(int vmId)
 	{
-		if (vmId < 1) return -1;
+		if (vmId < 1) 
+			return -1;
 
 		object? id = await ExecuteScalarAsync("SELECT owner_id FROM virtual_machines WHERE id = @id",
 			new NpgsqlParameter("@id", vmId)
 		);
 		
-		if (id == null) return -1;
+		if (id == null) 
+			return -1;
 		
 		return (int)id;
 	}

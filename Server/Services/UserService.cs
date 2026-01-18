@@ -125,7 +125,8 @@ public class UserService
 			{
 				foreach (ClientConnection connection in userConnections.Values)
 				{
-					connection.NotifyVirtualMachineCreated(descriptor);
+					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, descriptor.Id))
+						connection.NotifyVirtualMachineCreated(descriptor);
 				}
 			}
 		}
@@ -153,7 +154,8 @@ public class UserService
 			{
 				foreach (ClientConnection connection in userConnections.Values)
 				{
-					connection.NotifyVirtualMachineDeleted(vmId);
+					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, vmId))
+						connection.NotifyVirtualMachineDeleted(vmId);
 				}
 			}
 		}
@@ -179,7 +181,8 @@ public class UserService
 			{
 				foreach (ClientConnection connection in userConnections.Values)
 				{
-					connection.NotifyVirtualMachinePoweredOn(vmId);
+					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, vmId))
+						connection.NotifyVirtualMachinePoweredOn(vmId);
 				}
 			}
 		}
@@ -205,7 +208,8 @@ public class UserService
 			{
 				foreach (ClientConnection connection in userConnections.Values)
 				{
-					connection.NotifyVirtualMachinePoweredOff(vmId);
+					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, vmId))
+						connection.NotifyVirtualMachinePoweredOff(vmId);
 				}
 			}
 		}
@@ -231,7 +235,8 @@ public class UserService
 			{
 				foreach (ClientConnection connection in userConnections.Values)
 				{
-					connection.NotifyVirtualMachineCrashed(vmId);
+					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, vmId))
+						connection.NotifyVirtualMachineCrashed(vmId);
 				}
 			}
 		}
@@ -257,7 +262,8 @@ public class UserService
 			{
 				foreach (ClientConnection connection in userConnections.Values)
 				{
-					connection.NotifyDriveCreated(descriptor);
+					if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveList, descriptor.Id))
+						connection.NotifyDriveCreated(descriptor);
 				}
 			}
 		}
@@ -285,7 +291,8 @@ public class UserService
 			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
-				connection.NotifyItemCreated(driveId, path);
+				if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveItemList, driveId))
+					connection.NotifyItemCreated(driveId, path);
 			}
 		}
 	}
@@ -313,7 +320,8 @@ public class UserService
 			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
-				connection.NotifyItemDeleted(driveId, path);
+				if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveItemList, driveId))
+					connection.NotifyItemDeleted(driveId, path);
 			}
 		}
 	}
@@ -340,6 +348,7 @@ public class UserService
 			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
+				/* TODO: Add DriveConnect permission and check for it here. */
 				connection.NotifyDriveConnected(driveId, vmId);
 			}
 		}
@@ -367,6 +376,7 @@ public class UserService
 			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
+				/* TODO: Add DriveDisconnect permission and check for it here. */
 				connection.NotifyDriveDisconnected(driveId, vmId);
 			}
 		}
