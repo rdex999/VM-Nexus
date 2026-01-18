@@ -271,7 +271,43 @@ public class DatabaseService
 			"SELECT id, owner_id, owner_permissions, username, email, created_at FROM users WHERE username = @username",
 			new NpgsqlParameter("@username", username)
 		);
+
+		return await GetUserByReaderAsync(reader);
+	}
+
+	/// <summary>
+	/// Get a user by its ID.
+	/// </summary>
+	/// <param name="userId">The ID of the user to get. userId >= 1.</param>
+	/// <returns>The found user, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service connected to database. A user with the given ID exists. userId >= null. <br/>
+	/// Postcondition: On success, the found user is returned. On failure, (database failure, or if there is no such user) null is returned.
+	/// </remarks>
+	public async Task<User?> GetUserAsync(int userId)
+	{
+		if (userId < 1)
+			return null;
 		
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+			"SELECT id, owner_id, owner_permissions, username, email, created_at FROM users WHERE id = @id",
+			new NpgsqlParameter("@id", userId)
+		);
+		
+		return await GetUserByReaderAsync(reader);
+	}
+
+	/// <summary>
+	/// Get a user by an SQL data reader, which reads id, owner_id, owner_permissions, username, email, created_at.
+	/// </summary>
+	/// <param name="reader">The SQL data reader which is used to read the found use row. reader != null.</param>
+	/// <returns>The user, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: Service connected to database. The given reader is valid. reader != null. <br/>
+	/// Postcondition: On success, the found user is returned. On failure, (database failure, or if there is no such user) null is returned.
+	/// </remarks>
+	private async Task<User?> GetUserByReaderAsync(NpgsqlDataReader reader)
+	{
 		if (!reader.Read())
 			return null;
 
@@ -361,6 +397,30 @@ public class DatabaseService
 		
 		await Task.WhenAll(r.DisposeAsync().AsTask(), reader.DisposeAsync().AsTask());
 		return users.ToArray();
+	}
+
+	/// <summary>
+	/// Get the ID of the owner of the given user.
+	/// </summary>
+	/// <param name="userId">The user ID to get the owner of. userId >= 1.</param>
+	/// <returns>The owner's ID, or -1 on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists and is a sub-user. userId >= 1. <br/>
+	/// Postcondition: On success, the owner's ID is returned. On failure, -1 is returned.
+	/// </remarks>
+	public async Task<int> GetOwnerUserIdAsync(int userId)
+	{
+		if (userId < 1)
+			return -1;
+		
+		object? id = await ExecuteScalarAsync("SELECT owner_id FROM users WHERE id = @user_id",
+			new NpgsqlParameter("@user_id", userId)
+		);
+		
+		if (id == null) 
+			return -1;
+		
+		return (int)id;
 	}
 
 	/// <summary>

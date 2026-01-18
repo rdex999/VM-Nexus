@@ -412,13 +412,13 @@ public class UserService
 		if (!connection.IsLoggedIn)
 			return;
 
-		if (!_users.TryGetValue(connection.User!.Id, out ConcurrentDictionary<Guid, ClientConnection>? userConnections)) 
+		if (!_users.TryGetValue(connection.ActualUser!.Id, out ConcurrentDictionary<Guid, ClientConnection>? userConnections)) 
 			return;
 		
 		userConnections.TryRemove(connection.ClientId, out _);
 		if (userConnections.IsEmpty)
 		{
-			_users.TryRemove(connection.User.Id, out _);
+			_users.TryRemove(connection.ActualUser.Id, out _);
 		}
 	}
 
