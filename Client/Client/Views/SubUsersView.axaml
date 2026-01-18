@@ -152,8 +152,8 @@
 					<ItemsControl Grid.Row="1" ItemsSource="{Binding SubUsers}" HorizontalAlignment="Left" MaxWidth="730">
 						<ItemsControl.DataTemplates>
 							<DataTemplate DataType="viewModels:SubUserItemTemplate">
-								<Border Padding="10" Margin="10" Background="#edf7f7" CornerRadius="15" HorizontalAlignment="Stretch"
-								        BorderBrush="LightGray" BorderThickness="0" BoxShadow="0 0 14 0 #B0BAC5">
+								<Border Padding="10" Margin="10" Background="#edf7f7" CornerRadius="15" 
+								        HorizontalAlignment="Stretch" BoxShadow="0 0 14 0 #B0BAC5">
 									<Grid ColumnDefinitions="Auto, Auto, Auto, Auto, *" ColumnSpacing="25">
 										<Border CornerRadius="100" Background="#cbf4e5"
 										        BorderBrush="#c9dbd4" BorderThickness="0.8" Padding="15">

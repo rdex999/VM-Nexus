@@ -93,6 +93,25 @@ public partial class MainViewModel : ViewModelBase
 			MenuDisplayMode = SplitViewDisplayMode.CompactInline;
 		}
 	}
+
+	/* Use for IDE preview only. */
+	public MainViewModel()
+	{
+		AccountMenuTitle = "Welcome, preview_user.";
+		
+		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
+		{
+			new SideMenuItemTemplate("Home", new HomeViewModel(), "HomeRegular"),
+			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(), "AddRegular"),
+			new SideMenuItemTemplate("Drives", new DriveExplorerViewModel(), "StorageRegular"),
+			new SideMenuItemTemplate("Sub Users", new SubUsersViewModel(), "PeopleCommunityRegular"),
+		};
+		CurrentSideMenuItem = SideMenuItems[SideMenuIdxHome];
+		CurrentPageViewModel = SideMenuItems.First().ViewModel;
+
+		VmTabs = new ObservableCollection<VmTabTemplate>();
+		MenuDisplayMode = SplitViewDisplayMode.CompactInline;
+	}
 	
 	/// <summary>
 	/// Handles a click on one of the VMs Open button. If no open tab for the VM exists, create a new tab. If there is a tab, redirect to it.

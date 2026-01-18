@@ -31,6 +31,9 @@ public class ClientService : MessagingService
 	public event EventHandler<MessageInfoItemDeleted>? ItemDeleted;
 	public event EventHandler<DriveConnection>? DriveConnected;
 	public event EventHandler<DriveConnection>? DriveDisconnected;
+
+	public bool IsLoggedIn => User != null;
+	public User? User { get; private set; }	
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -116,8 +119,11 @@ public class ClientService : MessagingService
 		if (result != ExitCode.Success)
 			return MessageResponseCreateAccount.Status.Failure;
 		
-		MessageResponseCreateAccount reqCreateAccount = (MessageResponseCreateAccount)response!;
-		return reqCreateAccount.Result;
+		MessageResponseCreateAccount res = (MessageResponseCreateAccount)response!;
+		if (res.Result == MessageResponseCreateAccount.Status.Success)
+			User = res.User;
+		
+		return res.Result;
 	}
 
 	/// <summary>
@@ -143,8 +149,11 @@ public class ClientService : MessagingService
 		if (result != ExitCode.Success)
 			return null;
 		
-		MessageResponseLogin reqLogin = (MessageResponseLogin)response!;
-		return reqLogin.Accepted;
+		MessageResponseLogin res = (MessageResponseLogin)response!;
+		if (res.Accepted)
+			User = res.User;
+		
+		return res.Accepted;
 	}
 
 	/// <summary>
@@ -801,10 +810,6 @@ public class ClientService : MessagingService
 	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
 	/// </summary>
-	/// <param name="token">
-	/// Optional cancellation token to cancel the operation if required. <br/>
-	/// Because this function runs until a connection is established, it may be required to cancel the operation (For example, if the user exists the application)
-	/// </param>
 	/// <remarks>
 	/// Precondition: Base service initialized. (base.Initialize() was called already) <br/>
 	/// Postcondition: If the cancellation token did not require canceling the operation - the service is connected to the server. <br/>

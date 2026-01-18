@@ -70,6 +70,15 @@ public partial class DriveExplorerViewModel : ViewModelBase
 		ExplorerModeViewModel.DeleteItem += OnDeleteItemRequested;
 	}
 
+	/* Use for IDE preview only. */
+	public DriveExplorerViewModel()
+	{
+		_driveService = null!;
+		_prevPathParts = new Stack<string>();
+		PathParts = new ObservableCollection<PathPartItemTemplate>();
+		ExplorerModeViewModel = new DrivesViewModel();
+	}
+	
 	/// <summary>
 	/// Changes the path bar mode into text mode.
 	/// </summary>

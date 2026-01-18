@@ -111,12 +111,17 @@ public sealed class ClientConnection : MessagingService
 				result = await _databaseService.RegisterUserAsync(usernameTrimmed, emailTrimmed, reqCreateAccount.Password);
 				if (result == ExitCode.Success)
 				{
-					status = MessageResponseCreateAccount.Status.Success;
 					User = await _databaseService.GetUserAsync(usernameTrimmed);	/* Must be valid because created user successfully. */
 					if (User == null)
-						status = MessageResponseCreateAccount.Status.Failure;
+						SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id,
+							MessageResponseCreateAccount.Status.Failure));
+					else
+						SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, 
+							MessageResponseCreateAccount.Status.Success, User));
+					
+					break;
 				}
-				else if (result == ExitCode.UserAlreadyExists)
+				if (result == ExitCode.UserAlreadyExists)
 					status = MessageResponseCreateAccount.Status.UsernameNotAvailable;
 				else
 					status = MessageResponseCreateAccount.Status.Failure;
@@ -131,14 +136,14 @@ public sealed class ClientConnection : MessagingService
 				result = await _userService.LoginAsync(usernameTrimmed, reqLogin.Password, this);
 				if (result != ExitCode.Success)
 				{
-					SendResponse(new MessageResponseLogin(true, reqLogin.Id, false));
+					SendResponse(new MessageResponseLogin(true, reqLogin.Id));
 					break;
 				}
 
 				User = await _databaseService.GetUserAsync(usernameTrimmed);
 				if (User == null)
 				{
-					SendResponse(new MessageResponseLogin(true, reqLogin.Id, false));
+					SendResponse(new MessageResponseLogin(true, reqLogin.Id));
 					break;
 				}				
 
@@ -146,7 +151,7 @@ public sealed class ClientConnection : MessagingService
 				if (vms == null)
 				{
 					User = null;
-					SendResponse(new MessageResponseLogin(true, reqLogin.Id, false));
+					SendResponse(new MessageResponseLogin(true, reqLogin.Id));
 					break;
 				}
 
@@ -159,7 +164,7 @@ public sealed class ClientConnection : MessagingService
 					}
 				}
 				
-				SendResponse(new MessageResponseLogin(true, reqLogin.Id, true));
+				SendResponse(new MessageResponseLogin(true, reqLogin.Id, User));
 				break;
 			}
 

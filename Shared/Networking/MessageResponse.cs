@@ -37,17 +37,24 @@ public class MessageResponseCheckUsername : MessageResponse
 public class MessageResponseCreateAccount : MessageResponse
 {
 	public Status Result { get; }
+	public User? User { get; }
 
+	[JsonConstructor]
+	public MessageResponseCreateAccount(bool generateGuid, Guid requestId, Status result, User user)
+		: base(generateGuid, requestId)
+	{ 
+		Result = result;
+		User = user;
+	}
+	
 	public MessageResponseCreateAccount(bool generateGuid, Guid requestId, Status result)
 		: base(generateGuid, requestId)
 	{ 
 		Result = result;
+		User = null;
 	}
 
-	public override bool IsValidMessage()
-	{
-		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
-	}
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 
 	public enum Status
 	{
@@ -61,12 +68,20 @@ public class MessageResponseCreateAccount : MessageResponse
 
 public class MessageResponseLogin : MessageResponse
 {
-	public bool Accepted { get; }
+	public bool Accepted => User != null;
+	public User? User { get; }
 
-	public MessageResponseLogin(bool generateGuid, Guid requestId, bool accepted)
+	[JsonConstructor]
+	public MessageResponseLogin(bool generateGuid, Guid requestId, User user)		/* Successful login. */
 		: base(generateGuid, requestId)
 	{
-		Accepted = accepted;
+		User = user;
+	}
+	
+	public MessageResponseLogin(bool generateGuid, Guid requestId)					/* Login failed. */
+		: base(generateGuid, requestId)
+	{
+		User = null;
 	}
 }
 

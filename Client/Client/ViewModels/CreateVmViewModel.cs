@@ -83,6 +83,12 @@ public partial class CreateVmViewModel : ViewModelBase
 		_driveService = driveService;
 	}
 
+	/* Use for IDE preview only. */
+	public CreateVmViewModel()
+	{
+		_driveService = null!;
+	}
+
 	/// <summary>
 	/// Called when the operating system input field changes. (Called from the code-behind file)
 	/// </summary>

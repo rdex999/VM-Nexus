@@ -80,6 +80,15 @@ public partial class HomeViewModel : ViewModelBase
 		ClientSvc.ItemDeleted += OnItemDeleted;
 		ClientSvc.DriveConnected += OnDriveConnected;
 	}
+
+	/* Use for IDE preview only. */
+	public HomeViewModel()
+	{
+		_driveService = null!;
+		Vms = new ObservableCollection<VmItemTemplate>();
+		DeleteVmPopupDrives = new ObservableCollection<DeletionDriveItemTemplate>();
+		ConPopupDriveConnections = new ObservableCollection<DriveConnectionItemTemplate>();
+	}
 	
 	/// <summary>
 	/// Initializes HomeViewModel. Fetches virtual machines and displays them.
