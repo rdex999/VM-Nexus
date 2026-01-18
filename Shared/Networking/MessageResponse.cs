@@ -108,6 +108,25 @@ public class MessageResponseLogout : MessageResponse
 	}
 }
 
+public class MessageResponseLoginSubUser : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseLoginSubUser(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
 public class MessageResponseCreateSubUser : MessageResponse
 {
 	public Status Result { get; }

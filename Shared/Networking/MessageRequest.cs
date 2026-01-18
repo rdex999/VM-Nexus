@@ -74,6 +74,19 @@ public class MessageRequestLogout : MessageRequest
 	}
 }
 
+public class MessageRequestLoginSubUser : MessageRequest
+{
+	public int UserId { get; }
+
+	public MessageRequestLoginSubUser(bool generateGuid, int userId)
+		: base(generateGuid)
+	{
+		UserId = userId;
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
+}
+
 public class MessageRequestCreateSubUser : MessageRequest
 {
 	public string Username { get; }
