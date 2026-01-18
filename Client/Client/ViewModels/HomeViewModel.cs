@@ -85,7 +85,12 @@ public partial class HomeViewModel : ViewModelBase
 	public HomeViewModel()
 	{
 		_driveService = null!;
-		Vms = new ObservableCollection<VmItemTemplate>();
+		Vms = new ObservableCollection<VmItemTemplate>()
+		{
+			new VmItemTemplate(1, "test_vm0", OperatingSystem.Ubuntu, VmState.ShutDown),
+			new VmItemTemplate(2, "test_vm1", OperatingSystem.ManjaroLinux, VmState.ShutDown),
+			new VmItemTemplate(3, "test_vm2", OperatingSystem.MiniCoffeeOS, VmState.ShutDown),
+		};
 		DeleteVmPopupDrives = new ObservableCollection<DeletionDriveItemTemplate>();
 		ConPopupDriveConnections = new ObservableCollection<DriveConnectionItemTemplate>();
 	}
@@ -578,8 +583,7 @@ public partial class VmItemTemplate : ObservableObject
 	/// Precondition: clientService != null &amp;&amp; id >= 1 &amp;&amp; name != null. <br/>
 	/// Postcondition: A new instance of VmItemTemplate is created.
 	/// </remarks>
-	public VmItemTemplate(ClientService clientService, int id, string name,
-		OperatingSystem operatingSystem, VmState state)
+	public VmItemTemplate(ClientService clientService, int id, string name, OperatingSystem operatingSystem, VmState state)
 	{
 		_clientService = clientService;
 		Id = id;
@@ -589,6 +593,16 @@ public partial class VmItemTemplate : ObservableObject
 		_clientService.VmPoweredOn += OnVmPoweredOn;
 		_clientService.VmPoweredOff += OnVmPoweredOff;
 		_clientService.VmCrashed += OnVmCrashed;
+	}
+	
+	/* Use for IDE preview only. */
+	public VmItemTemplate(int id, string name, OperatingSystem operatingSystem, VmState state)
+	{
+		_clientService = null!;
+		Id = id;
+		Name = name;
+		OperatingSystem = operatingSystem;
+		State = state;
 	}
 
 	/// <summary>

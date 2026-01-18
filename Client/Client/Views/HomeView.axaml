@@ -31,8 +31,8 @@
 	<Border CornerRadius="10" Margin="6" Padding="15" x:Name="Border">
 		<Border.Background>
 			<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-				<GradientStop Offset="0" Color="#dffaff" />
-				<GradientStop Offset="1" Color="White" />
+				<GradientStop Offset="0" Color="#f4f4f4" />
+				<GradientStop Offset="1" Color="#daf5fa" />
 			</LinearGradientBrush>
 		</Border.Background>
 
@@ -163,125 +163,75 @@
 			
 			<ScrollViewer AllowAutoHide="False">
 				<StackPanel>
-					<ListBox ItemsSource="{Binding Vms}" Background="Transparent">
-						<ListBox.Styles>
-
-							<Style Selector="ListBoxItem">
-								<Setter Property="Padding" Value="0" />
-								<Setter Property="Margin" Value="10" />
-								<Setter Property="Background">
-									<Setter.Value>
-										<LinearGradientBrush StartPoint="10%, 10%" EndPoint="100%, 100%">
-											<GradientStop Offset="0" Color="#8fadbc" />
-											<GradientStop Offset="1" Color="#9ab8bf" />
-										</LinearGradientBrush>
-									</Setter.Value>
-								</Setter>
-							</Style>
-
-							<Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-								<Setter Property="Background">
-									<Setter.Value>
-										<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-											<GradientStop Offset="0" Color="#7d96a3" />
-											<GradientStop Offset="1" Color="#8ca7ad" />
-										</LinearGradientBrush>
-									</Setter.Value>
-								</Setter>
-							</Style>
-
-							<Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-								<Setter Property="Background">
-									<Setter.Value>
-										<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-											<GradientStop Offset="0" Color="#a1dded" />
-											<GradientStop Offset="1" Color="#80a6b5" />
-											<!-- <GradientStop Offset="1" Color="#b4e8ea"/> -->
-										</LinearGradientBrush>
-									</Setter.Value>
-								</Setter>
-							</Style>
-
-							<Style Selector="ListBoxItem:pointerover:selected /template/ ContentPresenter#PART_ContentPresenter">
-								<Setter Property="Background">
-									<Setter.Value>
-										<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-											<GradientStop Offset="0" Color="#8fc4d3" />
-											<GradientStop Offset="1" Color="#799aa8" />
-										</LinearGradientBrush>
-									</Setter.Value>
-								</Setter>
-							</Style>
-
-						</ListBox.Styles>
-
-						<ListBox.ItemsPanel>
+					<ItemsControl ItemsSource="{Binding Vms}" Background="Transparent">
+						<ItemsControl.ItemsPanel>
 							<ItemsPanelTemplate>
 								<WrapPanel Orientation="Horizontal" />
 							</ItemsPanelTemplate>
-						</ListBox.ItemsPanel>
+						</ItemsControl.ItemsPanel>
 
-						<ListBox.ItemTemplate>
+						<ItemsControl.ItemTemplate>
 							<DataTemplate DataType="{x:Type vm:VmItemTemplate}">
-								<Border Padding="10" Background="Transparent" Width="230" Height="210">
-									<Border CornerRadius="10" Padding="10" BorderThickness="0" BorderBrush="#5f757a">
-										<Border.Background>
-											<LinearGradientBrush StartPoint="0%, 0%" EndPoint="45%, 45%">
-												<GradientStop Offset="0" Color="#f8f8ff" />
-												<GradientStop Offset="1" Color="#daf1ff" />
-											</LinearGradientBrush>
-										</Border.Background>
+								<Border CornerRadius="10" Padding="10" Margin="10" BorderThickness="0" BorderBrush="#5f757a"
+								        Width="230" Height="200" BoxShadow="0 0 15 0 #c9d6d3">
+									<Border.Background>
+										<LinearGradientBrush StartPoint="0%, 0%" EndPoint="45%, 45%">
+											<!-- <GradientStop Offset="0" Color="#f7fdff" /> -->
+											<!-- <GradientStop Offset="1" Color="#eff9f9" /> -->
+											<GradientStop Offset="0" Color="#f9fdff" />
+											<GradientStop Offset="1" Color="#f2f9f9" />
+										</LinearGradientBrush>
+									</Border.Background>
 
-										<Grid RowDefinitions="Auto, *, Auto">
-											<StackPanel VerticalAlignment="Top" Spacing="5">
-												<Grid ColumnDefinitions="*, Auto">
-													<TextBlock FontSize="16" Foreground="#4f5b5b" VerticalAlignment="Center"
-													           Text="{Binding OperatingSystemString}" />
+									<Grid RowDefinitions="Auto, *, Auto">
+										<StackPanel VerticalAlignment="Top" Spacing="5">
+											<Grid ColumnDefinitions="*, Auto">
+												<TextBlock FontSize="16" Foreground="#4f5b5b" VerticalAlignment="Center"
+												           Text="{Binding OperatingSystemString}" />
 
-													<Button Grid.Column="1" Padding="4" VerticalAlignment="Center" Background="#b3cad8">
-														<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
-														<Button.Flyout>
-															<MenuFlyout VerticalOffset="5">
-																<MenuItem Header="Force off" Command="{Binding ForceOffClickCommand}"/>
-																<MenuItem Header="Manage connected drives" Command="{Binding ManageDriveConnectionsClickCommand}"/>
-																<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}"/>
-															</MenuFlyout>
-														</Button.Flyout>
-													</Button>
-												</Grid>
-												<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding Name}" />
-												<TextBlock FontSize="16" Foreground="{Binding StateColor}" Text="{Binding StateString}" FontWeight="Bold" />
-											</StackPanel>
+												<Button Grid.Column="1" Padding="4" VerticalAlignment="Center" Background="#c3dae8" Opacity="0.78">
+													<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
+													<Button.Flyout>
+														<MenuFlyout VerticalOffset="5">
+															<MenuItem Header="Force off" Command="{Binding ForceOffClickCommand}" />
+															<MenuItem Header="Manage connected drives" Command="{Binding ManageDriveConnectionsClickCommand}" />
+															<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}" />
+														</MenuFlyout>
+													</Button.Flyout>
+												</Button>
+											</Grid>
+											<TextBlock FontSize="16" Foreground="#4f5b5b" Text="{Binding Name}" />
+											<TextBlock FontSize="16" Foreground="{Binding StateColor}" Text="{Binding StateString}" FontWeight="Bold" />
+										</StackPanel>
 
-											<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20" IsVisible="{Binding ErrorMessageIsVisible}">
-												<TextBlock Classes="error" Text="{Binding ErrorMessage}" VerticalAlignment="Center" />
+										<StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="20" IsVisible="{Binding ErrorMessageIsVisible}">
+											<TextBlock Classes="error" Text="{Binding ErrorMessage}" VerticalAlignment="Center" />
 
-												<Button Command="{Binding ErrorMessageDismissCommand}" Background="Transparent" VerticalAlignment="Center">
-													<PathIcon Data="{StaticResource DismissRegular}" Width="10" Height="10" />
+											<Button Command="{Binding ErrorMessageDismissCommand}" Background="Transparent" VerticalAlignment="Center">
+												<PathIcon Data="{StaticResource DismissRegular}" Width="10" Height="10" />
+											</Button>
+										</StackPanel>
+
+										<StackPanel Grid.Row="2" HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Bottom">
+											<Button HorizontalAlignment="Center" Command="{Binding OpenClickCommand}" Classes="vm_action">
+												Open
+											</Button>
+
+											<StackPanel Orientation="Horizontal" Spacing="10">
+												<Button Width="80" Command="{Binding PowerOnClickCommand}" Classes="vm_action">
+													Start
+												</Button>
+
+												<Button Command="{Binding PowerOffClickCommand}" Classes="vm_action">
+													Power Off
 												</Button>
 											</StackPanel>
-
-											<StackPanel Grid.Row="2" HorizontalAlignment="Center" Spacing="5" VerticalAlignment="Bottom">
-												<Button HorizontalAlignment="Center" Command="{Binding OpenClickCommand}">
-													<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Open</TextBlock>
-												</Button>
-
-												<StackPanel Orientation="Horizontal" Spacing="10">
-													<Button Padding="8,5,8,6" Width="80" Command="{Binding PowerOnClickCommand}">
-														<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Start</TextBlock>
-													</Button>
-
-													<Button Command="{Binding PowerOffClickCommand}">
-														<TextBlock FontSize="14" FontWeight="DemiBold" TextAlignment="Center">Power Off</TextBlock>
-													</Button>
-												</StackPanel>
-											</StackPanel>
-										</Grid>
-									</Border>
+										</StackPanel>
+									</Grid>
 								</Border>
 							</DataTemplate>
-						</ListBox.ItemTemplate>
-					</ListBox>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
 				</StackPanel>
 			</ScrollViewer>
 		</Grid>
