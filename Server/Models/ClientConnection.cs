@@ -183,8 +183,11 @@ public sealed class ClientConnection : MessagingService
 						SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id,
 							MessageResponseCreateAccount.Status.Failure));
 					else
+					{
+						_userService.LoginAsUser(this, ActualUser.Id);
 						SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, 
 							MessageResponseCreateAccount.Status.Success, ActualUser));
+					}
 					
 					break;
 				}
@@ -240,13 +243,13 @@ public sealed class ClientConnection : MessagingService
 			{
 				if (IsLoggedIn)
 				{
+					_userService.Logout(this);
+					
 					if (IsLoggedInAsSubUser)
 						User = null;
 					else
-					{
-						_userService.Logout(this);
 						ActualUser = null;
-					}
+					
 					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
 				}
 				else
@@ -267,6 +270,26 @@ public sealed class ClientConnection : MessagingService
 				}
 
 				User = subUser;
+				
+				VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(ActionUser!.Id);
+				if (vms == null)
+				{
+					User = null;
+					SendResponse(new MessageResponseLoginSubUser(true, reqLoginSubUser.Id));
+					break;
+				}
+				
+				_userService.LoginToSubUser(this);
+				
+				foreach (VmGeneralDescriptor vm in vms)
+				{
+					if (vm.State == VmState.Running)
+					{
+						_virtualMachineService.SubscribeToVmPoweredOff(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
+						_virtualMachineService.SubscribeToVmCrashed(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
+					}
+				}
+				
 				SendResponse(new MessageResponseLoginSubUser(true, reqLoginSubUser.Id, subUser));
 				break;
 			}

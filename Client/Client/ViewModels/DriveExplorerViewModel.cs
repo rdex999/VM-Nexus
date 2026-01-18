@@ -384,7 +384,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	private void OnItemCreatedOrDeleted(int driveId, string path)
 	{
 		/* DrivesView handles drive deletions. */
-		if (Common.IsPathToDrive(path) && PathParts.Count == 0)		/* If a drive was created/deleted, and were in DrivesView */
+		if (Common.IsPathToDrive(path) || PathParts.Count == 0)		/* If a drive was created/deleted, and were in DrivesView */
 			return;
 		
 		string currentPath = string.Empty;

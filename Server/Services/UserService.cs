@@ -66,12 +66,40 @@ public class UserService
 
 		if (valid)
 		{
-			AddUserConnection(connection, userId);
-			UserLoggedIn?.Invoke(this, connection);
+			LoginAsUser(connection, userId);
 			return ExitCode.Success;
 		}
 		
 		return ExitCode.InvalidLoginCredentials;
+	}
+
+	/// <summary>
+	/// Login the connection as some user.
+	/// </summary>
+	/// <param name="connection">The connection to login. connection != null.</param>
+	/// <param name="userId">The ID of the user to log in the connection as. userId >= 1.</param>
+	/// <remarks>
+	/// Precondition: The given connection is valid and connected to the client. A user with the given ID exists. connection != null. <br/>
+	/// Postcondition: The connection is logged in as the given user.
+	/// </remarks>
+	public void LoginAsUser(ClientConnection connection, int userId)
+	{
+		AddUserConnection(connection, userId);
+		UserLoggedIn?.Invoke(this, connection);	
+	}
+
+	/// <summary>
+	/// Login the given connection to its set sub-user.
+	/// </summary>
+	/// <param name="connection">The connection to log in to its set sub-user. connection != null.</param>
+	/// <remarks>
+	/// Precondition: The given connection is valid and connected to the client. connection != null. <br/>
+	/// Postcondition: The connection is logged in as its set sub-user.
+	/// </remarks>
+	public void LoginToSubUser(ClientConnection connection)
+	{
+		RemoveUserConnection(connection);
+		AddUserConnection(connection, connection.User!.Id);
 	}
 
 	/// <summary>
@@ -85,7 +113,11 @@ public class UserService
 	public void Logout(ClientConnection connection)
 	{
 		RemoveUserConnection(connection);
-		UserLoggedOut?.Invoke(this, connection);
+		
+		if (connection.IsLoggedInAsSubUser)
+			AddUserConnection(connection, connection.ActualUser!.Id);
+		else
+			UserLoggedOut?.Invoke(this, connection);
 	}
 
 	/// <summary>
