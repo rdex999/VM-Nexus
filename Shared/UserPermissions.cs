@@ -35,18 +35,27 @@ public enum UserPermissions
 	
 	[Description("Delete the user's drives. Includes the Drive List permission.")]
 	DriveDelete				= 1 << 8,
+
+	[Description("List drive connections (which drive is connected to which VM) on the user's drives. Includes the Drive List and Virtual Machine List permissions.")]
+	DriveConnectionList		= 1 << 9,
+	
+	[Description("Connect the user's drives to the user's virtual machines. Includes the Drive Connection List, Drive List, and Virtual Machine List permissions.")]
+	DriveConnect			= 1 << 10,
+	
+	[Description("Disconnect the user's drives from the user's virtual machines. Includes the Drive Connection List, Drive List, and Virtual Machine List permissions.")]
+	DriveDisconnect			= 1 << 11,
 	
 	[Description("List partitions, files, and directories on the user's drives. Includes the Drive List permission.")]
-	DriveItemList			= 1 << 9,
+	DriveItemList			= 1 << 12,
 	
 	[Description("Create files and directories in the user's drives. Includes the Drive Item List, and Drive List permissions.")]
-	DriveItemCreate			= 1 << 10,
+	DriveItemCreate			= 1 << 13,
 	
 	[Description("Delete files and directories from the user's drives. Includes the Drive Item List, and Drive List permissions.")]
-	DriveItemDelete			= 1 << 11,
+	DriveItemDelete			= 1 << 14,
 	
 	[Description("Download files from the user's drives, or the drives themselves. Includes the Drive Item List, and Drive List permissions.")]
-	DriveItemDownload		= 1 << 12,
+	DriveItemDownload		= 1 << 15,
 }
 
 public static class UserPermissionsExtensions
@@ -118,6 +127,11 @@ public static class UserPermissionsExtensions
 				UserPermissions.DriveCreate or
 					UserPermissions.DriveDelete or
 					UserPermissions.DriveItemList				=> UserPermissions.DriveList,
+				
+				UserPermissions.DriveConnectionList				=> UserPermissions.DriveList | UserPermissions.VirtualMachineList,
+				
+				UserPermissions.DriveConnect or
+					UserPermissions.DriveDisconnect				=> UserPermissions.DriveConnectionList | UserPermissions.DriveList | UserPermissions.VirtualMachineList,
 
 				UserPermissions.DriveItemCreate or
 					UserPermissions.DriveItemDelete or

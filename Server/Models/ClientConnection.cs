@@ -95,7 +95,7 @@ public sealed class ClientConnection : MessagingService
 	/// Postcondition: Returns true if the permission is available, false otherwise.
 	/// </remarks>
 	public bool HasPermission(UserPermissions permission) =>
-		(IsLoggedIn && !IsLoggedInAsSubUser) || (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission));
+		(IsLoggedIn && !IsLoggedInAsSubUser) || (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission.AddIncluded()));
 
 
 	/// <summary>
@@ -113,7 +113,7 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	public async Task<bool> HasPermissionVmOwnerAsync(UserPermissions permission, int vmId) => 
 		(IsLoggedIn && !IsLoggedInAsSubUser) 
-		|| (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission) && await _databaseService.GetVmOwnerIdAsync(vmId) == User!.Id);
+		|| (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission.AddIncluded()) && await _databaseService.GetVmOwnerIdAsync(vmId) == User!.Id);
 	
 	/// <summary>
 	/// Checks if the current login state and user has a permission and access to a drive. <br/>
@@ -130,7 +130,7 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	public async Task<bool> HasPermissionDriveOwnerAsync(UserPermissions permission, int driveId) => 
 		(IsLoggedIn && !IsLoggedInAsSubUser) 
-		|| (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission) && await _databaseService.GetDriveOwnerIdAsync(driveId) == User!.Id);
+		|| (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission.AddIncluded()) && await _databaseService.GetDriveOwnerIdAsync(driveId) == User!.Id);
 	
 	/// <summary>
 	/// Handles requests from the client.
@@ -721,8 +721,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestConnectDrive reqConnectDrive:
 			{
-				/* TODO: Add DriveConnect permission and check for it here. */
-				if (!IsLoggedIn)
+				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveConnect, reqConnectDrive.DriveId))
 				{
 					SendResponse(new MessageResponseConnectDrive(true, reqConnectDrive.Id, MessageResponseConnectDrive.Status.Failure));
 					break;
@@ -749,8 +748,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestDisconnectDrive reqDisconnectDrive:
 			{
-				/* TODO: Add DriveDisconnect permission and check for it here. */
-				if (!IsLoggedIn)
+				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveDisconnect, reqDisconnectDrive.DriveId))
 				{
 					SendResponse(new MessageResponseDisconnectDrive(true, reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.Failure));
 					break;
@@ -773,8 +771,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestListDriveConnections reqListDriveConnections:
 			{
-				/* TODO: Add DriveConnectionList permission and check for it here. */
-				if (!IsLoggedIn)
+				if (!HasPermission(UserPermissions.DriveConnectionList))
 				{
 					SendResponse(new MessageResponseListDriveConnections(true, reqListDriveConnections.Id, MessageResponseListDriveConnections.Status.Failure));
 					break;
@@ -866,8 +863,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestUploadFile reqUploadFile:
 			{
-				/* TODO: Add DriveItemUpload permission and check for it here. */
-				if (!IsLoggedIn)
+				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemCreate, reqUploadFile.DriveId))
 				{
 					SendResponse(new MessageResponseUploadFile(true, reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
 					break;

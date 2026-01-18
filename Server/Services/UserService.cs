@@ -348,8 +348,8 @@ public class UserService
 			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
-				/* TODO: Add DriveConnect permission and check for it here. */
-				connection.NotifyDriveConnected(driveId, vmId);
+				if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveConnectionList, driveId))
+					connection.NotifyDriveConnected(driveId, vmId);
 			}
 		}
 	}
@@ -376,8 +376,8 @@ public class UserService
 			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
-				/* TODO: Add DriveDisconnect permission and check for it here. */
-				connection.NotifyDriveDisconnected(driveId, vmId);
+				if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveConnectionList, driveId))
+					connection.NotifyDriveDisconnected(driveId, vmId);
 			}
 		}
 	}
