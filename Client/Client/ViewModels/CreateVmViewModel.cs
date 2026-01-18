@@ -329,7 +329,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			List<Task> tasks = new List<Task>();
 			if (connectDriveResult == ExitCode.Success)
 			{
-				/* TODO: Delete the drive connection */
+				tasks.Add(_driveService.DisconnectDriveAsync(taskCreateDrive.Result!.DriveId, taskCreateVm.Result!.VmId));		/* Both should be valid. (because connected) */
 			}
 			
 			if (createDriveResult == MessageResponseCreateDriveOs.Status.Success)

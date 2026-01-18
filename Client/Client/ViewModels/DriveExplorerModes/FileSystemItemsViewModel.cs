@@ -143,7 +143,6 @@ public partial class FileSystemItemsViewModel : DriveExplorerMode
 			file.Dispose();
 		}
 		
-		/* TODO: Add MessageInfoItemCreated to refresh content. */
 		/* TODO: Add an upload/download progress bar at the bottom right corner, with error messages too. */
 	}
 

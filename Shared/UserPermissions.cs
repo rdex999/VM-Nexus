@@ -71,7 +71,7 @@ public static class UserPermissionsExtensions
 	/// Postcondition: Returns true if the given permission exists in the current permissions, false otherwise.
 	/// </remarks>
 	public static bool HasPermission(this UserPermissions permissions, UserPermissions permission) =>
-		(permissions & permission) != 0 || permission == UserPermissions.None;		/* Everything has None, but None has nothing. */
+		(permissions & permission) == permission || permission == UserPermissions.None;		/* Everything has None, but None has nothing. */
 
 	/// <summary>
 	/// Adds the given permission to the current permissions.

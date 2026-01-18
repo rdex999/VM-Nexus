@@ -1,8 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 using Client.Services;
+using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Shared;
@@ -56,7 +58,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>();
-		ClientSvc.SubUserCreated += (sender, user) => SubUsers.Add(new SubUserItemTemplate(user));
+		ClientSvc.SubUserCreated += OnSubUserCreated;
 
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
 		NewSubUserPopupPermissions = new UserPermissionItemTemplate[permissions.Length - 1];	/* The "None" permission is not included. */
@@ -70,6 +72,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		_ = InitializeAsync();
 	}
 
+	/* Use for IDE preview only. */
 	public SubUsersViewModel()
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>()
@@ -108,9 +111,24 @@ public partial class SubUsersViewModel : ViewModelBase
 
 		SubUsers.Clear();
 		foreach (SubUser subUser in subUsers)
-			SubUsers.Add(new SubUserItemTemplate(subUser));
+			OnSubUserCreated(null, subUser);
 	}
 
+	/// <summary>
+	/// Handles a sub-user creation event, adds the new sub-user to the sub-users list and displaying him.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="subUser">The new sub-user. subUser != null.</param>
+	/// <remarks>
+	/// Precondition: A new sub-user was created. subUser != null. <br/>
+	/// Postcondition: The new sub-user is added to the sub-users list and is displayed.
+	/// </remarks>
+	private void OnSubUserCreated(object? sender, SubUser subUser)
+	{
+		SubUsers.Add(new SubUserItemTemplate(subUser));
+		SubUsers.Last().LoginClick += async void (user) => await LoginToSubUserAsync(user);
+	}
+	
 	/// <summary>
 	/// Handles a click on the create sub user button. Opens the sub-user creation popup.
 	/// </summary>
@@ -338,17 +356,39 @@ public partial class SubUsersViewModel : ViewModelBase
 		await ClientSvc.CreateSubUserAsync(NewSubUserPopupUsername, NewSubUserPopupEmail, NewSubUserPopupPassword, permissions);
 		CloseNewSubUserPopup();
 	}
+
+	/// <summary>
+	/// Attempts to log in into the given sub-user's account.
+	/// </summary>
+	/// <param name="subUser">The sub-user to log in to. subUser != null.</param>
+	/// <remarks>
+	/// Precondition: The given sub-user is valid and is a sub-user of the current user, the current user is not logged in as a sub-user. subUser != null. <br/>
+	/// Postcondition: On success, the user is logged in to the sub-user and is redirected to its account.
+	/// On failure, the user is not logged in as the sub-user.
+	/// </remarks>
+	private async Task LoginToSubUserAsync(SubUser subUser)
+	{
+		bool accepted = await ClientSvc.LoginToSubUserAsync(subUser.Id);
+		if (!accepted)
+			return;
+		
+		NavigationSvc.NavigateToView(new MainView() { DataContext = new MainViewModel(NavigationSvc, ClientSvc)});
+	}
 }
 
-public class SubUserItemTemplate : ObservableObject
+public partial class SubUserItemTemplate : ObservableObject
 {
+	public Action<SubUser>? LoginClick;
 	public string UserName { get; }
 	public string Email { get; }
 	public UserPermissionItemTemplate[] Permissions { get; }		/* Owner's permissions over this sub-user. */
 	public string Created { get; }
+
+	private SubUser _subUser;
 	
 	public SubUserItemTemplate(SubUser user)
 	{
+		_subUser = user;
 		UserName = user.Username;
 		Email = user.Email;
 		Created = user.CreatedAt.ToString("dd/MM/yyyy");
@@ -361,6 +401,16 @@ public class SubUserItemTemplate : ObservableObject
 		if (prms.Length == 0)
 			Permissions[0] = new UserPermissionItemTemplate(UserPermissions.None);
 	}
+
+	/// <summary>
+	/// Handles a click on the login button of a sub-user. Attempts to log in to the sub-user.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the login button on the sub-user. <br/>
+	/// Postcondition: On success, the user is logged in as the sub-user. On failure, the user is not logged in as the sub-user.
+	/// </remarks>
+	[RelayCommand]
+	private void LoginToSubUserClick() => LoginClick?.Invoke(_subUser);
 }
 
 public partial class UserPermissionItemTemplate : ObservableObject

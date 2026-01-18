@@ -185,6 +185,29 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Request login to a sub-user account.
+	/// </summary>
+	/// <param name="subUserId">The ID of the sub-user to log in to. subUserId >= 1.</param>
+	/// <returns>True if the login attempt has succeeded, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server, the user is logged in as itself (not as a sub-user). <br/>
+	/// Postcondition: On success, true is returned and the user is logged in to the sub-user.
+	/// On failure, false is returned and the user is not logged in to the sub-user.
+	/// </remarks>
+	public async Task<bool> LoginToSubUserAsync(int subUserId)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLoginSubUser(true, subUserId));
+		if (result != ExitCode.Success)
+			return false;
+		
+		MessageResponseLoginSubUser res = (MessageResponseLoginSubUser)response!;
+		if (res.Success)
+			User = res.SubUser;
+		
+		return res.Success;
+	}
+
+	/// <summary>
 	/// Requests to create a sub-user with the given information.
 	/// </summary>
 	/// <param name="username">The username for the new sub-user. Must be unique, no user with this username should exist. username != null.</param>

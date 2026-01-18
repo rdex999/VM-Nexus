@@ -260,15 +260,14 @@ public sealed class ClientConnection : MessagingService
 			case MessageRequestLoginSubUser reqLoginSubUser:
 			{
 				User? user = await _databaseService.GetUserAsync(reqLoginSubUser.UserId);
-				if (!IsLoggedIn || IsLoggedInAsSubUser || user is not SubUser subUser || subUser.OwnerId != User!.Id)
+				if (!IsLoggedIn || IsLoggedInAsSubUser || user is not SubUser subUser || subUser.OwnerId != ActualUser!.Id)
 				{
-					SendResponse(new MessageResponseLoginSubUser(true, reqLoginSubUser.Id, MessageResponseLoginSubUser.Status.Failure));
+					SendResponse(new MessageResponseLoginSubUser(true, reqLoginSubUser.Id));
 					break;
 				}
 
 				User = subUser;
-				SendResponse(new MessageResponseLoginSubUser(true, reqLoginSubUser.Id, MessageResponseLoginSubUser.Status.Success));
-				
+				SendResponse(new MessageResponseLoginSubUser(true, reqLoginSubUser.Id, subUser));
 				break;
 			}
 
@@ -292,7 +291,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				result = await _databaseService.RegisterUserAsync(ActualUser!.Id, reqCreateSubUser.Permissions,
+				result = await _databaseService.RegisterUserAsync(ActionUser!.Id, reqCreateSubUser.Permissions,
 					reqCreateSubUser.Username, reqCreateSubUser.Email, reqCreateSubUser.Password);
 
 				if (result == ExitCode.Success)
@@ -319,7 +318,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				SubUser[]? subUsers = await _databaseService.GetSubUsersAsync(ActualUser!.Id);
+				SubUser[]? subUsers = await _databaseService.GetSubUsersAsync(ActionUser!.Id);
 				if (subUsers == null)
 				{
 					SendResponse(new MessageResponseListSubUsers(true, reqListSubUsers.Id, MessageResponseListSubUsers.Status.Failure));
