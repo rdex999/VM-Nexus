@@ -38,9 +38,9 @@ public class MessageInfoIdentifyUdp : MessageInfoTcp
 
 public class MessageInfoSubUserCreated : MessageInfoTcp
 {
-	public User SubUser { get; }
+	public SubUser SubUser { get; }
 
-	public MessageInfoSubUserCreated(bool generateGuid, User subUser)
+	public MessageInfoSubUserCreated(bool generateGuid, SubUser subUser)
 		: base(generateGuid)
 	{
 		SubUser = subUser;

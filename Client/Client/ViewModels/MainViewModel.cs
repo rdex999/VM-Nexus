@@ -66,7 +66,7 @@ public partial class MainViewModel : ViewModelBase
 		ClientSvc.VmCrashed += OnVmCrashed;
 
 		AccountMenuTitle = $"Welcome, {ClientSvc.User!.Username}.";
-		IsSubUser = ClientSvc.User.IsSubUser;
+		IsSubUser = ClientSvc.User is SubUser;
 
 		DriveService driveService = new DriveService(ClientSvc);
 		
@@ -97,9 +97,9 @@ public partial class MainViewModel : ViewModelBase
 
 	/* Use for IDE preview only. */
 	public MainViewModel()
-		: base(new NavigationService(), new ClientService(new User(2, 1, 
+		: base(new NavigationService(), new ClientService(new SubUser(2, 1, 
 			(UserPermissions.DriveItemList | UserPermissions.VirtualMachineList).AddIncluded(),
-			"preview_user", "user@gmail.com", DateTime.Now)))
+			"owner", "owner@gmail.com", "sub_user", "user@gmail.com", DateTime.Now)))
 	{
 		AccountMenuTitle = $"Welcome, {ClientSvc.User!.Username}.";
 		IsSubUser = true;

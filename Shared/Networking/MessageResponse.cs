@@ -133,10 +133,10 @@ public class MessageResponseCreateSubUser : MessageResponse
 public class MessageResponseListSubUsers : MessageResponse
 {
 	public Status Result { get; }
-	public User[]? Users { get; }
+	public SubUser[]? Users { get; }
 
 	[JsonConstructor]
-	public MessageResponseListSubUsers(bool generateGuid, Guid requestId, Status result, User[]? users)
+	public MessageResponseListSubUsers(bool generateGuid, Guid requestId, Status result, SubUser[]? users)
 		: base(generateGuid, requestId)
 	{
 		Result = result;

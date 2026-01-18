@@ -211,9 +211,9 @@ public sealed class ClientConnection : MessagingService
 				{
 					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Success));
 
-					User? subUser = await _databaseService.GetUserAsync(reqCreateSubUser.Username);
-					if (subUser != null)
-						await _userService.NotifySubUserCreatedAsync(subUser);
+					User? user = await _databaseService.GetUserAsync(reqCreateSubUser.Username);
+					if (user is SubUser subUser)
+						_userService.NotifySubUserCreated(subUser);
 				}
 				else if (result == ExitCode.UserAlreadyExists)
 					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.UsernameNotAvailable));
@@ -231,7 +231,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
-				User[]? subUsers = await _databaseService.GetSubUsersAsync(User!.Id);
+				SubUser[]? subUsers = await _databaseService.GetSubUsersAsync(User!.Id);
 				if (subUsers == null)
 				{
 					SendResponse(new MessageResponseListSubUsers(true, reqListSubUsers.Id, MessageResponseListSubUsers.Status.Failure));
@@ -984,7 +984,7 @@ public sealed class ClientConnection : MessagingService
 	/// Precondition: A new sub-user was created. Service initialized and connected to client. subUser != null. <br/>
 	/// Postcondition: Client is notified that a new sub-user was created.
 	/// </remarks>
-	public void NotifySubUserCreated(User subUser) =>
+	public void NotifySubUserCreated(SubUser subUser) =>
 		SendInfo(new MessageInfoSubUserCreated(true, subUser));
 	
 	/// <summary>

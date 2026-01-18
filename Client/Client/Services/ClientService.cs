@@ -18,7 +18,7 @@ namespace Client.Services;
 public class ClientService : MessagingService
 {
 	public event EventHandler? Reconnected;
-	public event EventHandler<User>? SubUserCreated;
+	public event EventHandler<SubUser>? SubUserCreated;
 	public event EventHandler<VmGeneralDescriptor>? VmCreated;
 	public event EventHandler<int>? VmDeleted;
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
@@ -224,7 +224,7 @@ public class ClientService : MessagingService
 	/// Postcondition: On success, a list of users is returned, describing the sub-users of the current user.
 	/// On failure, null is returned.
 	/// </remarks>
-	public async Task<User[]?> GetSubUsersAsync()
+	public async Task<SubUser[]?> GetSubUsersAsync()
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestListSubUsers(true));
 		if (result != ExitCode.Success)

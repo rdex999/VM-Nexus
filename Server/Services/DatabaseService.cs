@@ -272,7 +272,7 @@ public class DatabaseService
 			new NpgsqlParameter("@username", username)
 		);
 		
-		if (!reader.Read() || reader.IsDBNull(0) || reader.IsDBNull(2) || reader.IsDBNull(3) || reader.IsDBNull(4) || reader.IsDBNull(5))
+		if (!reader.Read())
 			return null;
 
 		if (reader.IsDBNull(1))
@@ -284,17 +284,26 @@ public class DatabaseService
 				reader.GetDateTime(5)
 			);
 		}
-		else
-		{
-			return new User(
-				reader.GetInt32(0),
-				reader.GetInt32(1),
-				(UserPermissions)reader.GetInt32(2),
-				reader.GetString(3),
-				reader.GetString(4),
-				reader.GetDateTime(5)
-			);
-		}
+
+		int ownerId = reader.GetInt32(1);
+		await using NpgsqlDataReader r = await ExecuteReaderAsync(
+			"SELECT username, email FROM users WHERE id = @owner_id",
+			new NpgsqlParameter("@owner_id", ownerId)
+		);
+
+		if (!r.Read())
+			return null;
+
+		return new SubUser(
+			reader.GetInt32(0),
+			reader.GetInt32(1),
+			(UserPermissions)reader.GetInt32(2),
+			r.GetString(0),
+			r.GetString(1),
+			reader.GetString(3),
+			reader.GetString(4),
+			reader.GetDateTime(5)
+		);
 	}
 
 	/// <summary>
@@ -306,23 +315,42 @@ public class DatabaseService
 	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
 	/// Postcondition: An array of users is returned, describing all sub-users of the given user. Returns null on failure.
 	/// </remarks>
-	public async Task<User[]?> GetSubUsersAsync(int userId)
+	public async Task<SubUser[]?> GetSubUsersAsync(int userId)
 	{
 		if (userId < 1)
 			return null;
-		
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+
+		Task<NpgsqlDataReader> rTask = ExecuteReaderAsync(
+			"SELECT username, email FROM users WHERE id = @userId",
+			new NpgsqlParameter("@userId", userId)
+		);
+		Task<NpgsqlDataReader> readerTask = ExecuteReaderAsync(
 			"SELECT id, owner_permissions, username, email, created_at FROM users WHERE owner_id = @owner_id",
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
-		List<User> users = new List<User>();
+		await Task.WhenAll(rTask, readerTask);
+
+		NpgsqlDataReader r = rTask.Result;
+		NpgsqlDataReader reader = readerTask.Result;
+		if (!await rTask.Result.ReadAsync())
+		{
+			await Task.WhenAll(r.DisposeAsync().AsTask(), reader.DisposeAsync().AsTask());
+			return null;
+		}
+		
+		string username = rTask.Result.GetString(0);
+		string email = rTask.Result.GetString(1);
+		
+		List<SubUser> users = new List<SubUser>();
 		while(await reader.ReadAsync())
 		{
-			User user = new User(
+			SubUser user = new SubUser(
 				reader.GetInt32(0),
 				userId,
 				(UserPermissions)reader.GetInt32(1),
+				username,
+				email,
 				reader.GetString(2),
 				reader.GetString(3),
 				reader.GetDateTime(4)
@@ -331,6 +359,7 @@ public class DatabaseService
 			users.Add(user);
 		}
 		
+		await Task.WhenAll(r.DisposeAsync().AsTask(), reader.DisposeAsync().AsTask());
 		return users.ToArray();
 	}
 

@@ -96,9 +96,9 @@ public class UserService
 	/// Precondition: Service initialized. A new sub-user was created. subUser != null. <br/>
 	/// Postcondition: All connections (ClientConnection) of the owner user are notified of the new sub-user.
 	/// </remarks>
-	public async Task NotifySubUserCreatedAsync(User subUser)
+	public void NotifySubUserCreated(SubUser subUser)
 	{
-		if (!_users.TryGetValue(subUser.OwnerId!.Value, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+		if (!_users.TryGetValue(subUser.OwnerId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 			return;
 		
 		foreach (ClientConnection connection in userConnections.Values)

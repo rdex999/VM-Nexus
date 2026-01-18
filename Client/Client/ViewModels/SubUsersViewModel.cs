@@ -74,14 +74,17 @@ public partial class SubUsersViewModel : ViewModelBase
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>()
 		{
-			new SubUserItemTemplate(new User(2, 1, UserPermissions.DriveList | UserPermissions.UserDelete, 
-				"hey0", "user0@gmail.com", new DateTime(1999, 12, 5))),
+			new SubUserItemTemplate(new SubUser(2, 1, 
+				(UserPermissions.VirtualMachineList | UserPermissions.DriveItemList).AddIncluded(),
+				"owner", "owner@gmail.com", "user2", "user2@gmail.com", DateTime.Now)),
 			
-			new SubUserItemTemplate(new User(3, 1, UserPermissions.DriveList | UserPermissions.DriveItemDownload, 
-				"hey0", "user1@gmail.com", new DateTime(1999, 12, 5))),
+			new SubUserItemTemplate(new SubUser(3, 1, 
+				(UserPermissions.VirtualMachineList | UserPermissions.DriveItemDelete).AddIncluded(),
+				"owner", "owner@gmail.com", "user3", "user3@gmail.com", DateTime.Now)),
 			
-			new SubUserItemTemplate(new User(4, 1, UserPermissions.DriveList | UserPermissions.VirtualMachineWatch, 
-				"hey0", "some.long.email@gmail.com", new DateTime(1999, 12, 5))),
+			new SubUserItemTemplate(new SubUser(4, 1, 
+				(UserPermissions.VirtualMachineWatch | UserPermissions.DriveList).AddIncluded(),
+				"owner", "owner@gmail.com", "user4", "some.long.email@gmail.com", DateTime.Now)),
 		};
 		
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
@@ -99,12 +102,12 @@ public partial class SubUsersViewModel : ViewModelBase
 	/// </remarks>
 	private async Task InitializeAsync()
 	{
-		User[]? subUsers = await ClientSvc.GetSubUsersAsync();
+		SubUser[]? subUsers = await ClientSvc.GetSubUsersAsync();
 		if (subUsers == null)
 			return;
 
 		SubUsers.Clear();
-		foreach (var subUser in subUsers)
+		foreach (SubUser subUser in subUsers)
 			SubUsers.Add(new SubUserItemTemplate(subUser));
 	}
 
@@ -344,7 +347,7 @@ public class SubUserItemTemplate : ObservableObject
 	public UserPermissionItemTemplate[] Permissions { get; }		/* Owner's permissions over this sub-user. */
 	public string Created { get; }
 	
-	public SubUserItemTemplate(User user)
+	public SubUserItemTemplate(SubUser user)
 	{
 		UserName = user.Username;
 		Email = user.Email;
