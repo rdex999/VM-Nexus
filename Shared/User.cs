@@ -10,6 +10,7 @@ public class User
 	public string Username { get; }
 	public string Email { get; }
 	public DateTime CreatedAt { get; }
+	public bool IsSubUser => OwnerId != null;
 
 	[JsonConstructor]
 	public User(int id, int? ownerId, UserPermissions ownerPermissions, string username, string email, DateTime createdAt)

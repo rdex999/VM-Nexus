@@ -107,7 +107,7 @@ public partial class LoginViewModel : ViewModelBase
 		} 
 		else if (result.Value)
 		{
-			NavigationSvc.NavigateToView(new MainView() { DataContext = new MainViewModel(NavigationSvc, ClientSvc, Username) });
+			NavigationSvc.NavigateToView(new MainView() { DataContext = new MainViewModel(NavigationSvc, ClientSvc) });
 		}
 		else
 		{

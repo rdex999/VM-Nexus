@@ -114,7 +114,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 		{
 			case MessageResponseCreateAccount.Status.Success:
 			{
-				NavigationSvc.NavigateToView(new MainView() {  DataContext = new MainViewModel(NavigationSvc, ClientSvc, usernameTrimmed) });
+				NavigationSvc.NavigateToView(new MainView() {  DataContext = new MainViewModel(NavigationSvc, ClientSvc) });
 				break;
 			}
 			case MessageResponseCreateAccount.Status.UsernameNotAvailable:

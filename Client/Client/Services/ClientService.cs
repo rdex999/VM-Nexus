@@ -33,7 +33,17 @@ public class ClientService : MessagingService
 	public event EventHandler<DriveConnection>? DriveDisconnected;
 
 	public bool IsLoggedIn => User != null;
-	public User? User { get; private set; }	
+	public User? User { get; private set; }
+
+	public ClientService()
+	{
+	}
+	
+	/* Use for IDE preview only. */
+	public ClientService(User user)
+	{
+		User = user;
+	}
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.

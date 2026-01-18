@@ -3,7 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Client.ViewModels"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="500"
              x:Class="Client.Views.MainView"
              x:DataType="vm:MainViewModel">
 
@@ -28,16 +28,61 @@
 
 	<Grid RowDefinitions="Auto, *">
 		<Border Background="#d3e6eb" Padding="7">		<!-- Also looks good #e2e7e8 -->
-			<Grid>
+			<Grid ColumnDefinitions="*, Auto, *">
 				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}"
 				              Width="40" Height="40" Margin="5, 0, 0, 0">
-					<PathIcon Data="{StaticResource NavigationRegular}"></PathIcon>
+					<PathIcon Data="{StaticResource NavigationRegular}" />
 				</ToggleButton>
 
-				<TextBlock Foreground="{StaticResource Title}" FontSize="38" FontWeight="Bold" HorizontalAlignment="Center">VM Nexus</TextBlock>
+				<TextBlock Grid.Column="1" Foreground="{StaticResource Title}" FontSize="38" FontWeight="Bold" HorizontalAlignment="Center">VM Nexus</TextBlock>
 
-				<StackPanel HorizontalAlignment="Right" Orientation="Horizontal" FlowDirection="RightToLeft">
-					<Button CornerRadius="200" Width="45" Height="45" Background="#8fcdc9">
+				<StackPanel Grid.Column="2" HorizontalAlignment="Right" Orientation="Horizontal" Spacing="10">
+					<Button CornerRadius="8" Background="#adbbd1" IsVisible="{Binding IsSubUser}">
+						<Button.Styles>
+							<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+								<Setter Property="Background" Value="#b8c6dc" />
+							</Style>
+							
+							<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+								<Setter Property="Background" Value="#a1afc5" />
+							</Style>
+						</Button.Styles>
+						
+						<StackPanel Orientation="Horizontal" Spacing="10">
+							<TextBlock Foreground="Black" FontSize="15" VerticalAlignment="Center">Permissions</TextBlock>
+							<PathIcon Data="{StaticResource ChevronDownRegular}" Foreground="#5f6a7c" Width="20" />
+						</StackPanel>
+					</Button>
+					
+					<Button CornerRadius="200" Width="45" Height="45" Background="#96c2b6" 
+					        HorizontalContentAlignment="Center" IsVisible="{Binding IsSubUser}">
+						<Button.Styles>
+							<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+								<Setter Property="Background" Value="#86b2a6" />
+							</Style>
+							<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
+								<Setter Property="Background" Value="#76a296" />
+							</Style>
+						</Button.Styles>
+						
+						<Button.Flyout>
+							<Flyout Placement="Bottom" VerticalOffset="10">
+								<StackPanel Spacing="3">
+									<TextBlock FontWeight="Bold" Foreground="Black" HorizontalAlignment="Center">owner_user</TextBlock>
+									<MenuItem Header="-"/>
+									<TextBlock Foreground="Black">owner@gmail.com</TextBlock>
+								</StackPanel>
+							</Flyout>
+						</Button.Flyout>
+
+						<PathIcon Data="{StaticResource PersonRegular}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+					</Button>
+					
+					<Image Source="/Assets/ArrowRight.png" Width="60" Height="40" Stretch="UniformToFill"
+					       IsVisible="{Binding IsSubUser}"
+					       RenderOptions.BitmapInterpolationMode="MediumQuality" Margin="0"/>
+					
+					<Button CornerRadius="200" Width="45" Height="45" Background="#8fcdc9" HorizontalContentAlignment="Center">
 						<Button.Styles>
 							<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
 								<Setter Property="Background" Value="#78adaa" />
@@ -67,7 +112,6 @@
 
 						<PathIcon Data="{StaticResource PersonRegular}" HorizontalAlignment="Center" VerticalAlignment="Center" />
 					</Button>
-
 				</StackPanel>
 			</Grid>
 		</Border>

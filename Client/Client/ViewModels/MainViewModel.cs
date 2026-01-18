@@ -40,6 +40,9 @@ public partial class MainViewModel : ViewModelBase
 
 	[ObservableProperty] 
 	private string _accountMenuTitle;
+
+	[ObservableProperty] 
+	private bool _isSubUser;
 	
 	/// <summary>
 	/// Creates the MainViewModel object. Initializes UI.
@@ -50,22 +53,20 @@ public partial class MainViewModel : ViewModelBase
 	/// <param name="clientSvc">
 	/// an instance of the client service. clientService != null.
 	/// </param>
-	/// <param name="username">
-	/// The username of the user. username != null.
-	/// </param>
 	/// <remarks>
 	/// Precondition: User has logged in or created an account successfully.
 	/// navigationService != null &amp;&amp; clientService != null &amp;&amp; username != null. <br/>
 	/// Postcondition: MainView UI is ready and initialized.
 	/// </remarks>
-	public MainViewModel(NavigationService navigationSvc, ClientService clientSvc, string username)
+	public MainViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		ClientSvc.VmPoweredOff += OnVmPoweredOff;
 		ClientSvc.VmCrashed += OnVmCrashed;
-		
-		AccountMenuTitle = $"Welcome, {username}.";
+
+		AccountMenuTitle = $"Welcome, {ClientSvc.User!.Username}.";
+		IsSubUser = ClientSvc.User.IsSubUser;
 
 		DriveService driveService = new DriveService(ClientSvc);
 		
@@ -96,8 +97,12 @@ public partial class MainViewModel : ViewModelBase
 
 	/* Use for IDE preview only. */
 	public MainViewModel()
+		: base(new NavigationService(), new ClientService(new User(2, 1, 
+			(UserPermissions.DriveItemList | UserPermissions.VirtualMachineList).AddIncluded(),
+			"preview_user", "user@gmail.com", DateTime.Now)))
 	{
-		AccountMenuTitle = "Welcome, preview_user.";
+		AccountMenuTitle = $"Welcome, {ClientSvc.User!.Username}.";
+		IsSubUser = true;
 		
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
