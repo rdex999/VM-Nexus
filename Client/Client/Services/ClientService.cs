@@ -176,11 +176,11 @@ public class ClientService : MessagingService
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogout(true));
 		if (result != ExitCode.Success)
-		{
 			return  MessageResponseLogout.Status.Failure;
-		}
 		
 		MessageResponseLogout resLogout = (MessageResponseLogout)response!;
+		User = resLogout.User;
+		
 		return resLogout.Result;
 	}
 

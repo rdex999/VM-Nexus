@@ -238,7 +238,11 @@ public partial class MainViewModel : ViewModelBase
 			{
 				await vmScreenViewModel.UnfocusAsync();
 			}
-			NavigationSvc.NavigateToView(new LoginView() { DataContext = new LoginViewModel(NavigationSvc, ClientSvc) });
+
+			if (ClientSvc.User == null)
+				NavigationSvc.NavigateToView(new LoginView() { DataContext = new LoginViewModel(NavigationSvc, ClientSvc) });
+			else
+				NavigationSvc.NavigateToView(new MainView() { DataContext = new MainViewModel(NavigationSvc, ClientSvc) });
 		}
 	}
 

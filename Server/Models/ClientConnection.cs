@@ -250,7 +250,7 @@ public sealed class ClientConnection : MessagingService
 					else
 						ActualUser = null;
 					
-					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success));
+					SendResponse(new MessageResponseLogout(true,  reqLogout.Id, MessageResponseLogout.Status.Success, ActualUser));
 				}
 				else
 				{

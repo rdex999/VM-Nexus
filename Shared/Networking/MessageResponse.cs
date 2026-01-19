@@ -88,11 +88,21 @@ public class MessageResponseLogin : MessageResponse
 public class MessageResponseLogout : MessageResponse
 {
 	public Status Result { get; }
+	public User? User { get; }
 
+	[JsonConstructor]
+	public MessageResponseLogout(bool generateGuid, Guid requestId, Status result, User? user)
+		:  base(generateGuid, requestId)
+	{
+		Result = result;
+		User = user;
+	}
+	
 	public MessageResponseLogout(bool generateGuid, Guid requestId, Status result)
 		:  base(generateGuid, requestId)
 	{
 		Result = result;
+		User = null;
 	}
 
 	public override bool IsValidMessage()
