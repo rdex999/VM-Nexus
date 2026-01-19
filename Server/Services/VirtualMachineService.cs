@@ -78,19 +78,20 @@ public class VirtualMachineService
 	/// <param name="name">The name of the virtual machine. name != null.</param>
 	/// <param name="operatingSystem">The operating system of the virtual machine.</param>
 	/// <param name="cpuArchitecture">The CPU architecture (x86, x86-64, etc..) of the virtual machine.</param>
+	/// <param name="ramSizeMiB">The amount of RAM storage for the virtual machine. Must be in valid range.
+	/// ramSizeMiB > 0 &amp;&amp; ramSizeMiB &lt;= SharedDefinitions.VmRamSizeMbMax.</param>
 	/// <param name="bootMode">The boot mode for the virtual machine. (UEFI or BIOS)</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
 	/// Precondition: A user with the given ID must exist,
 	/// there should not be a virtual machine with the given name under this user. (name is unique).
-	/// userId >= 1 &amp;&amp; name != null. <br/>
+	/// userId >= 1 &amp;&amp; name != null &amp;&amp; ramSizeMiB &lt;= SharedDefinitions.VmRamSizeMbMax. <br/>
 	/// Postcondition: On success, a virtual machine with the given parameters is created. On failure, the returned exit code will indicate the error.
 	/// </remarks>
 	public async Task<ExitCode> CreateVirtualMachineAsync(int userId, string name,
-		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture,
-		BootMode bootMode)
+		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode)
 	{
-		return await _databaseService.CreateVmAsync(userId, name, operatingSystem, cpuArchitecture, bootMode);
+		return await _databaseService.CreateVmAsync(userId, name, operatingSystem, cpuArchitecture, ramSizeMiB, bootMode);
 	}
 
 	/// <summary>

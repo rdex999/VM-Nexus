@@ -432,37 +432,43 @@ public class DatabaseService
 	/// <param name="name">The name of the virtual machine. name != null.</param>
 	/// <param name="operatingSystem">The operating system of the virtual machine.</param>
 	/// <param name="cpuArchitecture">The CPU architecture (x86, x86-64, etc..) of the virtual machine.</param>
+	/// <param name="ramSizeMiB">The amount of RAM storage for the virtual machine. Must be in valid range.
+	/// ramSizeMiB > 0 &amp;&amp; ramSizeMiB &lt;= SharedDefinitions.VmRamSizeMbMax.</param>
 	/// <param name="bootMode">The boot mode for the virtual machine. (UEFI or BIOS)</param>
 	/// <returns>An exit code indicating the result of the operation.</returns>
 	/// <remarks>
 	/// Precondition: Service connected to database, a user with the given username must exist,
 	/// there should not be a virtual machine with the given name under this user. (name is unique).
-	/// username != null &amp;&amp; name != null. <br/>
+	/// username != null &amp;&amp; name != null. ramSizeMiB > 0 &amp;&amp; ramSizeMiB &lt;= SharedDefinitions.VmRamSizeMbMax. <br/>
 	/// Postcondition: On success, a virtual machine with the given parameters is created. On failure, the returned exit code will indicate the error.
 	/// </remarks>
 	public async Task<ExitCode> CreateVmAsync(int userId, string name, OperatingSystem operatingSystem, 
-		CpuArchitecture cpuArchitecture, BootMode bootMode)
+		CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode)
 	{
-		if (userId < 1) return ExitCode.InvalidParameter;
+		if (userId < 1 || ramSizeMiB <= 1 || ramSizeMiB > SharedDefinitions.VmRamSizeMbMax) 
+			return ExitCode.InvalidParameter;
 		
 		bool vmExists = await IsVmExistsAsync(userId, name);
 		
-		if (vmExists) return ExitCode.VmAlreadyExists;
+		if (vmExists) 
+			return ExitCode.VmAlreadyExists;
 
 		int state = (int)VmState.ShutDown;
 		int rows = await ExecuteNonQueryAsync($"""
-		                                      INSERT INTO virtual_machines (name, owner_id, operating_system, cpu_architecture, boot_mode, state) 
-		                                      	VALUES (@name, @owner_id, @operating_system, @cpu_architecture,  @boot_mode, @state)
+		                                      INSERT INTO virtual_machines (name, owner_id, operating_system, cpu_architecture, ram_size, boot_mode, state) 
+		                                      	VALUES (@name, @owner_id, @operating_system, @cpu_architecture,  @ram_size, @boot_mode, @state)
 		                                      """,
 			new NpgsqlParameter("@name", name),
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@operating_system", (int)operatingSystem) { NpgsqlDbType = NpgsqlDbType.Integer },
 			new NpgsqlParameter("@cpu_architecture", (int)cpuArchitecture) { NpgsqlDbType = NpgsqlDbType.Integer },
+			new NpgsqlParameter("@ram_size", ramSizeMiB),
 			new NpgsqlParameter("@boot_mode", (int)bootMode) { NpgsqlDbType = NpgsqlDbType.Integer },
 			new NpgsqlParameter("@state", state) { NpgsqlDbType = NpgsqlDbType.Integer }
 		);
 		
-		if (rows == 1) return ExitCode.Success;
+		if (rows == 1) 
+			return ExitCode.Success;
 		
 		return ExitCode.DatabaseOperationFailed;
 	}

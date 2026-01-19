@@ -361,7 +361,7 @@ public sealed class ClientConnection : MessagingService
 			
 				string vmNameTrimmed = reqCreateVm.Name.Trim();
 				result = await _virtualMachineService.CreateVirtualMachineAsync(ActionUser!.Id, vmNameTrimmed,
-					reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, reqCreateVm.BootMode);
+					reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, reqCreateVm.RamSizeMiB, reqCreateVm.BootMode);
 				
 				if (result == ExitCode.VmAlreadyExists)
 				{
