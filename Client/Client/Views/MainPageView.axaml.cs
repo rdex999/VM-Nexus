@@ -89,30 +89,25 @@ public partial class MainPageView : UserControl
 	/// </remarks>
 	private async void VmTabsOnCollectionChangedAsync(object? sender, NotifyCollectionChangedEventArgs e)
 	{
-		if (e.Action != NotifyCollectionChangedAction.Add)
-		{
+		if (OperatingSystem.IsBrowser())
 			return;
-		}
+		
+		if (e.Action != NotifyCollectionChangedAction.Add)
+			return;
 
 		ListBox? listBox = this.FindControl<ListBox>("VmTabsListBox");
 		if (listBox == null)
-		{
 			return;
-		}
 
 		if (DataContext is not MainPageViewModel viewModel)
-		{
 			return;
-		}
 	
 		/* e.NewItems cannot be null because we know its an Add event. */
 		foreach (VmTabTemplate tab in e.NewItems!)
 		{
 			ListBoxItem? container = listBox.ContainerFromItem(tab) as ListBoxItem;
 			if (container == null)
-			{
 				continue;
-			}
 
 			container.Opacity = 0.0;								/* Before awaiting, set opacity to 0 so we dont see the full tab and then an animation. */
 		
@@ -169,25 +164,23 @@ public partial class MainPageView : UserControl
 	private async void CloseVMTab_OnClick(object? sender, RoutedEventArgs e)
 	{
 		if (sender is not Button button)
-		{
 			return;
-		}
 
 		if (DataContext is not MainPageViewModel viewModel)
-		{
 			return;
-		}
 
 		if (button.DataContext is not VmTabTemplate tab)
+			return;
+		
+		if (OperatingSystem.IsBrowser())
 		{
+			viewModel.CloseVmTab(tab);
 			return;
 		}
-
+		
 		ListBoxItem? listBoxItem = button.FindAncestorOfType<ListBoxItem>();
 		if (listBoxItem == null)
-		{
 			return;
-		}
 
 		Animation animation = new Animation()
 		{

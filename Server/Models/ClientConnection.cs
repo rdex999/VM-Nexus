@@ -610,14 +610,19 @@ public sealed class ClientConnection : MessagingService
 						MessageResponseVmStreamStart.Status.Failure));
 					break;
 				}
-				result = _virtualMachineService.SubscribeToVmAudioPacketReceived(reqVmStreamStart.VmId, OnVmNewAudioPacket);
-				if (result != ExitCode.Success)
+				
+				/* Audio not supported on web. */
+				if (WebSocket == null)		/* If the client is not on web. */
 				{
-					SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id, 
-						MessageResponseVmStreamStart.Status.Failure));
-					
-					_virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqVmStreamStart.VmId, OnVmNewFrame);
-					break;
+					result = _virtualMachineService.SubscribeToVmAudioPacketReceived(reqVmStreamStart.VmId, OnVmNewAudioPacket);
+
+					if (result != ExitCode.Success)
+					{
+						SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id, MessageResponseVmStreamStart.Status.Failure));
+
+						_virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqVmStreamStart.VmId, OnVmNewFrame);
+						break;
+					}
 				}
 				
 				PixelFormat pixelFormat = _virtualMachineService.GetScreenStreamPixelFormat(reqVmStreamStart.VmId)!;

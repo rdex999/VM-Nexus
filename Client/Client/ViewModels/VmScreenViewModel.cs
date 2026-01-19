@@ -15,6 +15,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Shared;
 using Shared.Networking;
 using Shared.VirtualMachines;
+using OperatingSystem = System.OperatingSystem;
 using PixelFormat = Avalonia.Platform.PixelFormat;
 using Point = System.Drawing.Point;
 
@@ -243,12 +244,20 @@ public partial class VmScreenViewModel : ViewModelBase
 			VmScreenBitmap = new WriteableBitmap(new PixelSize(frame.Size.Width, frame.Size.Height), new Vector(96, 96), _pixelFormat);
 		}
 
-		using MemoryStream input = new MemoryStream(frame.CompressedFramebuffer);
 		using MemoryStream output = new MemoryStream();
-		using (BrotliStream brotliStream = new BrotliStream(input, CompressionMode.Decompress))
+		if (OperatingSystem.IsBrowser())
 		{
-			brotliStream.CopyTo(output);
+			/* TODO: Find out how to decompress this. */
 		}
+		else
+		{
+			using MemoryStream input = new MemoryStream(frame.CompressedFramebuffer);
+			using (BrotliStream brotliStream = new BrotliStream(input, CompressionMode.Decompress))
+			{
+				brotliStream.CopyTo(output);
+			}	
+		}
+		
 		byte[] framebuffer = output.ToArray();
 
 		using ILockedFramebuffer buffer = VmScreenBitmap.Lock();

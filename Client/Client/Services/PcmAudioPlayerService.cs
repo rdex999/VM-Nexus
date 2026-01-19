@@ -31,7 +31,11 @@ public class PcmAudioPlayerService
 	/// </remarks>
 	public ExitCode Initialize()
 	{
-		if (IsInitialized) return ExitCode.AlreadyInitialized;
+		if (IsInitialized) 
+			return ExitCode.AlreadyInitialized;
+
+		if (OperatingSystem.IsBrowser())
+			return ExitCode.UnsupportedPlatform;
 		
 		_cts = new CancellationTokenSource();
 		_thread = new Thread(AudioPlayer);

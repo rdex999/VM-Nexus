@@ -7,6 +7,7 @@ public enum ExitCode
 	InvalidParameter,
 	CallOnInvalidCondition,
 	UnsupportedOperation,
+	UnsupportedPlatform,
 	AlreadyInitialized,
 	DataFetchFailed,
 	ServerNoValidLocalhostIp,
