@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
 using Server.Services;
@@ -70,6 +72,8 @@ public class MainWindowModel
 		
 		_listener = new Thread(() => ListenForClients(_listenerCts.Token, socket));
 		_listener.Start();
+		
+		_ = ListenForWebClients(_listenerCts.Token);
 
 		return ExitCode.Success;
 	}
@@ -144,6 +148,46 @@ public class MainWindowModel
 			}
 		}
 		socket.Close();
+	}
+
+	private async Task ListenForWebClients(CancellationToken token)
+	{
+		HttpListener listener = new HttpListener();
+		listener.Prefixes.Add($"http://{SharedDefinitions.ServerIp}:{SharedDefinitions.ServerTcpWebPort}/");
+		listener.Start();
+
+		while (!token.IsCancellationRequested)
+		{
+			HttpListenerContext context;
+
+			try
+			{
+				context = await listener.GetContextAsync().WaitAsync(token);
+			}
+			catch (OperationCanceledException)
+			{
+				return;
+			}
+			
+			if (!context.Request.IsWebSocketRequest)
+			{ 
+				context.Response.StatusCode = 400;
+				context.Response.Close();
+				Debug.WriteLine("BAD REQUEST");
+				continue;
+			}
+
+			WebSocketContext wsContext = await context.AcceptWebSocketAsync(null);
+			
+			/* This loop ensures the GUID is unique and that the client is added. */
+			bool added;
+			do
+			{
+				ClientConnection clientConnection = new ClientConnection(wsContext.WebSocket, _databaseService, _userService, _virtualMachineService, _driveService);
+				clientConnection.Disconnected += OnClientDisconnected;
+				added = _clients.TryAdd(clientConnection.ClientId, clientConnection);
+			} while (!added);
+		}
 	}
 
 	/// <summary>

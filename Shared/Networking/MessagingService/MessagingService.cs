@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Text;
 
 namespace Shared.Networking;
@@ -10,10 +11,10 @@ public partial class MessagingService
 	public event EventHandler<ExitCode>? FailEvent;
 	protected Socket? TcpSocket;
 	protected Socket? UdpSocket;
+	protected WebSocket? WebSocket;
 	protected readonly CancellationTokenSource Cts;
 	protected bool IsServiceInitialized;
 	private readonly ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
-	private readonly Thread _messageTcpSenderThread;
 	private readonly Thread _messageUdpSenderThread;
 	private readonly ConcurrentQueue<Message> _messageTcpQueue;
 	private readonly ConcurrentQueue<Message> _messageUdpQueue;
@@ -35,7 +36,6 @@ public partial class MessagingService
 		IsServiceInitialized = false;
 		
 		Cts = new CancellationTokenSource();
-		_messageTcpSenderThread = new Thread(MessageTcpSender);
 		_messageUdpSenderThread = new Thread(MessageUdpSender);
 		_responses = new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
 		_messageTcpQueue = new ConcurrentQueue<Message>();
@@ -58,9 +58,7 @@ public partial class MessagingService
 	protected void StartTcp()
 	{
 		_ = MessageTcpReceiverAsync();
-		
-		if (!_messageTcpSenderThread.IsAlive)
-			_messageTcpSenderThread.Start();
+		_ = MessageTcpSenderAsync();
 	}
 	
 	/// <summary>
@@ -88,10 +86,7 @@ public partial class MessagingService
 	/// Precondition: No specific condition. <br/>
 	/// Postcondition: Returns true if the service is initialized, false otherwise.
 	/// </remarks>
-	public bool IsInitialized()
-	{
-		return IsServiceInitialized;
-	}
+	public bool IsInitialized() => IsServiceInitialized;
 
 	/// <summary>
 	/// Returns whether the socket is connected or not.
@@ -100,10 +95,8 @@ public partial class MessagingService
 	/// Precondition: Service should be initialized. (returns false if not) <br/>
 	/// Postcondition: returns whether connected to the other side (client/server)
 	/// </remarks>
-	public bool IsConnected()
-	{
-		return IsInitialized() && TcpSocket != null && TcpSocket!.Connected;
-	}
+	public bool IsConnected() =>
+		IsInitialized() && ((TcpSocket != null && TcpSocket!.Connected) || (WebSocket != null && WebSocket.State == WebSocketState.Open));
 
 	/// <summary>
 	/// Handles communication with the other entity (server/client).
@@ -112,10 +105,6 @@ public partial class MessagingService
 	/// After the token is canceled, the function disconnects communication and calls AfterDisconnection().
 	/// This function runs on another thread, CommunicationThread.
 	/// </summary>
-	/// <param name="token">
-	/// The cancellation token - used for determining whether the function should return or not. Cannot be null.
-	/// Cancel the token (cts.Cancle()) only when communication should stop - on disconnection.
-	/// </param>
 	/// <remarks>
 	/// Precondition: Service fully initialized and connected to the other side, (server/client) token != null. <br/>
 	/// Postcondition: Communication stopped and disconnected. (socket disconnected and closed)
@@ -235,18 +224,23 @@ public partial class MessagingService
 	/// Precondition: Service fully initialized and connected to the other side. (server/client) This method should only be started from the StartTcp() method.<br/>
 	/// Postcondition: Returns when the cancellation token requires cancellation - communication is finished.
 	/// </remarks>
-	private void MessageTcpSender()
+	private async Task MessageTcpSenderAsync()
 	{
 		while (!Cts.Token.IsCancellationRequested)
 		{
 			try
 			{
-				_messageTcpAvailable.Wait(Cts.Token);		/* Wait until there is a message available */
+				if (OperatingSystem.IsBrowser())
+					while (!_messageTcpAvailable.IsSet)
+						await Task.Delay(50, Cts.Token);
+				
+				else
+					await Task.Run(() => _messageTcpAvailable.Wait(Cts.Token));		/* Wait until there is a message available */
 				
 				/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
 				while (_messageTcpQueue.TryDequeue(out Message? message) && !Cts.Token.IsCancellationRequested)		
 				{
-					SendMessageTcpOnSocketAsync(message).Wait(Cts.Token);
+					await SendMessageTcpOnSocketAsync(message);
 				}
 
 				if (_messageTcpQueue.IsEmpty)
@@ -504,7 +498,7 @@ public partial class MessagingService
 		if (!IsConnected())
 			return;
 		
-		if (message is MessageTcp)
+		if (message is MessageTcp || UdpSocket == null)
 		{
 			_messageTcpQueue.Enqueue(message);
 			_messageTcpAvailable.Set();
@@ -654,7 +648,17 @@ public partial class MessagingService
 			int sent;
 			try
 			{
-				sent = await TcpSocket!.SendAsync(memory);
+				if (TcpSocket != null)
+					sent = await TcpSocket!.SendAsync(memory);
+				
+				else if (WebSocket != null)
+				{
+					bool isEnd = bytesSent + memory.Length == bytes.Length;
+					await WebSocket.SendAsync(memory, WebSocketMessageType.Binary, isEnd, Cts.Token);
+					sent = memory.Length;
+				}
+				else
+					return ExitCode.DisconnectedFromServer;
 			}
 			catch (Exception)
 			{
@@ -699,7 +703,17 @@ public partial class MessagingService
 			int currentRead;
 			try
 			{
-				currentRead = await TcpSocket!.ReceiveAsync(memory);
+				if (TcpSocket != null)
+					currentRead = await TcpSocket!.ReceiveAsync(memory).ConfigureAwait(false);
+				
+				else if (WebSocket != null)
+				{
+					ValueWebSocketReceiveResult result = await WebSocket!.ReceiveAsync(memory, Cts.Token).ConfigureAwait(false);
+					currentRead = result.Count;
+				}
+
+				else
+					return null;
 			}
 			catch (Exception)
 			{
@@ -808,9 +822,6 @@ public partial class MessagingService
 			UdpSocket.Close();
 			UdpSocket.Dispose();
 		}
-
-		if (Thread.CurrentThread != _messageTcpSenderThread && _messageTcpSenderThread.IsAlive)
-			_messageTcpSenderThread.Join();
 
 		if (Thread.CurrentThread != _messageUdpSenderThread && _messageUdpSenderThread.IsAlive) 
 			_messageUdpSenderThread.Join();

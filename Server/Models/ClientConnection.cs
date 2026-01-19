@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 using Server.Drives;
 using Server.Services;
@@ -81,6 +82,35 @@ public sealed class ClientConnection : MessagingService
 		StartTcp();
 	}
 
+	/// <summary>
+	/// Creates and initializes the ClientConnection object.
+	/// </summary>
+	/// <param name="socket">The socket on which the client has connected. socket != null.</param>
+	/// <param name="databaseService">A reference to the database service. databaseService != null.</param>
+	/// <param name="userService">A reference to the user service. userService != null.</param>
+	/// <param name="virtualMachineService">A reference to the virtual machine service. virtualMachineService != null.</param>
+	/// <param name="driveService">A reference to the drive service. driveService != null.</param>
+	/// <remarks>
+	/// Precondition: Client has connected to the server.
+	/// socket != null &amp;&amp; userService != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null. &amp;&amp; driveService != null.<br/>
+	/// Postcondition: Messaging service fully initialized and connected to the client.
+	/// </remarks>
+	public ClientConnection(WebSocket socket, DatabaseService databaseService, UserService userService, VirtualMachineService virtualMachineService, DriveService driveService)
+	{
+		_databaseService = databaseService;
+		_userService = userService;
+		_virtualMachineService = virtualMachineService;
+		_driveService = driveService;
+		_downloads = new ConcurrentDictionary<Guid, TransferHandler>();
+		ClientId = Guid.NewGuid();
+
+		WebSocket = socket;
+		
+		IsServiceInitialized = true;
+		
+		StartTcp();
+	}
+	
 	/// <summary>
 	/// Checks if the current login state and user has a permission. <br/>
 	/// A user not logged in - has no permissions. <br/>

@@ -3,6 +3,7 @@ using System.Drawing;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 using Avalonia.Input;
 using Shared;
@@ -51,13 +52,21 @@ public class ClientService : MessagingService
 		if (IsInitialized())
 			return;
 
-		TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-		UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+		if (System.OperatingSystem.IsBrowser())
+			WebSocket = new ClientWebSocket();
+		
+		else
+		{
+			TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+		}
 		
 		await ConnectToServerAsync();
 		
 		StartTcp();
-		StartUdp();
+		
+		if (!System.OperatingSystem.IsBrowser())
+			StartUdp();
 	}
 
 	/// <summary>
@@ -853,14 +862,23 @@ public class ClientService : MessagingService
 				break;
 			}
 
-			TcpSocket!.Close();
-			TcpSocket.Dispose();
-			TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+			if (System.OperatingSystem.IsBrowser())
+			{
+				await WebSocket!.CloseAsync(WebSocketCloseStatus.NormalClosure, null, Cts.Token);
+				WebSocket.Dispose();
+				WebSocket = new ClientWebSocket();
+			}
+			else
+			{
+				TcpSocket!.Close();
+				TcpSocket.Dispose();
+				TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			
-			UdpSocket!.Close();
-			UdpSocket.Dispose();
-			UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-
+				UdpSocket!.Close();
+				UdpSocket.Dispose();
+				UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+			}
+			
 			try
 			{
 				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout, Cts.Token);
@@ -895,8 +913,15 @@ public class ClientService : MessagingService
 		/* Connect to the server. On connection failure try connecting with a 3-second delay between each try. */
 		try
 		{
-			await TcpSocket!.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerTcpPort,
-				Cts.Token);
+			if (System.OperatingSystem.IsBrowser())
+			{
+				ClientWebSocket webSocket = (ClientWebSocket)WebSocket!;
+				await webSocket.ConnectAsync(new Uri($"ws://{SharedDefinitions.ServerIp}:{SharedDefinitions.ServerTcpWebPort}/"), Cts.Token);
+				IsServiceInitialized = webSocket.State == WebSocketState.Open;
+				return IsServiceInitialized;
+			}
+			
+			await TcpSocket!.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerTcpPort, Cts.Token);
 		}
 		catch (OperationCanceledException)
 		{
