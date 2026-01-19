@@ -17,7 +17,7 @@ namespace Client.ViewModels;
 
 public partial class MainPageViewModel : ViewModelBase
 {
-	
+	private DriveService _driveService;
 	public SplitViewDisplayMode MenuDisplayMode { get; }
 	
 	public ObservableCollection<SideMenuItemTemplate> SideMenuItems { get; }
@@ -72,48 +72,32 @@ public partial class MainPageViewModel : ViewModelBase
 		ClientSvc.VmPoweredOff += OnVmPoweredOff;
 		ClientSvc.VmCrashed += OnVmCrashed;
 
-		AccountMenuTitle = $"Welcome, {ClientSvc.User!.Username}.";
-		IsSubUser = ClientSvc.User is SubUser;
-		if (IsSubUser)
-		{
-			SubUser = (SubUser)ClientSvc.User;
-			
-			UserPermissions[] permissions = SubUser.OwnerPermissions.ToArray();
-			OwnerPermissions = new UserPermissionItemTemplate[permissions.Length];
-			for (int i = 0; i < permissions.Length; ++i)
-				OwnerPermissions[i] = new UserPermissionItemTemplate(permissions[i]);
-		}
-
-		DriveService driveService = new DriveService(ClientSvc);
-		
-		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
-		{
-			new SideMenuItemTemplate("Home", new HomeViewModel(NavigationSvc, ClientSvc, driveService), "HomeRegular"),
-			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(NavigationSvc,  ClientSvc, driveService), "AddRegular"),
-			new SideMenuItemTemplate("Drives", new DriveExplorerViewModel(NavigationSvc, ClientSvc, driveService), "StorageRegular"),
-			new SideMenuItemTemplate("Sub Users", new SubUsersViewModel(NavigationSvc, ClientSvc), "PeopleCommunityRegular"),
-		};
-		CurrentSideMenuItem = SideMenuItems[SideMenuIdxHome];
-		CurrentPageViewModel = SideMenuItems.First().ViewModel;
-		((HomeViewModel)CurrentPageViewModel).VmOpenClicked += OnVmOpenClicked;
-
-		_ = driveService.InitializeAsync();
-		
+		_driveService = new DriveService(ClientSvc);
 		VmTabs = new ObservableCollection<VmTabTemplate>();
 
 		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
-		{
 			MenuDisplayMode = SplitViewDisplayMode.Overlay;
-		}
+		
 		else
-		{
 			MenuDisplayMode = SplitViewDisplayMode.CompactInline;
-		}
+		
+		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
+		{
+			new SideMenuItemTemplate("Home", new HomeViewModel(NavigationSvc, ClientSvc, _driveService), "HomeRegular"),
+			new SideMenuItemTemplate("Create a New Virtual Machine", new CreateVmViewModel(NavigationSvc,  ClientSvc, _driveService), "AddRegular"),
+			new SideMenuItemTemplate("Drives", new DriveExplorerViewModel(NavigationSvc, ClientSvc, _driveService), "StorageRegular"),
+			new SideMenuItemTemplate("Sub Users", new SubUsersViewModel(NavigationSvc, ClientSvc), "PeopleCommunityRegular"),
+		};
+
+		Initialize();
+		
+		((HomeViewModel)CurrentPageViewModel).VmOpenClicked += OnVmOpenClicked;
 	}
 
 	/* Use for IDE preview only. */
 	public MainPageViewModel()
 	{
+		_driveService = null!;
 		IsSubUser = true;
 		SubUser = new SubUser(2, 1, 
 		(UserPermissions.DriveItemList | UserPermissions.VirtualMachineList).AddIncluded(),
@@ -137,6 +121,35 @@ public partial class MainPageViewModel : ViewModelBase
 
 		VmTabs = new ObservableCollection<VmTabTemplate>();
 		MenuDisplayMode = SplitViewDisplayMode.CompactInline;
+	}
+
+	/// <summary>
+	/// Initializes this view model. <br/>
+	/// Refreshes user related information and re-initializes the drive service.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either this view model was just created (called from constructor) or it was placed as the current page. (re-initialization is needed) <br/>
+	/// Postcondition: This view model is initialized.
+	/// </remarks>
+	public void Initialize()
+	{
+		AccountMenuTitle = $"Welcome, {ClientSvc.User!.Username}.";
+		IsSubUser = ClientSvc.User is SubUser;
+		if (IsSubUser)
+		{
+			SubUser = (SubUser)ClientSvc.User;
+			
+			UserPermissions[] permissions = SubUser.OwnerPermissions.ToArray();
+			OwnerPermissions = new UserPermissionItemTemplate[permissions.Length];
+			for (int i = 0; i < permissions.Length; ++i)
+				OwnerPermissions[i] = new UserPermissionItemTemplate(permissions[i]);
+		}
+		CurrentSideMenuItem = SideMenuItems[SideMenuIdxHome];
+		CurrentPageViewModel = SideMenuItems.First().ViewModel;
+		
+		VmTabs.Clear();
+		
+		_ = _driveService.InitializeAsync();
 	}
 	
 	/// <summary>
