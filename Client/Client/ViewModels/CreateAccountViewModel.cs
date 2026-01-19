@@ -85,10 +85,8 @@ public partial class CreateAccountViewModel : ViewModelBase
 	/// Postcondition: User is redirected to the login view.
 	/// </remarks>
 	[RelayCommand]
-	private void NavigateToLogin()
-	{
-		NavigationSvc.NavigateToView(new LoginView() {  DataContext = new LoginViewModel(NavigationSvc, ClientSvc) });
-	}
+	private void NavigateToLogin() =>
+		NavigationSvc.NavigateTo(new LoginViewModel(NavigationSvc, ClientSvc));
 	
 	/// <summary>
 	/// Tries to create an account with the inputted username and password.
@@ -114,7 +112,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 		{
 			case MessageResponseCreateAccount.Status.Success:
 			{
-				NavigationSvc.NavigateToView(new MainView() {  DataContext = new MainViewModel(NavigationSvc, ClientSvc) });
+				NavigationSvc.NavigateTo(new MainPageViewModel(NavigationSvc, ClientSvc));
 				break;
 			}
 			case MessageResponseCreateAccount.Status.UsernameNotAvailable:

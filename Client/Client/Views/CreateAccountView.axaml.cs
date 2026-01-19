@@ -22,7 +22,8 @@ public partial class CreateAccountView : UserControl
 	/// </remarks>
 	private void OnPasswordTextChanged(object? sender, TextChangedEventArgs e)
 	{
-		((CreateAccountViewModel)DataContext!).PasswordTextChanged();
+		if (DataContext is CreateAccountViewModel viewModel)
+			viewModel.PasswordTextChanged();
 	}
 
 	/// <summary>
@@ -36,7 +37,8 @@ public partial class CreateAccountView : UserControl
 	/// </remarks>
 	private async void OnUsernameTextChangedAsync(object? sender, TextChangedEventArgs e)
 	{
-		await ((CreateAccountViewModel)DataContext!).ValidateUsernameAsync();
+		if (DataContext is CreateAccountViewModel viewModel)
+			await viewModel.ValidateUsernameAsync();
 	}
 
 	/// <summary>
@@ -64,6 +66,7 @@ public partial class CreateAccountView : UserControl
 	/// </remarks>
 	private void OnEmailTextChanged(object? sender, TextChangedEventArgs e)
 	{
-		((CreateAccountViewModel)DataContext!).OnEmailTextChanged();
+		if (DataContext is CreateAccountViewModel viewModel)
+			viewModel.OnEmailTextChanged();
 	}
 }

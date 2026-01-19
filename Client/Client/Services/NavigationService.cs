@@ -1,31 +1,37 @@
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Controls.ApplicationLifetimes;
+using Client.ViewModels;
 
 namespace Client.Services;
 
 public class NavigationService
 {
+	private MainViewModel _mainViewModel;
+
+	public NavigationService()
+	{
+		_mainViewModel = null!;
+	}
 
 	/// <summary>
-	/// Navigates to the given view.
+	/// Initialize the service.
 	/// </summary>
-	/// <param name="view">
-	/// The view to navigate to.
-	/// </param>
+	/// <param name="mainViewModel">The main view model. Used to switch view models. mainViewModel != null.</param>
 	/// <remarks>
-	/// Precondition: Application loaded and the MainWindow was created. view != null. <br/>
-	/// Postcondition: The given view is set as the current view. Meaning, the user now sees the given page. (view)
+	/// Precondition: Application loaded and the MainWindow was created. mainViewModel != null. <br/>
+	/// Postcondition: Service initialized and ready for operation.
 	/// </remarks>
-	public void NavigateToView(UserControl view)
+	public void Initialize(MainViewModel mainViewModel) => _mainViewModel = mainViewModel;
+
+	/// <summary>
+	/// Navigates to the given view model.
+	/// </summary>
+	/// <param name="viewModel">The view model to navigate to. viewModel != null.</param>
+	/// <remarks>
+	/// Precondition: Service initialized.  viewModel != null. <br/>
+	/// Postcondition: The given view model is set as the current view. Meaning, the user now sees the given page. (view model)
+	/// </remarks>
+	public void NavigateTo(ViewModelBase viewModel)
 	{
-		if (Application.Current!.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
-		{
-			desktop.MainWindow!.Content = view;
-		}
-		else if (Application.Current.ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-		{
-			singleViewPlatform.MainView = view;
-		}
+		_mainViewModel.CurrentViewModel = null!;
+		_mainViewModel.CurrentViewModel = viewModel;
 	}
 }

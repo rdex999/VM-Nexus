@@ -372,7 +372,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		if (!accepted)
 			return;
 		
-		NavigationSvc.NavigateToView(new MainView() { DataContext = new MainViewModel(NavigationSvc, ClientSvc)});
+		NavigationSvc.NavigateTo(new MainPageViewModel(NavigationSvc, ClientSvc));
 	}
 }
 

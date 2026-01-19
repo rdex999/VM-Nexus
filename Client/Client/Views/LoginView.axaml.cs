@@ -21,13 +21,11 @@ public partial class LoginView : UserControl
 	/// </remarks>
 	private void OnLoaded(object? sender, RoutedEventArgs e)
 	{
-		if (DataContext is LoginViewModel loginViewModel)
-		{
-			if (!loginViewModel.IsInitialized())
-			{
-				_ = loginViewModel.InitializeAsync();
-			}
-		}
+		if (DataContext is not LoginViewModel loginViewModel)
+			return;
+		
+		if (!loginViewModel.IsInitialized())
+			_ = loginViewModel.InitializeAsync();
 	}
 
 	/// <summary>
@@ -41,6 +39,7 @@ public partial class LoginView : UserControl
 	/// </remarks>
 	private void OnCredentialsTextChanged(object? sender, TextChangedEventArgs e)
 	{
-		((LoginViewModel)DataContext!).OnCredentialsTextChanged();
+		if (DataContext is LoginViewModel loginViewModel)
+			loginViewModel.OnCredentialsTextChanged();
 	}
 }

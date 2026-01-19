@@ -28,25 +28,28 @@ public partial class App : Application
 
 	public override void OnFrameworkInitializationCompleted()
 	{
+		NavigationService navigationService = new NavigationService();
+		ClientService clientService = new ClientService();
+		
+		MainViewModel mainViewModel = new MainViewModel(navigationService, clientService);
+		navigationService.Initialize(mainViewModel);
+		
 		if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 		{
 			// Avoid duplicate validations from both Avalonia and the CommunityToolkit. 
 			// More info: https://docs.avaloniaui.net/docs/guides/development-guides/data-validation#manage-validationplugins
 			DisableAvaloniaDataAnnotationValidation();
 
-			ClientService clientService = new ClientService();
 			desktop.MainWindow = new MainWindow
 			{
-				Content = new LoginView() { DataContext = new LoginViewModel(new NavigationService(), clientService) }
+				Content = new MainView() { DataContext = mainViewModel }
 			};
+			
 			desktop.Exit += (s, e) => clientService.OnExit();
 		}
 		else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
 		{
-			singleViewPlatform.MainView = new LoginView()
-			{
-				DataContext = new LoginViewModel(new NavigationService(), new ClientService())
-			};
+			singleViewPlatform.MainView = new MainView() { DataContext = mainViewModel };
 		}
 
 		base.OnFrameworkInitializationCompleted();

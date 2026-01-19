@@ -22,6 +22,7 @@
         <entry key="Client/Client/Views/DriveExplorerView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/HomeView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/LoginView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
+        <entry key="Client/Client/Views/MainPageView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/MainView.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/MainWindow.axaml" value="Client/Client.Desktop/Client.Desktop.csproj" />
         <entry key="Client/Client/Views/Styles.axaml" value="Client/Client.Browser/Client.Browser.csproj" />

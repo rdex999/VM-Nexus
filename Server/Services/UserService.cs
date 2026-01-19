@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Server.Models;
 using Shared;
@@ -428,11 +429,8 @@ public class UserService
 		if (userId < 1)
 			return;
 		
-		if (!_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
-		{
-			userConnections = new ConcurrentDictionary<Guid, ClientConnection>();
-			_users[userId] = userConnections;
-		}
+		ConcurrentDictionary<Guid, ClientConnection> userConnections = _users.GetOrAdd(userId, _ => new ConcurrentDictionary<Guid, ClientConnection>());
+
 		userConnections.TryAdd(connection.ClientId, connection);
 		
 		connection.Disconnected += OnUserDisconnected;
@@ -451,16 +449,21 @@ public class UserService
 	{
 		connection.Disconnected -= OnUserDisconnected;
 		
-		if (!connection.IsLoggedIn)
-			return;
+		if (connection.ActualUser != null)
+			Remove(connection.ActualUser.Id);
 
-		if (!_users.TryGetValue(connection.ActualUser!.Id, out ConcurrentDictionary<Guid, ClientConnection>? userConnections)) 
-			return;
+		if (connection.User != null)	
+			Remove(connection.User.Id);
 		
-		userConnections.TryRemove(connection.ClientId, out _);
-		if (userConnections.IsEmpty)
+		void Remove(int userId)
 		{
-			_users.TryRemove(connection.ActualUser.Id, out _);
+			if (!_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections)) 
+				return;
+		
+			userConnections.TryRemove(connection.ClientId, out _);
+			
+			if (userConnections.IsEmpty)
+				_users.TryRemove(userId, out _);
 		}
 	}
 
@@ -475,7 +478,7 @@ public class UserService
 	/// </remarks>
 	private void OnUserDisconnected(object? sender, EventArgs e)
 	{
-		if (sender == null || sender is not ClientConnection connection)
+		if (sender is not ClientConnection connection)
 			return;
 		
 		RemoveUserConnection(connection);

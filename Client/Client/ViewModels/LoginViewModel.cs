@@ -82,10 +82,8 @@ public partial class LoginViewModel : ViewModelBase
 	/// Postcondition: The create account page is now the current page - its what the user sees now.
 	/// </remarks>
 	[RelayCommand]
-	private void NavigateToCreateAccount()
-	{
-		NavigationSvc.NavigateToView(new CreateAccountView() { DataContext = new CreateAccountViewModel(NavigationSvc, ClientSvc) });
-	}
+	private void NavigateToCreateAccount() =>
+		NavigationSvc.NavigateTo(new CreateAccountViewModel(NavigationSvc, ClientSvc));
 
 	/// <summary>
 	/// Tries to log in with the inputted username and password. Occurs when the user clicks on the login button.
@@ -107,7 +105,7 @@ public partial class LoginViewModel : ViewModelBase
 		} 
 		else if (result.Value)
 		{
-			NavigationSvc.NavigateToView(new MainView() { DataContext = new MainViewModel(NavigationSvc, ClientSvc) });
+			NavigationSvc.NavigateTo(new MainPageViewModel(NavigationSvc, ClientSvc));
 		}
 		else
 		{
