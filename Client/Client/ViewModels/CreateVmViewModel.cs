@@ -37,6 +37,12 @@ public partial class CreateVmViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _cpuArchitectureIsEnabled = true;
 
+	[ObservableProperty] 
+	private int? _ramSizeMiB = 0;
+
+	[ObservableProperty] 
+	private bool _ramSizeValid = false;
+
 	[ObservableProperty]
 	private BootMode _bootMode = BootMode.Uefi;
 	

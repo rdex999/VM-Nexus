@@ -7,11 +7,17 @@
              x:Class="Client.Views.CreateVmView"
              x:DataType="vm:CreateVmViewModel">
 
+	<Design.DataContext>
+		<!-- This only sets the DataContext for the previewer in an IDE,
+		 to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+		<vm:HomeViewModel />
+	</Design.DataContext>
+	
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<MergeResourceInclude Source="/Resources/Geometries.axaml" />
-				<MergeResourceInclude Source="/Resources/Colors.axaml" />
+				<ResourceInclude Source="/Resources/Geometries.axaml" />
+				<ResourceInclude Source="/Resources/Colors.axaml" />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
@@ -20,138 +26,160 @@
 		<StyleInclude Source="/Resources/Styles.axaml" />
 	</UserControl.Styles>
 
-	<ScrollViewer>
-		<Grid RowDefinitions="Auto, Auto">
-			<TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" TextWrapping="Wrap" TextAlignment="Center"
-			           Margin="0, 10, 0, 15" Padding="0" Classes="h2">
-				Create a New Virtual Machine
-			</TextBlock>
+	<Border CornerRadius="15" Margin="5" Padding="4">
+		<Border.Background>
+			<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+				<GradientStop Offset="0" Color="#f8f8f8" />
+				<GradientStop Offset="1" Color="#eafaff" />
+			</LinearGradientBrush>
+		</Border.Background>
+		
+		<ScrollViewer>
+			<Grid RowDefinitions="Auto, Auto">
+				<TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" TextWrapping="Wrap" TextAlignment="Center"
+				           Margin="0, 10, 0, 15" Padding="0" Classes="h2">
+					Create a New Virtual Machine
+				</TextBlock>
 
-			<Border Grid.Row="1" HorizontalAlignment="Center" Width="400"
-			        Background="#d4eff1" CornerRadius="15" Padding="20">
-				<StackPanel Spacing="25">
-					<StackPanel>
-						<TextBox Watermark="Name" Classes="form" Classes.error="{Binding VmNameErrorClass}"
-						         Text="{Binding VmName}"
-						         TextChanged="VmCreationInfoChangedTextAsync" />
+				<Border Grid.Row="1" HorizontalAlignment="Center" Width="450" BoxShadow="0 0 16 0 #d4d5d6"
+				        Background="#eff4f4" CornerRadius="15" Padding="20">
+					<StackPanel Spacing="25">
+						<StackPanel>
+							<TextBox Watermark="Name" Background="White" Classes.error="{Binding VmNameErrorClass}"
+							         Text="{Binding VmName}"
+							         TextChanged="VmCreationInfoChangedTextAsync" />
 
-						<TextBlock Classes="error" Text="{Binding VmNameErrorMessage}" />
-					</StackPanel>
+							<TextBlock Classes="error" Text="{Binding VmNameErrorMessage}" />
+						</StackPanel>
 
-					<StackPanel>
-						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
-							<TextBlock VerticalAlignment="Center" Classes="form">Operating System</TextBlock>
-							<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="190"
-							          SelectedIndex="{Binding OperatingSystem}" SelectionChanged="OperatingSystemChangedAsync">
-								<ComboBoxItem>Ubuntu 24.04</ComboBoxItem>
-								<ComboBoxItem>Kali Linux 2025.2</ComboBoxItem>
-								<ComboBoxItem>Manjaro Linux</ComboBoxItem>
-								<ComboBoxItem>
-									<Grid ColumnDefinitions="*, Auto">
-										<TextBlock Margin="0, 0, 20, 0" VerticalAlignment="Center">Mini Coffee OS</TextBlock>
-										<Button Grid.Column="1" VerticalAlignment="Center" Padding="4">
-											<PathIcon Data="{StaticResource QuestionRegular}" Width="12" Height="12" />
-											<Button.Flyout>
-												<Flyout Placement="Right" HorizontalOffset="20">
-													<StackPanel>
-														<TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" MaxWidth="300">
-															A small MS-DOS like operating system I wrote in Assembly for the 8086 CPU.
-														</TextBlock>
-														<StackPanel Orientation="Horizontal">
-															<TextBlock Text="See: " />
-															<HyperlinkButton NavigateUri="https://github.com/rdex999/MiniCoffeeOS">https://github.com/rdex999/MiniCoffeeOS</HyperlinkButton>
+						<StackPanel>
+							<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+								<TextBlock VerticalAlignment="Center" Classes="form">Operating System</TextBlock>
+								<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="190" Background="White"
+								          SelectedIndex="{Binding OperatingSystem}" SelectionChanged="OperatingSystemChangedAsync">
+									<ComboBoxItem>Ubuntu 24.04</ComboBoxItem>
+									<ComboBoxItem>Kali Linux 2025.2</ComboBoxItem>
+									<ComboBoxItem>Manjaro Linux</ComboBoxItem>
+									<ComboBoxItem>
+										<Grid ColumnDefinitions="*, Auto">
+											<TextBlock Margin="0, 0, 20, 0" VerticalAlignment="Center">Mini Coffee OS</TextBlock>
+											<Button Grid.Column="1" VerticalAlignment="Center" Padding="4">
+												<PathIcon Data="{StaticResource QuestionRegular}" Width="12" Height="12" />
+												<Button.Flyout>
+													<Flyout Placement="Right" HorizontalOffset="20">
+														<StackPanel>
+															<TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" MaxWidth="300">
+																A small MS-DOS like operating system I wrote in Assembly for the 8086 CPU.
+															</TextBlock>
+															<StackPanel Orientation="Horizontal">
+																<TextBlock Text="See: " />
+																<HyperlinkButton NavigateUri="https://github.com/rdex999/MiniCoffeeOS">https://github.com/rdex999/MiniCoffeeOS</HyperlinkButton>
+															</StackPanel>
 														</StackPanel>
-													</StackPanel>
-												</Flyout>
-											</Button.Flyout>
-										</Button>
-									</Grid>
-								</ComboBoxItem>
-								<ComboBoxItem>Other</ComboBoxItem>
-							</ComboBox>
-						</Grid>
-						<TextBlock TextWrapping="Wrap" IsVisible="{Binding OsSetupMessageIsVisible}">
-							Log in as setup-user.<LineBreak/>
-							The password is "123" for both setup-user and root.<LineBreak/>
-							Run the Setup.sh script as root, and follow the instructions. Then log out, and log in as the new user.
-						</TextBlock>
-					</StackPanel>
+													</Flyout>
+												</Button.Flyout>
+											</Button>
+										</Grid>
+									</ComboBoxItem>
+									<ComboBoxItem>Other</ComboBoxItem>
+								</ComboBox>
+							</Grid>
+							<TextBlock TextWrapping="Wrap" IsVisible="{Binding OsSetupMessageIsVisible}">
+								Log in as setup-user.<LineBreak />
+								The password is "123" for both setup-user and root.<LineBreak />
+								Run the Setup.sh script as root, and follow the instructions. Then log out, and log in as the new user.
+							</TextBlock>
+						</StackPanel>
 
-					<Grid ColumnDefinitions="*, Auto">
-						<TextBlock Classes="form" VerticalAlignment="Center"
-						           Margin="0, 0, 10, 0">
-							CPU Architecture
-						</TextBlock>
-
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
-						          SelectedIndex="{Binding CpuArchitecture}"
-						          IsEnabled="{Binding CpuArchitectureIsEnabled}"
-						          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
-							<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
-							<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
-							<ComboBoxItem>ARM</ComboBoxItem>
-						</ComboBox>
-					</Grid>
-
-					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
-						<TextBlock Classes="form" VerticalAlignment="Center" Margin="0, 0, 10, 0">Boot Mode</TextBlock>
-
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
-						          SelectedIndex="{Binding BootMode}"
-						          IsEnabled="{Binding BootModeIsEnabled}"
-						          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
-							<ComboBoxItem>UEFI</ComboBoxItem>
-							<ComboBoxItem>BIOS</ComboBoxItem>
-						</ComboBox>
-					</Grid>
-
-					<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20" IsVisible="{Binding OsDriveSettingsIsVisible}">
-						<TextBlock Classes="form" VerticalAlignment="Center"
-						           Margin="0, 0, 10, 0">
-							OS drive type
-						</TextBlock>
-
-						<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
-						          SelectedIndex="{Binding OsDriveType}"
-						          IsEnabled="{Binding OsDriveTypeIsEnabled}"
-						          
-						          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
-							<ComboBoxItem>Disk</ComboBoxItem>
-							<ComboBoxItem>CD-ROM</ComboBoxItem>
-							<ComboBoxItem>Floppy Drive</ComboBoxItem>
-						</ComboBox>
-					</Grid>
-
-					<StackPanel>
-						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20" IsVisible="{Binding OsDriveSettingsIsVisible}">
+						<Grid ColumnDefinitions="*, Auto">
 							<TextBlock Classes="form" VerticalAlignment="Center"
 							           Margin="0, 0, 10, 0">
-								OS drive size (MiB)
+								CPU Architecture
+							</TextBlock>
+
+							<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
+							          SelectedIndex="{Binding CpuArchitecture}"
+							          IsEnabled="{Binding CpuArchitectureIsEnabled}"
+							          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
+								<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
+								<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
+								<ComboBoxItem>ARM</ComboBoxItem>
+							</ComboBox>
+						</Grid>
+
+						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+							<TextBlock Classes="form" VerticalAlignment="Center"
+							           Margin="0, 0, 10, 0">
+								RAM Size (MiB)
 							</TextBlock>
 
 							<NumericUpDown Grid.Column="1" VerticalAlignment="Center"
-							               Classes.error="{Binding OsDriveSizeErrorClass}"
-							               ValueChanged="VmCreationInfoChangedNumericAsync"
-							               Value="{Binding OsDriveSize}"
-							               IsEnabled="{Binding OsDriveSizeIsEnabled}"
-							               Increment="1024" Width="180" Maximum="262144" Minimum="0"/>
+							               Classes.error="{Binding !RamSizeValid}"
+							               ValueChanged="OnRamSizeChanged"
+							               Value="{Binding RamSizeMiB}"
+							               Increment="1024" Width="180" Maximum="8192" Minimum="0" />
 						</Grid>
-						<TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding OsDriveSizeErrorMessage}" />
-						
-						<TextBlock HorizontalAlignment="Center" Margin="0, 15"
-						           Classes.success="{Binding VmCreationMessageSuccessClass}"
-						           Classes.error="{Binding !VmCreationMessageSuccessClass}"
-						           Text="{Binding VmCreationMessage}" />
 
-						<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit"
-						        Margin="0, 0, 0, 5"
-						        IsEnabled="{Binding CreateVmButtonIsEnabled}"
-						        Command="{Binding CreateVirtualMachineCommand}">
-							Create
-						</Button>
+						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+							<TextBlock Classes="form" VerticalAlignment="Center" Margin="0, 0, 10, 0">Boot Mode</TextBlock>
+
+							<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
+							          SelectedIndex="{Binding BootMode}"
+							          IsEnabled="{Binding BootModeIsEnabled}"
+							          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
+								<ComboBoxItem>UEFI</ComboBoxItem>
+								<ComboBoxItem>BIOS</ComboBoxItem>
+							</ComboBox>
+						</Grid>
+
+						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20" IsVisible="{Binding OsDriveSettingsIsVisible}">
+							<TextBlock Classes="form" VerticalAlignment="Center"
+							           Margin="0, 0, 10, 0">
+								OS drive type
+							</TextBlock>
+
+							<ComboBox Grid.Column="1" VerticalAlignment="Center" Width="180"
+							          SelectedIndex="{Binding OsDriveType}"
+							          IsEnabled="{Binding OsDriveTypeIsEnabled}"
+
+							          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
+								<ComboBoxItem>Disk</ComboBoxItem>
+								<ComboBoxItem>CD-ROM</ComboBoxItem>
+								<ComboBoxItem>Floppy Drive</ComboBoxItem>
+							</ComboBox>
+						</Grid>
+
+						<StackPanel>
+							<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20" IsVisible="{Binding OsDriveSettingsIsVisible}">
+								<TextBlock Classes="form" VerticalAlignment="Center"
+								           Margin="0, 0, 10, 0">
+									OS drive size (MiB)
+								</TextBlock>
+
+								<NumericUpDown Grid.Column="1" VerticalAlignment="Center"
+								               Classes.error="{Binding OsDriveSizeErrorClass}"
+								               ValueChanged="OnOsDriveSizeChangedAsync"
+								               Value="{Binding OsDriveSize}"
+								               IsEnabled="{Binding OsDriveSizeIsEnabled}"
+								               Increment="1024" Width="180" Maximum="262144" Minimum="0" />
+							</Grid>
+							<TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding OsDriveSizeErrorMessage}" />
+
+							<TextBlock HorizontalAlignment="Center" Margin="0, 15"
+							           Classes.success="{Binding VmCreationMessageSuccessClass}"
+							           Classes.error="{Binding !VmCreationMessageSuccessClass}"
+							           Text="{Binding VmCreationMessage}" />
+
+							<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit"
+							        Margin="0, 0, 0, 5"
+							        IsEnabled="{Binding CreateVmButtonIsEnabled}"
+							        Command="{Binding CreateVirtualMachineCommand}">
+								Create
+							</Button>
+						</StackPanel>
 					</StackPanel>
-				</StackPanel>
-			</Border>
-		</Grid>
-	</ScrollViewer>
+				</Border>
+			</Grid>
+		</ScrollViewer>
+	</Border>
 </UserControl>

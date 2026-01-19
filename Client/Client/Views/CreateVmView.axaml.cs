@@ -51,7 +51,7 @@ public partial class CreateVmView : UserControl
 
 	private async void VmCreationInfoChangedTextAsync(object? sender, TextChangedEventArgs e) => await VmCreationInfoChangedAsync(sender, e);
 
-	private async void VmCreationInfoChangedNumericAsync(object? sender, NumericUpDownValueChangedEventArgs e)
+	private async void OnOsDriveSizeChangedAsync(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (DataContext is CreateVmViewModel vm)
 		{
@@ -64,4 +64,8 @@ public partial class CreateVmView : UserControl
 		await VmCreationInfoChangedAsync(sender, e);
 	}
 	private async void VmCreationInfoChangedComboBoxAsync(object? sender, SelectionChangedEventArgs e) => await VmCreationInfoChangedAsync(sender, e);
+
+	private void OnRamSizeChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	{
+	}
 }
