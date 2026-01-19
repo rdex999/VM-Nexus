@@ -107,18 +107,24 @@
 							</ComboBox>
 						</Grid>
 
-						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
-							<TextBlock Classes="form" VerticalAlignment="Center"
-							           Margin="0, 0, 10, 0">
-								RAM Size (MiB)
-							</TextBlock>
+						<StackPanel Spacing="4">
+							<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
+								<TextBlock Classes="form" VerticalAlignment="Center"
+								           Margin="0, 0, 10, 0">
+									RAM Size (MiB)
+								</TextBlock>
 
-							<NumericUpDown Grid.Column="1" VerticalAlignment="Center"
-							               Classes.error="{Binding !RamSizeValid}"
-							               ValueChanged="OnRamSizeChanged"
-							               Value="{Binding RamSizeMiB}"
-							               Increment="1024" Width="180" Maximum="8192" Minimum="0" />
-						</Grid>
+								<NumericUpDown Grid.Column="1" VerticalAlignment="Center"
+								               Classes.error="{Binding !RamSizeValid}"
+								               ValueChanged="OnRamSizeChangedAsync"
+								               Value="{Binding RamSizeMiB}"
+								               Increment="1024" Width="180" Maximum="8192" Minimum="0" />
+							</Grid>
+							
+							<TextBlock Classes="error" IsVisible="{Binding !RamSizeValid}">
+								RAM Size must be between 1 to 8192 MiB.
+							</TextBlock>
+						</StackPanel>
 
 						<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20">
 							<TextBlock Classes="form" VerticalAlignment="Center" Margin="0, 0, 10, 0">Boot Mode</TextBlock>
@@ -149,7 +155,7 @@
 							</ComboBox>
 						</Grid>
 
-						<StackPanel>
+						<StackPanel Spacing="4">
 							<Grid ColumnDefinitions="*, Auto" ColumnSpacing="20" IsVisible="{Binding OsDriveSettingsIsVisible}">
 								<TextBlock Classes="form" VerticalAlignment="Center"
 								           Margin="0, 0, 10, 0">
@@ -170,8 +176,8 @@
 							           Classes.error="{Binding !VmCreationMessageSuccessClass}"
 							           Text="{Binding VmCreationMessage}" />
 
-							<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit"
-							        Margin="0, 0, 0, 5"
+							<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit_dark"
+							        Margin="0, 0, 0, 5" Padding="18, 9" CornerRadius="11" FontSize="18"
 							        IsEnabled="{Binding CreateVmButtonIsEnabled}"
 							        Command="{Binding CreateVirtualMachineCommand}">
 								Create

@@ -44,9 +44,7 @@ public partial class CreateVmView : UserControl
 	private async Task VmCreationInfoChangedAsync(object? sender, EventArgs e)
 	{
 		if (DataContext is CreateVmViewModel vm)
-		{
 			await vm.VmCreationInfoChangedAsync();
-		}	
 	}
 
 	private async void VmCreationInfoChangedTextAsync(object? sender, TextChangedEventArgs e) => await VmCreationInfoChangedAsync(sender, e);
@@ -65,7 +63,17 @@ public partial class CreateVmView : UserControl
 	}
 	private async void VmCreationInfoChangedComboBoxAsync(object? sender, SelectionChangedEventArgs e) => await VmCreationInfoChangedAsync(sender, e);
 
-	private void OnRamSizeChanged(object? sender, NumericUpDownValueChangedEventArgs e)
+	private async void OnRamSizeChangedAsync(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
+		if (DataContext is CreateVmViewModel vm)
+		{
+			/*
+			 * RamSizeMiB is not automatically updated if the field is empty - but e.NewValue will contain null.
+			 * So update OsDriveSize to be null when the field is empty
+			 */
+			vm.RamSizeMiB = (int?)e.NewValue;	
+		}
+		
+		await VmCreationInfoChangedAsync(sender, e);
 	}
 }

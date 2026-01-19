@@ -201,6 +201,8 @@ public partial class CreateVmViewModel : ViewModelBase
 	/// </remarks>
 	public async Task VmCreationInfoChangedAsync()
 	{
+		RamSizeValid = RamSizeMiB != null && RamSizeMiB > 0 && RamSizeMiB <= SharedDefinitions.VmRamSizeMbMax;
+		
 		if ((OsDriveSize == null || OsDriveSize > _osDriveSizeMax || OsDriveSize < _osDriveSizeMin) && OperatingSystem != OperatingSystem.Other)
 		{
 			OsDriveSizeErrorClass = true;
@@ -233,7 +235,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 		VmCreationMessage = string.Empty;
 		
-		CreateVmButtonIsEnabled = _driveService.IsInitialized && isVmNameValid && OsDriveSize != null && 
+		CreateVmButtonIsEnabled = _driveService.IsInitialized && isVmNameValid && RamSizeValid && OsDriveSize != null && 
 		                          ((OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax) || OperatingSystem == OperatingSystem.Other);
 	}
 
