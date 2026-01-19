@@ -1176,6 +1176,23 @@ public partial class MessagingService
 		}
 
 		/// <summary>
+		/// Get the amount of currently available tokens.
+		/// </summary>
+		/// <returns>The amount of currently available tokens.</returns>
+		/// <remarks>
+		/// Precondition: No specific precondition. <br/>
+		/// Postcondition: amount of currently available tokens is returned.
+		/// </remarks>
+		public double GetTokens()
+		{
+			lock (_lock)
+			{
+				UpdateTokens();
+				return _tokens;
+			}
+		}
+
+		/// <summary>
 		/// Refills tokens relative to the last refill.
 		/// </summary>
 		/// <remarks>

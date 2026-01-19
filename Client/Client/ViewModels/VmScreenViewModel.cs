@@ -244,18 +244,17 @@ public partial class VmScreenViewModel : ViewModelBase
 			VmScreenBitmap = new WriteableBitmap(new PixelSize(frame.Size.Width, frame.Size.Height), new Vector(96, 96), _pixelFormat);
 		}
 
+		using MemoryStream input = new MemoryStream(frame.CompressedFramebuffer);
 		using MemoryStream output = new MemoryStream();
 		if (OperatingSystem.IsBrowser())
 		{
-			/* TODO: Find out how to decompress this. */
+			using GZipStream gzip = new GZipStream(input, CompressionMode.Decompress);
+			gzip.CopyTo(output);
 		}
 		else
 		{
-			using MemoryStream input = new MemoryStream(frame.CompressedFramebuffer);
-			using (BrotliStream brotliStream = new BrotliStream(input, CompressionMode.Decompress))
-			{
-				brotliStream.CopyTo(output);
-			}	
+			using BrotliStream brotliStream = new BrotliStream(input, CompressionMode.Decompress);
+			brotliStream.CopyTo(output);
 		}
 		
 		byte[] framebuffer = output.ToArray();

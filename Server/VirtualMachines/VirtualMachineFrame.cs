@@ -7,7 +7,7 @@ public class VirtualMachineFrame
 {
 	public int VmId { get; }
 	public Size Size { get; }
-	public byte[] CompressedFramebuffer { get; }
+	public byte[] CompressedFramebuffer { get; set; }
 
 	public VirtualMachineFrame(int vmId, Size size, byte[] compressedFramebuffer)
 	{

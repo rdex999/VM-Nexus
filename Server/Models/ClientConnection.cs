@@ -602,8 +602,12 @@ public sealed class ClientConnection : MessagingService
 					
 					_streamVmId = -1;
 				}
+			
+				if (WebSocket == null)
+					result = _virtualMachineService.SubscribeToVmNewBrotliFrameReceived(reqVmStreamStart.VmId, OnVmNewFrame);
+				else
+					result = _virtualMachineService.SubscribeToVmNewGzipFrameReceived(reqVmStreamStart.VmId, OnVmNewFrame);
 				
-				result = _virtualMachineService.SubscribeToVmNewFrameReceived(reqVmStreamStart.VmId, OnVmNewFrame);
 				if (result != ExitCode.Success)
 				{
 					SendResponse(new MessageResponseVmStreamStart(true, reqVmStreamStart.Id, 
@@ -1278,7 +1282,17 @@ public sealed class ClientConnection : MessagingService
 		if (!IsLoggedIn || _streamVmId != frame.VmId) return;
 		
 		MessageInfoVmScreenFrame frameMessage = new MessageInfoVmScreenFrame(true, frame.VmId, frame.Size, frame.CompressedFramebuffer);
-		SendInfo(frameMessage);
+
+		if (UdpSocket == null)
+		{
+			if (TransferLimiter.GetTokens() >= frame.CompressedFramebuffer.Length)
+			{
+				TransferLimiter.AcquireAsync(frame.CompressedFramebuffer.Length).Wait();
+				SendInfo(frameMessage);
+			}
+		}
+		else
+			SendInfo(frameMessage);
 	}
 
 	/// <summary>

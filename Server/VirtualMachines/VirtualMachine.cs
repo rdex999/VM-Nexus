@@ -36,7 +36,8 @@ public class VirtualMachine
 {
 	public event EventHandler<int>? PoweredOff;
 	public event EventHandler<int>? Crashed;
-	public event EventHandler<VirtualMachineFrame>? FrameReceived;
+	public event EventHandler<VirtualMachineFrame>? BrotliFrameReceived;
+	public event EventHandler<VirtualMachineFrame>? GzipFrameReceived;
 	public event EventHandler<byte[]>? AudioPacketReceived;					/* Gives the packet byte array - representing frames. (two channels, s16le) */
 	public readonly TaskCompletionSource<virDomainState> PoweredOffTcs;		/* Returns the new state - powered off, crashed */
 	
@@ -522,7 +523,26 @@ public class VirtualMachine
 
 			if (frame != null)
 			{
-				FrameReceived?.Invoke(this, frame);
+				if (BrotliFrameReceived != null)
+				{
+					using MemoryStream stream = new MemoryStream();
+					await using (BrotliStream brotliStream = new BrotliStream(stream, CompressionLevel.Fastest, true))
+					{
+						brotliStream.Write(frame.CompressedFramebuffer.AsSpan());
+					}
+
+					BrotliFrameReceived?.Invoke(this, new VirtualMachineFrame(Id, frame.Size, stream.ToArray()));
+				}
+				if (GzipFrameReceived != null)
+				{
+					using MemoryStream stream = new MemoryStream();
+					await using (GZipStream gzip = new GZipStream(stream, CompressionLevel.SmallestSize, leaveOpen: true))
+					{
+						gzip.Write(frame.CompressedFramebuffer, 0, frame.CompressedFramebuffer.Length);
+					}
+					
+					GzipFrameReceived?.Invoke(this, new VirtualMachineFrame(Id, frame.Size, stream.ToArray()));
+				}
 			}
 
 			try
@@ -1047,19 +1067,7 @@ public class VirtualMachine
 		private void OnFramebufferReleased()
 		{
 			_framebufferHandle!.Value.Free();
-
-			byte[] compressed;
-			using (MemoryStream stream = new MemoryStream())
-			{
-				using (BrotliStream brotliStream = new BrotliStream(stream, CompressionLevel.Fastest, true))
-				{
-					brotliStream.Write(_framebuffer.AsSpan());
-				}
-
-				compressed = stream.ToArray();
-			}
-
-			NewFrameReceived?.Invoke(this, new VirtualMachineFrame(_vmId, new System.Drawing.Size(ScreenSize.Width, ScreenSize.Height), compressed));
+			NewFrameReceived?.Invoke(this, new VirtualMachineFrame(_vmId, new System.Drawing.Size(ScreenSize.Width, ScreenSize.Height), _framebuffer!));
 			_grabbed = false;
 		}
 

@@ -239,7 +239,7 @@ public class VirtualMachineService
 	}
 
 	/// <summary>
-	/// Subscribes the given handler to the event of receiving a new frame of the given virtual machine.
+	/// Subscribes the given handler to the event of receiving a new frame of the given virtual machine, compressed using the Brotli algorithm.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to subscribe to. id >= 1.</param>
 	/// <param name="handler">The event handler to subscribe. handler != null</param>
@@ -249,13 +249,39 @@ public class VirtualMachineService
 	/// Postcondition: On success, the given handler is registered and will receive new frames. <br/>
 	/// On failure, the handler is not subscribed and the returned exit code will indicate the error.
 	/// </remarks>
-	public ExitCode SubscribeToVmNewFrameReceived(int id, EventHandler<VirtualMachineFrame> handler)
+	public ExitCode SubscribeToVmNewBrotliFrameReceived(int id, EventHandler<VirtualMachineFrame> handler)
 	{
-		if (id < 1) return ExitCode.InvalidParameter;
+		if (id < 1) 
+			return ExitCode.InvalidParameter;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
-			virtualMachine.FrameReceived += handler;
+			virtualMachine.BrotliFrameReceived += handler;
+			return ExitCode.Success;
+		}
+
+		return ExitCode.VmIsShutDown;
+	}
+	
+	/// <summary>
+	/// Subscribes the given handler to the event of receiving a new frame of the given virtual machine, compressed using the GZip algorithm.
+	/// </summary>
+	/// <param name="id">The ID of the virtual machine to subscribe to. id >= 1.</param>
+	/// <param name="handler">The event handler to subscribe. handler != null</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: There is a virtual machine with the given ID, and the virtual machine is alive. id >= 1 &amp;&amp; handler != null. <br/>
+	/// Postcondition: On success, the given handler is registered and will receive new frames. <br/>
+	/// On failure, the handler is not subscribed and the returned exit code will indicate the error.
+	/// </remarks>
+	public ExitCode SubscribeToVmNewGzipFrameReceived(int id, EventHandler<VirtualMachineFrame> handler)
+	{
+		if (id < 1) 
+			return ExitCode.InvalidParameter;
+
+		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
+		{
+			virtualMachine.GzipFrameReceived += handler;
 			return ExitCode.Success;
 		}
 
@@ -347,11 +373,13 @@ public class VirtualMachineService
 	/// </remarks>
 	public ExitCode UnsubscribeFromVmNewFrameReceived(int id, EventHandler<VirtualMachineFrame> handler)
 	{
-		if (id < 1) return ExitCode.InvalidParameter;
+		if (id < 1) 
+			return ExitCode.InvalidParameter;
 
 		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
 		{
-			virtualMachine.FrameReceived -= handler;
+			virtualMachine.BrotliFrameReceived -= handler;
+			virtualMachine.GzipFrameReceived -= handler;
 			return ExitCode.Success;
 		}
 		
