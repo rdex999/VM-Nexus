@@ -120,25 +120,25 @@ public class MessageRequestCreateVm : MessageRequest
 	public string Name { get; }
 	public OperatingSystem OperatingSystem { get; }
 	public CpuArchitecture CpuArchitecture { get; }
+	public int RamSizeMiB { get; }
 	public BootMode BootMode { get; }
 
-	public MessageRequestCreateVm(bool generateGuid, string name,
-		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, BootMode bootMode)
+	public MessageRequestCreateVm(bool generateGuid, string name, OperatingSystem operatingSystem, 
+		CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode)
 		: base(generateGuid)
 	{
 		Name = name;
 		OperatingSystem = operatingSystem;
 		CpuArchitecture = cpuArchitecture;
+		RamSizeMiB = ramSizeMiB;
 		BootMode = bootMode;
 	}
 
-	public override bool IsValidMessage()
-	{
-		return base.IsValidMessage() && !string.IsNullOrEmpty(Name) &&
-		       Enum.IsDefined(typeof(OperatingSystem), OperatingSystem) &&
-		       Enum.IsDefined(typeof(CpuArchitecture), CpuArchitecture) &&
-		       Enum.IsDefined(typeof(BootMode), BootMode);
-	}
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Name) 
+	                                                               && RamSizeMiB > 0 && RamSizeMiB <= SharedDefinitions.VmRamSizeMbMax 
+	                                                               && Enum.IsDefined(typeof(OperatingSystem), OperatingSystem) 
+	                                                               && Enum.IsDefined(typeof(CpuArchitecture), CpuArchitecture) 
+	                                                               && Enum.IsDefined(typeof(BootMode), BootMode);
 }
 
 public class MessageRequestDeleteVm : MessageRequest

@@ -88,9 +88,9 @@ public partial class HomeViewModel : ViewModelBase
 		_driveService = null!;
 		Vms = new ObservableCollection<VmItemTemplate>()
 		{
-			new VmItemTemplate(1, "test_vm0", OperatingSystem.Ubuntu, VmState.ShutDown),
-			new VmItemTemplate(2, "test_vm1", OperatingSystem.ManjaroLinux, VmState.ShutDown),
-			new VmItemTemplate(3, "test_vm2", OperatingSystem.MiniCoffeeOS, VmState.ShutDown),
+			new VmItemTemplate(1, "test_vm0", OperatingSystem.Ubuntu, VmState.ShutDown, 8192),
+			new VmItemTemplate(2, "test_vm1", OperatingSystem.ManjaroLinux, VmState.ShutDown, 4096),
+			new VmItemTemplate(3, "test_vm2", OperatingSystem.MiniCoffeeOS, VmState.ShutDown, 5),
 		};
 		DeleteVmPopupDrives = new ObservableCollection<DeletionDriveItemTemplate>();
 		ConPopupDriveConnections = new ObservableCollection<DriveConnectionItemTemplate>();
@@ -112,7 +112,7 @@ public partial class HomeViewModel : ViewModelBase
 			VmGeneralDescriptor[] vms = _driveService.GetVirtualMachines();
 			foreach (VmGeneralDescriptor vm in vms)
 			{
-				VmItemTemplate template = new VmItemTemplate(ClientSvc, vm.Id, vm.Name, vm.OperatingSystem, vm.State);
+				VmItemTemplate template = new VmItemTemplate(ClientSvc, vm);
 
 				template.OpenClicked += OnVmOpenClicked;
 				template.ForceOffClicked += OnVmForceOffClicked;
@@ -137,7 +137,7 @@ public partial class HomeViewModel : ViewModelBase
 	{
 		Dispatcher.UIThread.Post(() =>
 		{
-			VmItemTemplate template = new VmItemTemplate(ClientSvc, descriptor.Id, descriptor.Name, descriptor.OperatingSystem, descriptor.State);
+			VmItemTemplate template = new VmItemTemplate(ClientSvc, descriptor);
 
 			template.OpenClicked += OnVmOpenClicked;
 			template.ForceOffClicked += OnVmForceOffClicked;
@@ -553,6 +553,7 @@ public partial class VmItemTemplate : ObservableObject
 			}
 		}
 	}
+	public int RamSizeMiB { get; }
 
 	[ObservableProperty] 
 	private string _stateString = string.Empty;
@@ -572,40 +573,33 @@ public partial class VmItemTemplate : ObservableObject
 	/// Creates a new instance of a VmItemTemplate.
 	/// </summary>
 	/// <param name="clientService">The client communication service. clientService != null.</param>
-	/// <param name="id">The ID of the virtual machine. id >= 1.</param>
-	/// <param name="name">
-	/// The name of the VM. name != null.
-	/// </param>
-	/// <param name="operatingSystem">
-	/// The operating system of the VM. operatingSystem != null.
-	/// </param>
-	/// <param name="state">
-	/// The state of the VM. (shut down, running, etc..)
-	/// </param>
+	/// <param name="descriptor">A descriptor of the virtual machine. descriptor != null.</param>
 	/// <remarks>
-	/// Precondition: clientService != null &amp;&amp; id >= 1 &amp;&amp; name != null. <br/>
+	/// Precondition: clientService != null &amp;&amp; descriptor != null. <br/>
 	/// Postcondition: A new instance of VmItemTemplate is created.
 	/// </remarks>
-	public VmItemTemplate(ClientService clientService, int id, string name, OperatingSystem operatingSystem, VmState state)
+	public VmItemTemplate(ClientService clientService, VmGeneralDescriptor descriptor)
 	{
 		_clientService = clientService;
-		Id = id;
-		Name = name;
-		OperatingSystem = operatingSystem;
-		State = state;
+		Id = descriptor.Id;
+		Name = descriptor.Name;
+		OperatingSystem = descriptor.OperatingSystem;
+		State = descriptor.State;
+		RamSizeMiB = descriptor.RamSizeMiB;
 		_clientService.VmPoweredOn += OnVmPoweredOn;
 		_clientService.VmPoweredOff += OnVmPoweredOff;
 		_clientService.VmCrashed += OnVmCrashed;
 	}
 	
 	/* Use for IDE preview only. */
-	public VmItemTemplate(int id, string name, OperatingSystem operatingSystem, VmState state)
+	public VmItemTemplate(int id, string name, OperatingSystem operatingSystem, VmState state, int ramSizeMiB)
 	{
 		_clientService = null!;
 		Id = id;
 		Name = name;
 		OperatingSystem = operatingSystem;
 		State = state;
+		RamSizeMiB = ramSizeMiB;
 	}
 
 	/// <summary>
@@ -617,7 +611,7 @@ public partial class VmItemTemplate : ObservableObject
 	/// Postcondition: A VM general descriptor of this VM item template is returned.
 	/// </remarks>
 	public VmGeneralDescriptor AsVmGeneralDescriptor() => 
-		new VmGeneralDescriptor(Id, Name, OperatingSystem, State);
+		new VmGeneralDescriptor(Id, Name, OperatingSystem, State, RamSizeMiB);
 	
 	/// <summary>
 	/// Handles the event of the virtual machine being powered on.

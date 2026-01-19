@@ -252,7 +252,7 @@ public partial class CreateVmViewModel : ViewModelBase
 	{
 		string vmNameTrimmed = VmName.Trim();
 		bool createDrive = OperatingSystem != OperatingSystem.Other;
-		Task<MessageResponseCreateVm?> taskCreateVm = ClientSvc.CreateVirtualMachineAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, BootMode);
+		Task<MessageResponseCreateVm?> taskCreateVm = ClientSvc.CreateVirtualMachineAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, RamSizeMiB!.Value, BootMode);
 		Task<MessageResponseCreateDriveOs?> taskCreateDrive = null!;
 		
 		MessageResponseCreateVm.Status createVmResult = MessageResponseCreateVm.Status.Failure;

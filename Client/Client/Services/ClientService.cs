@@ -260,6 +260,7 @@ public class ClientService : MessagingService
 	/// <param name="name">The name of the new virtual machine. name != null.</param>
 	/// <param name="operatingSystem">The operating system of the new virtual machine. operatingSystem != null.</param>
 	/// <param name="cpuArchitecture">The CPU architecture to be used for the virtual machine. cpuArchitecture != null.</param>
+	/// <param name="ramSizeMiB">The amount of RAM storage for the virtual machine. ramSizeMiB > 0 &amp;&amp; ramSizeMiB &lt;= SharedDefinitions.VmRamSizeMbMax.</param>
 	/// <param name="bootMode">The boot mode - UEFI or BIOS. bootMode != null.</param>
 	/// <returns>The result of the VM creation operation.</returns>
 	/// <remarks>
@@ -268,10 +269,10 @@ public class ClientService : MessagingService
 	/// On networking failure, null is returned. On other failure, the servers response is returned.
 	/// </remarks>
 	public async Task<MessageResponseCreateVm?> CreateVirtualMachineAsync(string name,
-		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, BootMode bootMode)
+		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode)
 	{
 		(MessageResponse? response, ExitCode _) = await SendRequestAsync(
-			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, bootMode)
+			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, ramSizeMiB, bootMode)
 		);
 
 		if (response == null)

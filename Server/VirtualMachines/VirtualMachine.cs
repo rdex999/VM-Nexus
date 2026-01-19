@@ -52,6 +52,7 @@ public class VirtualMachine
 
 	private readonly OperatingSystem _operatingSystem;
 	private readonly CpuArchitecture _cpuArchitecture;
+	private readonly int _ramSizeMiB;
 	private readonly BootMode _bootMode;
 	private readonly DriveDescriptor[] _drives;
 	private int _pointerPressedButtons = (int)MouseButtons.None;
@@ -64,16 +65,16 @@ public class VirtualMachine
 	private Task _allBackgroundTasks = null!;
 	private bool _closing = false;
 	
-	public VirtualMachine(DatabaseService databaseService, DriveService driveService, int id, OperatingSystem operatingSystem,
-		CpuArchitecture cpuArchitecture, BootMode bootMode, DriveDescriptor[] drives)
+	public VirtualMachine(DatabaseService databaseService, DriveService driveService, VirtualMachineDescriptor descriptor, DriveDescriptor[] drives)
 	{
 		_databaseService = databaseService;
 		_driveService = driveService;
-		Id = id;
-		_operatingSystem = operatingSystem;
+		Id = descriptor.Id;
+		_operatingSystem = descriptor.OperatingSystem;
 		_drives = drives;
-		_cpuArchitecture = cpuArchitecture;
-		_bootMode = bootMode;
+		_cpuArchitecture = descriptor.CpuArchitecture;
+		_ramSizeMiB = descriptor.RamSizeMiB;
+		_bootMode = descriptor.BootMode;
 		_pcmAudioFilePath = $"/tmp/VM_Nexus_vm_{Id}.pcm";
 
 		PoweredOffTcs = new TaskCompletionSource<virDomainState>();
@@ -809,7 +810,7 @@ public class VirtualMachine
 					: "kvm"
 				),
 				new XElement("name", Id.ToString()),
-				new XElement("memory", "8192", new XAttribute("unit", "MiB")),
+				new XElement("memory", _ramSizeMiB, new XAttribute("unit", "MiB")),
 				new XElement("features",
 					new XElement("vmport", new XAttribute("state", "off")),
 					new XElement("acpi"),

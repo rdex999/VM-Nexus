@@ -59,6 +59,7 @@ public class DatabaseService
 			                                                    owner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 			                                                    operating_system INT NOT NULL,
 			                                                    cpu_architecture INT NOT NULL,
+			                                                    ram_size INT NOT NULL,
 			                                                    boot_mode INT NOT NULL,
 			                                                    state INT NOT NULL
 			                                                )
@@ -615,7 +616,7 @@ public class DatabaseService
 		if (userId < 1) return null;
 		
 		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
-			"SELECT id, name, operating_system, state FROM virtual_machines WHERE owner_id = @owner_id",
+			"SELECT id, name, operating_system, state, ram_size FROM virtual_machines WHERE owner_id = @owner_id",
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
@@ -626,7 +627,8 @@ public class DatabaseService
 				reader.GetInt32(0),
 				reader.GetString(1),
 				(OperatingSystem)reader.GetInt32(2),
-				(VmState)reader.GetInt32(3)
+				(VmState)reader.GetInt32(3),
+				reader.GetInt32(4)
 			);
 			
 			descriptors.Add(descriptor);
@@ -674,7 +676,7 @@ public class DatabaseService
 	{
 		if (id < 1) return null;
 		
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT name, operating_system, state FROM virtual_machines WHERE id = @id",
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT name, operating_system, state, ram_size FROM virtual_machines WHERE id = @id",
 			new NpgsqlParameter("@id", id)
 		);
 		
@@ -686,7 +688,8 @@ public class DatabaseService
 				id,
 				reader.GetString(0),
 				(OperatingSystem)reader.GetInt32(1),
-				(VmState)reader.GetInt32(2)
+				(VmState)reader.GetInt32(2),
+				reader.GetInt32(3)
 			);
 		}
 
@@ -770,7 +773,7 @@ public class DatabaseService
 		}
 		
 		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
-			"SELECT name, operating_system, cpu_architecture, boot_mode, state FROM virtual_machines WHERE id = @id LIMIT 1",
+			"SELECT name, operating_system, cpu_architecture, ram_size, boot_mode, state FROM virtual_machines WHERE id = @id LIMIT 1",
 			new NpgsqlParameter("@id", vmId)
 		);
 
@@ -784,8 +787,9 @@ public class DatabaseService
 			reader.GetString(0),
 			(OperatingSystem)reader.GetInt32(1), 
 			(CpuArchitecture)reader.GetInt32(2),
-			(BootMode)reader.GetInt32(3),
-			(VmState)reader.GetInt32(4)
+			reader.GetInt32(3),
+			(BootMode)reader.GetInt32(4),
+			(VmState)reader.GetInt32(5)
 		);
 	}
 

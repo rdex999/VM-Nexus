@@ -379,7 +379,7 @@ public sealed class ClientConnection : MessagingService
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
 				
 				await _userService.NotifyVirtualMachineCreatedAsync(
-					new VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, VmState.ShutDown)
+					new VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, VmState.ShutDown, reqCreateVm.RamSizeMiB)
 				);
 				
 				break;

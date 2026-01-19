@@ -136,8 +136,7 @@ public class VirtualMachineService
 			return ExitCode.VmAlreadyRunning;
 		}
 		
-		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, _driveService, id, vmDescriptor.Result.OperatingSystem,
-			vmDescriptor.Result.CpuArchitecture, vmDescriptor.Result.BootMode, vmDriveDescriptors.Result);
+		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, _driveService, vmDescriptor.Result, vmDriveDescriptors.Result);
 
 		bool addSuccess = false;
 		try

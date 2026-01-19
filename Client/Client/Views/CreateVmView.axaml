@@ -37,7 +37,7 @@
 		<ScrollViewer>
 			<Grid RowDefinitions="Auto, Auto">
 				<TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" TextWrapping="Wrap" TextAlignment="Center"
-				           Margin="0, 10, 0, 15" Padding="0" Classes="h2">
+				           Margin="0, 10, 0, 15" Padding="0" Classes="h2" Foreground="#607b7c">
 					Create a New Virtual Machine
 				</TextBlock>
 
@@ -177,7 +177,7 @@
 							           Text="{Binding VmCreationMessage}" />
 
 							<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit_dark"
-							        Margin="0, 0, 0, 5" Padding="18, 9" CornerRadius="11" FontSize="18"
+							        Margin="0, 0, 0, 5" Padding="16, 7" CornerRadius="11" FontSize="20"
 							        IsEnabled="{Binding CreateVmButtonIsEnabled}"
 							        Command="{Binding CreateVirtualMachineCommand}">
 								Create
