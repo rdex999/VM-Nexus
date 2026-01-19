@@ -28,8 +28,8 @@ public partial class App : Application
 
 	public override void OnFrameworkInitializationCompleted()
 	{
-		NavigationService navigationService = new NavigationService();
 		ClientService clientService = new ClientService();
+		NavigationService navigationService = new NavigationService(clientService);
 		
 		MainViewModel mainViewModel = new MainViewModel(navigationService, clientService);
 		navigationService.Initialize(mainViewModel);

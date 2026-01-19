@@ -23,7 +23,7 @@ public partial class MainViewModel : ViewModelBase
 	public MainViewModel(NavigationService navigationService, ClientService clientService)
 		: base(navigationService, clientService)
 	{
-		CurrentViewModel = new LoginViewModel(NavigationSvc, ClientSvc);
+		CurrentViewModel = null!;
 	}
 
 	/* Use for IDE preview only. */

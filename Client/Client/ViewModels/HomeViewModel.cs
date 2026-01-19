@@ -70,7 +70,8 @@ public partial class HomeViewModel : ViewModelBase
 		_driveService = driveService;
 		_driveService.Initialized += (sender, code) =>
 		{
-			if (code == ExitCode.Success) _ = InitializeAsync();
+			if (code == ExitCode.Success) 
+				_ = InitializeAsync();
 		};
 		ClientSvc.VmCreated += OnVmCreated;
 		ClientSvc.VmDeleted += OnVmDeleted;
@@ -106,6 +107,8 @@ public partial class HomeViewModel : ViewModelBase
 	{
 		await Dispatcher.UIThread.InvokeAsync(() =>
 		{
+			Vms.Clear();
+			
 			VmGeneralDescriptor[] vms = _driveService.GetVirtualMachines();
 			foreach (VmGeneralDescriptor vm in vms)
 			{

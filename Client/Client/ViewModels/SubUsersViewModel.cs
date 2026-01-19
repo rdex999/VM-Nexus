@@ -372,7 +372,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		if (!accepted)
 			return;
 		
-		NavigationSvc.NavigateTo(new MainPageViewModel(NavigationSvc, ClientSvc));
+		NavigationSvc.NavigateToMainPage();
 	}
 }
 

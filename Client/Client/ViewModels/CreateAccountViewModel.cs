@@ -86,7 +86,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 	/// </remarks>
 	[RelayCommand]
 	private void NavigateToLogin() =>
-		NavigationSvc.NavigateTo(new LoginViewModel(NavigationSvc, ClientSvc));
+		NavigationSvc.NavigateToLogin();
 	
 	/// <summary>
 	/// Tries to create an account with the inputted username and password.
@@ -112,7 +112,11 @@ public partial class CreateAccountViewModel : ViewModelBase
 		{
 			case MessageResponseCreateAccount.Status.Success:
 			{
-				NavigationSvc.NavigateTo(new MainPageViewModel(NavigationSvc, ClientSvc));
+				NavigationSvc.NavigateToMainPage();
+				Username = string.Empty;
+				Email = string.Empty;
+				Password = string.Empty;
+				PasswordConfirm = string.Empty;
 				break;
 			}
 			case MessageResponseCreateAccount.Status.UsernameNotAvailable:

@@ -254,9 +254,9 @@ public partial class MainPageViewModel : ViewModelBase
 			}
 
 			if (ClientSvc.User == null)
-				NavigationSvc.NavigateTo(new LoginViewModel(NavigationSvc, ClientSvc));
+				NavigationSvc.NavigateToLogin();
 			else
-				NavigationSvc.NavigateTo(new MainPageViewModel(NavigationSvc, ClientSvc));
+				NavigationSvc.NavigateToMainPage();
 		}
 	}
 

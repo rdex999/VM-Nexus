@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -844,7 +845,7 @@ public class DatabaseService
 		if (userId < 1)
 			return null;
 
-		NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT id, size, type FROM drives WHERE name = @name AND owner_id = @owner_id LIMIT 1",
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT id, size, type FROM drives WHERE name = @name AND owner_id = @owner_id LIMIT 1",
 			new NpgsqlParameter("@name", driveName),
 			new NpgsqlParameter("@owner_id", userId)
 		);
@@ -1257,10 +1258,10 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
+		await using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
 		{
 			await connection.OpenAsync();
-			using (NpgsqlCommand cmd = connection.CreateCommand())
+			await using (NpgsqlCommand cmd = connection.CreateCommand())
 			{
 				cmd.CommandText = command;
 				cmd.Parameters.AddRange(parameters);
@@ -1318,10 +1319,10 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<object?> ExecuteScalarAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
+		await using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
 		{
 			await connection.OpenAsync();
-			using (NpgsqlCommand cmd = connection.CreateCommand())
+			await using (NpgsqlCommand cmd = connection.CreateCommand())
 			{
 				cmd.CommandText = command;
 				cmd.Parameters.AddRange(parameters);
@@ -1350,10 +1351,10 @@ public class DatabaseService
 	{
 		NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection);
 		await connection.OpenAsync();
-		NpgsqlCommand cmd = connection.CreateCommand();
+		await using NpgsqlCommand cmd = connection.CreateCommand();
 		cmd.CommandText = command;
 		cmd.Parameters.AddRange(parameters);
-		return await cmd.ExecuteReaderAsync();
+		return await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
 	}
 
 	/// <summary>
@@ -1374,15 +1375,13 @@ public class DatabaseService
 	/// </remarks>
 	private async Task<byte[]> EncryptPasswordAsync(string password, byte[] salt)
 	{
-		using (Argon2id argon2 = new Argon2id(Encoding.UTF8.GetBytes(password)))
-		{
-			argon2.Salt = salt;
-			argon2.MemorySize = Argon2MemorySize;
-			argon2.Iterations = Argon2Iterations;
-			argon2.DegreeOfParallelism = Argon2Threads;
+		using Argon2id argon2 = new Argon2id(Encoding.UTF8.GetBytes(password));
+		argon2.Salt = salt;
+		argon2.MemorySize = Argon2MemorySize;
+		argon2.Iterations = Argon2Iterations;
+		argon2.DegreeOfParallelism = Argon2Threads;
 			
-			return await argon2.GetBytesAsync(EncryptedPasswordSize);
-		}
+		return await argon2.GetBytesAsync(EncryptedPasswordSize);
 	}
 
 	/// <summary>
@@ -1398,10 +1397,8 @@ public class DatabaseService
 	private byte[] GenerateSalt()
 	{
 		byte[] salt = new byte[SaltSize];
-		using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
-		{
-			rng.GetBytes(salt);
-		}
+		using RandomNumberGenerator rng = RandomNumberGenerator.Create();
+		rng.GetBytes(salt);
 
 		return salt;
 	}

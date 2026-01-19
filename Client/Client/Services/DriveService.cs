@@ -52,21 +52,22 @@ public class DriveService
 	/// </remarks>
 	public async Task<ExitCode> InitializeAsync()
 	{
-		if (IsInitialized) return ExitCode.AlreadyInitialized;
-
+		_virtualMachines.Clear();
+		_drives.Clear();
+		_vmsByDriveId.Clear();
+		_drivesByVmId.Clear();
+		
 		Task<ExitCode> fetchVms = FetchVmsAsync();
 		Task<ExitCode> fetchDrives = FetchDrivesAsync();
 		Task<ExitCode> fetchDriveConnections = FetchDriveConnectionsAsync();
 
-		ExitCode[] results = await Task.WhenAll(fetchVms, fetchDrives, fetchDriveConnections);
-
-		ExitCode result = results.Any(code => code != ExitCode.Success) ? ExitCode.DataFetchFailed : ExitCode.Success;
+		await Task.WhenAll(fetchVms, fetchDrives, fetchDriveConnections);
 		
-		if (result == ExitCode.Success) IsInitialized = true;
+		IsInitialized = true;
 
-		Initialized?.Invoke(this, result);
+		Initialized?.Invoke(this, ExitCode.Success);
 		
-		return result;
+		return ExitCode.Success;
 	}
 
 	/// <summary>

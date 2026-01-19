@@ -92,7 +92,7 @@ public abstract partial class ViewModelBase : ObservableObject
 				{
 					Dispatcher.UIThread.Post(() =>
 					{
-						NavigationSvc.NavigateTo(new LoginViewModel(NavigationSvc, ClientSvc));
+						NavigationSvc.NavigateToLogin();
 					});
 				}
 				break;
