@@ -247,23 +247,6 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}				
 
-				VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(ActualUser.Id);
-				if (vms == null)
-				{
-					ActualUser = null;
-					SendResponse(new MessageResponseLogin(true, reqLogin.Id));
-					break;
-				}
-
-				foreach (VmGeneralDescriptor vm in vms)
-				{
-					if (vm.State == VmState.Running)
-					{
-						_virtualMachineService.SubscribeToVmPoweredOff(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
-						_virtualMachineService.SubscribeToVmCrashed(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
-					}
-				}
-
 				SendResponse(new MessageResponseLogin(true, reqLogin.Id, ActualUser));
 				break;
 			}
@@ -300,24 +283,7 @@ public sealed class ClientConnection : MessagingService
 
 				User = subUser;
 				
-				VmGeneralDescriptor[]? vms = await _databaseService.GetVmGeneralDescriptorsOfUserAsync(ActionUser!.Id);
-				if (vms == null)
-				{
-					User = null;
-					SendResponse(new MessageResponseLoginSubUser(true, reqLoginSubUser.Id));
-					break;
-				}
-				
 				_userService.LoginToSubUser(this);
-				
-				foreach (VmGeneralDescriptor vm in vms)
-				{
-					if (vm.State == VmState.Running)
-					{
-						_virtualMachineService.SubscribeToVmPoweredOff(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
-						_virtualMachineService.SubscribeToVmCrashed(vm.Id, OnVirtualMachinePoweredOffOrCrashed);
-					}
-				}
 				
 				SendResponse(new MessageResponseLoginSubUser(true, reqLoginSubUser.Id, subUser));
 				break;
@@ -501,9 +467,6 @@ public sealed class ClientConnection : MessagingService
 					}
 					
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Success));
-					
-					_virtualMachineService.SubscribeToVmPoweredOff(reqVmStartup.VmId, OnVirtualMachinePoweredOffOrCrashed);
-					_virtualMachineService.SubscribeToVmCrashed(reqVmStartup.VmId, OnVirtualMachinePoweredOffOrCrashed);
 				} 
 				else if (result == ExitCode.VmAlreadyRunning)
 				{

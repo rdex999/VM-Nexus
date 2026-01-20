@@ -313,54 +313,6 @@ public class VirtualMachineService
 	}
 
 	/// <summary>
-	/// Subscribes the given handler to the event of when the virtual machine is shut down.
-	/// </summary>
-	/// <param name="id">The ID of the virtual machine to subscribe to. id >= 1.</param>
-	/// <param name="handler">The handler to subscribe. handler != null.</param>
-	/// <returns>An exit code indicating the result of the operation.</returns>
-	/// <remarks>
-	/// Precondition: A virtual machine with the given ID exists, and it is alive. id >= 1 &amp;&amp; handler != null. <br/>
-	/// Postcondition: On success, the handler is subscribed and the returned exit code indicates success. <br/>
-	/// On failure, the handler is not subscribed and the returned exit code indicates failure.
-	/// </remarks>
-	public ExitCode SubscribeToVmPoweredOff(int id, EventHandler<int> handler)
-	{
-		if (id < 1) return ExitCode.InvalidParameter;
-
-		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
-		{
-			virtualMachine.PoweredOff += handler;
-			return ExitCode.Success;
-		}
-		
-		return ExitCode.VmIsShutDown;
-	}
-
-	/// <summary>
-	/// Subscribes the given handler to the event of the virtual machine crashing.
-	/// </summary>
-	/// <param name="id">The ID of the virtual machine to subscribe to. id >= 1.</param>
-	/// <param name="handler">The handler to subscribe. handler != null.</param>
-	/// <returns>An exit code indicating the result of the operation.</returns>
-	/// <remarks>
-	/// Precondition: A virtual machine with the given ID exists, and it is alive. id >= 1 &amp;&amp; handler != null. <br/>
-	/// Postcondition: On success, the handler is subscribed and the returned exit code indicates success. <br/>
-	/// On failure, the handler is not subscribed and the returned exit code indicates failure.
-	/// </remarks>
-	public ExitCode SubscribeToVmCrashed(int id, EventHandler<int> handler)
-	{
-		if (id < 1) return ExitCode.InvalidParameter;
-
-		if (_aliveVirtualMachines.TryGetValue(id, out VirtualMachine? virtualMachine))
-		{
-			virtualMachine.Crashed += handler;
-			return ExitCode.Success;
-		}
-		
-		return ExitCode.VmIsShutDown;
-	}
-	
-	/// <summary>
 	/// Unsubscribe from the event of receiving a new frame from the given virtual machine.
 	/// </summary>
 	/// <param name="id">The ID of the virtual machine to unsubscribe from. id >= 1.</param>
