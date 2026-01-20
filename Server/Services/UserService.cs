@@ -117,6 +117,7 @@ public class UserService
 		
 		if (connection.IsLoggedInAsSubUser)
 			AddUserConnection(connection, connection.ActualUser!.Id);
+		
 		else
 			UserLoggedOut?.Invoke(this, connection);
 	}
@@ -148,19 +149,16 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyVirtualMachineCreatedAsync(VmGeneralDescriptor descriptor)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(descriptor.Id);
-		if (relatedUsers == null) 
+		int owner = await _databaseService.GetVmOwnerIdAsync(descriptor.Id);
+		if (owner < 1) 
 			return;
 
-		foreach (int userId in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			foreach (ClientConnection connection in userConnections.Values)
 			{
-				foreach (ClientConnection connection in userConnections.Values)
-				{
-					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, descriptor.Id))
-						connection.NotifyVirtualMachineCreated(descriptor);
-				}
+				if (connection.HasPermission(UserPermissions.VirtualMachineList))
+					connection.NotifyVirtualMachineCreated(descriptor);
 			}
 		}
 	}
@@ -177,19 +175,16 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyVirtualMachineDeletedAsync(int vmId)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(vmId);
-		if (relatedUsers == null)
+		int owner = await _databaseService.GetVmOwnerIdAsync(vmId);
+		if (owner < 1)
 			return;
 
-		foreach (int userId in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			foreach (ClientConnection connection in userConnections.Values)
 			{
-				foreach (ClientConnection connection in userConnections.Values)
-				{
-					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, vmId))
-						connection.NotifyVirtualMachineDeleted(vmId);
-				}
+				if (connection.HasPermission(UserPermissions.VirtualMachineList))
+					connection.NotifyVirtualMachineDeleted(vmId);
 			}
 		}
 	}
@@ -204,19 +199,16 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyVirtualMachinePoweredOnAsync(int vmId)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(vmId);
-		if (relatedUsers == null)
+		int owner = await _databaseService.GetVmOwnerIdAsync(vmId);
+		if (owner < 1)
 			return;
 
-		foreach (int userId in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			foreach (ClientConnection connection in userConnections.Values)
 			{
-				foreach (ClientConnection connection in userConnections.Values)
-				{
-					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, vmId))
-						connection.NotifyVirtualMachinePoweredOn(vmId);
-				}
+				if (connection.HasPermission(UserPermissions.VirtualMachineList))
+					connection.NotifyVirtualMachinePoweredOn(vmId);
 			}
 		}
 	}
@@ -231,19 +223,16 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyVirtualMachinePoweredOffAsync(int vmId)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(vmId);
-		if (relatedUsers == null)
+		int owner = await _databaseService.GetVmOwnerIdAsync(vmId);
+		if (owner < 1)
 			return;
 
-		foreach (int userId in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			foreach (ClientConnection connection in userConnections.Values)
 			{
-				foreach (ClientConnection connection in userConnections.Values)
-				{
-					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, vmId))
-						connection.NotifyVirtualMachinePoweredOff(vmId);
-				}
+				if (connection.HasPermission(UserPermissions.VirtualMachineList))
+					connection.NotifyVirtualMachinePoweredOff(vmId);
 			}
 		}
 	}
@@ -258,19 +247,16 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyVirtualMachineCrashedAsync(int vmId)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(vmId);
-		if (relatedUsers == null)
+		int owner = await _databaseService.GetVmOwnerIdAsync(vmId);
+		if (owner < 1)
 			return;
 
-		foreach (int userId in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			foreach (ClientConnection connection in userConnections.Values)
 			{
-				foreach (ClientConnection connection in userConnections.Values)
-				{
-					if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, vmId))
-						connection.NotifyVirtualMachineCrashed(vmId);
-				}
+				if (await connection.HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineList, vmId))
+					connection.NotifyVirtualMachineCrashed(vmId);
 			}
 		}
 	}
@@ -285,19 +271,16 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyDriveCreatedAsync(DriveGeneralDescriptor descriptor)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToDriveAsync(descriptor.Id);
-		if (relatedUsers == null)
+		int owner = await _databaseService.GetDriveOwnerIdAsync(descriptor.Id);
+		if (owner < 1)
 			return;
 
-		foreach (int userId in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			foreach (ClientConnection connection in userConnections.Values)
 			{
-				foreach (ClientConnection connection in userConnections.Values)
-				{
-					if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveList, descriptor.Id))
-						connection.NotifyDriveCreated(descriptor);
-				}
+				if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveList, descriptor.Id))
+					connection.NotifyDriveCreated(descriptor);
 			}
 		}
 	}
@@ -313,18 +296,15 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyItemCreatedAsync(int driveId, string path)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToDriveAsync(driveId);
-		if (relatedUsers == null)
+		int owner = await _databaseService.GetDriveOwnerIdAsync(driveId);
+		if (owner < 1)
 			return;
 
-		foreach (int id in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (!_users.TryGetValue(id, out ConcurrentDictionary<Guid, ClientConnection>? userConnections)) 
-				continue;
-			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
-				if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveItemList, driveId))
+				if (connection.HasPermission(UserPermissions.DriveItemList))
 					connection.NotifyItemCreated(driveId, path);
 			}
 		}
@@ -342,18 +322,15 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyItemDeletedAsync(int driveId, string path)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToDriveAsync(driveId);
-		if (relatedUsers == null)
+		int owner = await _databaseService.GetDriveOwnerIdAsync(driveId);
+		if (owner < 1)
 			return;
 
-		foreach (int id in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (!_users.TryGetValue(id, out ConcurrentDictionary<Guid, ClientConnection>? userConnections)) 
-				continue;
-			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
-				if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveItemList, driveId))
+				if (connection.HasPermission(UserPermissions.DriveItemList))
 					connection.NotifyItemDeleted(driveId, path);
 			}
 		}
@@ -370,18 +347,15 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyDriveConnected(int driveId, int vmId)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(vmId);
-		if (relatedUsers == null)
+		int owner = await _databaseService.GetDriveOwnerIdAsync(vmId);
+		if (owner < 1)
 			return;
 
-		foreach (int userId in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (!_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
-				continue;
-			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
-				if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveConnectionList, driveId))
+				if (connection.HasPermission(UserPermissions.DriveConnectionList))
 					connection.NotifyDriveConnected(driveId, vmId);
 			}
 		}
@@ -398,18 +372,15 @@ public class UserService
 	/// </remarks>
 	public async Task NotifyDriveDisconnected(int driveId, int vmId)
 	{
-		int[]? relatedUsers = await _databaseService.GetUserIdsRelatedToVmAsync(vmId);
-		if (relatedUsers == null)
+		int owner = await _databaseService.GetDriveOwnerIdAsync(vmId);
+		if (owner < 1)
 			return;
 
-		foreach (int userId in relatedUsers)
+		if (_users.TryGetValue(owner, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
-			if (!_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
-				continue;
-			
 			foreach (ClientConnection connection in userConnections.Values)
 			{
-				if (await connection.HasPermissionDriveOwnerAsync(UserPermissions.DriveConnectionList, driveId))
+				if (connection.HasPermission(UserPermissions.DriveConnectionList))
 					connection.NotifyDriveDisconnected(driveId, vmId);
 			}
 		}
