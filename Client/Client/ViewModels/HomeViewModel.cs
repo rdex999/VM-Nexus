@@ -704,13 +704,13 @@ public partial class VmItemTemplate : ObservableObject
 		MessageResponseVmStartup.Status result = await _clientService.PowerOnVirtualMachineAsync(Id);
 		ErrorMessage = string.Empty;
 		if (result == MessageResponseVmStartup.Status.VmAlreadyRunning)
-		{
 			State = VmState.Running;
-		} 
+	
+		else if (result == MessageResponseVmStartup.Status.ServerStarvation)
+			ErrorMessage = "Server under high load.";
+		
 		else if(result != MessageResponseVmStartup.Status.Success)
-		{
 			ErrorMessage = "VM startup failed.";
-		}
 	}
 
 	/// <summary>

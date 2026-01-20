@@ -53,7 +53,7 @@ public class VirtualMachine
 
 	private readonly OperatingSystem _operatingSystem;
 	private readonly CpuArchitecture _cpuArchitecture;
-	private readonly int _ramSizeMiB;
+	public int RamSizeMiB { get; }
 	private readonly BootMode _bootMode;
 	private readonly DriveDescriptor[] _drives;
 	private int _pointerPressedButtons = (int)MouseButtons.None;
@@ -74,7 +74,7 @@ public class VirtualMachine
 		_operatingSystem = descriptor.OperatingSystem;
 		_drives = drives;
 		_cpuArchitecture = descriptor.CpuArchitecture;
-		_ramSizeMiB = descriptor.RamSizeMiB;
+		RamSizeMiB = descriptor.RamSizeMiB;
 		_bootMode = descriptor.BootMode;
 		_pcmAudioFilePath = $"/tmp/VM_Nexus_vm_{Id}.pcm";
 
@@ -830,7 +830,7 @@ public class VirtualMachine
 					: "kvm"
 				),
 				new XElement("name", Id.ToString()),
-				new XElement("memory", _ramSizeMiB, new XAttribute("unit", "MiB")),
+				new XElement("memory", RamSizeMiB, new XAttribute("unit", "MiB")),
 				new XElement("features",
 					new XElement("vmport", new XAttribute("state", "off")),
 					new XElement("acpi"),

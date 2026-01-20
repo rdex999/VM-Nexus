@@ -42,6 +42,7 @@ public enum ExitCode
 	VmScreenStreamStartFailed,
 	VmScreenStreamStopFailed,
 	VmScreenStreamUnsupportedPixelFormat,
+	InsufficientMemory,
 	TooManyVmsRunning,
 	InvalidVmXml,
 	VncConnectionFailed,

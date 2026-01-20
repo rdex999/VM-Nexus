@@ -612,6 +612,7 @@ public class MessageResponseVmStartup : MessageResponse
 	{
 		Success,
 		VmAlreadyRunning,
+		ServerStarvation,
 		Failure,
 	}
 	

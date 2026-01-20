@@ -469,13 +469,13 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Success));
 				} 
 				else if (result == ExitCode.VmAlreadyRunning)
-				{
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.VmAlreadyRunning));
-				}
+				
+				else if (result == ExitCode.InsufficientMemory)
+					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.ServerStarvation));
+				
 				else
-				{
 					SendResponse(new MessageResponseVmStartup(true, reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
-				}
 				
 				break;
 			}

@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Input;
 using libvirt;
@@ -22,6 +24,7 @@ public class VirtualMachineService
 	/* By virtual machine ID's */
 	private readonly ConcurrentDictionary<int, VirtualMachine> _aliveVirtualMachines;
 	private readonly Connect _libvirtConnection;
+	private int _vmUsedRamMiB = 0;
 
 	public VirtualMachineService(DatabaseService databaseService, UserService userService, DriveService driveService)
 	{
@@ -128,14 +131,13 @@ public class VirtualMachineService
 		await Task.WhenAll(vmDescriptor, vmDriveDescriptors);
 
 		if (vmDescriptor.Result == null || vmDriveDescriptors.Result == null)
-		{
 			return ExitCode.VmDoesntExist;
-		}
 		
 		if (vmDescriptor.Result.VmState == VmState.Running)
-		{
 			return ExitCode.VmAlreadyRunning;
-		}
+
+		if (!await AllocateVmRamAsync(vmDescriptor.Result.RamSizeMiB))
+			return ExitCode.InsufficientMemory;
 		
 		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, _driveService, vmDescriptor.Result, vmDriveDescriptors.Result);
 
@@ -151,12 +153,14 @@ public class VirtualMachineService
 
 		if (!addSuccess)
 		{
+			FreeVmRam(vmDescriptor.Result.RamSizeMiB);
 			return ExitCode.TooManyVmsRunning;	
 		}
 		
 		ExitCode result = await virtualMachine.PowerOnAsync(_libvirtConnection);
 		if(result != ExitCode.Success)
 		{
+			FreeVmRam(vmDescriptor.Result.RamSizeMiB);
 			_aliveVirtualMachines.TryRemove(id, out _);
 			return result;
 		}
@@ -490,9 +494,10 @@ public class VirtualMachineService
 	private void OnVirtualMachinePoweredOff(object? sender, int id)
 	{
 		if (!_aliveVirtualMachines.TryRemove(id, out VirtualMachine? virtualMachine)) return;
-		
+	
 		_ = virtualMachine.CloseAsync();
 		_ = _userService.NotifyVirtualMachinePoweredOffAsync(id);
+		FreeVmRam(virtualMachine.RamSizeMiB);
 	}
 
 	/// <summary>
@@ -510,5 +515,66 @@ public class VirtualMachineService
 		
 		_ = virtualMachine.CloseAsync();
 		_ = _userService.NotifyVirtualMachineCrashedAsync(id);
+		FreeVmRam(virtualMachine.RamSizeMiB);
 	}
+
+	/// <summary>
+	/// Allocate RAM for a virtual machine.
+	/// </summary>
+	/// <param name="sizeMiB">The amount of RAM to allocate for a virtual machine, in MiB. sizeMiB >= 1.</param>
+	/// <returns>True if allocated successfully, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: sizeMiB >= 1. <br/>
+	/// Postcondition: On success, the given amount of memory is allocated and true is returned.
+	/// On failure, no memory is allocated and false is returned.
+	/// </remarks>
+	private async Task<bool> AllocateVmRamAsync(int sizeMiB)
+	{
+		if (sizeMiB < 1) 
+			return false;
+		
+		Dictionary<string, ulong> memInfo = new Dictionary<string, ulong>();
+		await foreach (string line in File.ReadLinesAsync("/proc/meminfo").ConfigureAwait(false))
+		{
+			string[] keyValue = line.Split(':');
+			if (keyValue.Length != 2)
+				continue;
+			
+			int kbIndex = keyValue[1].IndexOf("kB", StringComparison.Ordinal);
+			if (kbIndex < 0)
+				continue;
+			
+			string key = keyValue[0].Trim();
+			string valueStr = keyValue[1].Substring(0, kbIndex);
+			if (!ulong.TryParse(valueStr, out ulong value))
+				continue;
+
+			memInfo.TryAdd(key, value);
+		}
+
+		if (!memInfo.TryGetValue("MemAvailable", out ulong memAvailableKb))
+			return false;
+
+		if (!memInfo.TryGetValue("SwapFree", out ulong swapFreeKb))
+			return false;
+
+		int availableMiB = (int)((memAvailableKb + swapFreeKb) / 1024);
+		if (_vmUsedRamMiB + sizeMiB > availableMiB)
+			return false;
+
+		_vmUsedRamMiB += sizeMiB;
+		Debug.WriteLine($"USED {_vmUsedRamMiB} MiB OUT OF {availableMiB} MiB {(float)_vmUsedRamMiB / availableMiB * 100f}%");
+		return true;
+	}
+
+	/// <summary>
+	/// Frees the given amount of RAM which was allocated using AllocateVmRamAsync().
+	/// </summary>
+	/// <param name="sizeMiB">The amount of RAM to free, in MiB. sizeMiB >= 1.</param>
+	/// <remarks>
+	/// Precondition: The given memory was allocated using AllocateVmRamAsync(). sizeMiB >= 1. <br/>
+	/// Postcondition: The memory is freed. In the case that the given memory is greater than the currently
+	/// allocated amount, the allocated amount is set to 0.
+	/// </remarks>
+	private void FreeVmRam(int sizeMiB) => _vmUsedRamMiB -= Math.Min(_vmUsedRamMiB, Math.Max(sizeMiB, 0));
 }
