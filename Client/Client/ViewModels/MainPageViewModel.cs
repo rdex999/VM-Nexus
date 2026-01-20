@@ -119,7 +119,11 @@ public partial class MainPageViewModel : ViewModelBase
 		CurrentSideMenuItem = SideMenuItems[SideMenuIdxHome];
 		CurrentPageViewModel = SideMenuItems.First().ViewModel;
 
-		VmTabs = new ObservableCollection<VmTabTemplate>();
+		VmTabs = new ObservableCollection<VmTabTemplate>()
+		{
+			new VmTabTemplate(new VmGeneralDescriptor(1, "test_vm1", Shared.VirtualMachines.OperatingSystem.MiniCoffeeOS, VmState.Running, 5)),
+			new VmTabTemplate(new VmGeneralDescriptor(2, "test_vm2", Shared.VirtualMachines.OperatingSystem.ManjaroLinux, VmState.Running, 4096)),
+		};
 		MenuDisplayMode = SplitViewDisplayMode.CompactInline;
 	}
 
@@ -364,6 +368,7 @@ public partial class SideMenuItemTemplate : ObservableObject
 	public string Title { get; }
 	public ViewModelBase ViewModel { get; }
 	public string IconKey { get; }
+	public bool DefaultBackground { get; }
 
 	[ObservableProperty] 
 	private Geometry? _icon;

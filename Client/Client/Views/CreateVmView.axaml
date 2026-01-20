@@ -26,11 +26,11 @@
 		<StyleInclude Source="/Resources/Styles.axaml" />
 	</UserControl.Styles>
 
-	<Border CornerRadius="15" Margin="5" Padding="4">
+	<Border CornerRadius="15" Margin="6" Padding="4">
 		<Border.Background>
 			<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
-				<GradientStop Offset="0" Color="#f8f8f8" />
-				<GradientStop Offset="1" Color="#eafaff" />
+				<GradientStop Offset="0" Color="{StaticResource Background0}" />
+				<GradientStop Offset="1" Color="{StaticResource Background1}" />
 			</LinearGradientBrush>
 		</Border.Background>
 		

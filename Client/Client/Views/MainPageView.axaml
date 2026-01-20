@@ -162,11 +162,20 @@
 								<Setter Property="Background" Value="#e1eff1"></Setter>
 							</Style>
 
-							<Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
-								<Setter Property="Background" Value="#c4eeff" />
+							<Style Selector="ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+								<Setter Property="Background" Value="#e6f5f7" />
 							</Style>
+							
+							<Style Selector="ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter">
+								<Setter Property="Background" Value="#d9f3f9" />
+								
+								<Style Selector="^:pointerover">
+									<Setter Property="Background" Value="#e2f9ff" />
+								</Style>
+							</Style>
+							
 							<Style Selector="ListBoxItem:pressed /template/ ContentPresenter#PART_ContentPresenter">
-								<Setter Property="Background" Value="#b8e0ef" />
+								<Setter Property="Background" Value="#dcf0f4" />
 							</Style>
 						</ListBox.Styles>
 
@@ -178,17 +187,21 @@
 
 						<ListBox.ItemTemplate>
 							<DataTemplate DataType="{x:Type vm:VmTabTemplate}">
-								<Border Background="Transparent" CornerRadius="5" Padding="9, 6" VerticalAlignment="Center">
+								<Border Background="Transparent" CornerRadius="5" Padding="9, 5" VerticalAlignment="Center">
 									<StackPanel Orientation="Horizontal" Spacing="13">
 										<TextBlock VerticalAlignment="Center" HorizontalAlignment="Left" FontWeight="DemiBold" Foreground="#5c6d6d"
 										           FontSize="15" Text="{Binding Descriptor.Name}" MaxWidth="100"/>
 
-										<Button Padding="4" VerticalAlignment="Center" Background="#ccd1d1ca" IsHitTestVisible="True"
-										        Click="CloseVMTab_OnClick">
+										<Button Padding="5" VerticalAlignment="Center" Background="#bcd7db" IsHitTestVisible="True"
+										        CornerRadius="6.5" Opacity="0.66" Click="CloseVMTab_OnClick">
 
 											<Button.Styles>
+												<Style Selector="Button:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+													<Setter Property="Background" Value="#c5e1e5" />
+												</Style>
+												
 												<Style Selector="Button:pressed /template/ ContentPresenter#PART_ContentPresenter">
-													<Setter Property="Background" Value="#cc8a8a8f" />
+													<Setter Property="Background" Value="#b1c8cc" />
 												</Style>
 											</Button.Styles>
 

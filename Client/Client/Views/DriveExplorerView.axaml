@@ -11,6 +11,7 @@
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
+				<ResourceInclude Source="/Resources/Colors.axaml" />
 				<ResourceInclude Source="/Resources/Geometries.axaml" />
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
@@ -123,9 +124,18 @@
 				</ScrollViewer>
 			</Grid>
 
-			<ScrollViewer Grid.Row="1">
-				<TransitioningContentControl Content="{Binding ExplorerModeViewModel}" />
-			</ScrollViewer>
+			<Border Grid.Row="1" Margin="6, 5, 6, 6" CornerRadius="15" Padding="10, 10, 5, 10">
+				<Border.Background>
+					<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
+						<GradientStop Offset="0" Color="{StaticResource Background0}" />
+						<GradientStop Offset="1" Color="{StaticResource Background1}" />
+					</LinearGradientBrush>
+				</Border.Background>
+			
+				<ScrollViewer>
+					<TransitioningContentControl Content="{Binding ExplorerModeViewModel}" />
+				</ScrollViewer>
+			</Border>
 		</Grid>
 	</Grid>
 </UserControl>

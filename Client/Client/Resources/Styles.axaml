@@ -69,18 +69,18 @@
 		<Setter Property="Padding" Value="26, 6" />
 		<Setter Property="CornerRadius" Value="10" />
 		<Setter Property="FontWeight" Value="Bold" />
-		<Setter Property="Background" Value="#c7c7cc" />
+		<Setter Property="Background" Value="#d7d7dc" />
 		
 		<Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-			<Setter Property="Background" Value="#d8d8d8" />
+			<Setter Property="Background" Value="#e8e8e8" />
 		</Style>
 		<Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
-			<Setter Property="Background" Value="#a7a7ac" />
+			<Setter Property="Background" Value="#b7b7bc" />
 		</Style>
 	</Style>
 	
 	<Style Selector="Button.clean">
-		<Setter Property="Background" Value="Transparent" />
+		<Setter Property="Background" Value="White" />
 		<Setter Property="CornerRadius" Value="10" />
 		<Setter Property="BorderThickness" Value="1.5" />
 		

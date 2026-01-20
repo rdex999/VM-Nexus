@@ -2,5 +2,7 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 	
 	<Color x:Key="Title">#6c8b8d</Color>
-
+	<Color x:Key="Background0">#f4f4f4</Color>
+	<Color x:Key="Background1">#eaf9fc</Color>
+	<Color x:Key="DriveExplorerItem">#f4f6f7</Color>
 </ResourceDictionary>
