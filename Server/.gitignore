@@ -4,3 +4,8 @@ obj/
 riderModule.iml
 /_ReSharper.Caches/
 NugetLocal
+Keys/server.pfx
+Keys/server.key
+Keys/server.crt
+Keys/server.csr
+Keys/server.pswd

@@ -2,8 +2,11 @@ using System;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Net.WebSockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Server.Drives;
 using Server.Services;
@@ -75,11 +78,8 @@ public sealed class ClientConnection : MessagingService
 
 		TcpSocket = tcpSocket;
 		UdpSocket = udpSocket;
-		
-		IsServiceInitialized = true;
-	
-		/* UDP will be started once a MessageInfoIdentifyUdp is received (using TCP socket) from the client. */
-		StartTcp();
+
+		_ = InitializeAsync();
 	}
 
 	/// <summary>
@@ -110,6 +110,57 @@ public sealed class ClientConnection : MessagingService
 		
 		StartTcp();
 	}
+
+	/// <summary>
+	/// Initialize this client connection, TLS encryption and authenticate as the client.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: TcpSocket connected to the client. Client is not running on browser. <br/>
+	/// Postcondition: On success, this connection is initialized, TcpSslStream is encrypted and can be used for secure communication,
+	/// and the returned exit code indicates success. On failure, this connection is dropped.
+	/// </remarks>
+	private async Task InitializeAsync()
+	{
+		if (WebSocket != null)
+			return;
+		
+		if (TcpSocket == null)
+		{
+			Disconnect();
+			return;
+		}
+		
+		NetworkStream networkStream = new NetworkStream(TcpSocket, true);
+		TcpSslStream = new SslStream(networkStream, false);
+
+		string password = await File.ReadAllTextAsync("../../../Keys/server.pswd");
+		X509Certificate2 certificate = X509CertificateLoader.LoadPkcs12FromFile(
+			"../../../Keys/server.pfx", password,
+			X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable
+		);
+
+		SslServerAuthenticationOptions options = new SslServerAuthenticationOptions()
+		{
+			ServerCertificate = certificate,
+			EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
+			ClientCertificateRequired = false,
+		};
+
+		try
+		{
+			await TcpSslStream.AuthenticateAsServerAsync(options);
+		}
+		catch (Exception)
+		{
+			Disconnect();
+			return;
+		}
+		
+		IsServiceInitialized = true;
+	
+		/* UDP will be started once a MessageInfoIdentifyUdp is received (using TCP socket) from the client. */
+		StartTcp();
+	}
 	
 	/// <summary>
 	/// Checks if the current login state and user has a permission. <br/>
@@ -125,7 +176,6 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	public bool HasPermission(UserPermissions permission) =>
 		(IsLoggedIn && !IsLoggedInAsSubUser) || (IsLoggedInAsSubUser && User!.OwnerPermissions.HasPermission(permission.AddIncluded()));
-
 
 	/// <summary>
 	/// Checks if the current login state and user has a permission and access to a virtual machine. <br/>

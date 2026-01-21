@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -16,7 +15,7 @@ public class MainWindowModel
 {
 	private Thread? _listener;
 	private CancellationTokenSource? _listenerCts;
-	private ConcurrentDictionary<Guid, ClientConnection> _clients;	
+	private readonly ConcurrentDictionary<Guid, ClientConnection> _clients;	
 	private readonly DatabaseService _databaseService;
 	private readonly UserService _userService;
 	private readonly VirtualMachineService _virtualMachineService;
@@ -31,7 +30,7 @@ public class MainWindowModel
 		_virtualMachineService = new VirtualMachineService(_databaseService, _userService, _driveService);
 		
 		_userService.UserLoggedIn += (sender, connection) => _clients.TryRemove(connection.ClientId, out _);
-		_userService.UserLoggedOut += (sender, connection) => _clients.TryAdd(connection.ClientId, connection);
+		_userService.UserLoggedOut += (_, connection) => _clients.TryAdd(connection.ClientId, connection);
 	}
 
 	/// <summary>
@@ -56,7 +55,7 @@ public class MainWindowModel
 		}
 		
 		/* Socket initialization and listening */
-		IPHostEntry ipHost = Dns.GetHostEntry(Dns.GetHostName());		/* Get local host ip addresses */
+		IPHostEntry ipHost = await Dns.GetHostEntryAsync(Dns.GetHostName());		/* Get local host ip addresses */
 
 		/* Filter out ip addresses that are not IPv4, and loop-back ip's. Basically leave only usable ip's. Then from the array get the first ip, or null if empty. */
 		IPAddress? ipAddr = ipHost.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip));
@@ -118,14 +117,10 @@ public class MainWindowModel
 	/// <summary>
 	/// Listens for client connections and redirects them to handlers.
 	/// </summary>
-	/// <param name="token">
-	/// Used to determine when to stop listening for clients. token != null.
-	/// </param>
-	/// <param name="socket">
-	/// The socket to listen for clients on. socket != null.
-	/// </param>
+	/// <param name="token">Used to determine when to stop listening for clients. token != null.</param>
+	/// <param name="socket">The socket to listen for clients on. socket != null.</param>
 	/// <remarks>
-	/// Precondition: token != null &amp;&amp; socket != null. <br/>
+	/// Precondition: Server started. token != null &amp;&amp; socket != null. <br/>
 	/// Postcondition: socket is closed, server does not listen for clients anymore.
 	/// </remarks>
 	private void ListenForClients(CancellationToken token, Socket socket)
@@ -150,9 +145,17 @@ public class MainWindowModel
 		socket.Close();
 	}
 
+	/// <summary>
+	/// Listens for web client connections and redirects them to handlers.
+	/// </summary>
+	/// <param name="token">Used to determine when to stop listening for clients. token != null.</param>
+	/// <remarks>
+	/// Precondition: Server started. token != null. <br/>
+	/// Postcondition: Server does not listen for web clients anymore.
+	/// </remarks>
 	private async Task ListenForWebClients(CancellationToken token)
 	{
-		HttpListener listener = new HttpListener();
+		using HttpListener listener = new HttpListener();
 		listener.Prefixes.Add($"http://{SharedDefinitions.ServerIp}:{SharedDefinitions.ServerTcpWebPort}/");
 		listener.Start();
 
@@ -173,7 +176,6 @@ public class MainWindowModel
 			{ 
 				context.Response.StatusCode = 400;
 				context.Response.Close();
-				Debug.WriteLine("BAD REQUEST");
 				continue;
 			}
 
@@ -183,7 +185,9 @@ public class MainWindowModel
 			bool added;
 			do
 			{
-				ClientConnection clientConnection = new ClientConnection(wsContext.WebSocket, _databaseService, _userService, _virtualMachineService, _driveService);
+				ClientConnection clientConnection = new ClientConnection(wsContext.WebSocket, _databaseService, 
+					_userService, _virtualMachineService, _driveService);
+				
 				clientConnection.Disconnected += OnClientDisconnected;
 				added = _clients.TryAdd(clientConnection.ClientId, clientConnection);
 			} while (!added);
@@ -212,6 +216,4 @@ public class MainWindowModel
 			_clients.TryRemove(client.ClientId, out _);
 		}
 	}
-	
-
 }

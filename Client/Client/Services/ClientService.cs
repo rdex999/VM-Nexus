@@ -2,8 +2,11 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Net.WebSockets;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Avalonia.Input;
 using Shared;
@@ -35,10 +38,6 @@ public class ClientService : MessagingService
 
 	public bool IsLoggedIn => User != null;
 	public User? User { get; private set; }
-
-	public ClientService()
-	{
-	}
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.
@@ -60,8 +59,13 @@ public class ClientService : MessagingService
 			TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 		}
-		
-		await ConnectToServerAsync();
+
+		bool connected;
+		do
+		{
+			await ConnectToServerAsync();
+			connected = await TlsInitialize() == ExitCode.Success;
+		} while (!connected);
 		
 		StartTcp();
 		
@@ -892,6 +896,51 @@ public class ClientService : MessagingService
 		}
 		
 		Reconnected?.Invoke(this, EventArgs.Empty);
+	}
+
+	/// <summary>
+	/// Initialize TLS encryption and authenticate as the client.
+	/// </summary>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: TcpSocket connected to the server. Not running on browser. <br/>
+	/// Postcondition: On success, the TcpSslStream is encrypted and can be used for secure communication,
+	/// the returned exit code indicates success. <br/>
+	/// On failure, TcpSslStream is set to null, the TCP socket is disposed, and the returned exit code indicates the error.
+	/// </remarks>
+	private async Task<ExitCode> TlsInitialize()
+	{
+		if (System.OperatingSystem.IsBrowser() || !IsConnected())
+			return ExitCode.CallOnInvalidCondition;
+
+		NetworkStream networkStream = new NetworkStream(TcpSocket!, true);
+		TcpSslStream = new SslStream(networkStream, false,
+			(sender, certificate, chain, errors) => errors == SslPolicyErrors.None
+		);
+
+		try
+		{
+			await TcpSslStream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
+			{
+				TargetHost = SharedDefinitions.ServerIp,
+				EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
+				CertificateRevocationCheckMode = X509RevocationMode.Online
+			});
+		}
+		catch (AuthenticationException)
+		{
+			await TcpSslStream.DisposeAsync();
+			TcpSslStream = null;
+			return ExitCode.AuthenticationFailed;
+		}
+		catch (Exception)
+		{
+			await TcpSslStream.DisposeAsync();
+			TcpSslStream = null;
+			return ExitCode.DisconnectedFromServer;
+		}
+		
+		return ExitCode.Success;
 	}
 
 	/// <summary>

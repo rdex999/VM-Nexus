@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Net.Security;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
@@ -12,6 +13,7 @@ public partial class MessagingService
 	protected Socket? TcpSocket;
 	protected Socket? UdpSocket;
 	protected WebSocket? WebSocket;
+	protected SslStream? TcpSslStream;
 	protected readonly CancellationTokenSource Cts;
 	protected bool IsServiceInitialized;
 	private readonly ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
@@ -639,40 +641,24 @@ public partial class MessagingService
 	/// </remarks>
 	private async Task<ExitCode> SendBytesExactTcpAsync(byte[] bytes)
 	{
-		int bytesSent = 0;
-		
-		while (bytesSent < bytes.Length)
+		ReadOnlyMemory<byte> memory = new ReadOnlyMemory<byte>(bytes, 0, bytes.Length);
+
+		try
 		{
-			ReadOnlyMemory<byte> memory = new ReadOnlyMemory<byte>(bytes, bytesSent, bytes.Length - bytesSent);
-		
-			int sent;
-			try
-			{
-				if (TcpSocket != null)
-					sent = await TcpSocket!.SendAsync(memory);
-				
-				else if (WebSocket != null)
-				{
-					bool isEnd = bytesSent + memory.Length == bytes.Length;
-					await WebSocket.SendAsync(memory, WebSocketMessageType.Binary, isEnd, Cts.Token);
-					sent = memory.Length;
-				}
-				else
-					return ExitCode.DisconnectedFromServer;
-			}
-			catch (Exception)
-			{
-				return ExitCode.DisconnectedFromServer;
-			}
+			if (TcpSslStream != null)
+				await TcpSslStream!.WriteAsync(memory, Cts.Token);
 
-			if (sent <= 0)
-			{
-				return ExitCode.DisconnectedFromServer;
-			}
-
-			bytesSent += sent;
-		}
+			else if (WebSocket != null)
+				await WebSocket.SendAsync(memory, WebSocketMessageType.Binary, true, Cts.Token);
 			
+			else
+				return ExitCode.DisconnectedFromServer;
+		}
+		catch (Exception)
+		{
+			return ExitCode.DisconnectedFromServer;
+		}
+
 		return ExitCode.Success;
 	}
 
@@ -703,12 +689,13 @@ public partial class MessagingService
 			int currentRead;
 			try
 			{
-				if (TcpSocket != null)
-					currentRead = await TcpSocket!.ReceiveAsync(memory).ConfigureAwait(false);
-				
+				if (TcpSslStream != null)
+					currentRead = await TcpSslStream!.ReadAsync(memory, Cts.Token).ConfigureAwait(false);
+
 				else if (WebSocket != null)
 				{
-					ValueWebSocketReceiveResult result = await WebSocket!.ReceiveAsync(memory, Cts.Token).ConfigureAwait(false);
+					ValueWebSocketReceiveResult result =
+						await WebSocket!.ReceiveAsync(memory, Cts.Token).ConfigureAwait(false);
 					currentRead = result.Count;
 				}
 
@@ -811,11 +798,7 @@ public partial class MessagingService
 			return;
 		}
 
-		if (TcpSocket != null)
-		{
-			TcpSocket.Close();
-			TcpSocket.Dispose();
-		}
+		TcpSslStream?.Dispose();
 
 		if (UdpSocket != null)
 		{
