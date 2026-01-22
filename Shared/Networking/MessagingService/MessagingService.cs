@@ -27,6 +27,7 @@ public partial class MessagingService
 	private readonly Dictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
 	private readonly ConcurrentDictionary<Guid, TransferHandler> _ongoingTransfers;
 	protected readonly TransferRateLimiter TransferLimiter;
+	protected readonly UdpCryptoService? CryptoService;
 	private const int DatagramSize = 1200;
 
 	/// <remarks>
@@ -169,9 +170,10 @@ public partial class MessagingService
 		byte[] buffer = new byte[DatagramSize];
 		while (!Cts.Token.IsCancellationRequested)
 		{
+			int size;
 			try
 			{
-				await UdpSocket!.ReceiveAsync(buffer, Cts.Token).ConfigureAwait(false);
+				size = await UdpSocket!.ReceiveAsync(buffer, Cts.Token).ConfigureAwait(false);
 			}
 			catch (Exception)
 			{
@@ -181,18 +183,15 @@ public partial class MessagingService
 			if (!UdpPacket.IsValidPacket(buffer))
 				continue;
 
-			UdpPacket packet = new UdpPacket(buffer);
+			UdpPacket packet = new UdpPacket(buffer, size);
 			
 			ExitCode result;
 			Message? message;
 			if (_incomingUdpMessages.TryGetValue(packet.MessageId, out IncomingMessageUdp? incoming))
-			{
 				result = incoming.ReceivePacket(packet, out message);
-			}
+			
 			else
-			{
 				_incomingUdpMessages.TryAdd(packet.MessageId, new IncomingMessageUdp(packet, OnIncomingMessageTimeout, out result, out message));
-			}
 
 			switch (result)
 			{
@@ -810,6 +809,7 @@ public partial class MessagingService
 			_messageUdpSenderThread.Join();
 
 		Cts.Dispose();
+		CryptoService?.Dispose();
 		
 		IsServiceInitialized = false;
 		

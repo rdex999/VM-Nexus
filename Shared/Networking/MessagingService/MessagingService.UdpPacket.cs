@@ -4,7 +4,7 @@ public partial class MessagingService
 {
 	private readonly struct UdpPacket
 	{
-		public const int HeaderSize = 4 + 16 + 4 + 4 + 4;
+		public const int HeaderSize = 4 + 16 + 4 + 4;
 		public const int MaxPayloadSize = DatagramSize - HeaderSize;
 		public Guid MessageId { get; }
 		public int MessageSize { get; }
@@ -14,8 +14,10 @@ public partial class MessagingService
 		public ReadOnlySpan<byte> Packet => _packet.AsSpan();
 		private readonly byte[] _packet;
 		
-		public UdpPacket(byte[] packet)
+		public UdpPacket(byte[] packet, int payloadSize)
 		{
+			PayloadSize = payloadSize;
+			
 			int nextField = 0;
 			_packet = packet;
 			
@@ -25,9 +27,6 @@ public partial class MessagingService
 			nextField += 16;
 		
 			MessageSize = BitConverter.ToInt32(_packet.AsSpan(nextField, sizeof(int)));
-			nextField += sizeof(int);
-			
-			PayloadSize = BitConverter.ToInt32(_packet.AsSpan(nextField, sizeof(int)));
 			nextField += sizeof(int);
 			
 			Offset = BitConverter.ToInt32(_packet.AsSpan(nextField, sizeof(int)));
@@ -62,9 +61,6 @@ public partial class MessagingService
 			BitConverter.GetBytes(messageSize).CopyTo(_packet, nextField);
 			nextField += sizeof(int);
 			
-			BitConverter.GetBytes(payload.Length).CopyTo(_packet, nextField);
-			nextField += sizeof(int);
-			
 			BitConverter.GetBytes(offset).CopyTo(_packet, nextField);
 			nextField += sizeof(int);
 			
@@ -89,10 +85,8 @@ public partial class MessagingService
 			bool validMagic = packet.AsSpan(0, MessageMagic.Length).SequenceEqual(MessageMagic);
 			if (!validMagic)
 				return false;
-			
-			int payloadSize = BitConverter.ToInt32(packet.AsSpan(24, sizeof(int)));
-			
-			return payloadSize <= DatagramSize - HeaderSize;
+
+			return true;
 		}
 
 	}
