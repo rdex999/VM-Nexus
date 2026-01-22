@@ -9,6 +9,7 @@ public partial class MessagingService
 		private ulong _sendCounter = 0;
 		private AesGcm _aesGcm;
 		private byte[] _salt4;
+		private readonly Lock _syncLock = new();
 
 		public UdpCryptoService(byte[] key32, byte[] salt4) => Reset(key32, salt4);
 		public UdpCryptoService(out byte[] key32, out byte[] salt4) => Reset(out key32, out salt4);
@@ -24,11 +25,14 @@ public partial class MessagingService
 		/// </remarks>
 		public void Reset(byte[] key32, byte[] salt4)
 		{
-			_salt4 = salt4;
-			_sendCounter = 0;
-
-			_aesGcm?.Dispose();
-			_aesGcm = new AesGcm(key32, 16);
+			AesGcm aesGcm = new AesGcm(key32, 16);
+			lock (_syncLock)
+			{
+				AesGcm? old = Interlocked.Exchange(ref _aesGcm, aesGcm);
+				_salt4 = salt4;
+				Interlocked.Exchange(ref _sendCounter, 0);
+				old?.Dispose();
+			}
 		}
 	
 		/// <summary>
@@ -65,7 +69,9 @@ public partial class MessagingService
 		/// </remarks>
 		public UdpPacket? Encrypt(Guid messageId, int messageSize, int offset, ReadOnlySpan<byte> payload)
 		{
-			ulong sequence = _sendCounter++;
+			ulong sequence = _sendCounter;
+			Interlocked.Increment(ref _sendCounter);
+			
 			byte[] nonce = BuildNonce(sequence);
 			byte[] tag = new byte[16];
 			byte[] cipher = new byte[payload.Length];

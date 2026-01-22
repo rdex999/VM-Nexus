@@ -61,7 +61,7 @@ public class VirtualMachine
 	private bool _isRightShiftKeyDown = false;
 	private readonly string _pcmAudioFilePath;
 	private int _fps = 20;
-	private readonly object _frameLock;
+	private readonly Lock _frameLock;
 	private VirtualMachineFrame? _lastFrame = null;
 	private Task _allBackgroundTasks = null!;
 	private bool _closing = false;
@@ -81,7 +81,7 @@ public class VirtualMachine
 		PoweredOffTcs = new TaskCompletionSource<virDomainState>();
 		_cts = new CancellationTokenSource();
 		_rfbMessageCts = new CancellationTokenSource();
-		_frameLock = new object();
+		_frameLock = new Lock();
 	}
 
 	/// <summary>
@@ -1001,7 +1001,7 @@ public class VirtualMachine
 		public event EventHandler<VirtualMachineFrame>? NewFrameReceived;
 		private readonly int _vmId;
 		private byte[]? _framebuffer;
-		private readonly object _lock;
+		private readonly Lock _lock;
 		public Size ScreenSize { get; private set; }
 		private readonly PixelFormat _pixelFormat;
 		public Shared.PixelFormat UniPixelFormat { get; } /* Universal pixel format */
@@ -1015,7 +1015,7 @@ public class VirtualMachine
 			UniPixelFormat = new Shared.PixelFormat(_pixelFormat.BitsPerPixel, _pixelFormat.HasAlpha, _pixelFormat.RedShift,
 				_pixelFormat.GreenShift, _pixelFormat.BlueShift, _pixelFormat.AlphaShift);
 
-			_lock = new object();
+			_lock = new Lock();
 			ScreenSize = new Size(0, 0);
 		}
 
