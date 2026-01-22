@@ -1078,7 +1078,7 @@ public sealed class ClientConnection : MessagingService
 		ExitCode result = ExitCode.Success;
 		switch (info)
 		{
-			case MessageInfoIdentifyUdp infoIdentifyUdp:
+			case MessageInfoIdentifyUdpPort infoIdentifyUdp:
 			{
 				if (IsUdpMessagingRunning || UdpSocket!.RemoteEndPoint != null)
 					break;
@@ -1094,6 +1094,9 @@ public sealed class ClientConnection : MessagingService
 				{
 					break;
 				}
+				
+				ResetUdpCrypto(out byte[] key32, out byte[] salt4);
+				SendInfo(new MessageInfoCryptoUdp(true, key32, salt4));
 				
 				StartUdp();
 				break;

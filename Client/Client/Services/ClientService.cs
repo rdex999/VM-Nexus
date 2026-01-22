@@ -1011,7 +1011,7 @@ public class ClientService : MessagingService
 		}
 
 		IsServiceInitialized = true;
-		SendInfo(new MessageInfoIdentifyUdp(true, localPort));
+		SendInfo(new MessageInfoIdentifyUdpPort(true, localPort));
 
 		return true;
 	}
@@ -1062,6 +1062,11 @@ public class ClientService : MessagingService
 		
 		switch (info)
 		{
+			case MessageInfoCryptoUdp infoCryptoUdp:
+			{
+				ResetUdpCrypto(infoCryptoUdp.Key32, infoCryptoUdp.Salt4);
+				break;
+			}
 			case MessageInfoSubUserCreated infoSubUserCreated:
 			{
 				SubUserCreated?.Invoke(this, infoSubUserCreated.SubUser);

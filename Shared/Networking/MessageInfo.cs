@@ -23,17 +23,32 @@ public class MessageInfoUdp : MessageUdp
 	}
 }
 
-public class MessageInfoIdentifyUdp : MessageInfoTcp
+public class MessageInfoIdentifyUdpPort : MessageInfoTcp
 {
 	public int Port { get; }
 
-	public MessageInfoIdentifyUdp(bool generateGuid, int port)
+	public MessageInfoIdentifyUdpPort(bool generateGuid, int port)
 		: base(generateGuid)
 	{
 		Port = port;
 	}
 	
 	public override bool IsValidMessage() => base.IsValidMessage() && Port >= IPEndPoint.MinPort && Port <= IPEndPoint.MaxPort;
+}
+
+public class MessageInfoCryptoUdp : MessageInfoTcp
+{
+	public byte[] Key32 { get; }
+	public byte[] Salt4 { get; }
+	
+	public MessageInfoCryptoUdp(bool generateGuid, byte[] key32, byte[] salt4)
+		: base(generateGuid)
+	{
+		Key32 = key32;
+		Salt4 = salt4;
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && Key32.Length == 32 && Salt4.Length == 4;
 }
 
 public class MessageInfoSubUserCreated : MessageInfoTcp

@@ -75,18 +75,46 @@ public partial class MessagingService
 	/// </remarks>
 	protected void StartUdp()
 	{
-		/* TEMPORARY */
-		CryptoService = new UdpCryptoService(
-			new byte[32],
-			[12, 51, 91, 237]
-		);
-		
 		_ = MessageUdpReceiverAsync();
 		
 		if (!_messageUdpSenderThread.IsAlive)
 			_messageUdpSenderThread.Start();
 
 		IsUdpMessagingRunning = true;
+	}
+
+	/// <summary>
+	/// Reset the UDP crypto service. Re-generate key and salt, reset counters.
+	/// </summary>
+	/// <param name="key32">The new key to use. key32 != null.</param>
+	/// <param name="salt4">The new salt to use. salt != null.</param>
+	/// <remarks>
+	/// Precondition: key32 != null &amp;&amp; salt4 != null. <br/>
+	/// Postcondition: Service is reset, the given key and salt are now used.
+	/// </remarks>
+	protected void ResetUdpCrypto(byte[] key32, byte[] salt4)
+	{
+		if (CryptoService == null)
+			CryptoService = new UdpCryptoService(key32, salt4);
+		else
+			CryptoService.Reset(key32, salt4);
+	}
+	
+	/// <summary>
+	/// Reset the UDP crypto service. Re-generate key and salt, reset counters.
+	/// </summary>
+	/// <param name="key32">The new generated key output. key32 != null.</param>
+	/// <param name="salt4">The new generated salt output. salt != null.</param>
+	/// <remarks>
+	/// Precondition: key32 != null &amp;&amp; salt4 != null. <br/>
+	/// Postcondition: Service is reset, the new key and salt are written into the given outputs.
+	/// </remarks>
+	protected void ResetUdpCrypto(out byte[] key32, out byte[] salt4)
+	{
+		if (CryptoService == null)
+			CryptoService = new UdpCryptoService(out key32, out salt4);
+		else
+			CryptoService.Reset(out key32, out salt4);
 	}
 
 	/// <summary>

@@ -11,19 +11,42 @@ public partial class MessagingService
 		private AesGcm _aesGcm;
 		private byte[] _salt4;
 
-		public UdpCryptoService(byte[] key32, byte[] salt4)
-		{
-			_aesGcm = new AesGcm(key32, 16);
-			_salt4 = salt4;
-		}
+		public UdpCryptoService(byte[] key32, byte[] salt4) => Reset(key32, salt4);
+		public UdpCryptoService(out byte[] key32, out byte[] salt4) => Reset(out key32, out salt4);
 
-		public UdpCryptoService(out byte[] key32, out byte[] salt4)
+		/// <summary>
+		/// Reset this service. Re-generate key and salt, reset counters.
+		/// </summary>
+		/// <param name="key32">The new key to use. key32 != null.</param>
+		/// <param name="salt4">The new salt to use. salt != null.</param>
+		/// <remarks>
+		/// Precondition: key32 != null &amp;&amp; salt4 != null. <br/>
+		/// Postcondition: Service is reset, the given key and salt are now used.
+		/// </remarks>
+		public void Reset(byte[] key32, byte[] salt4)
+		{
+			_salt4 = salt4;
+			_sendCounter = 0;
+			_receiveCounter = 0;
+
+			_aesGcm?.Dispose();
+			_aesGcm = new AesGcm(key32, 16);
+		}
+	
+		/// <summary>
+		/// Reset this service. Re-generate key and salt, reset counters.
+		/// </summary>
+		/// <param name="key32">The new generated key output. key32 != null.</param>
+		/// <param name="salt4">The new generated salt output. salt != null.</param>
+		/// <remarks>
+		/// Precondition: key32 != null &amp;&amp; salt4 != null. <br/>
+		/// Postcondition: Service is reset, the new key and salt are written into the given outputs.
+		/// </remarks>
+		public void Reset(out byte[] key32, out byte[] salt4)
 		{
 			key32 = RandomNumberGenerator.GetBytes(32);
 			salt4 = RandomNumberGenerator.GetBytes(4);
-			_salt4 = salt4;
-			
-			_aesGcm = new AesGcm(key32, 16);
+			Reset(key32, salt4);
 		}
 
 		/// <summary>
