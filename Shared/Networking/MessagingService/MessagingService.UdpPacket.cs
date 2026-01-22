@@ -22,9 +22,9 @@ public partial class MessagingService
 		 * 0:4		- Magic "VMNX"
 		 * 4:8		- Sequence number. (ulong) Used for encryption and decryption. (See UdpCryptoService)
 		 * 12:16	- Tag. Used for encryption and decryption. (See UdpCryptoService)
-		 * 4:16		- Message ID (Guid)
-		 * 20:4		- Message size. The total size of the incoming message, in bytes. (not the size of this packet)
-		 * 24:4		- Offset. The offset of this packet's data in the incoming message, in bytes.
+		 * 28:16	- Message ID (Guid)
+		 * 44:4		- Message size. The total size of the incoming message, in bytes. (not the size of this packet)
+		 * 48:4		- Offset. The offset of this packet's data in the incoming message, in bytes.
 		 */
 		
 		public UdpPacket(byte[] packet, int packetSize)
@@ -50,8 +50,8 @@ public partial class MessagingService
 		/// <summary>
 		/// Instantiates a packet from the given data. (Packet content)
 		/// </summary>
-		/// <param name="sequence"></param>
-		/// <param name="tag16"></param>
+		/// <param name="sequence">The sequence number of the packet. Used for encryption and decryption.</param>
+		/// <param name="tag16">The packets tag. Used for encryption and decryption. tag16 != null.</param>
 		/// <param name="messageId">The ID of the message that this packet is a part of. messageId != null.</param>
 		/// <param name="messageSize">The size of the entier message, in bytes. messageSize > 0.</param>
 		/// <param name="offset">The offset of this packet's payload in the message. offset >= 0.</param>
@@ -59,7 +59,7 @@ public partial class MessagingService
 		/// payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize.</param>
 		/// <returns>A byte array representing the packet with the given data.</returns>
 		/// <remarks>
-		/// Precondition: messageId != null &amp;&amp; messageSize > 0 &amp;&amp; offset >= 0
+		/// Precondition: tag16 != null &amp;&amp; messageId != null &amp;&amp; messageSize > 0 &amp;&amp; offset >= 0
 		/// &amp;&amp; payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize. <br/>
 		/// Postcondition: A byte array representing the packet with the given data is returned.
 		/// </remarks>
@@ -103,6 +103,11 @@ public partial class MessagingService
 		{
 			if (packet.Length > DatagramSize || packet.Length < HeaderSize)
 				return false;
+
+			/* Protects against large memory allocation attacks. (attacker set large size so server allocates memory) */
+			int messageSize = BitConverter.ToInt32(packet.AsSpan(44, 4));
+			if (messageSize > SharedDefinitions.MaxUdpMessageSize || messageSize <= 0)
+				return false;
 			
 			bool validMagic = packet.AsSpan(0, MessageMagic.Length).SequenceEqual(MessageMagic);
 			if (!validMagic)
@@ -111,6 +116,16 @@ public partial class MessagingService
 			return true;
 		}
 
+		/// <summary>
+		/// Update the payload to a new payload, of the same size. (Useful after decryption)
+		/// </summary>
+		/// <param name="payload">The new payload. Must be of the same size as the old one. payload != null.</param>
+		/// <returns>True on success, false otherwise.</returns>
+		/// <remarks>
+		/// Precondition: The given payload must be of the same size as the old one. payload != null. <br/>
+		/// Postcondition: If the given payload is of the same size as the old one, the operation succeeds and true is returned.
+		/// Otherwise, false is returned and the payload is not updated.
+		/// </remarks>
 		public bool UpdatePayload(ReadOnlySpan<byte> payload)
 		{
 			if (payload.Length != PayloadSize)

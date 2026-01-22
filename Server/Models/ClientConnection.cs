@@ -160,6 +160,9 @@ public sealed class ClientConnection : MessagingService
 	
 		/* UDP will be started once a MessageInfoIdentifyUdp is received (using TCP socket) from the client. */
 		StartTcp();
+		
+		ResetUdpCrypto(out byte[] key32, out byte[] salt4);
+		SendInfo(new MessageInfoCryptoUdp(true, key32, salt4));
 	}
 	
 	/// <summary>
@@ -1094,9 +1097,6 @@ public sealed class ClientConnection : MessagingService
 				{
 					break;
 				}
-				
-				ResetUdpCrypto(out byte[] key32, out byte[] salt4);
-				SendInfo(new MessageInfoCryptoUdp(true, key32, salt4));
 				
 				StartUdp();
 				break;

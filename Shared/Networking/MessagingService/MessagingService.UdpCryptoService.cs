@@ -7,7 +7,6 @@ public partial class MessagingService
 	private class UdpCryptoService : IDisposable
 	{
 		private ulong _sendCounter = 0;
-		private ulong _receiveCounter = 0;
 		private AesGcm _aesGcm;
 		private byte[] _salt4;
 
@@ -27,7 +26,6 @@ public partial class MessagingService
 		{
 			_salt4 = salt4;
 			_sendCounter = 0;
-			_receiveCounter = 0;
 
 			_aesGcm?.Dispose();
 			_aesGcm = new AesGcm(key32, 16);

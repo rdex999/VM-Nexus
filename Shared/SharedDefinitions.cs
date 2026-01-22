@@ -8,6 +8,8 @@ public static class SharedDefinitions
 	public const int ServerUdpPort = 5002;
 	public const string ServerIp = "192.168.1.155";		/* local IP in network */
 
+	public const int MaxUdpMessageSize = 150 * 1024 * 1024;
+	
 	public const int MessageTimeoutMilliseconds = 3 * 60 * 1000;
 	public const int ConnectionDeniedRetryTimeout = 4000;
 

@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Net.WebSockets;
-using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace Shared.Networking;
@@ -219,18 +218,28 @@ public partial class MessagingService
 				continue;
 
 			UdpPacket packet = new UdpPacket(buffer, size);
-			UdpPacket? decrypted = CryptoService.Decrypt(packet);
-			if (decrypted == null)
-				continue;
 			
 			ExitCode result;
 			Message? message;
-			if (_incomingUdpMessages.TryGetValue(decrypted.MessageId, out IncomingMessageUdp? incoming))
+			if (_incomingUdpMessages.TryGetValue(packet.MessageId, out IncomingMessageUdp? incoming))
+			{
+				/* Checking here before decrypting to save decryption time. We might detect an invalid packet before its decrypted. */
+				if (incoming.CanReceivePacket(packet) == ExitCode.InvalidUdpPacket)
+				{
+					_incomingUdpMessages.Remove(packet.MessageId);
+					continue;
+				}
+			}
+
+			UdpPacket? decrypted = CryptoService.Decrypt(packet);
+			if (decrypted == null)
+				continue;
+
+			if (incoming == null)
+				_incomingUdpMessages.TryAdd(decrypted.MessageId, new IncomingMessageUdp(decrypted, OnIncomingMessageTimeout, out result, out message));
+			else
 				result = incoming.ReceivePacket(decrypted, out message);
 			
-			else
-				_incomingUdpMessages.TryAdd(decrypted.MessageId, new IncomingMessageUdp(decrypted, OnIncomingMessageTimeout, out result, out message));
-
 			switch (result)
 			{
 				case ExitCode.Success:

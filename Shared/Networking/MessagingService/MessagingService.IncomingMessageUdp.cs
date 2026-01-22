@@ -115,6 +115,52 @@ public partial class MessagingService
 		}
 
 		/// <summary>
+		/// Check if the packet can be received. If It's invalid, this message is closed. <br/>
+		/// Note: If this method returns ExitCode.Success, it is not guaranteed that ReceivePacket will succeed.
+		/// </summary>
+		/// <param name="packet">The packet to check if it can be received. packet != null.</param>
+		/// <returns>An exit code, indicating the packet can be received, (success) or the reason it cannot be received.</returns>
+		/// <remarks>
+		/// Precondition: packet != null. <br/>
+		/// Postcondition: If the packet can be received, success is returned.
+		/// Otherwise, the returned exit code indicates the reason the packet cannot be received.
+		/// If ExitCode.InvalidUdpPacket is returned, this incoming message is closed,
+		/// and the caller should remove this message from the incoming messages.
+		/// </remarks>
+		public ExitCode CanReceivePacket(UdpPacket packet)
+		{
+			if (packet.MessageSize != _data.Length)
+			{
+				Close();
+				return ExitCode.InvalidUdpPacket;
+			}
+			
+			int chunk = packet.Offset / UdpPacket.MaxPayloadSize;
+			if (chunk >= _chunks.Length)
+			{
+				Close();
+				return ExitCode.InvalidUdpPacket;
+			}
+
+			if (_chunks[chunk])
+				return ExitCode.UdpPacketDuplicate;
+
+			int chunkSize;
+			if (chunk == _chunks.Length - 1)
+				chunkSize = _data.Length % UdpPacket.MaxPayloadSize;
+			else
+				chunkSize = UdpPacket.MaxPayloadSize;
+
+			if (packet.PayloadSize > chunkSize)
+			{
+				Close();
+				return ExitCode.InvalidUdpPacket;
+			}
+			
+			return ExitCode.Success;
+		}
+
+		/// <summary>
 		/// Closes this message and releases used resources.
 		/// </summary>
 		/// <remarks>
