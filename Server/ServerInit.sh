@@ -33,13 +33,13 @@ then
   sudo systemctl stop postgresql
 fi
 
-mkdir -p Keys
-echo -e "Enter a password for the server.pfx key:"
-read password
-
 echo -e "Enter the server's IP:"
 read ip
 
+echo -e "Enter a password for the server.pfx key:"
+read password
+
+mkdir -p Keys
 echo -n "$password" > Keys/server.pswd
 
 echo -e "[req]" > Keys/san.cnf
@@ -61,7 +61,7 @@ echo -e "IP.1 = $ip" >> Keys/san.cnf
 
 openssl genrsa -out Keys/server.key 2048
 openssl req -new -key Keys/server.key -out Keys/server.csr -config Keys/san.cnf
-openssl x509 -req -in Keys/server.csr -signkey Keys/server.key -out Keys/server.crt -days 365 -extfile Keys/san.cnf
+openssl x509 -req -in Keys/server.csr -signkey Keys/server.key -out Keys/server.crt -days 365 -extfile Keys/san.cnf -extensions v3_req
 openssl pkcs12 -export -out Keys/server.pfx -inkey Keys/server.key -in Keys/server.crt -passout "pass:$password"
 
 sudo cp Keys/server.crt /etc/ssl/certs
