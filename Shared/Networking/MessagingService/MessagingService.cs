@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Net.WebSockets;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
 namespace Shared.Networking;
@@ -27,7 +28,7 @@ public partial class MessagingService
 	private readonly Dictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
 	private readonly ConcurrentDictionary<Guid, TransferHandler> _ongoingTransfers;
 	protected readonly TransferRateLimiter TransferLimiter;
-	protected readonly UdpCryptoService? CryptoService;
+	private UdpCryptoService? CryptoService;
 	private const int DatagramSize = 1200;
 
 	/// <remarks>
@@ -74,6 +75,12 @@ public partial class MessagingService
 	/// </remarks>
 	protected void StartUdp()
 	{
+		/* TEMPORARY */
+		CryptoService = new UdpCryptoService(
+			new byte[32],
+			[12, 51, 91, 237]
+		);
+		
 		_ = MessageUdpReceiverAsync();
 		
 		if (!_messageUdpSenderThread.IsAlive)
@@ -180,28 +187,31 @@ public partial class MessagingService
 				continue;
 			}
 			
-			if (!UdpPacket.IsValidPacket(buffer))
+			if (!UdpPacket.IsValidPacket(buffer) || CryptoService == null)
 				continue;
 
 			UdpPacket packet = new UdpPacket(buffer, size);
+			UdpPacket? decrypted = CryptoService.Decrypt(packet);
+			if (decrypted == null)
+				continue;
 			
 			ExitCode result;
 			Message? message;
-			if (_incomingUdpMessages.TryGetValue(packet.MessageId, out IncomingMessageUdp? incoming))
-				result = incoming.ReceivePacket(packet, out message);
+			if (_incomingUdpMessages.TryGetValue(decrypted.MessageId, out IncomingMessageUdp? incoming))
+				result = incoming.ReceivePacket(decrypted, out message);
 			
 			else
-				_incomingUdpMessages.TryAdd(packet.MessageId, new IncomingMessageUdp(packet, OnIncomingMessageTimeout, out result, out message));
+				_incomingUdpMessages.TryAdd(decrypted.MessageId, new IncomingMessageUdp(decrypted, OnIncomingMessageTimeout, out result, out message));
 
 			switch (result)
 			{
 				case ExitCode.Success:
 					await ProcessMessageAsync(message!);
-					_incomingUdpMessages.Remove(packet.MessageId);
+					_incomingUdpMessages.Remove(decrypted.MessageId);
 					break;
 					
 				case ExitCode.InvalidUdpPacket or ExitCode.MessageUdpCorrupted:
-					_incomingUdpMessages.Remove(packet.MessageId);
+					_incomingUdpMessages.Remove(decrypted.MessageId);
 					break;
 			}
 		}
@@ -276,18 +286,27 @@ public partial class MessagingService
 				continue;
 			}
 
+			if (CryptoService == null)
+			{
+				_messageUdpQueue.Clear();
+				continue;
+			}
+
 			while (_messageUdpQueue.TryDequeue(out Message? message))
 			{
 				byte[] messageBytes = Common.ToByteArrayWithType(message);
 				int bytesSent = 0;
 				while (bytesSent < messageBytes.Length && !Cts.Token.IsCancellationRequested)
 				{
-					UdpPacket packet = new UdpPacket(
+					UdpPacket? packet = CryptoService.Encrypt(
 						message.Id,
 						messageBytes.Length,
 						bytesSent,
 						messageBytes.AsSpan(bytesSent, Math.Min(UdpPacket.MaxPayloadSize, messageBytes.Length - bytesSent))
 					);
+
+					if (packet == null)
+						continue;
 
 					int sent;
 					try

@@ -2,26 +2,41 @@ namespace Shared.Networking;
 
 public partial class MessagingService
 {
-	private readonly struct UdpPacket
+	private class UdpPacket
 	{
-		public const int HeaderSize = 4 + 16 + 4 + 4;
+		public const int HeaderSize = 4 + 8 + 16 + 16 + 4 + 4;
 		public const int MaxPayloadSize = DatagramSize - HeaderSize;
+		public ulong Sequence { get; }
+		public ReadOnlySpan<byte> Tag16 => _packet.AsSpan(4 + 8, 16);
 		public Guid MessageId { get; }
 		public int MessageSize { get; }
 		public int PayloadSize { get; }
 		public int Offset { get; }
 		public ReadOnlySpan<byte> Payload => _packet.AsSpan(HeaderSize, PayloadSize);
 		public ReadOnlySpan<byte> Packet => _packet.AsSpan();
-		private readonly byte[] _packet;
+		private byte[] _packet;
+	
+		/*
+		 * UDP Packet structure, by byte offset, and length. (offset:length)
+		 * 
+		 * 0:4		- Magic "VMNX"
+		 * 4:8		- Sequence number. (ulong) Used for encryption and decryption. (See UdpCryptoService)
+		 * 12:16	- Tag. Used for encryption and decryption. (See UdpCryptoService)
+		 * 4:16		- Message ID (Guid)
+		 * 20:4		- Message size. The total size of the incoming message, in bytes. (not the size of this packet)
+		 * 24:4		- Offset. The offset of this packet's data in the incoming message, in bytes.
+		 */
 		
-		public UdpPacket(byte[] packet, int payloadSize)
+		public UdpPacket(byte[] packet, int packetSize)
 		{
-			PayloadSize = payloadSize;
-			
-			int nextField = 0;
+			PayloadSize = packetSize - HeaderSize;
 			_packet = packet;
 			
+			int nextField = 0;
 			nextField += MessageMagic.Length;
+			
+			Sequence = BitConverter.ToUInt64(_packet, nextField);
+			nextField += sizeof(ulong) + Tag16.Length;
 			
 			MessageId = new Guid(packet.AsSpan(nextField, 16));
 			nextField += 16;
@@ -35,25 +50,32 @@ public partial class MessagingService
 		/// <summary>
 		/// Instantiates a packet from the given data. (Packet content)
 		/// </summary>
+		/// <param name="sequence"></param>
+		/// <param name="tag16"></param>
 		/// <param name="messageId">The ID of the message that this packet is a part of. messageId != null.</param>
 		/// <param name="messageSize">The size of the entier message, in bytes. messageSize > 0.</param>
 		/// <param name="offset">The offset of this packet's payload in the message. offset >= 0.</param>
-		/// <param name="payload">
-		/// The payload, the content of this packet. payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize.
-		/// </param>
+		/// <param name="payload">The payload, the content of this packet.
+		/// payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize.</param>
 		/// <returns>A byte array representing the packet with the given data.</returns>
 		/// <remarks>
 		/// Precondition: messageId != null &amp;&amp; messageSize > 0 &amp;&amp; offset >= 0
 		/// &amp;&amp; payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize. <br/>
 		/// Postcondition: A byte array representing the packet with the given data is returned.
 		/// </remarks>
-		public UdpPacket(Guid messageId, int messageSize, int offset, ReadOnlySpan<byte> payload)
+		public UdpPacket(ulong sequence, ReadOnlySpan<byte> tag16, Guid messageId, int messageSize, int offset, ReadOnlySpan<byte> payload)
 		{
 			_packet = new byte[HeaderSize + payload.Length];
 			int nextField = 0;
 		
 			MessageMagic.CopyTo(_packet, nextField);
 			nextField += MessageMagic.Length;
+			
+			BitConverter.GetBytes(sequence).CopyTo(_packet, nextField);
+			nextField += sizeof(ulong);
+			
+			tag16.CopyTo(_packet.AsSpan(nextField, 16));
+			nextField += 16;
 			
 			messageId.ToByteArray().CopyTo(_packet, nextField);
 			nextField += 16;
@@ -89,5 +111,13 @@ public partial class MessagingService
 			return true;
 		}
 
+		public bool UpdatePayload(ReadOnlySpan<byte> payload)
+		{
+			if (payload.Length != PayloadSize)
+				return false;
+			
+			payload.CopyTo(_packet.AsSpan(HeaderSize, Payload.Length));
+			return true;
+		}
 	}
 }
