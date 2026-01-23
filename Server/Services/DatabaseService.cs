@@ -426,6 +426,33 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Update the owner of the given user. (Change owner_id field)
+	/// </summary>
+	/// <param name="userId">The user to update the owner of. userId >= 1.</param>
+	/// <param name="newOwnerId">The ID of the new owner of the given user. Set to null to orphan user. newOwnerId >= 1 || newOwnerId == null.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. userId >= 1 &amp;&amp; (newOwnerId >= 1 || newOwnerId == null). <br/>
+	/// Postcondition: On success, the owner of the given user is updated to the given user, and the returned exit code indicates success. <br/>
+	/// On failure, the owner is not updated and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> UpdateUserOwnerAsync(int userId, int? newOwnerId)
+	{
+		if (userId < 1 || newOwnerId < 1)
+			return ExitCode.InvalidParameter;
+
+		int rows = await ExecuteNonQueryAsync("UPDATE users SET owner_id = @new_owner_id WHERE id = @user_id",
+			new NpgsqlParameter("@user_id", userId),
+			new NpgsqlParameter("@new_owner_id", newOwnerId)
+		);
+		
+		if (rows == 1)
+			return ExitCode.Success;
+
+		return ExitCode.DatabaseOperationFailed;
+	}
+
+	/// <summary>
 	/// Creates a virtual machine in the database.
 	/// </summary>
 	/// <param name="userId">The ID of the owner user of the virtual machine. userId >= 1.</param>

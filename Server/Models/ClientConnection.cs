@@ -285,6 +285,34 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestDeleteAccount reqDeleteAccount:
+			{
+				if (!IsLoggedIn || !(reqDeleteAccount.UserId == ActualUser!.Id || (IsLoggedInAsSubUser && reqDeleteAccount.UserId == User!.Id 
+					    && HasPermission(UserPermissions.UserDelete))))
+				{
+					SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
+					break;
+				}
+				
+				int? newOwnerId;
+				if (reqDeleteAccount.UserId == ActionUser!.Id)
+					newOwnerId = ActualUser is SubUser actionAsSub ? actionAsSub.OwnerId : null;
+
+				else
+				{
+					User? user = await _databaseService.GetUserAsync(reqDeleteAccount.UserId);
+					if (user is not SubUser subUser || subUser.OwnerId != ActualUser.Id 
+					                                || !subUser.OwnerPermissions.HasPermission(UserPermissions.UserDelete.AddIncluded()))
+					{
+						SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
+						break;
+					}
+
+					newOwnerId = ActualUser.Id;
+				}
+				break;
+			}
+
 			case MessageRequestLogin reqLogin:
 			{
 				string usernameTrimmed = reqLogin.Username.Trim();
