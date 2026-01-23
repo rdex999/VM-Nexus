@@ -180,6 +180,25 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests to delete the given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user to delete. userId >= 1.</param>
+	/// <returns>True if the user was deleted successfully, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server, a user with the given ID exists,
+	/// and the current user has permission to delete the given user. userId >= 1. <br/>
+	/// Postcondition: On success, the given user is deleted and true is returned. On failure, the given user is not deleted and false is returned.
+	/// </remarks>
+	public async Task<bool> DeleteAccountAsync(int userId)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteAccount(true, userId));
+		if (result != ExitCode.Success)
+			return false;
+
+		return ((MessageResponseDeleteAccount)response!).Deleted;
+	}
+
+	/// <summary>
 	/// Sends a Logout request. Logs-out on success.
 	/// </summary>
 	/// <returns>

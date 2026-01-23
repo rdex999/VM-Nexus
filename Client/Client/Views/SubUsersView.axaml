@@ -133,11 +133,14 @@
 					Deleting a sub-user will permanently delete all of their virtual machines and drives.
 				</TextBlock>
 				
+				<TextBlock TextWrapping="Wrap">Note: This might take up to several minutes.</TextBlock>
+				
 				<TextBlock Text="{Binding DeleteSubUserPopupEffects}" TextWrapping="Wrap"/>
 				
 				<TextBlock Text="{Binding DeleteSubUserPopupConfirmation}" FontWeight="DemiBold" />
 				
-				<Button HorizontalAlignment="Center" Margin="0, 15, 0, 0" Classes="submit_dark">Delete</Button>
+				<Button HorizontalAlignment="Center" Margin="0, 15, 0, 0" Classes="submit_dark"
+				        Command="{Binding DeleteSubUserPopupDeleteClickCommand}">Delete</Button>
 			</StackPanel>
 		</templated:OverlayPopup>
 		
@@ -170,7 +173,7 @@
 						<ItemsControl.DataTemplates>
 							<DataTemplate DataType="viewModels:SubUserItemTemplate">
 								<Border Padding="10" Margin="10" Background="#edf7f7" CornerRadius="15" 
-								        HorizontalAlignment="Stretch" BoxShadow="0 0 14 0 #B0BAC5">
+								        HorizontalAlignment="Stretch" BoxShadow="0 0 14 0 #c9d0d8">
 									<Grid ColumnDefinitions="Auto, Auto, Auto, Auto, *" ColumnSpacing="25">
 										<Border CornerRadius="100" Background="#cbf4e5"
 										        BorderBrush="#c9dbd4" BorderThickness="0.8" Padding="15">

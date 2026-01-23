@@ -63,6 +63,8 @@ public partial class SubUsersViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private string _deleteSubUserPopupConfirmation = string.Empty;
+
+	private int _deleteSubUserPopupUserId = -1;
 	
 	public SubUsersViewModel(NavigationService navigationSvc, ClientService clientSvc) 
 		: base(navigationSvc, clientSvc)
@@ -422,7 +424,19 @@ public partial class SubUsersViewModel : ViewModelBase
 		
 		DeleteSubUserPopupConfirmation = $"Are you sure you want to delete {subUser.Username}?";
 		DeleteSubUserPopupIsOpen = true;
+		_deleteSubUserPopupUserId = subUser.Id;
 	}
+
+	/// <summary>
+	/// Attempts to delete the sub-user.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the delete button, on the sub-user deletion popup. <br/>
+	/// Postcondition: An attempt to delete the sub-user is performed. On success, the sub-user is deleted.
+	/// On failure, (which should not happen) the sub-user is not deleted.
+	/// </remarks>
+	[RelayCommand]
+	private async Task DeleteSubUserPopupDeleteClickAsync() => await ClientSvc.DeleteAccountAsync(_deleteSubUserPopupUserId);
 	
 	/// <summary>
 	/// Attempts to log in into the given sub-user's account.

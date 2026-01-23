@@ -289,8 +289,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestDeleteAccount reqDeleteAccount:
 			{
-				if (!IsLoggedIn || !(reqDeleteAccount.UserId == ActualUser!.Id || (IsLoggedInAsSubUser && reqDeleteAccount.UserId == User!.Id 
-					    && HasPermission(UserPermissions.UserDelete))))
+				if (!IsLoggedIn)
 				{
 					SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
 					break;
@@ -298,12 +297,19 @@ public sealed class ClientConnection : MessagingService
 				
 				int? newOwnerId;
 				if (reqDeleteAccount.UserId == ActionUser!.Id)
+				{
 					newOwnerId = ActualUser is SubUser actionAsSub ? actionAsSub.OwnerId : null;
+					if (IsLoggedInAsSubUser && !HasPermission(UserPermissions.UserDelete))
+					{
+						SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
+						break;
+					}
+				}
 
 				else
 				{
 					User? user = await _databaseService.GetUserAsync(reqDeleteAccount.UserId);
-					if (user is not SubUser subUser || subUser.OwnerId != ActualUser.Id 
+					if (user is not SubUser subUser || subUser.OwnerId != ActualUser!.Id 
 					                                || !subUser.OwnerPermissions.HasPermission(UserPermissions.UserDelete.AddIncluded()))
 					{
 						SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
