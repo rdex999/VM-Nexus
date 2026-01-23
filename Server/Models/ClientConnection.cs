@@ -63,7 +63,9 @@ public sealed class ClientConnection : MessagingService
 	/// socket != null &amp;&amp; userService != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null. &amp;&amp; driveService != null.<br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
-	public ClientConnection(Socket tcpSocket, DatabaseService databaseService, UserService userService, VirtualMachineService virtualMachineService, DriveService driveService)
+	public ClientConnection(Socket tcpSocket, DatabaseService databaseService, UserService userService, 
+		VirtualMachineService virtualMachineService, DriveService driveService)
+		: base(true)
 	{
 		_databaseService = databaseService;
 		_userService = userService;
@@ -95,7 +97,9 @@ public sealed class ClientConnection : MessagingService
 	/// socket != null &amp;&amp; userService != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null. &amp;&amp; driveService != null.<br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
-	public ClientConnection(WebSocket socket, DatabaseService databaseService, UserService userService, VirtualMachineService virtualMachineService, DriveService driveService)
+	public ClientConnection(WebSocket socket, DatabaseService databaseService, UserService userService, 
+		VirtualMachineService virtualMachineService, DriveService driveService)
+		: base(true)
 	{
 		_databaseService = databaseService;
 		_userService = userService;
@@ -160,9 +164,8 @@ public sealed class ClientConnection : MessagingService
 	
 		/* UDP will be started once a MessageInfoIdentifyUdp is received (using TCP socket) from the client. */
 		StartTcp();
-		
-		ResetUdpCrypto(out byte[] key32, out byte[] salt4);
-		SendInfo(new MessageInfoCryptoUdp(true, key32, salt4));
+
+		ResetUdpCrypto();
 	}
 	
 	/// <summary>

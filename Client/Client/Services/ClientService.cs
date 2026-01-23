@@ -38,6 +38,11 @@ public class ClientService : MessagingService
 
 	public bool IsLoggedIn => User != null;
 	public User? User { get; private set; }
+
+	public ClientService()
+		: base(false)
+	{
+	}
 	
 	/// <summary>
 	/// Fully initializes client messaging and connects to the server.

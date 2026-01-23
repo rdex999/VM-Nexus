@@ -7,48 +7,71 @@ public partial class MessagingService
 	private class UdpCryptoService : IDisposable
 	{
 		private ulong _sendCounter = 0;
-		private AesGcm _aesGcm;
-		private byte[] _salt4;
+		private AesGcm _aesGcmS2C;
+		private AesGcm _aesGcmC2S;
+		private byte[] _sessionId4;
+		private readonly bool _isServer;
 		private readonly Lock _syncLock = new();
 
-		public UdpCryptoService(byte[] key32, byte[] salt4) => Reset(key32, salt4);
-		public UdpCryptoService(out byte[] key32, out byte[] salt4) => Reset(out key32, out salt4);
+		public UdpCryptoService(bool isServer, byte[] masterKey32, byte[] salt32)
+		{
+			_isServer = isServer;
+			Reset(masterKey32, salt32);
+		}
+
+		public UdpCryptoService(bool isServer, out byte[] masterKey32, out byte[] salt32)
+		{
+			_isServer = isServer;
+			Reset(out masterKey32, out salt32);
+		}
 
 		/// <summary>
 		/// Reset this service. Re-generate key and salt, reset counters.
 		/// </summary>
-		/// <param name="key32">The new key to use. key32 != null.</param>
-		/// <param name="salt4">The new salt to use. salt != null.</param>
+		/// <param name="masterKey32">The new key to use. key32 != null.</param>
+		/// <param name="salt32">The new salt to use. salt != null.</param>
 		/// <remarks>
 		/// Precondition: key32 != null &amp;&amp; salt4 != null. <br/>
 		/// Postcondition: Service is reset, the given key and salt are now used.
 		/// </remarks>
-		public void Reset(byte[] key32, byte[] salt4)
+		public void Reset(byte[] masterKey32, byte[] salt32)
 		{
-			AesGcm aesGcm = new AesGcm(key32, 16);
+			byte[] prk = HKDF.Extract(HashAlgorithmName.SHA256, masterKey32, salt32);
+
+			byte[] s2C = HKDF.Expand(HashAlgorithmName.SHA256, prk, 32, "SERVER TO CLIENT"u8.ToArray());
+			byte[] c2S = HKDF.Expand(HashAlgorithmName.SHA256, prk, 32, "CLIENT TO SERVER"u8.ToArray());
+			byte[] sessionId4 = HKDF.Expand(HashAlgorithmName.SHA256, prk, 4, "SESSION ID"u8.ToArray());
+
 			lock (_syncLock)
 			{
-				AesGcm? old = Interlocked.Exchange(ref _aesGcm, aesGcm);
-				_salt4 = salt4;
+				_sessionId4 = sessionId4;
 				Interlocked.Exchange(ref _sendCounter, 0);
-				old?.Dispose();
+
+				AesGcm aesGcmS2C = new AesGcm(s2C, 16);
+				AesGcm aesGcmC2S = new AesGcm(c2S, 16);
+				
+				AesGcm? oldS2C = Interlocked.Exchange(ref _aesGcmS2C, aesGcmS2C);
+				AesGcm? oldC2S = Interlocked.Exchange(ref _aesGcmC2S, aesGcmC2S);
+				
+				oldS2C?.Dispose();
+				oldC2S?.Dispose();
 			}
 		}
 	
 		/// <summary>
 		/// Reset this service. Re-generate key and salt, reset counters.
 		/// </summary>
-		/// <param name="key32">The new generated key output. key32 != null.</param>
-		/// <param name="salt4">The new generated salt output. salt != null.</param>
+		/// <param name="masterKey32">The new generated key output. key32 != null.</param>
+		/// <param name="salt32">The new generated salt output. salt != null.</param>
 		/// <remarks>
 		/// Precondition: key32 != null &amp;&amp; salt4 != null. <br/>
 		/// Postcondition: Service is reset, the new key and salt are written into the given outputs.
 		/// </remarks>
-		public void Reset(out byte[] key32, out byte[] salt4)
+		public void Reset(out byte[] masterKey32, out byte[] salt32)
 		{
-			key32 = RandomNumberGenerator.GetBytes(32);
-			salt4 = RandomNumberGenerator.GetBytes(4);
-			Reset(key32, salt4);
+			masterKey32 = RandomNumberGenerator.GetBytes(32);
+			salt32 = RandomNumberGenerator.GetBytes(32);
+			Reset(masterKey32, salt32);
 		}
 
 		/// <summary>
@@ -78,7 +101,10 @@ public partial class MessagingService
 
 			try
 			{
-				_aesGcm.Encrypt(nonce, payload, cipher, tag, null);
+				if (_isServer)
+					_aesGcmS2C.Encrypt(nonce, payload, cipher, tag, null);
+				else
+					_aesGcmC2S.Encrypt(nonce, payload, cipher, tag, null);
 			}
 			catch (Exception)
 			{
@@ -104,7 +130,10 @@ public partial class MessagingService
 
 			try
 			{
-				_aesGcm.Decrypt(nonce, packet.Payload, packet.Tag16, plainText, null);
+				if (_isServer)
+					_aesGcmC2S.Decrypt(nonce, packet.Payload, packet.Tag16, plainText, null);
+				else
+					_aesGcmS2C.Decrypt(nonce, packet.Payload, packet.Tag16, plainText, null);
 			}
 			catch (Exception)
 			{
@@ -129,7 +158,7 @@ public partial class MessagingService
 		private byte[] BuildNonce(ulong sequence)
 		{
 			byte[] nonce = new byte[12];
-			_salt4.CopyTo(nonce, 0);
+			_sessionId4.CopyTo(nonce, 0);
 			BitConverter.GetBytes(sequence).CopyTo(nonce, 4);
 			
 			return nonce;
@@ -144,7 +173,8 @@ public partial class MessagingService
 		/// </remarks>
 		public void Dispose()
 		{
-			_aesGcm.Dispose();
+			_aesGcmS2C?.Dispose();
+			_aesGcmC2S?.Dispose();
 		}
 	}
 }

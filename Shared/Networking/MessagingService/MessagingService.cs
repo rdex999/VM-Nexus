@@ -10,6 +10,7 @@ namespace Shared.Networking;
 public partial class MessagingService
 {
 	public event EventHandler<ExitCode>? FailEvent;
+	private readonly bool _isServer;
 	protected Socket? TcpSocket;
 	protected Socket? UdpSocket;
 	protected WebSocket? WebSocket;
@@ -34,8 +35,9 @@ public partial class MessagingService
 	/// Precondition: No specific preconditions. <br/>
 	/// PostCondition: Service officially uninitialized 
 	/// </remarks>
-	public MessagingService()
+	public MessagingService(bool isServer)
 	{
+		_isServer = isServer;
 		IsServiceInitialized = false;
 		
 		Cts = new CancellationTokenSource();
@@ -86,34 +88,36 @@ public partial class MessagingService
 	/// Reset the UDP crypto service. Re-generate key and salt, reset counters.
 	/// </summary>
 	/// <param name="key32">The new key to use. key32 != null.</param>
-	/// <param name="salt4">The new salt to use. salt != null.</param>
+	/// <param name="salt32">The new salt to use. salt != null.</param>
 	/// <remarks>
-	/// Precondition: key32 != null &amp;&amp; salt4 != null. <br/>
+	/// Precondition: key32 != null &amp;&amp; salt32 != null. <br/>
 	/// Postcondition: Service is reset, the given key and salt are now used.
 	/// </remarks>
-	protected void ResetUdpCrypto(byte[] key32, byte[] salt4)
+	private void ResetUdpCrypto(byte[] key32, byte[] salt32)
 	{
 		if (CryptoService == null)
-			CryptoService = new UdpCryptoService(key32, salt4);
+			CryptoService = new UdpCryptoService(_isServer, key32, salt32);
 		else
-			CryptoService.Reset(key32, salt4);
+			CryptoService.Reset(key32, salt32);
 	}
 	
 	/// <summary>
 	/// Reset the UDP crypto service. Re-generate key and salt, reset counters.
 	/// </summary>
-	/// <param name="key32">The new generated key output. key32 != null.</param>
-	/// <param name="salt4">The new generated salt output. salt != null.</param>
 	/// <remarks>
-	/// Precondition: key32 != null &amp;&amp; salt4 != null. <br/>
-	/// Postcondition: Service is reset, the new key and salt are written into the given outputs.
+	/// Precondition: TcpSslStream securely established, connected to the other side. <br/>
+	/// Postcondition: UDP Crypto service is reset, the other side is notified of the reset, and new key and salt used.
 	/// </remarks>
-	protected void ResetUdpCrypto(out byte[] key32, out byte[] salt4)
+	protected void ResetUdpCrypto()
 	{
+		byte[] key32;
+		byte[] salt32;
 		if (CryptoService == null)
-			CryptoService = new UdpCryptoService(out key32, out salt4);
+			CryptoService = new UdpCryptoService(_isServer, out key32, out salt32);
 		else
-			CryptoService.Reset(out key32, out salt4);
+			CryptoService.Reset(out key32, out salt32);
+		
+		SendInfo(new MessageInfoCryptoUdp(true, key32, salt32));
 	}
 
 	/// <summary>
@@ -822,7 +826,7 @@ public partial class MessagingService
 		{
 			case MessageInfoCryptoUdp cryptoInfo:
 			{
-				ResetUdpCrypto(cryptoInfo.MasterKey32, cryptoInfo.Salt4);
+				ResetUdpCrypto(cryptoInfo.MasterKey32, cryptoInfo.Salt32);
 				break;
 			}
 			case MessageInfoTransferData downloadData:
