@@ -384,7 +384,7 @@ public partial class SubUserItemTemplate : ObservableObject
 	public UserPermissionItemTemplate[] Permissions { get; }		/* Owner's permissions over this sub-user. */
 	public string Created { get; }
 
-	private SubUser _subUser;
+	private readonly SubUser _subUser;
 	
 	public SubUserItemTemplate(SubUser user)
 	{

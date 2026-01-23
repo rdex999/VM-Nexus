@@ -66,6 +66,17 @@ public class MessageResponseCreateAccount : MessageResponse
 	}
 }
 
+public class MessageResponseDeleteAccount : MessageResponse
+{
+	public bool Deleted { get; }
+
+	public MessageResponseDeleteAccount(bool generateGuid, Guid requestId, bool deleted)
+		: base(generateGuid, requestId)
+	{
+		Deleted = deleted;
+	}
+}
+
 public class MessageResponseLogin : MessageResponse
 {
 	public bool Accepted => User != null;

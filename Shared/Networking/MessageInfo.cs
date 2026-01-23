@@ -62,6 +62,19 @@ public class MessageInfoSubUserCreated : MessageInfoTcp
 	}
 }
 
+public class MessageInfoUserDeleted : MessageInfoTcp
+{
+	public int UserId { get; }
+
+	public MessageInfoUserDeleted(bool generateGuid, int userId)
+		: base(generateGuid)
+	{
+		UserId = userId;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
+}
+
 public class MessageInfoVmCreated : MessageInfoTcp
 {
 	public VmGeneralDescriptor Descriptor { get; }

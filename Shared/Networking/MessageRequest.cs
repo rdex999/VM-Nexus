@@ -48,6 +48,19 @@ public class MessageRequestCreateAccount : MessageRequest
 	}
 }
 
+public class MessageRequestDeleteAccount : MessageRequest
+{
+	public int UserId { get; }
+
+	public MessageRequestDeleteAccount(bool generateGuid, int userId)
+		: base(generateGuid)
+	{
+		UserId = userId;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
+}
+
 public class MessageRequestLogin : MessageRequest
 {
 	public string Username { get; }
