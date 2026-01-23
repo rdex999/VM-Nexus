@@ -96,7 +96,10 @@ public partial class MessagingService
 	private void ResetUdpCrypto(byte[] key32, byte[] salt32)
 	{
 		if (CryptoService == null)
+		{
 			CryptoService = new UdpCryptoService(_isServer, key32, salt32);
+			CryptoService.ResetRequired += (_, _) => ResetUdpCrypto();
+		}
 		else
 			CryptoService.Reset(key32, salt32);
 	}
@@ -113,7 +116,10 @@ public partial class MessagingService
 		byte[] key32;
 		byte[] salt32;
 		if (CryptoService == null)
+		{
 			CryptoService = new UdpCryptoService(_isServer, out key32, out salt32);
+			CryptoService.ResetRequired += (_, _) => ResetUdpCrypto();
+		}
 		else
 			CryptoService.Reset(out key32, out salt32);
 		
@@ -228,7 +234,11 @@ public partial class MessagingService
 			if (_incomingUdpMessages.TryGetValue(packet.MessageId, out IncomingMessageUdp? incoming))
 			{
 				/* Checking here before decrypting to save decryption time. We might detect an invalid packet before its decrypted. */
-				if (incoming.CanReceivePacket(packet) == ExitCode.InvalidUdpPacket)
+				result = incoming.CanReceivePacket(packet);
+				if (result == ExitCode.UdpPacketDuplicate)
+					continue;
+				
+				if (result == ExitCode.InvalidUdpPacket)
 				{
 					_incomingUdpMessages.Remove(packet.MessageId);
 					continue;

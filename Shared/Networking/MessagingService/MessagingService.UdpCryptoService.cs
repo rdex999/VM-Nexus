@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Security.Cryptography;
 
 namespace Shared.Networking;
@@ -6,7 +7,8 @@ public partial class MessagingService
 {
 	private class UdpCryptoService : IDisposable
 	{
-		private ulong _sendCounter = 0;
+		public event EventHandler? ResetRequired;
+		private ulong _encCounter = 0;
 		private AesGcm _aesGcmS2C;
 		private AesGcm _aesGcmC2S;
 		private byte[] _sessionId4;
@@ -42,10 +44,12 @@ public partial class MessagingService
 			byte[] c2S = HKDF.Expand(HashAlgorithmName.SHA256, prk, 32, "CLIENT TO SERVER"u8.ToArray());
 			byte[] sessionId4 = HKDF.Expand(HashAlgorithmName.SHA256, prk, 4, "SESSION ID"u8.ToArray());
 
+			Debug.WriteLine($"CRYPTO RESET ON {_encCounter}");
+			
 			lock (_syncLock)
 			{
 				_sessionId4 = sessionId4;
-				Interlocked.Exchange(ref _sendCounter, 0);
+				Interlocked.Exchange(ref _encCounter, 0);
 
 				AesGcm aesGcmS2C = new AesGcm(s2C, 16);
 				AesGcm aesGcmC2S = new AesGcm(c2S, 16);
@@ -92,8 +96,8 @@ public partial class MessagingService
 		/// </remarks>
 		public UdpPacket? Encrypt(Guid messageId, int messageSize, int offset, ReadOnlySpan<byte> payload)
 		{
-			ulong sequence = _sendCounter;
-			Interlocked.Increment(ref _sendCounter);
+			ulong sequence = _encCounter;
+			Interlocked.Increment(ref _encCounter);
 			
 			byte[] nonce = BuildNonce(sequence);
 			byte[] tag = new byte[16];
@@ -110,6 +114,9 @@ public partial class MessagingService
 			{
 				return null;
 			}
+			
+			if (_encCounter > Math.Pow(2, 24))
+				ResetRequired?.Invoke(this, EventArgs.Empty);
 
 			return new UdpPacket(sequence, tag, messageId, messageSize, offset, cipher);
 		}
