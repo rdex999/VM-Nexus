@@ -54,6 +54,15 @@ public partial class SubUsersViewModel : ViewModelBase
 	
 	public UserPermissionItemTemplate[] NewSubUserPopupPermissions { get; }
 	
+	[ObservableProperty]
+	private bool _deleteSubUserPopupIsOpen = false;
+	
+	[ObservableProperty]
+	private string _deleteSubUserPopupEffects = string.Empty;
+	
+	[ObservableProperty]
+	private string _deleteSubUserPopupConfirmation = string.Empty;
+	
 	public SubUsersViewModel(NavigationService navigationSvc, ClientService clientSvc) 
 		: base(navigationSvc, clientSvc)
 	{
@@ -78,7 +87,11 @@ public partial class SubUsersViewModel : ViewModelBase
 		SubUsers = new ObservableCollection<SubUserItemTemplate>()
 		{
 			new SubUserItemTemplate(new SubUser(2, 1, 
-				(UserPermissions.VirtualMachineList | UserPermissions.DriveItemList).AddIncluded(),
+				(UserPermissions.UserDelete | UserPermissions.VirtualMachineUse | 
+				 UserPermissions.DriveConnect | UserPermissions.DriveDisconnect | UserPermissions.DriveDelete | 
+				 UserPermissions.DriveCreate | UserPermissions.DriveItemList | UserPermissions.DriveItemCreate | UserPermissions.DriveItemDelete |
+				 UserPermissions.DriveItemDownload).AddIncluded(),
+				
 				"owner", "owner@gmail.com", "user2", "user2@gmail.com", DateTime.Now)),
 			
 			new SubUserItemTemplate(new SubUser(3, 1, 
@@ -127,8 +140,9 @@ public partial class SubUsersViewModel : ViewModelBase
 	{
 		SubUsers.Add(new SubUserItemTemplate(subUser));
 		SubUsers.Last().LoginClick += async void (user) => await LoginToSubUserAsync(user);
+		SubUsers.Last().DeleteClick += OnSubUserDeleteClicked;
 	}
-	
+
 	/// <summary>
 	/// Handles a click on the create sub user button. Opens the sub-user creation popup.
 	/// </summary>
@@ -358,6 +372,33 @@ public partial class SubUsersViewModel : ViewModelBase
 	}
 
 	/// <summary>
+	/// Close the sub-user deletion popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the sub-user deletion popup is closing, or closing it is needed. <br/>
+	/// Postcondition: The sub-user deletion popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private void CloseDeleteSubUserPopup() => DeleteSubUserPopupIsOpen = false;
+
+	/// <summary>
+	/// Handles a click on a sub-users delete button. Displays the sub-user deletion popup.
+	/// </summary>
+	/// <param name="subUser">The sub-user on which the delete button was clicked. subUser != null.</param>
+	/// <remarks>
+	/// Precondition: The user has clicked on the delete button of a sub-user. <br/>
+	/// Postcondition: The sub-user deletion popup is displayed.
+	/// </remarks>
+	private void OnSubUserDeleteClicked(SubUser subUser)
+	{
+		DeleteSubUserPopupEffects = $"{subUser.Username}'s sub-users will not be deleted, " +
+		                            $"their ownership will be transferred to you, {ClientSvc.User!.Username}.";
+		
+		DeleteSubUserPopupConfirmation = $"Are you sure you want to delete {subUser.Username}?";
+		DeleteSubUserPopupIsOpen = true;
+	}
+	
+	/// <summary>
 	/// Attempts to log in into the given sub-user's account.
 	/// </summary>
 	/// <param name="subUser">The sub-user to log in to. subUser != null.</param>
@@ -379,11 +420,13 @@ public partial class SubUsersViewModel : ViewModelBase
 public partial class SubUserItemTemplate : ObservableObject
 {
 	public Action<SubUser>? LoginClick;
+	public Action<SubUser>? DeleteClick;
 	public string UserName { get; }
 	public string Email { get; }
 	public UserPermissionItemTemplate[] Permissions { get; }		/* Owner's permissions over this sub-user. */
 	public string Created { get; }
-
+	public bool CanBeDeleted { get; }
+	
 	private readonly SubUser _subUser;
 	
 	public SubUserItemTemplate(SubUser user)
@@ -392,6 +435,7 @@ public partial class SubUserItemTemplate : ObservableObject
 		UserName = user.Username;
 		Email = user.Email;
 		Created = user.CreatedAt.ToString("dd/MM/yyyy");
+		CanBeDeleted = _subUser.OwnerPermissions.HasPermission(UserPermissions.UserDelete);
 
 		UserPermissions[] prms = user.OwnerPermissions.AddIncluded().ToArray();
 		Permissions = new UserPermissionItemTemplate[Math.Max(prms.Length, 1)];
@@ -411,6 +455,16 @@ public partial class SubUserItemTemplate : ObservableObject
 	/// </remarks>
 	[RelayCommand]
 	private void LoginToSubUserClick() => LoginClick?.Invoke(_subUser);
+	
+	/// <summary>
+	/// Handles a click on the delete button of a sub-user. Displays the sub-user deletion popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the delete button on the sub-user. <br/>
+	/// Postcondition: Displays the sub-user deletion popup.
+	/// </remarks>
+	[RelayCommand]
+	private void DeleteSubUserClick() => DeleteClick?.Invoke(_subUser);
 }
 
 public partial class UserPermissionItemTemplate : ObservableObject

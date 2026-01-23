@@ -125,6 +125,22 @@
 			</Border>
 		</templated:OverlayPopup>
 		
+		<templated:OverlayPopup IsOpen="{Binding DeleteSubUserPopupIsOpen}"
+		                        PlacementTarget="Grid" Background="White" Placement="Center" Title="Delete this sub-user?"
+		                        ClosedCommand="{Binding CloseDeleteSubUserPopupCommand}">
+			<StackPanel Spacing="5">
+				<TextBlock TextWrapping="Wrap" FontWeight="DemiBold">
+					Deleting a sub-user will permanently delete all of their virtual machines and drives.
+				</TextBlock>
+				
+				<TextBlock Text="{Binding DeleteSubUserPopupEffects}" TextWrapping="Wrap"/>
+				
+				<TextBlock Text="{Binding DeleteSubUserPopupConfirmation}" FontWeight="DemiBold" />
+				
+				<Button HorizontalAlignment="Center" Margin="0, 15, 0, 0" Classes="submit_dark">Delete</Button>
+			</StackPanel>
+		</templated:OverlayPopup>
+		
 		<Border CornerRadius="15" Margin="6" Padding="4">
 			<Border.Background>
 				<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
@@ -211,7 +227,9 @@
 											
 											<Button.Flyout>
 												<MenuFlyout VerticalOffset="5">
-													<MenuItem Header="Delete" />
+													<MenuItem Header="Delete" 
+													          Command="{Binding DeleteSubUserClickCommand}"
+													          IsEnabled="{Binding CanBeDeleted}" />
 												</MenuFlyout>
 											</Button.Flyout>
 										</Button>

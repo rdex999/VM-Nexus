@@ -9,7 +9,9 @@ public enum UserPermissions
 	[Description("No permissions over the user.")]
 	None = 0,
 
-	[Description("Delete the user, along with all their virtual machines, drives, and sub-users in the same manner, recursively.")]
+	[Description("Delete the user, along with all their virtual machines and drives. " +
+	             "The user's sub-users will be trasfered to the owner of their current owner, or be orphaned if they have no owner. " +
+	             "Includes the Virtual Machine Delete, Virtual Machine List, Drive Delete, and Drive List permissions.")]
 	UserDelete				= 1 << 0,
 	
 	[Description("List the user's virtual machines, along with their specifications. (name, OS, CPU, etc..)")]
@@ -118,6 +120,9 @@ public static class UserPermissionsExtensions
 		{
 			result |= permission switch
 			{
+				UserPermissions.UserDelete						=> UserPermissions.VirtualMachineDelete | UserPermissions.VirtualMachineList | 
+										                             UserPermissions.DriveDelete | UserPermissions.DriveList,
+				
 				UserPermissions.VirtualMachineCreate or
 					UserPermissions.VirtualMachineDelete or
 					UserPermissions.VirtualMachineWatch			=> UserPermissions.VirtualMachineList,
