@@ -199,6 +199,32 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<ExitCode> RegisterUserAsync(string username, string email, string password) =>
 		await RegisterUserAsync(null, 0, username, email, password);
+
+	/// <summary>
+	/// Delete the given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user to delete. userId >= 1.</param>
+	/// <returns>An exit code indicating the result of operation.</returns>
+	/// <remarks>
+	/// Precondition: Service connected to database, a user with the given ID exists,
+	/// and their virtual machines and drives were deleted. userId >= 1. <br/>
+	/// Postcondition: On success, the user is deleted and the returned exit code indicates success.
+	/// On failure, the user is not deleted and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> DeleteUserAsync(int userId)
+	{
+		if (userId < 1)
+			return ExitCode.InvalidParameter;
+		
+		int rows = await ExecuteNonQueryAsync("DELETE FROM users WHERE id = @id",
+			new NpgsqlParameter("@id", userId)
+		);
+
+		if (rows == 1)
+			return ExitCode.Success;
+
+		return ExitCode.DatabaseOperationFailed;
+	}
 	
 	/// <summary>
 	/// Checks if a login attempt with the given username and password is valid.
@@ -399,6 +425,33 @@ public class DatabaseService
 		
 		await Task.WhenAll(r.DisposeAsync().AsTask(), reader.DisposeAsync().AsTask());
 		return users.ToArray();
+	}
+
+	/// <summary>
+	/// Get the IDs of all sub-users of the given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user to get the sub-users of. userId >= 1.</param>
+	/// <returns>An array of IDs, specifying the IDs of all sub-users of the given user. Returns null on failure.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. userId >= 1. <br/>
+	/// Postcondition: On success, an array of IDs is returned, specifying the IDs of all sub-users of the given user.
+	/// On failure, null is returned.
+	/// </remarks>
+	public async Task<int[]?> GetSubUserIdsAsync(int userId)
+	{
+		if (userId < 1)
+			return null;
+		
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+			"SELECT id FROM users WHERE owner_id = @owner_id",
+			new NpgsqlParameter("@owner_id", userId)
+		);
+
+		List<int> ids = new List<int>();
+		while (await reader.ReadAsync())
+			ids.Add(reader.GetInt32(0));
+		
+		return ids.ToArray();
 	}
 
 	/// <summary>

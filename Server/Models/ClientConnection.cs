@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -309,6 +311,62 @@ public sealed class ClientConnection : MessagingService
 					}
 
 					newOwnerId = ActualUser.Id;
+				}
+
+				Task<VmGeneralDescriptor[]?> vmsTask = _databaseService.GetVmGeneralDescriptorsOfUserAsync(reqDeleteAccount.UserId);
+				Task<int[]?> driveIdsTask = _databaseService.GetDriveIdsOfUserAsync(reqDeleteAccount.UserId);
+				Task<int[]?> subUsersTask = _databaseService.GetSubUserIdsAsync(reqDeleteAccount.UserId);
+				await Task.WhenAll(vmsTask, driveIdsTask, subUsersTask);
+
+				VmGeneralDescriptor[]? vms = vmsTask.Result;
+				int[]? driveIds = driveIdsTask.Result;
+				int[]? subUsers = subUsersTask.Result;
+				
+				if (vms == null || driveIds == null || subUsers == null)
+				{
+					SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
+					break;				
+				}
+
+				List<Task<ExitCode>> shutdownTasks = new List<Task<ExitCode>>();
+				foreach (VmGeneralDescriptor vm in vms)
+				{
+					if (vm.State == VmState.Running)
+						shutdownTasks.Add(_virtualMachineService.PowerOffAndDestroyOnTimeoutAsync(vm.Id));
+				}
+				await Task.WhenAll(shutdownTasks);
+
+				List<Task<ExitCode>> vmDeleteTasks = new List<Task<ExitCode>>();
+				foreach (VmGeneralDescriptor vm in vms)
+					vmDeleteTasks.Add(_databaseService.DeleteVmAsync(vm.Id));
+
+				List<Task<ExitCode>> driveDeleteTasks = new List<Task<ExitCode>>();
+				foreach (int driveId in driveIds)
+					driveDeleteTasks.Add(_driveService.DeleteDriveAsync(driveId));
+
+				List<Task<ExitCode>> subUsersUpdateTasks = new List<Task<ExitCode>>();
+				foreach (int subUserId in subUsers)
+					subUsersUpdateTasks.Add(_databaseService.UpdateUserOwnerAsync(subUserId, newOwnerId));
+				
+				await Task.WhenAll(vmDeleteTasks.Concat(driveDeleteTasks).Concat(subUsersUpdateTasks));
+				
+				result = await _databaseService.DeleteUserAsync(reqDeleteAccount.UserId);
+				if (result != ExitCode.Success)
+				{
+					SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
+					break;
+				}
+				
+				SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, true));
+
+				if (newOwnerId != null)
+				{
+					SubUser[]? updatedSubUsers = await _databaseService.GetSubUsersAsync(newOwnerId.Value);
+					if (updatedSubUsers == null)
+						break;
+					
+					foreach (SubUser subUser in updatedSubUsers)
+						_userService.NotifySubUserCreated(subUser);
 				}
 				break;
 			}
