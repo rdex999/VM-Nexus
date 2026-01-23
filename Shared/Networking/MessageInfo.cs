@@ -38,17 +38,17 @@ public class MessageInfoIdentifyUdpPort : MessageInfoTcp
 
 public class MessageInfoCryptoUdp : MessageInfoTcp
 {
-	public byte[] Key32 { get; }
+	public byte[] MasterKey32 { get; }
 	public byte[] Salt4 { get; }
 	
-	public MessageInfoCryptoUdp(bool generateGuid, byte[] key32, byte[] salt4)
+	public MessageInfoCryptoUdp(bool generateGuid, byte[] masterKey32, byte[] salt4)
 		: base(generateGuid)
 	{
-		Key32 = key32;
+		MasterKey32 = masterKey32;
 		Salt4 = salt4;
 	}
 
-	public override bool IsValidMessage() => base.IsValidMessage() && Key32.Length == 32 && Salt4.Length == 4;
+	public override bool IsValidMessage() => base.IsValidMessage() && MasterKey32.Length == 32 && Salt4.Length == 4;
 }
 
 public class MessageInfoSubUserCreated : MessageInfoTcp

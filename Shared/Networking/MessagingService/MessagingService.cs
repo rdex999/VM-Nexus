@@ -820,6 +820,11 @@ public partial class MessagingService
 	{
 		switch (info)
 		{
+			case MessageInfoCryptoUdp cryptoInfo:
+			{
+				ResetUdpCrypto(cryptoInfo.MasterKey32, cryptoInfo.Salt4);
+				break;
+			}
 			case MessageInfoTransferData downloadData:
 			{
 				if (!_ongoingTransfers.TryGetValue(downloadData.StreamId, out TransferHandler? handler))

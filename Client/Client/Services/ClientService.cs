@@ -1062,11 +1062,6 @@ public class ClientService : MessagingService
 		
 		switch (info)
 		{
-			case MessageInfoCryptoUdp infoCryptoUdp:
-			{
-				ResetUdpCrypto(infoCryptoUdp.Key32, infoCryptoUdp.Salt4);
-				break;
-			}
 			case MessageInfoSubUserCreated infoSubUserCreated:
 			{
 				SubUserCreated?.Invoke(this, infoSubUserCreated.SubUser);
