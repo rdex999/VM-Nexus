@@ -349,7 +349,8 @@ public sealed class ClientConnection : MessagingService
 					subUsersUpdateTasks.Add(_databaseService.UpdateUserOwnerAsync(subUserId, newOwnerId));
 				
 				await Task.WhenAll(vmDeleteTasks.Concat(driveDeleteTasks).Concat(subUsersUpdateTasks));
-				
+
+				await _userService.NotifyUserDeletedAsync(reqDeleteAccount.UserId);
 				result = await _databaseService.DeleteUserAsync(reqDeleteAccount.UserId);
 				if (result != ExitCode.Success)
 				{
@@ -361,6 +362,7 @@ public sealed class ClientConnection : MessagingService
 
 				if (newOwnerId != null)
 				{
+					/* The new owner of the sub-users of the deleted user, should be notified that he has "new" sub-users. */
 					SubUser[]? updatedSubUsers = await _databaseService.GetSubUsersAsync(newOwnerId.Value);
 					if (updatedSubUsers == null)
 						break;
@@ -1238,6 +1240,17 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	public void NotifySubUserCreated(SubUser subUser) =>
 		SendInfo(new MessageInfoSubUserCreated(true, subUser));
+	
+	/// <summary>
+	/// Notifies the client that a user was deleted. (Either a sub-user, or the current user itself)
+	/// </summary>
+	/// <param name="userId">The ID of the user that was deleted. subUserId >= .</param>
+	/// <remarks>
+	/// Precondition: A user was deleted. Service initialized and connected to client. userId >= 1. <br/>
+	/// Postcondition: Client is notified that a user was deleted.
+	/// </remarks>
+	public void NotifyUserDeleted(int userId) =>
+		SendInfo(new MessageInfoUserDeleted(true, userId));
 	
 	/// <summary>
 	/// Notifies the client that a virtual machine was created.

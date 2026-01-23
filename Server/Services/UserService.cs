@@ -138,6 +138,38 @@ public class UserService
 		foreach (ClientConnection connection in userConnections.Values)
 			connection.NotifySubUserCreated(subUser);
 	}
+
+	/// <summary>
+	/// Notifies all instances of the deleted user, and all instances of its owner, (if any) that the user was deleted.
+	/// </summary>
+	/// <param name="userId">The ID of the user that was deleted. userId >= 1.</param>
+	/// <remarks>
+	/// Precondition: Service initialized. A user was deleted. userId >= 1. <br/>
+	/// Postcondition: All instances of the deleted user, and all instances of its owner, (if any) are notified that the user was deleted.
+	/// </remarks>
+	public async Task NotifyUserDeletedAsync(int userId)
+	{
+		if (userId < 1)
+			return;
+
+		/* Notify owner instances that one of its sub-users were deleted. */
+		int ownerId = await _databaseService.GetOwnerUserIdAsync(userId);
+		if (ownerId >= 1)
+		{
+			if (_users.TryGetValue(ownerId, out ConcurrentDictionary<Guid, ClientConnection>? ownerUserConnections))
+			{
+				foreach (ClientConnection connection in ownerUserConnections.Values)
+					connection.NotifyUserDeleted(userId);
+			}
+		}
+	
+		/* Notify the all instances of the deleted user that his account was deleted. */
+		if (!_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+			return;
+		
+		foreach (ClientConnection connection in userConnections.Values)
+			connection.NotifyUserDeleted(userId);
+	}
 	
 	/// <summary>
 	/// Notifies related users of a virtual machine creation event.
