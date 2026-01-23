@@ -35,6 +35,7 @@ public abstract partial class ViewModelBase : ObservableObject
 
 		ClientSvc.Reconnected += OnReconnection;
 		ClientSvc.FailEvent += OnFailEvent;
+		ClientSvc.UserDeleted += OnUserDeleted;
 	}
 
 	/// <summary>
@@ -98,5 +99,25 @@ public abstract partial class ViewModelBase : ObservableObject
 				break;
 			}
 		}
+	}
+
+	/// <summary>
+	/// Handles a user deletion event. <br/>
+	/// In the case that the deleted user is the current user, the user is logged out.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="userId">The ID of the user that was deleted. userId >= 1.</param>
+	/// <remarks>
+	/// Precondition: Some user was deleted. userId >= 1. <br/>
+	/// Postcondition: In the case that the deleted user is the current user, the user is logged out.
+	/// Otherwise, no action is taken in this method.
+	/// </remarks>
+	private void OnUserDeleted(object? sender, int userId)
+	{
+		if (ClientSvc.User == null || ClientSvc.User.Id != userId)
+			return;
+		
+		if (this is not LoginViewModel && this is not CreateAccountViewModel)
+			Dispatcher.UIThread.Post(() => NavigationSvc.NavigateToLogin());
 	}
 }

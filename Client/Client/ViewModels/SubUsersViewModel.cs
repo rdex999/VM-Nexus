@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
+using Avalonia.Threading;
 using Client.Services;
 using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -67,6 +68,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>();
+		ClientSvc.UserDeleted += OnUserDeleted;
 		ClientSvc.SubUserCreated += OnSubUserCreated;
 
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
@@ -143,6 +145,30 @@ public partial class SubUsersViewModel : ViewModelBase
 		SubUsers.Last().DeleteClick += OnSubUserDeleteClicked;
 	}
 
+	/// <summary>
+	/// Handles a user deletion event.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="userId">The ID of the user that was deleted. userId >= 1.</param>
+	/// <remarks>
+	/// Precondition: Some user was deleted. userId >= 1. <br/>
+	/// Postcondition: If the deleted user is a sub-user, the sub-user is removed.
+	/// </remarks>
+	private void OnUserDeleted(object? sender, int userId)
+	{
+		Dispatcher.UIThread.Post(() =>
+		{
+			for (int i = 0; i < SubUsers.Count; ++i)
+			{
+				if (SubUsers[i].SubUser.Id == userId)
+				{
+					SubUsers.RemoveAt(i);
+					return;
+				}
+			}
+		});
+	}
+	
 	/// <summary>
 	/// Handles a click on the create sub user button. Opens the sub-user creation popup.
 	/// </summary>
@@ -427,15 +453,15 @@ public partial class SubUserItemTemplate : ObservableObject
 	public string Created { get; }
 	public bool CanBeDeleted { get; }
 	
-	private readonly SubUser _subUser;
+	public readonly SubUser SubUser;
 	
 	public SubUserItemTemplate(SubUser user)
 	{
-		_subUser = user;
+		SubUser = user;
 		UserName = user.Username;
 		Email = user.Email;
 		Created = user.CreatedAt.ToString("dd/MM/yyyy");
-		CanBeDeleted = _subUser.OwnerPermissions.HasPermission(UserPermissions.UserDelete);
+		CanBeDeleted = SubUser.OwnerPermissions.HasPermission(UserPermissions.UserDelete);
 
 		UserPermissions[] prms = user.OwnerPermissions.AddIncluded().ToArray();
 		Permissions = new UserPermissionItemTemplate[Math.Max(prms.Length, 1)];
@@ -454,7 +480,7 @@ public partial class SubUserItemTemplate : ObservableObject
 	/// Postcondition: On success, the user is logged in as the sub-user. On failure, the user is not logged in as the sub-user.
 	/// </remarks>
 	[RelayCommand]
-	private void LoginToSubUserClick() => LoginClick?.Invoke(_subUser);
+	private void LoginToSubUserClick() => LoginClick?.Invoke(SubUser);
 	
 	/// <summary>
 	/// Handles a click on the delete button of a sub-user. Displays the sub-user deletion popup.
@@ -464,7 +490,7 @@ public partial class SubUserItemTemplate : ObservableObject
 	/// Postcondition: Displays the sub-user deletion popup.
 	/// </remarks>
 	[RelayCommand]
-	private void DeleteSubUserClick() => DeleteClick?.Invoke(_subUser);
+	private void DeleteSubUserClick() => DeleteClick?.Invoke(SubUser);
 }
 
 public partial class UserPermissionItemTemplate : ObservableObject

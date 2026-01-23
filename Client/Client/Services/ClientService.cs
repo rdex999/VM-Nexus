@@ -22,6 +22,7 @@ namespace Client.Services;
 public class ClientService : MessagingService
 {
 	public event EventHandler? Reconnected;
+	public event EventHandler<int>? UserDeleted; 
 	public event EventHandler<SubUser>? SubUserCreated;
 	public event EventHandler<VmGeneralDescriptor>? VmCreated;
 	public event EventHandler<int>? VmDeleted;
@@ -1067,6 +1068,11 @@ public class ClientService : MessagingService
 		
 		switch (info)
 		{
+			case MessageInfoUserDeleted infoUserDeleted:
+			{
+				UserDeleted?.Invoke(this, infoUserDeleted.UserId);
+				break;
+			}
 			case MessageInfoSubUserCreated infoSubUserCreated:
 			{
 				SubUserCreated?.Invoke(this, infoSubUserCreated.SubUser);
