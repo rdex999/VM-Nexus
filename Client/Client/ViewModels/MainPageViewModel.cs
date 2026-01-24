@@ -50,6 +50,15 @@ public partial class MainPageViewModel : ViewModelBase
 
 	[ObservableProperty] 
 	private UserPermissionItemTemplate[]? _ownerPermissions;
+
+	[ObservableProperty] 
+	private bool _deleteAccountPopupIsOpen = false;
+	
+	[ObservableProperty] 
+	private string _deleteAccountPopupEffects = string.Empty;
+	
+	[ObservableProperty] 
+	private string _deleteAccountPopupConfirmation = string.Empty;
 	
 	/// <summary>
 	/// Creates the MainViewModel object. Initializes UI.
@@ -263,6 +272,47 @@ public partial class MainPageViewModel : ViewModelBase
 				NavigationSvc.NavigateToMainPage();
 		}
 	}
+
+	/// <summary>
+	/// Handles a click on the delete account button in the account sub-menu. Opens the account deletion popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: User has clicked on the delete account button in the account sub-menu. <br/>
+	/// Postcondition: The account deletion popup is displayed.
+	/// </remarks>
+	[RelayCommand]
+	private void DeleteAccountClick()
+	{
+		DeleteAccountPopupEffects = $"{ClientSvc.User!.Username}'s sub-users will not be deleted, ";
+		if (ClientSvc.User is SubUser subUser)
+			DeleteAccountPopupEffects += $"their ownership will be transferred to {subUser.OwnerUsername}.";
+		else
+			DeleteAccountPopupEffects += "instead, they will be orphaned.";
+		
+		DeleteAccountPopupConfirmation = $"Are you sure you want to delete {ClientSvc.User!.Username}?";
+		DeleteAccountPopupIsOpen = true;
+	}
+
+	/// <summary>
+	/// Closes the account deletion popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the account deletion popup is closing or closing it is needed. <br/>
+	/// Postcondition: The account deletion popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private void CloseDeleteAccountPopup() => DeleteAccountPopupIsOpen = false;
+
+	/// <summary>
+	/// Handles a click on the delete button on the account deletion popup. Attempts to delete the account.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the delete button on the account deletion popup. <br/>
+	/// Postcondition: An attempt to delete the account is performed. On success, the account is deleted.
+	/// On failure, the account is not deleted.
+	/// </remarks>
+	[RelayCommand]
+	private async Task DeleteAccountPopupDeleteAsync() => await ClientSvc.DeleteAccountAsync(ClientSvc.User!.Id);
 
 	/// <summary>
 	/// Change the mode of the side menu. Not extended is for when there is no selected VM tab, and extended is for when there is a tab selected.

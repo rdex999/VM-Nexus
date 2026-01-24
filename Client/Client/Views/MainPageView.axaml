@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Client.ViewModels"
+             xmlns:templated="clr-namespace:Client.Controls.Templated"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Client.Views.MainPageView"
              x:DataType="vm:MainPageViewModel">
@@ -24,10 +25,32 @@
 
 	<UserControl.Styles>
 		<StyleInclude Source="/Resources/Styles.axaml" />
+		<StyleInclude Source="/Controls/Templated/OverlayPopup.axaml" />
 	</UserControl.Styles>
 
-	<Grid RowDefinitions="Auto, *">
-		<Border Background="#d3e6eb" Padding="7">		<!-- Also looks good #e2e7e8 -->
+	<Grid RowDefinitions="Auto, *" x:Name="Grid">
+		<templated:OverlayPopup IsOpen="{Binding DeleteAccountPopupIsOpen}"
+		                        PlacementTarget="Grid" Background="White" Placement="Center" Title="Delete this account?"
+		                        ClosedCommand="{Binding CloseDeleteAccountPopupCommand}">
+			<StackPanel Spacing="5">
+				<TextBlock TextWrapping="Wrap" FontWeight="DemiBold">
+					Deleting this account will permanently delete all of its virtual machines and drives.
+				</TextBlock>
+				
+				<TextBlock TextWrapping="Wrap">Note: This might take up to several minutes.</TextBlock>
+				
+				<TextBlock Text="{Binding DeleteAccountPopupEffects}" TextWrapping="Wrap"/>
+				
+				<TextBlock Text="{Binding DeleteAccountPopupConfirmation}" FontWeight="DemiBold" />
+				
+				<Button HorizontalAlignment="Center" Margin="0, 15, 0, 0" Classes="submit_dark"
+				        Command="{Binding DeleteAccountPopupDeleteCommand}">
+					Delete
+				</Button>
+			</StackPanel>
+		</templated:OverlayPopup>
+		
+		<Border Grid.Row="0" Background="#d3e6eb" Padding="7">		<!-- Also looks good #e2e7e8 -->
 			<Grid ColumnDefinitions="*, Auto, *">
 				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}"
 				              Width="40" Height="40" Margin="5, 0, 0, 0">
@@ -126,6 +149,7 @@
 								
 								<MenuItem Header="-"/>
 								<MenuItem Header="Log Out" Command="{Binding LogoutCommand}"/>
+								<MenuItem Header="Delete Account" Command="{Binding DeleteAccountClickCommand}"/>
 							</MenuFlyout>
 						</Button.Flyout>
 
