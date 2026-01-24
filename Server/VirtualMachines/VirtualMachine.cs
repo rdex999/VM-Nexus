@@ -526,7 +526,7 @@ public class VirtualMachine
 				if (BrotliFrameReceived != null)
 				{
 					using MemoryStream stream = new MemoryStream();
-					await using (BrotliStream brotliStream = new BrotliStream(stream, CompressionLevel.Fastest, true))
+					await using (BrotliStream brotliStream = new BrotliStream(stream, CompressionLevel.Optimal, true))
 					{
 						brotliStream.Write(frame.CompressedFramebuffer.AsSpan());
 					}
@@ -536,7 +536,7 @@ public class VirtualMachine
 				if (GzipFrameReceived != null)
 				{
 					using MemoryStream stream = new MemoryStream();
-					await using (GZipStream gzip = new GZipStream(stream, CompressionLevel.SmallestSize, leaveOpen: true))
+					await using (GZipStream gzip = new GZipStream(stream, CompressionLevel.Optimal, leaveOpen: true))
 					{
 						gzip.Write(frame.CompressedFramebuffer, 0, frame.CompressedFramebuffer.Length);
 					}
@@ -737,7 +737,7 @@ public class VirtualMachine
 				// new XElement("gl", new XAttribute("enabled", "yes"))
 			),
 			new XElement("interface", new XAttribute("type", "network"),
-				new XElement("source", new XAttribute("network", "default")),
+				new XElement("source", new XAttribute("network", "VM-Nexus-Isolated-Network")),
 				new XElement("model", new XAttribute("type", "virtio"))
 			),
 			new XElement("sound", new XAttribute("model", "ich9"), 

@@ -71,6 +71,9 @@ public class ClientService : MessagingService
 		do
 		{
 			await ConnectToServerAsync();
+			if (System.OperatingSystem.IsBrowser())
+				break;
+			
 			connected = await TlsInitialize() == ExitCode.Success;
 		} while (!connected);
 		

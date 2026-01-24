@@ -7,7 +7,7 @@
 mkdir -p "$HOME"/.VM-Nexus/DiskImages
 mkdir -p "$HOME"/.VM-Nexus/OsDiskImages
 
-if [ "$1" != "key_gen_only" ]
+if [ "$1" != "skip_db_setup" ]
 then
   if ! sudo -u postgres initdb --locale en_US.UTF-8 -D /var/lib/postgres/data
   then
@@ -66,5 +66,9 @@ openssl pkcs12 -export -out Keys/server.pfx -inkey Keys/server.key -in Keys/serv
 
 sudo cp Keys/server.crt /etc/ssl/certs
 sudo c_rehash
+
+sudo virsh net-define VmIsolatedNetwork.xml
+sudo virsh net-autostart VM-Nexus-Isolated-Network
+sudo virsh net-start VM-Nexus-Isolated-Network
 
 exit

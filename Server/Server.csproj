@@ -40,4 +40,8 @@
 		<EmbeddedResource Remove="Libraries\MarcusW.VncClient\**" />
 		<None Remove="Libraries\MarcusW.VncClient\**" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Keys\" />
+	</ItemGroup>
 </Project>
