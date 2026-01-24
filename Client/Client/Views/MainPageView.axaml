@@ -149,7 +149,8 @@
 								
 								<MenuItem Header="-"/>
 								<MenuItem Header="Log Out" Command="{Binding LogoutCommand}"/>
-								<MenuItem Header="Delete Account" Command="{Binding DeleteAccountClickCommand}"/>
+								<MenuItem Header="Delete Account" Command="{Binding DeleteAccountClickCommand}" 
+								          IsEnabled="{Binding CanDeleteAccount}"/>
 							</MenuFlyout>
 						</Button.Flyout>
 

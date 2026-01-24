@@ -51,6 +51,9 @@ public partial class MainPageViewModel : ViewModelBase
 	[ObservableProperty] 
 	private UserPermissionItemTemplate[]? _ownerPermissions;
 
+	[ObservableProperty]
+	private bool _canDeleteAccount;
+	
 	[ObservableProperty] 
 	private bool _deleteAccountPopupIsOpen = false;
 	
@@ -148,6 +151,8 @@ public partial class MainPageViewModel : ViewModelBase
 	{
 		AccountMenuTitle = $"Welcome, {ClientSvc.User!.Username}.";
 		IsSubUser = ClientSvc.User is SubUser;
+		CanDeleteAccount = !ClientSvc.IsLoggedInAsSubUser || (ClientSvc.IsLoggedInAsSubUser &&
+		                                                      ((SubUser)ClientSvc.User).OwnerPermissions.HasPermission(UserPermissions.UserDelete.AddIncluded()));
 		if (IsSubUser)
 		{
 			SubUser = (SubUser)ClientSvc.User;

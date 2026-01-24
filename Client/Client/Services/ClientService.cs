@@ -38,6 +38,7 @@ public class ClientService : MessagingService
 	public event EventHandler<DriveConnection>? DriveDisconnected;
 
 	public bool IsLoggedIn => User != null;
+	public bool IsLoggedInAsSubUser { get; private set; } = false;
 	public User? User { get; private set; }
 
 	public ClientService()
@@ -144,8 +145,10 @@ public class ClientService : MessagingService
 		
 		MessageResponseCreateAccount res = (MessageResponseCreateAccount)response!;
 		if (res.Result == MessageResponseCreateAccount.Status.Success)
+		{
 			User = res.User;
-		
+			IsLoggedInAsSubUser = false;
+		}
 		return res.Result;
 	}
 
@@ -174,7 +177,10 @@ public class ClientService : MessagingService
 		
 		MessageResponseLogin res = (MessageResponseLogin)response!;
 		if (res.Accepted)
+		{
 			User = res.User;
+			IsLoggedInAsSubUser = false;
+		}
 		
 		return res.Accepted;
 	}
@@ -218,6 +224,7 @@ public class ClientService : MessagingService
 		
 		MessageResponseLogout resLogout = (MessageResponseLogout)response!;
 		User = resLogout.User;
+		IsLoggedInAsSubUser = false;
 		
 		return resLogout.Result;
 	}
@@ -240,7 +247,10 @@ public class ClientService : MessagingService
 		
 		MessageResponseLoginSubUser res = (MessageResponseLoginSubUser)response!;
 		if (res.Success)
+		{
 			User = res.SubUser;
+			IsLoggedInAsSubUser = true;
+		}
 		
 		return res.Success;
 	}
