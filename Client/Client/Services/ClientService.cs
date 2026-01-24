@@ -953,7 +953,17 @@ public class ClientService : MessagingService
 
 		NetworkStream networkStream = new NetworkStream(TcpSocket!, true);
 		TcpSslStream = new SslStream(networkStream, false,
-			(sender, certificate, chain, errors) => errors == SslPolicyErrors.None
+			(_, certificate, chain, errors) =>
+			{
+				if (errors == SslPolicyErrors.None)
+					return true;
+
+				if (certificate == null || chain == null)
+					return false;
+
+				chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;			/* Disable CRL/OCSP revocation checks */
+				return chain.Build(new X509Certificate2(certificate));
+			}
 		);
 
 		try
@@ -1003,7 +1013,7 @@ public class ClientService : MessagingService
 			if (System.OperatingSystem.IsBrowser())
 			{
 				ClientWebSocket webSocket = (ClientWebSocket)WebSocket!;
-				await webSocket.ConnectAsync(new Uri($"ws://{SharedDefinitions.ServerIp}:{SharedDefinitions.ServerTcpWebPort}/"), Cts.Token);
+				await webSocket.ConnectAsync(new Uri($"wss://{SharedDefinitions.ServerIp}:443/"), Cts.Token);
 				IsServiceInitialized = webSocket.State == WebSocketState.Open;
 				return IsServiceInitialized;
 			}
