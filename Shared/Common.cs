@@ -290,7 +290,7 @@ public static class Common
 
 		return operatingSystem switch
 		{
-			VirtualMachines.OperatingSystem.MiniCoffeeOS	=> size >= 9 && size <= 20,
+			VirtualMachines.OperatingSystem.MiniCoffeeOS	=> size >= 9 && size <= 10,
 			VirtualMachines.OperatingSystem.Ubuntu		=> size >= 25 * 1024,
 			VirtualMachines.OperatingSystem.ManjaroLinux	=> size >= 30 * 1024,
 			_ => true

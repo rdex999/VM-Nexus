@@ -18,6 +18,7 @@ using Server.Drives;
 using Shared;
 using Shared.Drives;
 using DriveType = Shared.Drives.DriveType;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Server.Services;
 
@@ -65,9 +66,7 @@ public class DriveService
 		
 		ExitCode result = await _databaseService.CreateDriveAsync(userId, driveName, size, driveType);
 		if (result != ExitCode.Success)
-		{
 			return result;
-		}
 
 		int driveId = await GetDriveIdAsync(userId, driveName);	/* Just successfully created the drive - this must succeed. */
 		string driveFilePath = GetDriveFilePath(driveId);
@@ -76,20 +75,8 @@ public class DriveService
 
 		if (operatingSystem == Shared.VirtualMachines.OperatingSystem.MiniCoffeeOS)
 		{
-			Process process = new Process()
-			{
-				StartInfo = new ProcessStartInfo()
-				{
-					FileName = "/usr/bin/make",
-					Arguments = $" -C ../../../MiniCoffeeOS FDA={driveFilePath} FDA_SIZE={size}",
-				},
-			};
-			process.Start();
-			await process.WaitForExitAsync();
-			int exitCode = process.ExitCode;
-			process.Dispose();
-
-			if (exitCode != 0)
+			result = await CreateMiniCoffeeOsDiskImageAsync(driveFilePath, size);
+			if (result != ExitCode.Success)
 			{
 				await DeleteDriveAsync(driveId);
 				return ExitCode.DiskImageCreationFailed;
@@ -171,6 +158,71 @@ public class DriveService
 		}
 
 		return ExitCode.Success;
+	}
+
+	/// <summary>
+	/// Creates a disk image with Mini Coffee OS installed on it.
+	/// </summary>
+	/// <param name="path">The path to create the disk image at. path != null.</param>
+	/// <param name="sizeMiB">The size of the disk image to create, in MiB. sizeMiB >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: The given path is valid and exists. The given size is within valid range. path != null &amp;&amp; sizeMiB >= 1. <br/>
+	/// Postcondition: On success, the disk image is created and the returned exit code indicates success.
+	/// On failure, the disk image is not created and the returned exit code indicates the error.
+	/// </remarks>
+	private async Task<ExitCode> CreateMiniCoffeeOsDiskImageAsync(string path, int sizeMiB)
+	{
+		if (!Common.IsOperatingSystemDriveSizeValid(OperatingSystem.MiniCoffeeOS, sizeMiB))
+			return ExitCode.InvalidParameter;
+		
+		Directory.CreateDirectory("../../../MiniCoffeeOsBuilds");
+		string[] builds = Directory.GetFiles("../../../MiniCoffeeOsBuilds");
+		int highest = -1;
+		foreach (string build in builds)
+		{
+			if (!int.TryParse(build, out int buildNumber))
+			{
+				Directory.Delete("../../../MiniCoffeeOsBuilds/" + build, true);
+				continue;
+			}
+			
+			if (buildNumber > highest)
+				highest = buildNumber;
+		}
+		
+		int buildId = highest + 1;
+		string buildPath = "../../../MiniCoffeeOsBuilds/" + buildId;
+		
+		using Process? copyProc = Process.Start(new ProcessStartInfo()
+		{
+			FileName = "/usr/bin/cp",
+			Arguments = $" -r ../../../MiniCoffeeOS {buildPath}"
+		});
+		if (copyProc == null)
+			return ExitCode.DriveDiskImageCreationFailed;
+
+		await copyProc.WaitForExitAsync();
+		if (copyProc.ExitCode != 0)
+			return ExitCode.DriveDiskImageCreationFailed;
+		
+		using Process? process = Process.Start(new ProcessStartInfo()
+		{
+			FileName = "/usr/bin/make",
+			Arguments = $" -C {buildPath} FDA={path} FDA_SIZE={sizeMiB}",
+		});
+
+		if (process == null)
+			return ExitCode.DriveDiskImageCreationFailed;
+		
+		await process.WaitForExitAsync();
+		
+		Directory.Delete(buildPath, true);
+		
+		if (process.ExitCode == 0)
+			return ExitCode.Success;
+		
+		return ExitCode.DriveDiskImageCreationFailed;
 	}
 
 	/// <summary>
