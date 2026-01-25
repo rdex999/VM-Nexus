@@ -91,18 +91,29 @@
 		
 		<Grid Grid.Row="1">
 			<Grid.RowDefinitions>
-				<RowDefinition Height="*"/>
+				<RowDefinition Height="2*"/>
 				<RowDefinition Height="4"/>
-				<RowDefinition Height="*" MaxHeight="500" MinHeight="5"/>
+				<RowDefinition Height="*" MaxHeight="500" MinHeight="20"/>
 			</Grid.RowDefinitions>
 			
-			<GridSplitter Grid.Row="1" ResizeDirection="Rows" Background="#e8e8e8" MinHeight="1"/>
+			<GridSplitter Grid.Row="1" ResizeDirection="Rows" Background="#ebebeb" MinHeight="1"/>
 			
-			<ScrollViewer Grid.Row="2" Background="#d8d8d8">
+			<ScrollViewer Grid.Row="2" Background="#e0e0e0">
 				<ItemsControl ItemsSource="{Binding Logs}">
 					<ItemsControl.ItemTemplate>
 						<DataTemplate DataType="vm:LogItemTemplate">
-							<TextBlock Text="{Binding Message}"/>
+							<Grid ColumnDefinitions="160, Auto, 80, Auto, 165, Auto, *" ColumnSpacing="10" Margin="7, 1.5">
+								<TextBlock Text="{Binding Date}" Foreground="#303830"/>
+								
+								<TextBlock Grid.Column="1" FontWeight="Bold" Foreground="{Binding LevelColor}">[</TextBlock>
+								<TextBlock Grid.Column="2" FontWeight="Bold" Foreground="{Binding LevelColor}" 
+								           Text="{Binding Level}" HorizontalAlignment="Center"/>
+								<TextBlock Grid.Column="3" FontWeight="Bold" Foreground="{Binding LevelColor}">]</TextBlock>
+								
+								<TextBlock Grid.Column="4" HorizontalAlignment="Center" Text="{Binding Source}" Foreground="#303030"/>
+								<TextBlock Grid.Column="5" HorizontalAlignment="Center" Foreground="#303030" Text=" - "/>
+								<TextBlock Grid.Column="6" Text="{Binding Message}" Foreground="#202020"/>
+							</Grid>
 						</DataTemplate>
 					</ItemsControl.ItemTemplate>
 				</ItemsControl>

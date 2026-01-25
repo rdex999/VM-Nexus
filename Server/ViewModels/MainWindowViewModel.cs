@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Serilog;
@@ -43,9 +44,11 @@ public partial class MainWindowViewModel : ViewModelBase
 	public MainWindowViewModel()
 	{
 		Logger logger = new LoggerConfiguration()
+			.MinimumLevel.Verbose()
 			.WriteTo.Console()
-			.WriteTo.File($"../../../Logs/{DateTime.Now:yyyy-MM-dd_HH:mm:ss}.log", rollingInterval: RollingInterval.Infinite)
-			.WriteTo.Sink(new LoggingSink(OnLog))
+			.WriteTo.File($"../../../Logs/{DateTime.Now:yyyy-MM-dd_HH:mm:ss}.log", 
+				restrictedToMinimumLevel: LogEventLevel.Information, rollingInterval: RollingInterval.Infinite)
+			.WriteTo.Sink(new LoggingSink(OnLog), LogEventLevel.Verbose)
 			.CreateLogger();
 
 		Logs = new ObservableCollection<LogItemTemplate>();
@@ -60,10 +63,7 @@ public partial class MainWindowViewModel : ViewModelBase
 	/// Precondition: A log was logged. log != null. <br/>
 	/// Postcondition: The log is displayed.
 	/// </remarks>
-	private void OnLog(LogEvent log)
-	{
-		Logs.Add(new LogItemTemplate(log.MessageTemplate.Text));
-	}
+	private void OnLog(LogEvent log) => Logs.Add(new LogItemTemplate(log));
 	
 	/// <summary>
 	/// Handles a toggle of the server on/off button.
@@ -83,28 +83,40 @@ public partial class MainWindowViewModel : ViewModelBase
 		{
 			ExitCode result = await MainWindowModel.ServerStartAsync();
 			if (result != ExitCode.Success)
-			{
-				/* TODO: Add logic to display error message */
 				ServerStateIsChecked = false;
-			}
 		}
 		else
 		{
 			ExitCode result = await MainWindowModel.ServerStopAsync();
 			if (result != ExitCode.Success)
-			{
-				/* TODO: Add logic to display error message */
 				ServerStateIsChecked = true;
-			}
 		}
 	}
 }
 
 public class LogItemTemplate
 {
+	public string Date { get; }
+	public string Level { get; }
+	public Brush LevelColor { get; }
+	public string Source { get; }
 	public string Message { get; }
-	public LogItemTemplate(string message)
+	public LogItemTemplate(LogEvent log)
 	{
-		Message = message;
+		Date = log.Timestamp.ToString("dd-MM-yyyyy HH:mm:ss");
+		Level = log.Level.ToString();
+		Source = log.Properties.TryGetValue("Source", out var source) ? source.ToString().Trim('"') : "Server";
+		Message = log.MessageTemplate.Text;
+
+		LevelColor = log.Level switch
+		{
+			LogEventLevel.Verbose		=> new SolidColorBrush(Color.Parse("#404040")),
+			LogEventLevel.Debug			=> new SolidColorBrush(Color.Parse("#1a4f22")),
+			LogEventLevel.Information	=> new SolidColorBrush(Color.Parse("#202020")),
+			LogEventLevel.Warning		=> new SolidColorBrush(Color.Parse("#63481a")),
+			LogEventLevel.Error			=> new SolidColorBrush(Color.Parse("#631a1a")),
+			LogEventLevel.Fatal			=> new SolidColorBrush(Color.Parse("#600000")),
+			_ => new SolidColorBrush(Color.Parse("#000000"))
+		};
 	}
 }
