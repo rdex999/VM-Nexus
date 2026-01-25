@@ -543,7 +543,7 @@ public partial class VmScreenViewModel : ViewModelBase
 			HasError = true;
 		}
 		
-		else if (result != MessageResponseVmStartup.Status.Success)
+		else if (result != MessageResponseVmStartup.Status.Success && result != MessageResponseVmStartup.Status.VmAlreadyRunning)
 		{
 			ErrorMessage = "Virtual machine startup failed.";
 			HasError = true;

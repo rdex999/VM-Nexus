@@ -1301,8 +1301,11 @@ public sealed class ClientConnection : MessagingService
 	/// Precondition: A virtual machine was powered off. Service initialized and connected to client. vmId >= 1. <br/>
 	/// Postcondition: Client is notified that the virtual machine was powered off.
 	/// </remarks>
-	public void NotifyVirtualMachinePoweredOff(int vmId) =>
+	public void NotifyVirtualMachinePoweredOff(int vmId)
+	{
 		SendInfo(new MessageInfoVmPoweredOff(true, vmId));
+		OnVirtualMachinePoweredOffOrCrashed(vmId);
+	}
 
 	/// <summary>
 	/// Notifies the client that a virtual machine has crashed.
@@ -1312,8 +1315,11 @@ public sealed class ClientConnection : MessagingService
 	/// Precondition: A virtual machine has crashed. Service initialized and connected to client. vmId >= 1. <br/>
 	/// Postcondition: Client is notified that the virtual machine has crashed.
 	/// </remarks>
-	public void NotifyVirtualMachineCrashed(int vmId) =>
+	public void NotifyVirtualMachineCrashed(int vmId)
+	{
 		SendInfo(new MessageInfoVmCrashed(true, vmId));
+		OnVirtualMachinePoweredOffOrCrashed(vmId);
+	}
 	
 	/// <summary>
 	/// Notifies the client that a drive was created.
@@ -1442,19 +1448,18 @@ public sealed class ClientConnection : MessagingService
 	/// <summary>
 	/// Handles the event of a virtual machine being shut down.
 	/// </summary>
-	/// <param name="sender">Unused.</param>
 	/// <param name="id">The ID of the virtual machine that was shut down. id >= 1.</param>
 	/// <remarks>
 	/// Precondition: A virtual machine has been powered off. id >= 1. <br/>
 	/// Postcondition: The event is handled, client receives information if needed.
 	/// </remarks>
-	private void OnVirtualMachinePoweredOffOrCrashed(object? sender, int id)
+	private void OnVirtualMachinePoweredOffOrCrashed(int id)
 	{
-		if (!IsLoggedIn || id < 1) return;
+		if (id != _streamVmId) 
+			return;
 		
-		if (id == _streamVmId)
-		{
-			_streamVmId = -1;
-		}
+		_streamVmId = -1;
+		_virtualMachineService.UnsubscribeFromVmAudioPacketReceived(id, OnVmNewAudioPacket);
+		_virtualMachineService.UnsubscribeFromVmNewFrameReceived(id, OnVmNewFrame);
 	}
 }
