@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using Avalonia.Threading;
@@ -40,6 +41,27 @@ public partial class VmScreenViewModel : ViewModelBase
 	[ObservableProperty] 
 	private WriteableBitmap? _vmScreenBitmap = null;
 	
+	[ObservableProperty] 
+	private string _vmName = string.Empty;
+	
+	[ObservableProperty] 
+	private string _vmOperatingSystem = string.Empty;
+
+	[ObservableProperty] 
+	private CpuArchitecture _vmCpuArchitecture;
+	
+	[ObservableProperty] 
+	private string _vmBootMode = string.Empty;
+	
+	[ObservableProperty] 
+	private string _vmRam = string.Empty;
+	
+	[ObservableProperty] 
+	private string _vmStateStr = string.Empty;
+
+	[ObservableProperty] 
+	private Brush _vmStateColor;
+	
 	public VmScreenViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
@@ -61,6 +83,14 @@ public partial class VmScreenViewModel : ViewModelBase
 	public VmScreenViewModel()
 	{
 		_audioPlayerService = null!;
+
+		VmName = "test_vm0";
+		VmOperatingSystem = Common.SeparateStringWords(Shared.VirtualMachines.OperatingSystem.MiniCoffeeOS.ToString());
+		VmCpuArchitecture = CpuArchitecture.X86_64;
+		VmBootMode = BootMode.Bios.ToString().ToUpper();
+		VmRam = "5 MiB";
+		VmStateStr = Common.SeparateStringWords(VmState.Running.ToString());
+		VmStateColor = new SolidColorBrush(Color.Parse("#64d670"));
 	}
 
 	/// <summary>
@@ -118,6 +148,21 @@ public partial class VmScreenViewModel : ViewModelBase
 		_streamRunning = false;
 		_vmDescriptor = vmDescriptor;
 		VmScreenBitmap = null;
+
+		VmName = vmDescriptor.Name;
+		VmOperatingSystem = Common.SeparateStringWords(vmDescriptor.OperatingSystem.ToString());
+		VmCpuArchitecture = vmDescriptor.CpuArchitecture;
+		VmBootMode = vmDescriptor.BootMode.ToString().ToUpper();
+		VmRam = vmDescriptor.RamSizeMiB < 1024
+			? $"{vmDescriptor.RamSizeMiB} MiB"
+			: $"{(vmDescriptor.RamSizeMiB / 1024.0):0.##} GiB";
+		VmStateStr = Common.SeparateStringWords(vmDescriptor.State.ToString());
+		
+		if (vmDescriptor.State == VmState.ShutDown)
+			VmStateColor = new SolidColorBrush(Color.FromRgb(0x4F, 0x5B, 0x5B));
+		
+		else if (vmDescriptor.State == VmState.Running)
+			VmStateColor = new SolidColorBrush(Color.Parse("#64d670"));
 
 		if (_vmDescriptor.State == VmState.Running)
 		{
@@ -303,6 +348,11 @@ public partial class VmScreenViewModel : ViewModelBase
 		}
 
 		_vmDescriptor.State = VmState.Running;
+		Dispatcher.UIThread.Post(() =>
+		{
+			VmStateStr = Common.SeparateStringWords(VmState.Running.ToString());
+			VmStateColor = new SolidColorBrush(Color.Parse("#64d670"));
+		});
 
 		if (_isFocused)
 		{
@@ -327,6 +377,11 @@ public partial class VmScreenViewModel : ViewModelBase
 		}
 
 		_vmDescriptor.State = VmState.ShutDown;
+		Dispatcher.UIThread.Post(() =>
+		{
+			VmStateStr = Common.SeparateStringWords(VmState.ShutDown.ToString());
+			VmStateColor = new SolidColorBrush(Color.FromRgb(0x4F, 0x5B, 0x5B));
+		});
 		
 		VmScreenBitmap = null;
 		if (_streamRunning)

@@ -23,10 +23,37 @@
 
 	<Grid>
 		<SplitView Name="SplitView" IsPaneOpen="{Binding IsChecked, ElementName=ToggleButton}" DisplayMode="Overlay" FlowDirection="RightToLeft"
-		         CompactPaneLength="15" Background="Transparent" PaneBackground="Transparent">
+		         CompactPaneLength="15" Background="Transparent" PaneBackground="Transparent" OpenPaneLength="250">
 			<SplitView.Pane>
-				<Border CornerRadius="10" Background="#efefef" Opacity="0.995">
-
+				<Border CornerRadius="10" Background="#f6f6f6" Opacity="0.995" Padding="10" BoxShadow="0 0 15 0 #509d9d9d" Margin="15">
+					<StackPanel Spacing="14" HorizontalAlignment="Stretch">
+						<StackPanel Orientation="Horizontal" Spacing="3" HorizontalAlignment="Center" Margin="0, 0, 0, 12">
+							<TextBlock FontSize="16" FontWeight="Bold" Text="{Binding VmStateStr}" 
+							           Foreground="{Binding VmStateColor}"/>
+							<TextBlock FontSize="16">-</TextBlock>
+							<TextBlock FontSize="16" FontWeight="DemiBold" Text="{Binding VmName}" />
+						</StackPanel>
+						
+						<Grid>
+							<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding VmOperatingSystem}" />
+							<TextBlock HorizontalAlignment="Right" FontSize="16" FontWeight="DemiBold">OS</TextBlock>
+						</Grid>
+						
+						<Grid>
+							<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding VmBootMode}" />
+							<TextBlock HorizontalAlignment="Right" FontSize="16" FontWeight="DemiBold">Firmware Type</TextBlock>
+						</Grid>
+						
+						<Grid>
+							<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding VmCpuArchitecture}" />
+							<TextBlock HorizontalAlignment="Right" FontSize="16" FontWeight="DemiBold">CPU Architecture</TextBlock>
+						</Grid>
+						
+						<Grid HorizontalAlignment="Stretch">
+							<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding VmRam}" FlowDirection="LeftToRight"/>
+							<TextBlock HorizontalAlignment="Right" FontSize="16" FontWeight="DemiBold">RAM</TextBlock>
+						</Grid>
+					</StackPanel>
 				</Border>
 			</SplitView.Pane>
 
@@ -48,7 +75,7 @@
 					<Setter Property="Background" Value="LightGray" />
 					
 					<Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-						<Setter Property="Background" Value="#e8e8e8" />
+						<Setter Property="Background" Value="#e1e1e1" />
 					</Style>
 					
 					<Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
