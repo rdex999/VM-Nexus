@@ -133,8 +133,8 @@ public partial class MainPageViewModel : ViewModelBase
 
 		VmTabs = new ObservableCollection<VmTabTemplate>()
 		{
-			new VmTabTemplate(new VmGeneralDescriptor(1, "test_vm1", Shared.VirtualMachines.OperatingSystem.MiniCoffeeOS, VmState.Running, 5)),
-			new VmTabTemplate(new VmGeneralDescriptor(2, "test_vm2", Shared.VirtualMachines.OperatingSystem.ManjaroLinux, VmState.Running, 4096)),
+			new VmTabTemplate(new VmGeneralDescriptor(1, "test_vm1", Shared.VirtualMachines.OperatingSystem.MiniCoffeeOS, CpuArchitecture.X86_64,  VmState.Running, 5, BootMode.Uefi)),
+			new VmTabTemplate(new VmGeneralDescriptor(2, "test_vm2", Shared.VirtualMachines.OperatingSystem.ManjaroLinux, CpuArchitecture.X86_64, VmState.Running, 4096, BootMode.Uefi)),
 		};
 		MenuDisplayMode = SplitViewDisplayMode.CompactInline;
 	}

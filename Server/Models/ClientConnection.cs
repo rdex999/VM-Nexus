@@ -525,7 +525,9 @@ public sealed class ClientConnection : MessagingService
 				SendResponse(new MessageResponseCreateVm(true,  reqCreateVm.Id, MessageResponseCreateVm.Status.Success, id));
 				
 				await _userService.NotifyVirtualMachineCreatedAsync(
-					new VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, VmState.ShutDown, reqCreateVm.RamSizeMiB)
+					new VmGeneralDescriptor(id, vmNameTrimmed, reqCreateVm.OperatingSystem, reqCreateVm.CpuArchitecture, 
+						VmState.ShutDown, reqCreateVm.RamSizeMiB, reqCreateVm.BootMode
+					)
 				);
 				
 				break;

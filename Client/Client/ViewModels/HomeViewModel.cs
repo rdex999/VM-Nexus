@@ -529,6 +529,7 @@ public partial class VmItemTemplate : ObservableObject
 				: Common.SeparateStringWords(_operatingSystem.ToString());
 		}
 	}
+	private CpuArchitecture _cpuArchitecture;
 	
 	private readonly ClientService _clientService;
 
@@ -554,6 +555,7 @@ public partial class VmItemTemplate : ObservableObject
 		}
 	}
 	public int RamSizeMiB { get; }
+	private BootMode _bootMode { get; }
 
 	[ObservableProperty] 
 	private string _stateString = string.Empty;
@@ -584,8 +586,10 @@ public partial class VmItemTemplate : ObservableObject
 		Id = descriptor.Id;
 		Name = descriptor.Name;
 		OperatingSystem = descriptor.OperatingSystem;
+		_cpuArchitecture = descriptor.CpuArchitecture;
 		State = descriptor.State;
 		RamSizeMiB = descriptor.RamSizeMiB;
+		_bootMode = descriptor.BootMode;
 		_clientService.VmPoweredOn += OnVmPoweredOn;
 		_clientService.VmPoweredOff += OnVmPoweredOff;
 		_clientService.VmCrashed += OnVmCrashed;
@@ -611,7 +615,7 @@ public partial class VmItemTemplate : ObservableObject
 	/// Postcondition: A VM general descriptor of this VM item template is returned.
 	/// </remarks>
 	public VmGeneralDescriptor AsVmGeneralDescriptor() => 
-		new VmGeneralDescriptor(Id, Name, OperatingSystem, State, RamSizeMiB);
+		new VmGeneralDescriptor(Id, Name, OperatingSystem, _cpuArchitecture, State, RamSizeMiB, _bootMode);
 	
 	/// <summary>
 	/// Handles the event of the virtual machine being powered on.

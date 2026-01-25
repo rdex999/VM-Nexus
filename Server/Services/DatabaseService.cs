@@ -702,7 +702,7 @@ public class DatabaseService
 		if (userId < 1) return null;
 		
 		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
-			"SELECT id, name, operating_system, state, ram_size FROM virtual_machines WHERE owner_id = @owner_id",
+			"SELECT id, name, operating_system, cpu_architecture, state, ram_size, boot_mode FROM virtual_machines WHERE owner_id = @owner_id",
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
@@ -713,8 +713,10 @@ public class DatabaseService
 				reader.GetInt32(0),
 				reader.GetString(1),
 				(OperatingSystem)reader.GetInt32(2),
-				(VmState)reader.GetInt32(3),
-				reader.GetInt32(4)
+				(CpuArchitecture)reader.GetInt32(3),
+				(VmState)reader.GetInt32(4),
+				reader.GetInt32(5),
+				(BootMode)reader.GetInt32(6)
 			);
 			
 			descriptors.Add(descriptor);
@@ -762,7 +764,7 @@ public class DatabaseService
 	{
 		if (id < 1) return null;
 		
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT name, operating_system, state, ram_size FROM virtual_machines WHERE id = @id",
+		await using NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT name, operating_system, cpu_architecture, state, ram_size, boot_mode FROM virtual_machines WHERE id = @id",
 			new NpgsqlParameter("@id", id)
 		);
 		
@@ -774,8 +776,10 @@ public class DatabaseService
 				id,
 				reader.GetString(0),
 				(OperatingSystem)reader.GetInt32(1),
-				(VmState)reader.GetInt32(2),
-				reader.GetInt32(3)
+				(CpuArchitecture)reader.GetInt32(2),
+				(VmState)reader.GetInt32(3),
+				reader.GetInt32(4),
+				(BootMode)reader.GetInt32(5)
 			);
 		}
 
