@@ -20,12 +20,16 @@
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
+	
+	<UserControl.Styles>
+		<StyleInclude Source="/Resources/Styles.axaml" />
+	</UserControl.Styles>
 
 	<Grid>
 		<SplitView Name="SplitView" IsPaneOpen="{Binding IsChecked, ElementName=ToggleButton}" DisplayMode="Overlay" FlowDirection="RightToLeft"
 		         CompactPaneLength="15" Background="Transparent" PaneBackground="Transparent" OpenPaneLength="250">
 			<SplitView.Pane>
-				<Border CornerRadius="10" Background="#f6f6f6" Opacity="0.995" Padding="10" BoxShadow="0 0 15 0 #509d9d9d" Margin="15">
+				<Border CornerRadius="10" Background="#f6f6f6" Opacity="0.995" Padding="10" BoxShadow="0 0 15 0 #509a9a9a" Margin="15">
 					<StackPanel Spacing="14" HorizontalAlignment="Stretch">
 						<StackPanel Orientation="Horizontal" Spacing="3" HorizontalAlignment="Center" Margin="0, 0, 0, 12">
 							<TextBlock FontSize="16" FontWeight="Bold" Text="{Binding VmStateStr}" 
@@ -53,6 +57,20 @@
 							<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding VmRam}" FlowDirection="LeftToRight"/>
 							<TextBlock HorizontalAlignment="Right" FontSize="16" FontWeight="DemiBold">RAM</TextBlock>
 						</Grid>
+					
+						<Border Padding="15" Margin="0, 0, 0, 0">
+							<StackPanel Spacing="13" HorizontalAlignment="Stretch">
+								<Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Classes="submit_dark"
+								        Command="{Binding PowerOnClickCommand}">
+									Start
+								</Button>
+								
+								<Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Classes="submit_dark"
+								        Command="{Binding PowerOffClickCommand}">
+									Power Off
+								</Button>
+							</StackPanel>
+						</Border>
 					</StackPanel>
 				</Border>
 			</SplitView.Pane>

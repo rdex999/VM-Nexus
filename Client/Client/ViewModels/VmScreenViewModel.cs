@@ -13,6 +13,7 @@ using Avalonia.Platform;
 using Avalonia.Threading;
 using Client.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Shared;
 using Shared.Networking;
 using Shared.VirtualMachines;
@@ -511,5 +512,39 @@ public partial class VmScreenViewModel : ViewModelBase
 				break;
 			}
 		}
+	}
+
+	/// <summary>
+	/// Handles a click on the start button. Attempts to power on the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the start button. <br/>
+	/// Postcondition: An attempt to power on the virtual machine is performed. On success, the virtual machine is powered on.
+	/// On failure, the virtual machine is not powered on and an error message is displayed.
+	/// </remarks>
+	[RelayCommand]
+	private async Task PowerOnClickAsync()
+	{
+		if (_vmDescriptor == null) 
+			return;
+
+		await ClientSvc.PowerOnVirtualMachineAsync(_vmDescriptor.Id);
+	}
+
+	/// <summary>
+	/// Handles a click on the power off button. Attempts to power off the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the power off button. <br/>
+	/// Postcondition: An attempt to power off the virtual machine is performed. On success, the virtual machine is powered off.
+	/// On failure, the virtual machine is not powered off and an error message is displayed.
+	/// </remarks>
+	[RelayCommand]
+	private async Task PowerOffClickAsync()
+	{
+		if (_vmDescriptor == null) 
+			return;	
+		
+		await ClientSvc.PowerOffVirtualMachineAsync(_vmDescriptor.Id);
 	}
 }
