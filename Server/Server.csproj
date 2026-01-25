@@ -28,6 +28,9 @@
         <PackageReference Include="libvirt-csharp" Version="0.0.1-alpha2" />
         <PackageReference Include="Npgsql" Version="9.0.3" />
 		<PackageReference Include="MarcusW.VncClient" Version="1.0.0-alpha5" />
+		<PackageReference Include="Serilog" Version="4.3.0" />
+		<PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+		<PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -43,5 +46,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Keys\" />
+	  <Folder Include="Logs\" />
 	</ItemGroup>
 </Project>

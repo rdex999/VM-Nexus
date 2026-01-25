@@ -6,13 +6,15 @@ using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog.Core;
 using Server.Services;
 using Shared;
 
 namespace Server.Models;
 
-public class MainWindowModel
+public class MainWindowModel : IDisposable
 {
+	private readonly Logger _logger;
 	private Thread? _listener;
 	private CancellationTokenSource? _listenerCts;
 	private readonly ConcurrentDictionary<Guid, ClientConnection> _clients;	
@@ -21,8 +23,9 @@ public class MainWindowModel
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
 
-	public MainWindowModel()
+	public MainWindowModel(Logger logger)
 	{
+		_logger = logger;
 		_clients = new ConcurrentDictionary<Guid, ClientConnection>();
 		_databaseService = new DatabaseService();
 		_userService = new UserService(_databaseService);
@@ -33,6 +36,19 @@ public class MainWindowModel
 		_userService.UserLoggedOut += (_, connection) => _clients.TryAdd(connection.ClientId, connection);
 	}
 
+	/// <summary>
+	/// Disposes this model. Must only be called after ServerStopAsync() was called and returned ExitCode.Success.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: ServerStopAsync() was called and returned ExitCode.Success. <br/>
+	/// Postcondition: This model is disposed, used resources are freed.
+	/// </remarks>
+	public void Dispose()
+	{
+		_logger.Dispose();
+		_listenerCts?.Dispose();
+	}
+	
 	/// <summary>
 	/// Starts the server.
 	/// </summary>

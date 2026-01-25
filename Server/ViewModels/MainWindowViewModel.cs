@@ -1,8 +1,11 @@
-﻿using System.Threading.Tasks;
-using Avalonia;
-using Avalonia.Controls.ApplicationLifetimes;
+﻿using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using Server.Models;
 using Shared;
 
@@ -11,9 +14,24 @@ namespace Server.ViewModels;
 public partial class MainWindowViewModel : ViewModelBase
 {
 	public readonly MainWindowModel MainWindowModel;
+	public ObservableCollection<LogItemTemplate> Logs { get; set; }
 	
 	[ObservableProperty]
 	private bool _serverStateIsChecked;
+
+	private class LoggingSink : ILogEventSink
+	{
+		private readonly IFormatProvider? _fmt;
+		private readonly Action<LogEvent>? _onLog;
+
+		public LoggingSink(Action<LogEvent> onLog, IFormatProvider? fmt = null)
+		{
+			_onLog = onLog; 
+			_fmt = fmt;
+		}
+		
+		public void Emit(LogEvent logEvent) => _onLog?.Invoke(logEvent);
+	}
 
 	/// <summary>
 	/// Creates an instance of MainWindowViewModel.
@@ -24,7 +42,27 @@ public partial class MainWindowViewModel : ViewModelBase
 	/// </remarks>
 	public MainWindowViewModel()
 	{
-		MainWindowModel = new MainWindowModel();
+		Logger logger = new LoggerConfiguration()
+			.WriteTo.Console()
+			.WriteTo.File($"../../../Logs/{DateTime.Now:yyyy-MM-dd_HH:mm:ss}.log", rollingInterval: RollingInterval.Infinite)
+			.WriteTo.Sink(new LoggingSink(OnLog))
+			.CreateLogger();
+
+		Logs = new ObservableCollection<LogItemTemplate>();
+		MainWindowModel = new MainWindowModel(logger);
+	}
+
+	/// <summary>
+	/// Handles a log. Called each time a new log was logged.
+	/// </summary>
+	/// <param name="log">The log. log != null.</param>
+	/// <remarks>
+	/// Precondition: A log was logged. log != null. <br/>
+	/// Postcondition: The log is displayed.
+	/// </remarks>
+	private void OnLog(LogEvent log)
+	{
+		Logs.Add(new LogItemTemplate(log.MessageTemplate.Text));
 	}
 	
 	/// <summary>
@@ -59,5 +97,14 @@ public partial class MainWindowViewModel : ViewModelBase
 				ServerStateIsChecked = true;
 			}
 		}
+	}
+}
+
+public class LogItemTemplate
+{
+	public string Message { get; }
+	public LogItemTemplate(string message)
+	{
+		Message = message;
 	}
 }

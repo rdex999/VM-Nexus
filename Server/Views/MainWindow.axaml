@@ -3,13 +3,13 @@
         xmlns:vm="using:Server.ViewModels"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="450"
+        mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="400"
         x:Class="Server.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/avalonia-logo.ico"
         Title="VM Nexus Server"
-        MinWidth="1200"
-        MinHeight="700">
+        MinWidth="900"
+        MinHeight="500">
 
     <Design.DataContext>
         <!-- This only sets the DataContext for the previewer in an IDE,
@@ -26,14 +26,14 @@
 	</Window.Resources>	
 	
 	<Grid RowDefinitions="Auto, *">
-		<Grid Grid.Row="0" ColumnDefinitions="*, Auto" Background="#ededed">
+		<Grid Grid.Row="0" ColumnDefinitions="*, Auto, Auto" Background="#ededed">
 			<Grid RowDefinitions="Auto, *">
 				<TextBlock Grid.Row="0" HorizontalAlignment="Center" FontWeight="Bold" FontSize="45" Margin="120, 5, 0, 0"
 				           Foreground="#304049">
 					VM Nexus Server
 				</TextBlock>
 			
-				<Border Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0, 0, 0, 0">
+				<Border Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="120, 0, 0, 0">
 					<ListBox Background="Transparent" SelectedIndex="0">
 						<ListBox.ItemsPanel>
 							<ItemsPanelTemplate>
@@ -71,8 +71,10 @@
 					</ListBox>
 				</Border>
 			</Grid>
+		
+			<TextBlock Grid.Column="1" TextWrapping="Wrap"/>
 			
-			<ToggleButton Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Width="120" Height="120" Margin="0, 5, 5, 5"
+			<ToggleButton Grid.Column="2" HorizontalAlignment="Right" VerticalAlignment="Top" Width="120" Height="120" Margin="0, 5, 5, 5"
 			              CornerRadius="90" IsChecked="{Binding ServerStateIsChecked}"
 			              Command="{Binding ServerStateToggleChangedCommand}"
 			              CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}">
@@ -85,6 +87,26 @@
 
 				<PathIcon Data="{StaticResource PowerRegular}" Width="90" Height="90" />
 			</ToggleButton>
+		</Grid>
+		
+		<Grid Grid.Row="1">
+			<Grid.RowDefinitions>
+				<RowDefinition Height="*"/>
+				<RowDefinition Height="4"/>
+				<RowDefinition Height="*" MaxHeight="500" MinHeight="5"/>
+			</Grid.RowDefinitions>
+			
+			<GridSplitter Grid.Row="1" ResizeDirection="Rows" Background="#e8e8e8" MinHeight="1"/>
+			
+			<ScrollViewer Grid.Row="2" Background="#d8d8d8">
+				<ItemsControl ItemsSource="{Binding Logs}">
+					<ItemsControl.ItemTemplate>
+						<DataTemplate DataType="vm:LogItemTemplate">
+							<TextBlock Text="{Binding Message}"/>
+						</DataTemplate>
+					</ItemsControl.ItemTemplate>
+				</ItemsControl>
+			</ScrollViewer>
 		</Grid>
 	</Grid>
 </Window>

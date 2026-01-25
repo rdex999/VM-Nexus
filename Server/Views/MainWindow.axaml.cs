@@ -26,29 +26,31 @@ public partial class MainWindow : Window
 	protected override void OnClosing(WindowClosingEventArgs e)
 	{
 		if (_isClosing) return;
-		
-		if (DataContext is MainWindowViewModel vm)
-		{
-			if (vm.ServerStateIsChecked)
-			{
-				e.Cancel = true;
 
-				/* Run on the thread pool, not blocking main/UI thread. */ 
-				Task.Run(async () =>
+		if (DataContext is not MainWindowViewModel vm)
+			return;
+
+		if (vm.ServerStateIsChecked)
+		{
+			e.Cancel = true;
+
+			/* Run on the thread pool, not blocking main/UI thread. */
+			Task.Run(async () =>
+			{
+				ExitCode result = await vm.MainWindowModel.ServerStopAsync();
+				if (result == ExitCode.Success)
 				{
-					ExitCode result = await vm.MainWindowModel.ServerStopAsync();
-					if (result == ExitCode.Success)
+					Dispatcher.UIThread.Post(() =>
 					{
-						Dispatcher.UIThread.Post(() =>
-						{
-							vm.ServerStateIsChecked = false;
-							_isClosing = true;
-							Close();
-						});
-					}
-				}).Wait();
-			}
+						vm.ServerStateIsChecked = false;
+						vm.MainWindowModel.Dispose();
+						_isClosing = true;
+						Close();
+					});
+				}
+			}).Wait();
 		}
+
 		base.OnClosing(e);
 	}
 }
