@@ -27,10 +27,11 @@ public class MainWindowModel : IDisposable
 	{
 		_logger = logger;
 		_clients = new ConcurrentDictionary<Guid, ClientConnection>();
-		_databaseService = new DatabaseService();
-		_userService = new UserService(_databaseService);
-		_driveService = new DriveService(_databaseService);
-		_virtualMachineService = new VirtualMachineService(_databaseService, _userService, _driveService);
+		_databaseService = new DatabaseService(_logger.ForContext("Source", "Database Service"));
+		_userService = new UserService(_logger.ForContext("Source", "User Service"), _databaseService);
+		_driveService = new DriveService(_logger.ForContext("Source", "Drive Service"), _databaseService);
+		_virtualMachineService = new VirtualMachineService(_logger.ForContext("Source", "Virtual Machine Service"), 
+			_databaseService, _userService, _driveService);
 		
 		_userService.UserLoggedIn += (sender, connection) => _clients.TryRemove(connection.ClientId, out _);
 		_userService.UserLoggedOut += (_, connection) => _clients.TryAdd(connection.ClientId, connection);
@@ -67,6 +68,7 @@ public class MainWindowModel : IDisposable
 		ExitCode status = await _databaseService.InitializeAsync();
 		if(status != ExitCode.Success)
 		{
+			_logger.Fatal($"Failed to initialize database service. Exit code {status}.");
 			return status;
 		}
 		
@@ -90,6 +92,8 @@ public class MainWindowModel : IDisposable
 		
 		_ = ListenForWebClients(_listenerCts.Token);
 
+		_logger.Information("Server started.");
+		
 		return ExitCode.Success;
 	}
 
@@ -127,6 +131,8 @@ public class MainWindowModel : IDisposable
 
 		_databaseService.Close();
 
+		_logger.Information("Server stopped.");
+		
 		return ExitCode.Success;
 	}
 

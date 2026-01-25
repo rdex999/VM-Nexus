@@ -7,7 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Konscious.Security.Cryptography;
 using Npgsql;
+using Npgsql.Internal;
 using NpgsqlTypes;
+using Serilog;
 using Server.Drives;
 using Server.VirtualMachines;
 using Shared;
@@ -19,6 +21,7 @@ namespace Server.Services;
 
 public class DatabaseService
 {
+	private readonly ILogger _logger;
 	private const string DatabaseConnection = "Server=localhost;Port=5432;User Id=postgres;Password=postgres;Database=VM_Nexus_DB;";
 	private const int EncryptedPasswordSize = 64;
 	private const int SaltSize = 32;
@@ -26,6 +29,11 @@ public class DatabaseService
 	private const int Argon2Iterations = 4;
 	private const int Argon2Threads = 2;
 
+	public DatabaseService(ILogger logger)
+	{
+		_logger = logger;
+	}
+	
 	/// <summary>
 	/// Initializes the database service and establishes a connection tp the database.
 	/// </summary>
@@ -1350,17 +1358,21 @@ public class DatabaseService
 	/// Postcondition: On success, the number of rows affected by the execution of the command is returned. <br/>
 	/// On failure, an exception is raised.
 	/// </remarks>
-	public async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
+	private async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		await using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
+		try
 		{
+			await using NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection);
 			await connection.OpenAsync();
-			await using (NpgsqlCommand cmd = connection.CreateCommand())
-			{
-				cmd.CommandText = command;
-				cmd.Parameters.AddRange(parameters);
-				return await cmd.ExecuteNonQueryAsync();
-			}
+			await using NpgsqlCommand cmd = connection.CreateCommand();
+			cmd.CommandText = command;
+			cmd.Parameters.AddRange(parameters);
+			return await cmd.ExecuteNonQueryAsync();
+		}
+		catch (Exception e)
+		{
+			_logger.Error($"ExecuteNonQueryAsync failed. Exception: {e}");
+			throw;
 		}
 	}
 	
@@ -1383,15 +1395,19 @@ public class DatabaseService
 	/// </remarks>
 	public int ExecuteNonQuery(string command, params NpgsqlParameter[] parameters)
 	{
-		using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
+		try
 		{
+			using NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection);
 			connection.Open();
-			using (NpgsqlCommand cmd = connection.CreateCommand())
-			{
-				cmd.CommandText = command;
-				cmd.Parameters.AddRange(parameters);
-				return cmd.ExecuteNonQuery();
-			}
+			using NpgsqlCommand cmd = connection.CreateCommand();
+			cmd.CommandText = command;
+			cmd.Parameters.AddRange(parameters);
+			return cmd.ExecuteNonQuery();
+		}
+		catch (Exception e)
+		{
+			_logger.Error($"ExecuteNonQuery failed. Exception: {e}");
+			throw;
 		}
 	}
 
@@ -1411,17 +1427,21 @@ public class DatabaseService
 	/// Precondition: Service connected to the database. command != null. <br/>
 	/// Postcondition: Returns the returned data by the executed command. (Data varies by which command is executed)
 	/// </remarks>
-	public async Task<object?> ExecuteScalarAsync(string command, params NpgsqlParameter[] parameters)
+	private async Task<object?> ExecuteScalarAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		await using (NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection))
+		try
 		{
+			await using NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection);
 			await connection.OpenAsync();
-			await using (NpgsqlCommand cmd = connection.CreateCommand())
-			{
-				cmd.CommandText = command;
-				cmd.Parameters.AddRange(parameters);
-				return await cmd.ExecuteScalarAsync();
-			}	
+			await using NpgsqlCommand cmd = connection.CreateCommand();
+			cmd.CommandText = command;
+			cmd.Parameters.AddRange(parameters);
+			return await cmd.ExecuteScalarAsync();
+		}
+		catch (Exception e)
+		{
+			_logger.Error($"ExecuteScalarAsync failed. Exception: {e}");
+			throw;
 		}
 	}
 
@@ -1441,14 +1461,22 @@ public class DatabaseService
 	/// Precondition: Service connected to the database. command != null. <br/>
 	/// Postcondition: Returns a data reader for reading the returned data by the command.
 	/// </remarks>
-	public async Task<NpgsqlDataReader> ExecuteReaderAsync(string command, params NpgsqlParameter[] parameters)
+	private async Task<NpgsqlDataReader> ExecuteReaderAsync(string command, params NpgsqlParameter[] parameters)
 	{
-		NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection);
-		await connection.OpenAsync();
-		await using NpgsqlCommand cmd = connection.CreateCommand();
-		cmd.CommandText = command;
-		cmd.Parameters.AddRange(parameters);
-		return await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
+		try
+		{
+			NpgsqlConnection connection = new NpgsqlConnection(DatabaseConnection);
+			await connection.OpenAsync();
+			await using NpgsqlCommand cmd = connection.CreateCommand();
+			cmd.CommandText = command;
+			cmd.Parameters.AddRange(parameters);
+			return await cmd.ExecuteReaderAsync(CommandBehavior.CloseConnection);
+		}
+		catch (Exception e)
+		{
+			_logger.Error($"ExecuteReaderAsync failed. Exception: {e}");
+			throw;
+		}
 	}
 
 	/// <summary>

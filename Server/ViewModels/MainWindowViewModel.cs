@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Media;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Serilog;
@@ -43,11 +45,12 @@ public partial class MainWindowViewModel : ViewModelBase
 	/// </remarks>
 	public MainWindowViewModel()
 	{
+		Directory.CreateDirectory("../../../Logs");
 		Logger logger = new LoggerConfiguration()
 			.MinimumLevel.Verbose()
 			.WriteTo.Console()
-			.WriteTo.File($"../../../Logs/{DateTime.Now:yyyy-MM-dd_HH:mm:ss}.log", 
-				restrictedToMinimumLevel: LogEventLevel.Information, rollingInterval: RollingInterval.Infinite)
+			.WriteTo.File($"../../../Logs/{DateTime.Now:yyyy-MM-dd_HH:mm:ss}.log", restrictedToMinimumLevel: LogEventLevel.Information, 
+				rollingInterval: RollingInterval.Infinite, fileSizeLimitBytes: 1 * 1024 * 1024 * 1024)
 			.WriteTo.Sink(new LoggingSink(OnLog), LogEventLevel.Verbose)
 			.CreateLogger();
 
@@ -63,7 +66,7 @@ public partial class MainWindowViewModel : ViewModelBase
 	/// Precondition: A log was logged. log != null. <br/>
 	/// Postcondition: The log is displayed.
 	/// </remarks>
-	private void OnLog(LogEvent log) => Logs.Add(new LogItemTemplate(log));
+	private void OnLog(LogEvent log) => Dispatcher.UIThread.Post(() => Logs.Add(new LogItemTemplate(log)));
 	
 	/// <summary>
 	/// Handles a toggle of the server on/off button.

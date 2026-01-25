@@ -9,11 +9,11 @@ using DiscUtils.Ext;
 using DiscUtils.Fat;
 using DiscUtils.HfsPlus;
 using DiscUtils.Iso9660;
-using DiscUtils.Ntfs;
 using DiscUtils.Partitions;
 using DiscUtils.Raw;
 using DiscUtils.SquashFs;
 using DiscUtils.Streams;
+using Serilog;
 using Server.Drives;
 using Shared;
 using Shared.Drives;
@@ -24,10 +24,12 @@ namespace Server.Services;
 
 public class DriveService
 {
-	private DatabaseService _databaseService;
+	private readonly ILogger _logger;
+	private readonly DatabaseService _databaseService;
 
-	public DriveService(DatabaseService databaseService)
+	public DriveService(ILogger logger, DatabaseService databaseService)
 	{
+		_logger = logger;
 		_databaseService = databaseService;
 		DiscUtils.Complete.SetupHelper.SetupComplete();
 	}
@@ -47,10 +49,10 @@ public class DriveService
 	/// On failure, the drive is not created and the returned exit code indicates the error.
 	/// </remarks>
 	public async Task<ExitCode> CreateOperatingSystemDriveAsync(int userId, string driveName,
-		Shared.VirtualMachines.OperatingSystem operatingSystem, int size)
+		OperatingSystem operatingSystem, int size)
 	{
-		if (!Enum.IsDefined(typeof(Shared.VirtualMachines.OperatingSystem), operatingSystem) ||
-		    operatingSystem == Shared.VirtualMachines.OperatingSystem.Other || userId < 1 || size < 1)
+		if (!Enum.IsDefined(typeof(OperatingSystem), operatingSystem) ||
+		    operatingSystem == OperatingSystem.Other || userId < 1 || size < 1)
 		{
 			return ExitCode.InvalidParameter;
 		}
@@ -60,9 +62,9 @@ public class DriveService
 			return ExitCode.InvalidDriveSize;
 		}
 		
-		Shared.Drives.DriveType driveType = operatingSystem == Shared.VirtualMachines.OperatingSystem.MiniCoffeeOS
-			? Shared.Drives.DriveType.Floppy
-			: Shared.Drives.DriveType.Disk;
+		DriveType driveType = operatingSystem == OperatingSystem.MiniCoffeeOS
+			? DriveType.Floppy
+			: DriveType.Disk;
 		
 		ExitCode result = await _databaseService.CreateDriveAsync(userId, driveName, size, driveType);
 		if (result != ExitCode.Success)
@@ -73,7 +75,7 @@ public class DriveService
 	
 		long driveSize = (long)size * 1024 * 1024;		/* The drive size in bytes */
 
-		if (operatingSystem == Shared.VirtualMachines.OperatingSystem.MiniCoffeeOS)
+		if (operatingSystem == OperatingSystem.MiniCoffeeOS)
 		{
 			result = await CreateMiniCoffeeOsDiskImageAsync(driveFilePath, size);
 			if (result != ExitCode.Success)
@@ -87,13 +89,13 @@ public class DriveService
 			string osDiskImageName;
 			switch (operatingSystem)
 			{
-				case Shared.VirtualMachines.OperatingSystem.Ubuntu:
+				case OperatingSystem.Ubuntu:
 					osDiskImageName = "Ubuntu.raw";
 					break;
-				case Shared.VirtualMachines.OperatingSystem.KaliLinux:
+				case OperatingSystem.KaliLinux:
 					osDiskImageName = "Kali.raw";
 					break;
-				case Shared.VirtualMachines.OperatingSystem.ManjaroLinux:
+				case OperatingSystem.ManjaroLinux:
 					osDiskImageName = "Manjaro.raw";
 					break;
 				default:
@@ -112,6 +114,7 @@ public class DriveService
 			if (copyProc.ExitCode != 0)
 			{
 				await DeleteDriveAsync(driveId);
+				_logger.Error($"Failed to copy {operatingSystem} disk image. Exit code {copyProc.ExitCode}");
 				return ExitCode.DiskImageCreationFailed;
 			}
 
@@ -138,6 +141,7 @@ public class DriveService
 			if (sgdiskDeletePartProc.ExitCode != 0)
 			{
 				await DeleteDriveAsync(driveId);
+				_logger.Error($"Failed to delete drive partition. Exit code {sgdiskDeletePartProc.ExitCode}.");
 				return ExitCode.DiskImageCreationFailed;
 			}
 
@@ -153,6 +157,7 @@ public class DriveService
 			if (sgdiskNewPartProc.ExitCode != 0)
 			{
 				await DeleteDriveAsync(driveId);
+				_logger.Error($"Failed to create drive partition. Exit code {sgdiskNewPartProc.ExitCode}.");
 				return ExitCode.DiskImageCreationFailed;
 			}
 		}
@@ -200,11 +205,17 @@ public class DriveService
 			Arguments = $" -r ../../../MiniCoffeeOS {buildPath}"
 		});
 		if (copyProc == null)
+		{
+			_logger.Error("Failed to create copy process. (copy into MiniCoffeeOsBuilds).");
 			return ExitCode.DriveDiskImageCreationFailed;
+		}
 
 		await copyProc.WaitForExitAsync();
 		if (copyProc.ExitCode != 0)
+		{
+			_logger.Error($"Failed to copy MiniCoffeeOS, exit code {copyProc.ExitCode}.");
 			return ExitCode.DriveDiskImageCreationFailed;
+		}
 		
 		using Process? process = Process.Start(new ProcessStartInfo()
 		{
@@ -213,7 +224,10 @@ public class DriveService
 		});
 
 		if (process == null)
+		{
+			_logger.Error("Failed to create make process for MiniCoffeeOS.");
 			return ExitCode.DriveDiskImageCreationFailed;
+		}
 		
 		await process.WaitForExitAsync();
 		
@@ -221,7 +235,8 @@ public class DriveService
 		
 		if (process.ExitCode == 0)
 			return ExitCode.Success;
-		
+	
+		_logger.Error($"MiniCoffeeOS build failed. Exit code {process.ExitCode}.");
 		return ExitCode.DriveDiskImageCreationFailed;
 	}
 
@@ -263,6 +278,7 @@ public class DriveService
 		catch (Exception)
 		{
 			await _databaseService.DeleteDriveAsync(driveId);
+			_logger.Error($"Failed to create file system drive. Id {driveId}.");
 			return ExitCode.DriveDiskImageCreationFailed;
 		}
 		
@@ -286,7 +302,8 @@ public class DriveService
 				image.DisposeAsync().AsTask(),
 				_databaseService.DeleteDriveAsync(driveId)
 			);
-			
+
+			_logger.Error($"Failed to format drive {driveId} to {fileSystem}.");
 			return ExitCode.DriveFormattingFailed;
 		}
 
@@ -339,7 +356,7 @@ public class DriveService
 		}
 		catch (Exception)
 		{
-			// ignored
+			_logger.Error($"Failed to delete disk image. Drive {id}.");
 		}
 
 		return await _databaseService.DeleteDriveAsync(id);
@@ -424,6 +441,7 @@ public class DriveService
 		}
 		catch (Exception)
 		{
+			_logger.Information($"Failed to open disk. Drive {driveId}.");
 			return null;
 		}
 		
@@ -507,6 +525,7 @@ public class DriveService
 		}
 		catch (Exception)
 		{
+			_logger.Information($"Failed to open disk. Drive {driveId}.");
 			return (PartitionTableType)(-1);
 		}
 
@@ -548,6 +567,7 @@ public class DriveService
 		}
 		catch (Exception)
 		{
+			_logger.Information($"Failed to open disk. Drive {driveId}.");
 			return -1;
 		}
 	}
@@ -679,6 +699,7 @@ public class DriveService
 			}
 			catch (Exception)
 			{
+				_logger.Information($"Failed to open disk image. Drive {driveId}.");
 				return null;
 			}
 		}
@@ -690,6 +711,7 @@ public class DriveService
 		}
 		catch (Exception)
 		{
+			_logger.Information($"Failed to open disk. Drive {driveId}.");
 			return null;
 		}
 
@@ -775,6 +797,7 @@ public class DriveService
 		}
 		catch (Exception)
 		{
+			_logger.Information($"Failed to open disk. Drive {driveId}.");
 			return ExitCode.DriveDoesntExist;
 		}
 
@@ -861,6 +884,7 @@ public class DriveService
 		}
 		catch (Exception)
 		{
+			_logger.Information($"Failed to open disk. Drive {driveId}.");
 			return false;
 		}
 
@@ -936,6 +960,7 @@ public class DriveService
 		}
 		catch (Exception)
 		{
+			_logger.Information($"Failed to open disk. Drive {driveId}.");
 			return ExitCode.DriveDoesntExist;
 		}
 		

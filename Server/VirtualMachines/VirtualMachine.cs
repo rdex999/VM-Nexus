@@ -24,6 +24,7 @@ using Server.Services;
 using Shared;
 using Shared.VirtualMachines;
 using DriveType = Shared.Drives.DriveType;
+using ILogger = Serilog.ILogger;
 using MouseButtons = Shared.VirtualMachines.MouseButtons;
 using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 using PixelFormat = MarcusW.VncClient.PixelFormat;
@@ -43,7 +44,8 @@ public class VirtualMachine
 	
 	public static readonly TimeSpan PowerOffTimeout = TimeSpan.FromMinutes(1);
 	public int Id { get; }
-	
+
+	private readonly ILogger _logger;
 	private readonly DatabaseService _databaseService;
 	private readonly DriveService _driveService;
 	private Domain _libvirtDomain = null!;
@@ -66,8 +68,9 @@ public class VirtualMachine
 	private Task _allBackgroundTasks = null!;
 	private bool _closing = false;
 	
-	public VirtualMachine(DatabaseService databaseService, DriveService driveService, VirtualMachineDescriptor descriptor, DriveDescriptor[] drives)
+	public VirtualMachine(ILogger logger, DatabaseService databaseService, DriveService driveService, VirtualMachineDescriptor descriptor, DriveDescriptor[] drives)
 	{
+		_logger = logger;
 		_databaseService = databaseService;
 		_driveService = driveService;
 		Id = descriptor.Id;
@@ -188,6 +191,7 @@ public class VirtualMachine
 		{
 			_ = StateInformerAsync();
 			await PowerOffAndDestroyOnTimeoutAsync();
+			_logger.Information("VNC connection failed.");
 			return ExitCode.VncConnectionFailed;
 		}
 
@@ -427,6 +431,7 @@ public class VirtualMachine
 		}
 		catch (Exception)
 		{
+			_logger.Error("VNC render target resulted in unsupported pixel format - " + _rfbConnection.RemoteFramebufferFormat);
 			return ExitCode.VmScreenStreamUnsupportedPixelFormat;
 		}
 
@@ -480,6 +485,7 @@ public class VirtualMachine
 						await _databaseService.SetVmStateAsync(Id, VmState.ShutDown);
 						PoweredOffTcs.SetResult(currentState);
 						Crashed?.Invoke(this, Id);
+						_logger.Information("Crashed.");
 						return;
 					}
 				}

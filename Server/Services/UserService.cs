@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Serilog;
 using Server.Models;
 using Shared;
 using Shared.Drives;
@@ -14,13 +15,15 @@ public class UserService
 {
 	public event EventHandler<ClientConnection>? UserLoggedIn;
 	public event EventHandler<ClientConnection>? UserLoggedOut;
-	
+
+	private readonly ILogger _logger;
 	private readonly ConcurrentDictionary<int, ConcurrentDictionary<Guid, ClientConnection>> _users;		/* By user ID, then by client ID */
 	
 	private readonly DatabaseService _databaseService;
 	
-	public UserService(DatabaseService databaseService)
+	public UserService(ILogger logger, DatabaseService databaseService)
 	{
+		_logger = logger;
 		_users = new ConcurrentDictionary<int, ConcurrentDictionary<Guid, ClientConnection>>();
 		_databaseService = databaseService;
 	}

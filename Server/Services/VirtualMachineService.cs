@@ -7,16 +7,19 @@ using System.IO;
 using System.Threading.Tasks;
 using Avalonia.Input;
 using libvirt;
+using Microsoft.Extensions.Logging;
 using Server.Drives;
 using Server.VirtualMachines;
 using Shared;
 using Shared.VirtualMachines;
+using ILogger = Serilog.ILogger;
 using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Server.Services;
 
 public class VirtualMachineService
 {
+	private readonly ILogger _logger;
 	private readonly DatabaseService _databaseService;
 	private readonly UserService _userService;
 	private readonly DriveService _driveService;
@@ -26,8 +29,9 @@ public class VirtualMachineService
 	private readonly Connect _libvirtConnection;
 	private int _vmUsedRamMiB = 0;
 
-	public VirtualMachineService(DatabaseService databaseService, UserService userService, DriveService driveService)
+	public VirtualMachineService(ILogger logger, DatabaseService databaseService, UserService userService, DriveService driveService)
 	{
+		_logger = logger;
 		_databaseService = databaseService;
 		_userService = userService;
 		_driveService = driveService;
@@ -139,7 +143,8 @@ public class VirtualMachineService
 		if (!await AllocateVmRamAsync(vmDescriptor.Result.RamSizeMiB))
 			return ExitCode.InsufficientMemory;
 		
-		VirtualMachine virtualMachine = new VirtualMachine(_databaseService, _driveService, vmDescriptor.Result, vmDriveDescriptors.Result);
+		VirtualMachine virtualMachine = new VirtualMachine(_logger.ForContext("Source", $"Virtual Machine {id}"), 
+			_databaseService, _driveService, vmDescriptor.Result, vmDriveDescriptors.Result);
 
 		bool addSuccess = false;
 		try
@@ -148,7 +153,7 @@ public class VirtualMachineService
 		}
 		catch (Exception)
 		{
-			// ignored
+			_logger.Error($"Failed to add virtual machine {id} to _aliveVirtualMachines.");
 		}
 
 		if (!addSuccess)
@@ -563,7 +568,7 @@ public class VirtualMachineService
 			return false;
 
 		_vmUsedRamMiB += sizeMiB;
-		Debug.WriteLine($"USED {_vmUsedRamMiB} MiB OUT OF {availableMiB} MiB {(float)_vmUsedRamMiB / availableMiB * 100f}%");
+		_logger.Information($"Virtual machines use {_vmUsedRamMiB/1024f} GiB of RAM. {availableMiB/1024} GiB left.");
 		return true;
 	}
 
