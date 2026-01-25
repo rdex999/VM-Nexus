@@ -44,60 +44,67 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<ExitCode> InitializeAsync()
 	{
-		try
-		{
-			/* Because these tables depend upon each other, I can not create them at the same time. */
-			await ExecuteNonQueryAsync($"""
-			                                      CREATE TABLE IF NOT EXISTS users (
-			                                          id SERIAL PRIMARY KEY,
-			                                          owner_id INT REFERENCES users(id) ON DELETE SET NULL,
-			                                          owner_permissions INT NOT NULL DEFAULT 0,
-			                                          username VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL, 
-			                                          email VARCHAR(254) NOT NULL,
-			                                          password_hashed BYTEA NOT NULL, 
-			                                          password_salt BYTEA NOT NULL,
-			                                          created_at TIMESTAMP NOT NULL DEFAULT now()
-			                                      )
-			                                      """);
+		int? rows;
+		
+		/* Because these tables depend upon each other, I can not create them at the same time. */
+		rows = await ExecuteNonQueryAsync($"""
+		                                   CREATE TABLE IF NOT EXISTS users (
+		                                       id SERIAL PRIMARY KEY,
+		                                       owner_id INT REFERENCES users(id) ON DELETE SET NULL,
+		                                       owner_permissions INT NOT NULL DEFAULT 0,
+		                                       username VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL, 
+		                                       email VARCHAR(254) NOT NULL,
+		                                       password_hashed BYTEA NOT NULL, 
+		                                       password_salt BYTEA NOT NULL,
+		                                       created_at TIMESTAMP NOT NULL DEFAULT now()
+		                                   )
+		                                   """);
 
-			await ExecuteNonQueryAsync($"""
-			                                                CREATE TABLE IF NOT EXISTS virtual_machines (
-			                                                    id SERIAL PRIMARY KEY,
-			                                                    name VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL,
-			                                                    owner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			                                                    operating_system INT NOT NULL,
-			                                                    cpu_architecture INT NOT NULL,
-			                                                    ram_size INT NOT NULL,
-			                                                    boot_mode INT NOT NULL,
-			                                                    state INT NOT NULL
-			                                                )
-			                                                """);
-
-			await ExecuteNonQueryAsync($"""
-			                                       CREATE TABLE IF NOT EXISTS drives (
-			                                           id SERIAL PRIMARY KEY,
-			                                           name VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL,
-			                                           owner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			                                           size INT NOT NULL,
-			                                           type INT NOT NULL
-			                                       )
-			                                       """);
-
-			await ExecuteNonQueryAsync($"""
-			                                                 CREATE TABLE IF NOT EXISTS drive_connections (
-			                                                     drive_id INT NOT NULL REFERENCES drives(id) ON DELETE CASCADE,
-			                                                     vm_id INT NOT NULL REFERENCES virtual_machines(id) ON DELETE CASCADE,
-			                                                     connected_at TIMESTAMP NOT NULL DEFAULT now(),
-			                                                     PRIMARY KEY (drive_id, vm_id)
-			                                                 ) 
-			                                                 """);
-
-			return ExitCode.Success;
-		}
-		catch (Exception)
-		{
+		if (rows == null)
 			return ExitCode.DatabaseStartupFailed;
-		}
+
+		rows = await ExecuteNonQueryAsync($"""
+		                                   CREATE TABLE IF NOT EXISTS virtual_machines (
+		                                       id SERIAL PRIMARY KEY,
+		                                       name VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL,
+		                                       owner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		                                       operating_system INT NOT NULL,
+		                                       cpu_architecture INT NOT NULL,
+		                                       ram_size INT NOT NULL,
+		                                       boot_mode INT NOT NULL,
+		                                       state INT NOT NULL
+		                                   )
+		                                   """);
+		
+		if (rows == null)
+			return ExitCode.DatabaseStartupFailed;
+		
+		rows = await ExecuteNonQueryAsync($"""
+		                                   CREATE TABLE IF NOT EXISTS drives (
+		                                       id SERIAL PRIMARY KEY,
+		                                       name VARCHAR({SharedDefinitions.CredentialsMaxLength}) NOT NULL,
+		                                       owner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		                                       size INT NOT NULL,
+		                                       type INT NOT NULL
+		                                   )
+		                                   """);
+		
+		if (rows == null)
+			return ExitCode.DatabaseStartupFailed;
+
+		rows = await ExecuteNonQueryAsync($"""
+		                                   CREATE TABLE IF NOT EXISTS drive_connections (
+		                                       drive_id INT NOT NULL REFERENCES drives(id) ON DELETE CASCADE,
+		                                       vm_id INT NOT NULL REFERENCES virtual_machines(id) ON DELETE CASCADE,
+		                                       connected_at TIMESTAMP NOT NULL DEFAULT now(),
+		                                       PRIMARY KEY (drive_id, vm_id)
+		                                   ) 
+		                                   """);
+		
+		if (rows == null)
+			return ExitCode.DatabaseStartupFailed;
+
+		return ExitCode.Success;
 	}
 
 	/// <summary>
@@ -165,7 +172,7 @@ public class DatabaseService
 		byte[] salt = GenerateSalt();
 		byte[] passwordHash = await EncryptPasswordAsync(password, salt);
 		
-		int rowCount = await ExecuteNonQueryAsync($"""
+		int? rowCount = await ExecuteNonQueryAsync($"""
 		                                           INSERT INTO users (owner_id, owner_permissions, username, email, password_hashed, password_salt)
 		                                           		VALUES (@owner_id, @owner_permissions, @username, @email, @password_hashed, @password_salt)
 		                                           """,
@@ -224,7 +231,7 @@ public class DatabaseService
 		if (userId < 1)
 			return ExitCode.InvalidParameter;
 		
-		int rows = await ExecuteNonQueryAsync("DELETE FROM users WHERE id = @id",
+		int? rows = await ExecuteNonQueryAsync("DELETE FROM users WHERE id = @id",
 			new NpgsqlParameter("@id", userId)
 		);
 
@@ -253,19 +260,15 @@ public class DatabaseService
 	public async Task<bool> IsValidLoginAsync(string username, string password)
 	{
 		if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-		{
 			return false;
-		}
 
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync(
 				"SELECT password_hashed, password_salt FROM users WHERE username = @username",
 				new NpgsqlParameter("@username", username)
-			);
+		);
 		
-		if (!reader.Read() || reader.IsDBNull(0) || reader.IsDBNull(1))
-		{
+		if (reader == null || !reader.Read() || reader.IsDBNull(0) || reader.IsDBNull(1))
 			return false;
-		}
 		
 		byte[] dbPasswordHash = (byte[])reader.GetValue(0);
 		byte[] passwordSalt = (byte[])reader.GetValue(1);
@@ -287,7 +290,8 @@ public class DatabaseService
 	public async Task<int> GetUserIdAsync(string username)
 	{
 		object? id = await ExecuteScalarAsync("SELECT id FROM users WHERE username = @username", new NpgsqlParameter("@username", username));
-		if (id == null) return -1;
+		if (id == null) 
+			return -1;
 		
 		return (int)id;
 	}
@@ -303,10 +307,13 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<User?> GetUserAsync(string username)
 	{
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync(
 			"SELECT id, owner_id, owner_permissions, username, email, created_at FROM users WHERE username = @username",
 			new NpgsqlParameter("@username", username)
 		);
+
+		if (reader == null)
+			return null;
 
 		return await GetUserByReaderAsync(reader);
 	}
@@ -324,11 +331,14 @@ public class DatabaseService
 	{
 		if (userId < 1)
 			return null;
-		
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync(
 			"SELECT id, owner_id, owner_permissions, username, email, created_at FROM users WHERE id = @id",
 			new NpgsqlParameter("@id", userId)
 		);
+
+		if (reader == null)
+			return null;
 		
 		return await GetUserByReaderAsync(reader);
 	}
@@ -358,12 +368,12 @@ public class DatabaseService
 		}
 
 		int ownerId = reader.GetInt32(1);
-		await using NpgsqlDataReader r = await ExecuteReaderAsync(
+		await using NpgsqlDataReader? r = await ExecuteReaderAsync(
 			"SELECT username, email FROM users WHERE id = @owner_id",
 			new NpgsqlParameter("@owner_id", ownerId)
 		);
 
-		if (!r.Read())
+		if (r == null || !r.Read())
 			return null;
 
 		return new SubUser(
@@ -392,27 +402,24 @@ public class DatabaseService
 		if (userId < 1)
 			return null;
 
-		Task<NpgsqlDataReader> rTask = ExecuteReaderAsync(
+		Task<NpgsqlDataReader?> rTask = ExecuteReaderAsync(
 			"SELECT username, email FROM users WHERE id = @userId",
 			new NpgsqlParameter("@userId", userId)
 		);
-		Task<NpgsqlDataReader> readerTask = ExecuteReaderAsync(
+		Task<NpgsqlDataReader?> readerTask = ExecuteReaderAsync(
 			"SELECT id, owner_permissions, username, email, created_at FROM users WHERE owner_id = @owner_id",
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
 		await Task.WhenAll(rTask, readerTask);
 
-		NpgsqlDataReader r = rTask.Result;
-		NpgsqlDataReader reader = readerTask.Result;
-		if (!await rTask.Result.ReadAsync())
-		{
-			await Task.WhenAll(r.DisposeAsync().AsTask(), reader.DisposeAsync().AsTask());
+		await using NpgsqlDataReader? r = rTask.Result;
+		await using NpgsqlDataReader? reader = readerTask.Result;
+		if (r == null || reader == null || !await r.ReadAsync())
 			return null;
-		}
 		
-		string username = rTask.Result.GetString(0);
-		string email = rTask.Result.GetString(1);
+		string username = r.GetString(0);
+		string email = r.GetString(1);
 		
 		List<SubUser> users = new List<SubUser>();
 		while(await reader.ReadAsync())
@@ -431,7 +438,6 @@ public class DatabaseService
 			users.Add(user);
 		}
 		
-		await Task.WhenAll(r.DisposeAsync().AsTask(), reader.DisposeAsync().AsTask());
 		return users.ToArray();
 	}
 
@@ -450,11 +456,14 @@ public class DatabaseService
 		if (userId < 1)
 			return null;
 		
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync(
 			"SELECT id FROM users WHERE owner_id = @owner_id",
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
+		if (reader == null)
+			return null;
+		
 		List<int> ids = new List<int>();
 		while (await reader.ReadAsync())
 			ids.Add(reader.GetInt32(0));
@@ -502,7 +511,7 @@ public class DatabaseService
 		if (userId < 1 || newOwnerId < 1)
 			return ExitCode.InvalidParameter;
 
-		int rows = await ExecuteNonQueryAsync("UPDATE users SET owner_id = @new_owner_id WHERE id = @user_id",
+		int? rows = await ExecuteNonQueryAsync("UPDATE users SET owner_id = @new_owner_id WHERE id = @user_id",
 			new NpgsqlParameter("@user_id", userId),
 			new NpgsqlParameter("@new_owner_id", newOwnerId)
 		);
@@ -542,7 +551,7 @@ public class DatabaseService
 			return ExitCode.VmAlreadyExists;
 
 		int state = (int)VmState.ShutDown;
-		int rows = await ExecuteNonQueryAsync($"""
+		int? rows = await ExecuteNonQueryAsync($"""
 		                                      INSERT INTO virtual_machines (name, owner_id, operating_system, cpu_architecture, ram_size, boot_mode, state) 
 		                                      	VALUES (@name, @owner_id, @operating_system, @cpu_architecture,  @ram_size, @boot_mode, @state)
 		                                      """,
@@ -573,11 +582,13 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<ExitCode> DeleteVmAsync(int id)
 	{
-		if (id < 1) return ExitCode.InvalidParameter;
+		if (id < 1) 
+			return ExitCode.InvalidParameter;
 
-		int rows = await ExecuteNonQueryAsync("DELETE FROM virtual_machines WHERE id = @id", new NpgsqlParameter("@id", id));
+		int? rows = await ExecuteNonQueryAsync("DELETE FROM virtual_machines WHERE id = @id", new NpgsqlParameter("@id", id));
 
-		if (rows == 1) return ExitCode.Success;
+		if (rows == 1) 
+			return ExitCode.Success;
 		
 		return ExitCode.DatabaseOperationFailed;
 	}
@@ -594,7 +605,8 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsVmExistsAsync(int userId, string name)
 	{
-		if (userId < 1) return false;
+		if (userId < 1) 
+			return false;
 		
 		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM virtual_machines WHERE owner_id = @owner_id AND name = @name)",
 			new NpgsqlParameter("@owner_id", userId),
@@ -615,7 +627,8 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsVmExistsAsync(int vmId)
 	{
-		if (vmId < 1) return false;
+		if (vmId < 1) 
+			return false;
 		
 		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM virtual_machines WHERE id = @id)",
 			new NpgsqlParameter("@id", vmId)
@@ -636,14 +649,16 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int> GetVmIdAsync(int userId, string name)
 	{
-		if (userId < 1) return -1;
+		if (userId < 1) 
+			return -1;
 		
 		object? id = await ExecuteScalarAsync("SELECT id FROM virtual_machines WHERE owner_id = @owner_id AND name = @name", 
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
 		);
 		
-		if (id == null) return -1;
+		if (id == null) 
+			return -1;
 		
 		return (int)id;
 	}
@@ -683,12 +698,14 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int[]?> GetUserIdsRelatedToVmAsync(int vmId)
 	{
-		if (vmId < 1) return null;
+		if (vmId < 1) 
+			return null;
 
 		/* For now the owner is the only related user */
 		int id = await GetVmOwnerIdAsync(vmId);
 		
-		if (id < 1) return null;
+		if (id < 1) 
+			return null;
 		
 		return [id];
 	}
@@ -707,12 +724,16 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<VmGeneralDescriptor[]?> GetVmGeneralDescriptorsOfUserAsync(int userId)
 	{
-		if (userId < 1) return null;
+		if (userId < 1) 
+			return null;
 		
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync(
 			"SELECT id, name, operating_system, cpu_architecture, state, ram_size, boot_mode FROM virtual_machines WHERE owner_id = @owner_id",
 			new NpgsqlParameter("@owner_id", userId)
 		);
+
+		if (reader == null)
+			return null;
 
 		List<VmGeneralDescriptor> descriptors = new List<VmGeneralDescriptor>();
 		while(await reader.ReadAsync())
@@ -743,12 +764,16 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int[]?> GetVmIdsOfUserAsync(int userId)
 	{
-		if (userId < 1) return null;
+		if (userId < 1) 
+			return null;
 		
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync(
 			"SELECT id FROM virtual_machines WHERE owner_id = @owner_id",
 			new NpgsqlParameter("@owner_id", userId)
 		);
+		
+		if (reader == null)
+			return null;
 
 		List<int> ids = new List<int>();
 		while (await reader.ReadAsync())
@@ -770,11 +795,15 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<VmGeneralDescriptor?> GetVmGeneralDescriptorAsync(int id)
 	{
-		if (id < 1) return null;
+		if (id < 1) 
+			return null;
 		
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT name, operating_system, cpu_architecture, state, ram_size, boot_mode FROM virtual_machines WHERE id = @id",
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync("SELECT name, operating_system, cpu_architecture, state, ram_size, boot_mode FROM virtual_machines WHERE id = @id",
 			new NpgsqlParameter("@id", id)
 		);
+
+		if (reader == null)
+			return null;
 		
 		VmGeneralDescriptor? descriptor = null;
 
@@ -806,9 +835,7 @@ public class DatabaseService
 	public async Task<VmState> GetVmStateAsync(int id)
 	{
 		if (id < 1)
-		{
 			return (VmState)(-1);
-		}
 
 		object? state = await ExecuteScalarAsync(
 			"SELECT state FROM virtual_machines WHERE id = @id",
@@ -816,9 +843,7 @@ public class DatabaseService
 		);
 
 		if (state == null)
-		{
 			return (VmState)(-1);
-		}
 		
 		return (VmState)state;
 	}
@@ -837,19 +862,15 @@ public class DatabaseService
 	public async Task<ExitCode> SetVmStateAsync(int id, VmState state)
 	{
 		if (id < 1)
-		{
 			return ExitCode.InvalidParameter;
-		}
 
-		int rows = await ExecuteNonQueryAsync("UPDATE virtual_machines SET state = @state WHERE id = @id",
+		int? rows = await ExecuteNonQueryAsync("UPDATE virtual_machines SET state = @state WHERE id = @id",
 			new NpgsqlParameter("@state", (int)state) { NpgsqlDbType = NpgsqlDbType.Integer },
 			new NpgsqlParameter("@id", id)
 		);
 		
 		if(rows == 1)
-		{
 			return ExitCode.Success;
-		}
 
 		return ExitCode.VmDoesntExist;
 	}
@@ -866,19 +887,15 @@ public class DatabaseService
 	public async Task<VirtualMachineDescriptor?> GetVmDescriptorAsync(int vmId)
 	{
 		if (vmId < 1)
-		{
 			return null;
-		}
 		
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync(
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync(
 			"SELECT name, operating_system, cpu_architecture, ram_size, boot_mode, state FROM virtual_machines WHERE id = @id LIMIT 1",
 			new NpgsqlParameter("@id", vmId)
 		);
 
-		if (!await reader.ReadAsync())
-		{
+		if (reader == null || !await reader.ReadAsync())
 			return null;
-		}
 		
 		return new VirtualMachineDescriptor(
 			vmId,
@@ -907,14 +924,13 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<ExitCode> CreateDriveAsync(int userId, string name, int size, DriveType driveType)
 	{
-		if (size < 1 || userId < 1) return ExitCode.InvalidParameter;
+		if (size < 1 || userId < 1) 
+			return ExitCode.InvalidParameter;
 		
 		if (await IsDriveExistsAsync(userId, name))
-		{
 			return ExitCode.DriveAlreadyExists;
-		}
 		
-		int rowCount = await ExecuteNonQueryAsync($"""
+		int? rowCount = await ExecuteNonQueryAsync($"""
 		                                           INSERT INTO drives (name, owner_id, size, type)
 		                                           		VALUES (@name, @owner_id, @size, @type)
 		                                           """,
@@ -925,9 +941,7 @@ public class DatabaseService
 		);
 
 		if (rowCount == 1)
-		{
 			return ExitCode.Success;
-		}
 		
 		return ExitCode.DatabaseOperationFailed;
 	}
@@ -947,12 +961,12 @@ public class DatabaseService
 		if (userId < 1)
 			return null;
 
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync("SELECT id, size, type FROM drives WHERE name = @name AND owner_id = @owner_id LIMIT 1",
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync("SELECT id, size, type FROM drives WHERE name = @name AND owner_id = @owner_id LIMIT 1",
 			new NpgsqlParameter("@name", driveName),
 			new NpgsqlParameter("@owner_id", userId)
 		);
 
-		if (!await reader.ReadAsync())
+		if (reader == null || !await reader.ReadAsync())
 			return null;
 
 		return new DriveDescriptor(
@@ -975,7 +989,8 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsDriveExistsAsync(int userId, string name)
 	{
-		if (userId < 1 || string.IsNullOrEmpty(name)) return false;
+		if (userId < 1 || string.IsNullOrEmpty(name)) 
+			return false;
 		
 		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM drives WHERE owner_id = @owner_id AND name = @name)",
 			new NpgsqlParameter("@owner_id", userId),
@@ -996,7 +1011,8 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsDriveExistsAsync(int driveId)
 	{
-		if (driveId < 1) return false;
+		if (driveId < 1) 
+			return false;
 		
 		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM drives WHERE id = @id)",
 			new NpgsqlParameter("@id", driveId)
@@ -1024,9 +1040,7 @@ public class DatabaseService
 		);
 		
 		if (id == null)
-		{
 			return -1;
-		}
 		
 		return (int)id;
 	}
@@ -1042,13 +1056,15 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int> GetDriveOwnerIdAsync(int driveId)
 	{
-		if (driveId < 1) return -1;
+		if (driveId < 1) 
+			return -1;
 
 		object? id = await ExecuteScalarAsync("SELECT owner_id FROM drives WHERE id = @drive_id",
 			new NpgsqlParameter("@drive_id", driveId)
 		);
 
-		if (id == null) return -1;
+		if (id == null) 
+			return -1;
 		
 		return (int)id;
 	}
@@ -1086,16 +1102,12 @@ public class DatabaseService
 	public async Task<ExitCode> DeleteDriveAsync(int id)
 	{
 		if (id < 1)
-		{
 			return ExitCode.InvalidParameter;
-		}
 		
-		int rows = await ExecuteNonQueryAsync("DELETE FROM drives WHERE id = @id", new NpgsqlParameter("@id", id));
+		int? rows = await ExecuteNonQueryAsync("DELETE FROM drives WHERE id = @id", new NpgsqlParameter("@id", id));
 
 		if (rows >= 1)
-		{
 			return ExitCode.Success;
-		}
 		
 		return ExitCode.DatabaseOperationFailed;
 	}
@@ -1125,7 +1137,7 @@ public class DatabaseService
 			return ExitCode.DriveConnectionAlreadyExists;
 		}
 
-		int rows = await ExecuteNonQueryAsync($"""
+		int? rows = await ExecuteNonQueryAsync($"""
 		                                       INSERT INTO drive_connections (drive_id, vm_id)
 		                                       	VALUES (@drive_id, @vm_id)
 		                                       """,
@@ -1134,9 +1146,7 @@ public class DatabaseService
 		);
 
 		if (rows == 1)
-		{
 			return ExitCode.Success;
-		}
 
 		return ExitCode.DatabaseOperationFailed;
 	}
@@ -1161,7 +1171,7 @@ public class DatabaseService
 		if (!await IsDriveConnectionExistsAsync(driveId, vmId))
 			return ExitCode.DriveConnectionDoesNotExist;
 		
-		int rows = await ExecuteNonQueryAsync("""
+		int? rows = await ExecuteNonQueryAsync("""
 		                                       DELETE FROM drive_connections 
 		                                              WHERE drive_id = @drive_id
 		                                              AND vm_id = @vm_id
@@ -1219,7 +1229,7 @@ public class DatabaseService
 			return null;
 		}
 
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync($"""
 		                                                    SELECT d.id, d.name, d.size, d.type FROM drive_connections dc 
 		                                                        JOIN drives d ON d.id = dc.drive_id 
 		                                                    	WHERE dc.vm_id = @vm_id
@@ -1227,6 +1237,9 @@ public class DatabaseService
 		                                                    """,
 			new NpgsqlParameter("@vm_id", vmId)
 		);
+
+		if (reader == null)
+			return null;
 		
 		List<DriveDescriptor> descriptors = new List<DriveDescriptor>();
 		while (await reader.ReadAsync())
@@ -1258,11 +1271,14 @@ public class DatabaseService
 	{
 		if (userId < 1) return null;
 
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync($"""
 		                                                    SELECT id, name, size, type FROM drives WHERE owner_id = @owner_id
 		                                                    """,
 			new NpgsqlParameter("@owner_id", userId)
 		);
+
+		if (reader == null)
+			return null;
 
 		List<DriveDescriptor> descriptors = new List<DriveDescriptor>();
 		while (await reader.ReadAsync())
@@ -1291,11 +1307,14 @@ public class DatabaseService
 	{
 		if (userId < 1) return null;
 
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync($"""
 		                                                                SELECT id FROM drives WHERE owner_id = @owner_id
 		                                                                """,
 			new NpgsqlParameter("@owner_id", userId)
 		);
+
+		if (reader == null)
+			return null;
 
 		List<int> ids = new List<int>();
 		while (await reader.ReadAsync())
@@ -1319,7 +1338,7 @@ public class DatabaseService
 	{
 		if (userId < 1) return null;
 
-		await using NpgsqlDataReader reader = await ExecuteReaderAsync($"""
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync($"""
 		                                                    SELECT dc.drive_id, dc.vm_id FROM drive_connections dc
 		                                                    JOIN drives d ON d.id = dc.drive_id
 		                                                    JOIN virtual_machines vm ON vm.id = dc.vm_id
@@ -1327,6 +1346,9 @@ public class DatabaseService
 		                                                    """,
 			new NpgsqlParameter("@owner_id", userId)
 		);
+		
+		if (reader == null)
+			return null;
 
 		List<DriveConnection> connections = new List<DriveConnection>();
 		while (await reader.ReadAsync())
@@ -1358,7 +1380,7 @@ public class DatabaseService
 	/// Postcondition: On success, the number of rows affected by the execution of the command is returned. <br/>
 	/// On failure, an exception is raised.
 	/// </remarks>
-	private async Task<int> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
+	private async Task<int?> ExecuteNonQueryAsync(string command, params NpgsqlParameter[] parameters)
 	{
 		try
 		{
@@ -1372,7 +1394,7 @@ public class DatabaseService
 		catch (Exception e)
 		{
 			_logger.Error($"ExecuteNonQueryAsync failed. Exception: {e}");
-			throw;
+			return null;
 		}
 	}
 	
@@ -1393,7 +1415,7 @@ public class DatabaseService
 	/// Postcondition: On success, the number of rows affected by the execution of the command is returned. <br/>
 	/// On failure, an exception is raised.
 	/// </remarks>
-	public int ExecuteNonQuery(string command, params NpgsqlParameter[] parameters)
+	public int? ExecuteNonQuery(string command, params NpgsqlParameter[] parameters)
 	{
 		try
 		{
@@ -1407,7 +1429,7 @@ public class DatabaseService
 		catch (Exception e)
 		{
 			_logger.Error($"ExecuteNonQuery failed. Exception: {e}");
-			throw;
+			return null;
 		}
 	}
 
@@ -1441,7 +1463,7 @@ public class DatabaseService
 		catch (Exception e)
 		{
 			_logger.Error($"ExecuteScalarAsync failed. Exception: {e}");
-			throw;
+			return null;
 		}
 	}
 
@@ -1461,7 +1483,7 @@ public class DatabaseService
 	/// Precondition: Service connected to the database. command != null. <br/>
 	/// Postcondition: Returns a data reader for reading the returned data by the command.
 	/// </remarks>
-	private async Task<NpgsqlDataReader> ExecuteReaderAsync(string command, params NpgsqlParameter[] parameters)
+	private async Task<NpgsqlDataReader?> ExecuteReaderAsync(string command, params NpgsqlParameter[] parameters)
 	{
 		try
 		{
@@ -1475,7 +1497,7 @@ public class DatabaseService
 		catch (Exception e)
 		{
 			_logger.Error($"ExecuteReaderAsync failed. Exception: {e}");
-			throw;
+			return null;
 		}
 	}
 
