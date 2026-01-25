@@ -63,6 +63,12 @@ public partial class VmScreenViewModel : ViewModelBase
 	[ObservableProperty] 
 	private Brush _vmStateColor;
 	
+	[ObservableProperty] 
+	private string _errorMessage = string.Empty;
+	
+	[ObservableProperty]
+	private bool _hasError = false;
+	
 	public VmScreenViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
@@ -528,7 +534,20 @@ public partial class VmScreenViewModel : ViewModelBase
 		if (_vmDescriptor == null) 
 			return;
 
-		await ClientSvc.PowerOnVirtualMachineAsync(_vmDescriptor.Id);
+		ErrorMessageDismiss();
+		MessageResponseVmStartup.Status result = await ClientSvc.PowerOnVirtualMachineAsync(_vmDescriptor.Id);
+
+		if (result == MessageResponseVmStartup.Status.ServerStarvation)
+		{
+			ErrorMessage = "Server under high load. Try again later.";
+			HasError = true;
+		}
+		
+		else if (result != MessageResponseVmStartup.Status.Success)
+		{
+			ErrorMessage = "Virtual machine startup failed.";
+			HasError = true;
+		}
 	}
 
 	/// <summary>
@@ -545,6 +564,27 @@ public partial class VmScreenViewModel : ViewModelBase
 		if (_vmDescriptor == null) 
 			return;	
 		
-		await ClientSvc.PowerOffVirtualMachineAsync(_vmDescriptor.Id);
+		ErrorMessageDismiss();
+		MessageResponseVmShutdown.Status result = await ClientSvc.PowerOffVirtualMachineAsync(_vmDescriptor.Id);
+
+		if (result != MessageResponseVmShutdown.Status.Success && result != MessageResponseVmShutdown.Status.VmIsShutDown)
+		{
+			ErrorMessage = "Virtual machine shutdown failed.";
+			HasError = true;
+		}
+	}
+
+	/// <summary>
+	/// Handles a click on the dismiss button next to the error message. Clears and removes the error message.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the dismiss button next to an error message. <br/>
+	/// Postcondition: The error message is cleared and removed.
+	/// </remarks>
+	[RelayCommand]
+	private void ErrorMessageDismiss()
+	{
+		HasError = false;
+		ErrorMessage = string.Empty;
 	}
 }

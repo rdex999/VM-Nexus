@@ -71,6 +71,16 @@
 								</Button>
 							</StackPanel>
 						</Border>
+					
+						<Grid IsVisible="{Binding HasError}">
+							<Button HorizontalAlignment="Left" Command="{Binding ErrorMessageDismissCommand}" 
+							        Background="Transparent" CornerRadius="7">
+								<PathIcon Data="{StaticResource DismissRegular}" Width="10" Height="10" />
+							</Button>
+							
+							<TextBlock HorizontalAlignment="Right" Classes="error" TextWrapping="Wrap" MaxWidth="170" 
+							           FlowDirection="LeftToRight" Text="{Binding ErrorMessage}"/>
+						</Grid>
 					</StackPanel>
 				</Border>
 			</SplitView.Pane>
