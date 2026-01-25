@@ -7,12 +7,57 @@
              x:Class="Client.Views.VmScreenView"
              x:DataType="vm:VmScreenViewModel">
 
-	<Image Name="VmScreenImage" Source="{Binding VmScreenBitmap}" Focusable="True"
-	       SizeChanged="OnVmScreenSizeChanged"
-	       PointerMoved="OnPointerMoved"
-	       PointerPressed="OnPointerPressed"
-	       PointerReleased="OnPointerReleased"
-	       PointerWheelChanged="OnPointerWheelChanged"
-	       KeyDown="OnKeyDown"
-	       KeyUp="OnKeyUp"/>
+	<Design.DataContext>
+		<!-- This only sets the DataContext for the previewer in an IDE,
+		 to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+		<vm:VmScreenViewModel />
+	</Design.DataContext>
+
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceInclude Source="/Resources/Geometries.axaml" />
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</UserControl.Resources>
+
+	<Grid>
+		<SplitView Name="SplitView" IsPaneOpen="{Binding IsChecked, ElementName=ToggleButton}" DisplayMode="Overlay" FlowDirection="RightToLeft"
+		         CompactPaneLength="15" Background="Transparent" PaneBackground="Transparent">
+			<SplitView.Pane>
+				<Border CornerRadius="10" Background="#efefef" Opacity="0.995">
+
+				</Border>
+			</SplitView.Pane>
+
+			<Image Name="VmScreenImage" Source="{Binding VmScreenBitmap}" Focusable="True"
+			       SizeChanged="OnVmScreenSizeChanged"
+			       PointerMoved="OnPointerMoved"
+			       PointerPressed="OnPointerPressed"
+			       PointerReleased="OnPointerReleased"
+			       PointerWheelChanged="OnPointerWheelChanged"
+			       KeyDown="OnKeyDown"
+			       KeyUp="OnKeyUp" />
+		</SplitView>
+		
+		<ToggleButton Name="ToggleButton" IsVisible="{Binding !IsChecked, ElementName=ToggleButton}" Height="150" HorizontalAlignment="Right"
+		        Opacity="0.4" CornerRadius="12.5, 10, 10, 12.5" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}"
+		        Padding="5, 0, 3, 0" Margin="0">
+			<ToggleButton.Styles>
+				<Style Selector="ToggleButton">
+					<Setter Property="Background" Value="LightGray" />
+					
+					<Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+						<Setter Property="Background" Value="#e8e8e8" />
+					</Style>
+					
+					<Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+						<Setter Property="Background" Value="#c4c4c4" />
+					</Style>
+				</Style>
+			</ToggleButton.Styles>
+			
+			<PathIcon Data="{StaticResource MoreVerticalRegular}" Width="6" Height="50" />
+		</ToggleButton>
+	</Grid>
 </UserControl>

@@ -57,6 +57,12 @@ public partial class VmScreenViewModel : ViewModelBase
 		ClientSvc.VmCrashed += OnVmCrashed;
 	}
 
+	/* Use for IDE preview only. */
+	public VmScreenViewModel()
+	{
+		_audioPlayerService = null!;
+	}
+
 	/// <summary>
 	/// Resumes the screen stream.
 	/// </summary>
