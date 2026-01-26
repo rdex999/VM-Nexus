@@ -6,5 +6,93 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:DataType="vm:UsersViewModel"             
              x:Class="Server.Views.UsersView">
-	Welcome to Avalonia!
+	
+	<Design.DataContext>
+		<!-- This only sets the DataContext for the previewer in an IDE,
+             to set the actual DataContext for runtime, set the DataContext property in code (look at App.axaml.cs) -->
+		<vm:UsersViewModel />
+	</Design.DataContext>
+
+	<UserControl.Resources>
+		<ResourceDictionary>
+			<ResourceDictionary.MergedDictionaries>
+				<ResourceInclude Source="/Resources/Geometries.axaml"/>
+			</ResourceDictionary.MergedDictionaries>
+		</ResourceDictionary>
+	</UserControl.Resources>
+	
+	<Grid RowDefinitions="Auto, Auto, *">
+		<Grid ColumnDefinitions="Auto, Auto" HorizontalAlignment="Left" ColumnSpacing="12">
+			<TextBox Watermark="Search by username or id." Background="#f2f2f2" BorderBrush="#a0a0a0" MinWidth="280"/>
+			
+			<Button Grid.Column="1" CornerRadius="6">
+				<PathIcon Data="{StaticResource ArrowClockwiseRegular}" Foreground="#303030"/>
+			</Button>
+		</Grid>
+	
+		<Border Grid.Row="1" Background="#f0f0f0" Padding="5" Margin="0, 20, 0, 10">
+			<StackPanel Spacing="10">
+				<Grid ColumnDefinitions="Auto, Auto, *, Auto, 1.7*, Auto, 1.5*" ColumnSpacing="5" Width="600" HorizontalAlignment="Left">
+					<TextBlock HorizontalAlignment="Center">ID</TextBlock>
+					<TextBlock Grid.Column="1" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Column="2" HorizontalAlignment="Center">Username</TextBlock>
+					<TextBlock Grid.Column="3" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Column="4" HorizontalAlignment="Center">Email</TextBlock>
+					<TextBlock Grid.Column="5" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Column="6" HorizontalAlignment="Center">Created At</TextBlock>
+				</Grid>
+				
+				<Grid ColumnDefinitions="Auto, Auto, Auto, Auto, Auto" ColumnSpacing="10" Width="600" HorizontalAlignment="Left">
+					<TextBlock HorizontalAlignment="Center">Owner ID</TextBlock>
+					<TextBlock Grid.Column="1" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Column="4" HorizontalAlignment="Center">Owner Permissions</TextBlock>
+					<TextBlock Grid.Column="3" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Column="2" HorizontalAlignment="Center">Owner username</TextBlock>
+				</Grid>
+			</StackPanel>
+		</Border>
+
+		<ScrollViewer Grid.Row="2">
+			<ItemsControl ItemsSource="{Binding Users}" HorizontalAlignment="Left">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate DataType="vm:UserItemTemplate">
+						<Border Margin="5, 7" Background="#e4e4e4" CornerRadius="5" Width="600" Padding="10, 5"
+						        BoxShadow="0 0 8 0 #a8a8a8">
+							<StackPanel Spacing="7">
+								<Grid ColumnDefinitions="Auto, *, 1.7*, 1.5*" ColumnSpacing="20">
+									<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16" 
+									           Text="{Binding Id}" />
+									
+									<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
+									           FontWeight="DemiBold"
+									           Text="{Binding Username}" />
+									
+									<TextBlock Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
+									           Text="{Binding Email}" />
+									
+									<TextBlock Grid.Row="0" Grid.Column="3" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
+									           Text="{Binding CreatedAt}" />
+								</Grid>
+
+								<Grid ColumnDefinitions="Auto, *, 1.7*, 1.5*" ColumnSpacing="20" IsVisible="{Binding IsSubUser}">
+									<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16" 
+									           Text="{Binding OwnerId}" />
+
+									<TextBlock Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
+									           Text="{Binding OwnerUsername}" />
+
+									<Button Grid.Column="2" Padding="4, 1.7">
+										<StackPanel Orientation="Horizontal" Spacing="10">
+											<TextBlock>Owner Permissions</TextBlock>
+											<PathIcon Data="{StaticResource ChevronDownRegular}" Foreground="#454545" Width="18" />
+										</StackPanel>
+									</Button>
+								</Grid>
+							</StackPanel>
+						</Border>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+	</Grid>
 </UserControl>

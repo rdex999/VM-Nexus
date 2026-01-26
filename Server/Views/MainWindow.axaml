@@ -96,7 +96,7 @@
 				<RowDefinition Height="*" MaxHeight="500" MinHeight="48" />
 			</Grid.RowDefinitions>
 		
-			<TransitioningContentControl Content="{Binding CurrentTab}" />
+			<TransitioningContentControl Content="{Binding CurrentTab}" Margin="10"/>
 			
 			<GridSplitter Grid.Row="1" ResizeDirection="Rows" Background="#ebebeb" MinHeight="1"/>
 
