@@ -13,4 +13,8 @@
 	<Style Selector="TextBlock">
 		<Setter Property="FontSize" Value="14"/>
 	</Style>
+	
+	<Style Selector="TextBox">
+		<Setter Property="MaxLength" Value="128"/>
+	</Style>
 </Styles>
