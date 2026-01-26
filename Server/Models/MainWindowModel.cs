@@ -23,11 +23,11 @@ public class MainWindowModel : IDisposable
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
 
-	public MainWindowModel(Logger logger)
+	public MainWindowModel(Logger logger, out DatabaseService databaseService)
 	{
 		_logger = logger;
 		_clients = new ConcurrentDictionary<Guid, ClientConnection>();
-		_databaseService = new DatabaseService(_logger.ForContext("Source", "Database Service"));
+		_databaseService = databaseService = new DatabaseService(_logger.ForContext("Source", "Database Service"));
 		_userService = new UserService(_logger.ForContext("Source", "User Service"), _databaseService);
 		_driveService = new DriveService(_logger.ForContext("Source", "Drive Service"), _databaseService);
 		_virtualMachineService = new VirtualMachineService(_logger.ForContext("Source", "Virtual Machine Service"), 
@@ -112,6 +112,8 @@ public class MainWindowModel : IDisposable
 	/// </remarks>
 	public async Task<ExitCode> ServerStopAsync()
 	{
+		_logger.Verbose("Server shutting down, please wait..");
+		
 		if (_listenerCts != null)
 			await _listenerCts.CancelAsync();
 		

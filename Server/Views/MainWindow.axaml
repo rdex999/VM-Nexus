@@ -34,7 +34,7 @@
 				</TextBlock>
 			
 				<Border Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="120, 0, 0, 0">
-					<ListBox Background="Transparent" SelectedIndex="0">
+					<ListBox Background="Transparent" SelectedIndex="{Binding CurrentTabIndex}">
 						<ListBox.ItemsPanel>
 							<ItemsPanelTemplate>
 								<StackPanel Orientation="Horizontal"/>
@@ -95,6 +95,8 @@
 				<RowDefinition Height="4"/>
 				<RowDefinition Height="*" MaxHeight="500" MinHeight="48" />
 			</Grid.RowDefinitions>
+		
+			<TransitioningContentControl Content="{Binding CurrentTab}" />
 			
 			<GridSplitter Grid.Row="1" ResizeDirection="Rows" Background="#ebebeb" MinHeight="1"/>
 

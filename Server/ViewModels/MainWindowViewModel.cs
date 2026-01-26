@@ -11,6 +11,7 @@ using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using Server.Models;
+using Server.Services;
 using Shared;
 
 namespace Server.ViewModels;
@@ -28,6 +29,14 @@ public partial class MainWindowViewModel : ViewModelBase
 
 	[ObservableProperty] 
 	private bool _logsFocused = false;
+
+	[ObservableProperty] 
+	private int _currentTabIndex = 0;
+	
+	[ObservableProperty] 
+	private ViewModelBase _currentTab;
+	
+	private readonly UsersViewModel _usersViewModel;
 
 	private class LoggingSink : ILogEventSink
 	{
@@ -63,7 +72,10 @@ public partial class MainWindowViewModel : ViewModelBase
 			.CreateLogger();
 
 		Logs = new ObservableCollection<LogItemTemplate>();
-		MainWindowModel = new MainWindowModel(logger);
+		MainWindowModel = new MainWindowModel(logger, out DatabaseService databaseService);
+		
+		_usersViewModel = new UsersViewModel(databaseService);
+		CurrentTab = _usersViewModel;
 	}
 
 	/// <summary>
@@ -116,6 +128,23 @@ public partial class MainWindowViewModel : ViewModelBase
 			if (result != ExitCode.Success)
 				ServerStateIsChecked = true;
 		}
+	}
+
+	/// <summary>
+	/// Handles a change in the currently selected tab. Displays the new selected tab.
+	/// </summary>
+	/// <param name="value">The new tab (index) that was selected. Must be in valid range. value >= 0.</param>
+	/// <remarks>
+	/// Precondition: The user has clicked on another tab. value >= 0. <br/>
+	/// Postcondition:
+	/// </remarks> 
+	partial void OnCurrentTabIndexChanged(int value)
+	{
+		CurrentTab = value switch
+		{
+			0 => _usersViewModel,
+			_ => _usersViewModel
+		};
 	}
 }
 
