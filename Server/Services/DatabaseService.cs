@@ -312,7 +312,7 @@ public class DatabaseService
 			new NpgsqlParameter("@username", username)
 		);
 
-		if (reader == null)
+		if (reader == null || !await reader.ReadAsync())
 			return null;
 
 		return await GetUserByReaderAsync(reader);
@@ -337,7 +337,7 @@ public class DatabaseService
 			new NpgsqlParameter("@id", userId)
 		);
 
-		if (reader == null)
+		if (reader == null || !await reader.ReadAsync())
 			return null;
 		
 		return await GetUserByReaderAsync(reader);
@@ -354,9 +354,6 @@ public class DatabaseService
 	/// </remarks>
 	private async Task<User?> GetUserByReaderAsync(NpgsqlDataReader reader)
 	{
-		if (!reader.Read())
-			return null;
-
 		if (reader.IsDBNull(1))
 		{
 			return new User(
@@ -373,7 +370,7 @@ public class DatabaseService
 			new NpgsqlParameter("@owner_id", ownerId)
 		);
 
-		if (r == null || !r.Read())
+		if (r == null || !await r.ReadAsync())
 			return null;
 
 		return new SubUser(
@@ -520,6 +517,53 @@ public class DatabaseService
 			return ExitCode.Success;
 
 		return ExitCode.DatabaseOperationFailed;
+	}
+
+	/// <summary>
+	/// Searches for users using the given query.
+	/// </summary>
+	/// <param name="query">The query to search for users with. query != null.</param>
+	/// <returns>An array of users describing the found users, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: query != null. <br/>
+	/// Postcondition: An array of users describing the found users is returned. Returns or null on failure.
+	/// </remarks>
+	public async Task<User[]?> SearchUsersAsync(string query)
+	{
+		string q = query.Trim();
+		NpgsqlDataReader? reader;
+		if (int.TryParse(q, out int id))
+		{
+			reader = await ExecuteReaderAsync($@"SELECT id, owner_id, owner_permissions, username, email, created_at 
+															FROM users WHERE id = @id OR STRPOS(username, @query) > 0 
+															OR STRPOS(email, @query) > 0",
+				new NpgsqlParameter("@id", id),
+				new NpgsqlParameter("@query", q)
+			);
+		}
+		else
+		{
+			reader = await ExecuteReaderAsync($@"SELECT id, owner_id, owner_permissions, username, email, created_at 
+															FROM users WHERE STRPOS(username, @query) > 0
+															OR STRPOS(email, @query) > 0",
+				new NpgsqlParameter("@query", q)
+			);
+		}
+
+		if (reader == null)
+			return null;
+
+		List<User> users = new List<User>();
+		while (await reader.ReadAsync())
+		{
+			User? user = await GetUserByReaderAsync(reader);
+			if (user != null)
+				users.Add(user);
+		}
+
+		await reader.DisposeAsync();
+		
+		return users.ToArray();
 	}
 
 	/// <summary>

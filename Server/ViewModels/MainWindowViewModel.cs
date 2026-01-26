@@ -128,6 +128,8 @@ public partial class MainWindowViewModel : ViewModelBase
 			if (result != ExitCode.Success)
 				ServerStateIsChecked = true;
 		}
+
+		await _usersViewModel.RefreshAsync();
 	}
 
 	/// <summary>

@@ -27,9 +27,10 @@
 
 	<Grid RowDefinitions="Auto, Auto, *">
 		<Grid ColumnDefinitions="Auto, Auto" HorizontalAlignment="Left" ColumnSpacing="12">
-			<TextBox Watermark="Search by username or id." Background="#f2f2f2" BorderBrush="#a0a0a0" MinWidth="280"/>
+			<TextBox Watermark="Search by username or id." Background="#f2f2f2" BorderBrush="#a0a0a0" 
+			         MinWidth="280" Text="{Binding Query}" />
 			
-			<Button Grid.Column="1" CornerRadius="6">
+			<Button Grid.Column="1" CornerRadius="6" Command="{Binding RefreshCommand}">
 				<PathIcon Data="{StaticResource ArrowClockwiseRegular}" Foreground="#303030"/>
 			</Button>
 		</Grid>
@@ -46,12 +47,14 @@
 					<TextBlock Grid.Column="6" HorizontalAlignment="Center">Created At</TextBlock>
 				</Grid>
 				
-				<Grid ColumnDefinitions="Auto, Auto, Auto, Auto, Auto" ColumnSpacing="10" Width="600" HorizontalAlignment="Left">
+				<Grid ColumnDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto" ColumnSpacing="10" Width="600" HorizontalAlignment="Left">
 					<TextBlock HorizontalAlignment="Center">Owner ID</TextBlock>
 					<TextBlock Grid.Column="1" HorizontalAlignment="Center">|</TextBlock>
-					<TextBlock Grid.Column="4" HorizontalAlignment="Center">Owner Permissions</TextBlock>
-					<TextBlock Grid.Column="3" HorizontalAlignment="Center">|</TextBlock>
 					<TextBlock Grid.Column="2" HorizontalAlignment="Center">Owner username</TextBlock>
+					<TextBlock Grid.Column="3" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Column="4" HorizontalAlignment="Center">Owner Email</TextBlock>
+					<TextBlock Grid.Column="5" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Column="6" HorizontalAlignment="Center">Owner Permissions</TextBlock>
 				</Grid>
 			</StackPanel>
 		</Border>
@@ -62,57 +65,60 @@
 					<DataTemplate DataType="vm:UserItemTemplate">
 						<Border Margin="5, 7" Background="#e4e4e4" CornerRadius="5" Width="600" Padding="10, 5"
 						        BoxShadow="0 0 7 0 #a4a4a4">
-							<StackPanel Spacing="7">
-								<Grid ColumnDefinitions="Auto, *, 1.7*, 1.5*" ColumnSpacing="20">
-									<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16" 
-									           Text="{Binding Id}" />
-									
-									<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
-									           FontWeight="DemiBold"
-									           Text="{Binding Username}" />
-									
-									<TextBlock Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
-									           Text="{Binding Email}" />
-									
-									<TextBlock Grid.Row="0" Grid.Column="3" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
-									           Text="{Binding CreatedAt}" />
-								</Grid>
+							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, *, 1.7*, 1.5*" ColumnSpacing="20">
+								<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
+								           Text="{Binding User.Id}" />
 
-								<Grid ColumnDefinitions="Auto, *, 1.7*, 1.5*" ColumnSpacing="20" IsVisible="{Binding IsSubUser}">
-									<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16" 
-									           Text="{Binding OwnerId}" />
+								<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
+								           FontWeight="DemiBold"
+								           Text="{Binding User.Username}" />
 
-									<TextBlock Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
-									           Text="{Binding OwnerUsername}" />
+								<TextBlock Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
+								           Text="{Binding User.Email}" />
 
-									<Button Grid.Column="2" Padding="4, 1.7">
-										<StackPanel Orientation="Horizontal" Spacing="10">
-											<TextBlock>Owner Permissions</TextBlock>
-											<PathIcon Data="{StaticResource ChevronDownRegular}" Foreground="#454545" Width="18" />
-										</StackPanel>
-										
-										<Button.Flyout>
-											<Flyout VerticalOffset="5">
-												<ScrollViewer MaxHeight="240">
-													<ItemsControl ItemsSource="{Binding Permissions}">
-														<ItemsControl.DataTemplates>
-															<DataTemplate DataType="vm:UserPermissionItemTemplate">
-																<Border Background="#dfdfdf" CornerRadius="4" Margin="0, 4"
-																        Padding="5, 4" ToolTip.Placement="Right" ToolTip.HorizontalOffset="6"
-																        ToolTip.VerticalOffset="0"
-																        ToolTip.Tip="{Binding Description}">
+								<TextBlock Grid.Row="0" Grid.Column="3" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
+								           Text="{Binding User.CreatedAt}" />
 
-																	<TextBlock Text="{Binding Permission}" />
-																</Border>
-															</DataTemplate>
-														</ItemsControl.DataTemplates>
-													</ItemsControl>
-												</ScrollViewer>
-											</Flyout>
-										</Button.Flyout>
-									</Button>
-								</Grid>
-							</StackPanel>
+								<TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16" 
+								           Margin="0, 8, 0, 0"
+								           Text="{Binding SubUser.OwnerId}" IsVisible="{Binding IsSubUser}" />
+
+								<TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16" 
+								           Margin="0, 8, 0, 0"
+								           Text="{Binding SubUser.OwnerUsername}" IsVisible="{Binding IsSubUser}"/>
+
+								<TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16" 
+								           Margin="0, 8, 0, 0"
+								           Text="{Binding SubUser.OwnerEmail}" IsVisible="{Binding IsSubUser}"/>
+
+								<Button Grid.Row="1" Grid.Column="3" Padding="4, 1.7" IsVisible="{Binding IsSubUser}"
+								        Margin="0, 8, 0, 0">
+									<StackPanel Orientation="Horizontal" Spacing="10">
+										<TextBlock>Owner Permissions</TextBlock>
+										<PathIcon Data="{StaticResource ChevronDownRegular}" Foreground="#454545" Width="18" />
+									</StackPanel>
+
+									<Button.Flyout>
+										<Flyout VerticalOffset="5">
+											<ScrollViewer MaxHeight="240">
+												<ItemsControl ItemsSource="{Binding Permissions}">
+													<ItemsControl.DataTemplates>
+														<DataTemplate DataType="vm:UserPermissionItemTemplate">
+															<Border Background="#dfdfdf" CornerRadius="4" Margin="0, 4"
+															        Padding="5, 4" ToolTip.Placement="Right" ToolTip.HorizontalOffset="6"
+															        ToolTip.VerticalOffset="0"
+															        ToolTip.Tip="{Binding Description}">
+
+																<TextBlock Text="{Binding Permission}" />
+															</Border>
+														</DataTemplate>
+													</ItemsControl.DataTemplates>
+												</ItemsControl>
+											</ScrollViewer>
+										</Flyout>
+									</Button.Flyout>
+								</Button>
+							</Grid>
 						</Border>
 					</DataTemplate>
 				</ItemsControl.ItemTemplate>

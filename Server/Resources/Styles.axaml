@@ -9,4 +9,8 @@
 	<Style Selector="FlyoutPresenter">
 		<Setter Property="Background" Value="White" />
 	</Style>
+	
+	<Style Selector="TextBlock">
+		<Setter Property="FontSize" Value="14"/>
+	</Style>
 </Styles>
