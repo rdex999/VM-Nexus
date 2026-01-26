@@ -951,6 +951,58 @@ public class DatabaseService
 			(VmState)reader.GetInt32(5)
 		);
 	}
+	
+	/// <summary>
+	/// Searches for virtual machines using the given query.
+	/// </summary>
+	/// <param name="query">The query to search for virtual machines with. query != null.</param>
+	/// <returns>An array of general virtual machine descriptors is returned, describing the found virtual machines. Returns or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: query != null. <br/>
+	/// Postcondition: An array of users describing the found users is returned. Returns or null on failure.
+	/// </remarks>
+	public async Task<VmGeneralDescriptor[]?> SearchVirtualMachinesAsync(string query)
+	{
+		string q = query.Trim();
+		NpgsqlDataReader? reader;
+		if (int.TryParse(q, out int id))
+		{
+			reader = await ExecuteReaderAsync($@"SELECT id, name, operating_system, cpu_architecture, state, ram_size, boot_mode
+															FROM virtual_machines WHERE id = @id OR owner_id = @id 
+															OR STRPOS(name, @query) > 0",
+				new NpgsqlParameter("@id", id),
+				new NpgsqlParameter("@query", q)
+			);
+		}
+		else
+		{
+			reader = await ExecuteReaderAsync($@"SELECT id, name, operating_system, cpu_architecture, state, ram_size, boot_mode
+															FROM virtual_machines WHERE STRPOS(name, @query) > 0",
+				new NpgsqlParameter("@query", q)
+			);
+		}
+
+		if (reader == null)
+			return null;
+
+		List<VmGeneralDescriptor> descriptors = new List<VmGeneralDescriptor>();
+		while (await reader.ReadAsync())
+		{
+			descriptors.Add(new VmGeneralDescriptor(
+				reader.GetInt32(0),
+				reader.GetString(1),
+				(OperatingSystem)reader.GetInt32(2),
+				(CpuArchitecture)reader.GetInt32(3),
+				(VmState)reader.GetInt32(4),
+				reader.GetInt32(5),
+				(BootMode)reader.GetInt32(6)
+			));
+		}
+
+		await reader.DisposeAsync();
+		
+		return descriptors.ToArray();
+	}
 
 	/// <summary>
 	/// Registers a drive in the database.
