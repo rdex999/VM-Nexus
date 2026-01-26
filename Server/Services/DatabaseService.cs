@@ -534,8 +534,9 @@ public class DatabaseService
 		if (int.TryParse(q, out int id))
 		{
 			reader = await ExecuteReaderAsync($@"SELECT id, owner_id, owner_permissions, username, email, created_at 
-															FROM users WHERE id = @id OR STRPOS(username, @query) > 0 
-															OR STRPOS(email, @query) > 0",
+															FROM users WHERE id = @id 
+															OR STRPOS(LOWER(username), LOWER(@query)) > 0 
+															OR STRPOS(LOWER(email), LOWER(@query)) > 0",
 				new NpgsqlParameter("@id", id),
 				new NpgsqlParameter("@query", q)
 			);
@@ -543,8 +544,8 @@ public class DatabaseService
 		else
 		{
 			reader = await ExecuteReaderAsync($@"SELECT id, owner_id, owner_permissions, username, email, created_at 
-															FROM users WHERE STRPOS(username, @query) > 0
-															OR STRPOS(email, @query) > 0",
+															FROM users WHERE STRPOS(LOWER(username), LOWER(@query)) > 0
+															OR STRPOS(LOWER(email), LOWER(@query)) > 0",
 				new NpgsqlParameter("@query", q)
 			);
 		}
@@ -968,9 +969,11 @@ public class DatabaseService
 		{
 			reader = await ExecuteReaderAsync($@"SELECT vms.id, vms.owner_id, usrs.username, vms.name, vms.operating_system, 
        															vms.cpu_architecture, vms.ram_size, vms.boot_mode, vms.state
-															FROM virtual_machines vms JOIN users usrs ON usrs.id = vms.owner_id 
+															FROM virtual_machines vms 
+															JOIN users usrs ON usrs.id = vms.owner_id 
 															WHERE vms.id = @id OR vms.owner_id = @id 
-															OR STRPOS(vms.name, @query) > 0 OR STRPOS(usrs.username, @query) > 0",
+															OR STRPOS(LOWER(vms.name), LOWER(@query)) > 0 
+															OR STRPOS(LOWER(usrs.username), LOWER(@query)) > 0",
 				new NpgsqlParameter("@id", id),
 				new NpgsqlParameter("@query", q)
 			);
@@ -979,8 +982,10 @@ public class DatabaseService
 		{
 			reader = await ExecuteReaderAsync($@"SELECT vms.id, vms.owner_id, usrs.username, vms.name, vms.operating_system, 
        															vms.cpu_architecture, vms.ram_size, vms.boot_mode, vms.state
-															FROM virtual_machines vms JOIN users usrs ON usrs.id = vms.owner_id 
-															WHERE STRPOS(vms.name, @query) > 0 OR STRPOS(usrs.username, @query) > 0",
+															FROM virtual_machines vms 
+															JOIN users usrs ON usrs.id = vms.owner_id 
+															WHERE STRPOS(LOWER(vms.name), LOWER(@query)) > 0 
+															OR STRPOS(LOWER(usrs.username), LOWER(@query)) > 0",
 				new NpgsqlParameter("@query", q)
 			);
 		}
@@ -1229,9 +1234,11 @@ public class DatabaseService
 		if (int.TryParse(q, out int id))
 		{
 			reader = await ExecuteReaderAsync($@"SELECT d.id, d.owner_id, u.username, d.name, d.size, d.type
-															FROM drives d JOIN users u ON d.owner_id = u.id
+															FROM drives d 
+															JOIN users u ON d.owner_id = u.id
 															WHERE d.id = @id OR d.owner_id = @id 
-															OR STRPOS(d.name, @query) > 0 OR STRPOS(u.username, @query) > 0",
+															OR STRPOS(LOWER(d.name), LOWER(@query)) > 0 
+															OR STRPOS(LOWER(u.username), LOWER(@query)) > 0",
 				new NpgsqlParameter("@id", id),
 				new NpgsqlParameter("@query", q)
 			);
@@ -1239,8 +1246,10 @@ public class DatabaseService
 		else
 		{
 			reader = await ExecuteReaderAsync($@"SELECT d.id, d.owner_id, u.username, d.name, d.size, d.type
-															FROM drives d JOIN users u ON d.owner_id = u.id
-															WHERE STRPOS(d.name, @query) > 0 OR STRPOS(u.username, @query) > 0",
+															FROM drives d 
+															JOIN users u ON d.owner_id = u.id
+															WHERE STRPOS(LOWER(d.name), LOWER(@query)) > 0 
+															OR STRPOS(LOWER(u.username), LOWER(@query)) > 0",
 				new NpgsqlParameter("@query", q)
 			);
 		}
@@ -1365,6 +1374,72 @@ public class DatabaseService
 		
 		return exists != null && (bool)exists;
 	}
+	
+	
+	/// <summary>
+	/// Searches for drive connections using the given query.
+	/// </summary>
+	/// <param name="query">The query to search for drive connections with. query != null.</param>
+	/// <returns>An array of drives describing the found drives, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: query != null. <br/>
+	/// Postcondition: An array of drive connections is returned, describing the found drives. Returns or null on failure.
+	/// </remarks>
+	public async Task<SearchedDriveConnection[]?> SearchDriveConnectionsAsync(string query)
+	{
+		string q = query.Trim();
+		NpgsqlDataReader? reader;
+		if (int.TryParse(q, out int id))
+		{
+			reader = await ExecuteReaderAsync($@"SELECT d.owner_id, u.username, d.name, v.name, d.id, v.id, dc.connected_at
+															FROM drive_connections dc 
+    														JOIN drives d ON d.id = dc.drive_id
+    														JOIN virtual_machines v ON v.id = dc.vm_id
+    														JOIN users u ON u.id = d.owner_id
+    														WHERE d.id = @id OR v.id = @id OR u.id = @id
+    														OR STRPOS(LOWER(u.username), LOWER(@query)) > 0 
+    														OR STRPOS(LOWER(v.name), LOWER(@query)) > 0
+    														OR STRPOS(LOWER(d.name), LOWER(@query)) > 0",
+				new NpgsqlParameter("@id", id),
+				new NpgsqlParameter("@query", q)
+			);
+		}
+		else
+		{
+			reader = await ExecuteReaderAsync($@"SELECT d.owner_id, u.username, d.name, v.name, d.id, v.id, dc.connected_at
+															FROM drive_connections dc 
+    														JOIN drives d ON d.id = dc.drive_id
+    														JOIN virtual_machines v ON v.id = dc.vm_id
+    														JOIN users u ON u.id = d.owner_id
+    														WHERE STRPOS(LOWER(u.username), LOWER(@query)) > 0 
+    														OR STRPOS(LOWER(v.name), LOWER(@query)) > 0
+    														OR STRPOS(LOWER(d.name), LOWER(@query)) > 0",
+				new NpgsqlParameter("@id", id),
+				new NpgsqlParameter("@query", q)
+			);
+		}
+
+		if (reader == null)
+			return null;
+
+		List<SearchedDriveConnection> drives = new List<SearchedDriveConnection>();
+		while (await reader.ReadAsync())
+		{
+			drives.Add(new SearchedDriveConnection(
+				reader.GetInt32(0),
+				reader.GetString(1),
+				reader.GetString(2),
+				reader.GetString(3),
+				reader.GetInt32(4),
+				reader.GetInt32(5),
+				reader.GetDateTime(6)
+			));
+		}
+
+		await reader.DisposeAsync();
+		
+		return drives.ToArray();
+	}		
 
 	/// <summary>
 	/// Get all drives connected to the virtual machine.
@@ -1745,6 +1820,29 @@ public class DatabaseService
 			Name = name;
 			SizeMiB = sizeMiB;
 			DriveType = driveType;
+		}
+	}
+	
+	public class SearchedDriveConnection
+	{
+		public int OwnerId { get; }
+		public string OwnerUsername { get; }
+		public string DriveName { get; }
+		public string VirtualMachineName { get; }
+		public int DriveId { get; }
+		public int VirtualMachineId { get; }
+		public DateTime ConnectedAt { get; }
+		
+		public SearchedDriveConnection(int ownerId, string ownerUsername, string driveName, string virtualMachineName, 
+			int driveId, int virtualMachineId, DateTime connectedAt)
+		{
+			OwnerId = ownerId;
+			OwnerUsername = ownerUsername;
+			DriveName = driveName;
+			VirtualMachineName = virtualMachineName;
+			DriveId = driveId;
+			VirtualMachineId = virtualMachineId;
+			ConnectedAt = connectedAt;
 		}
 	}
 }

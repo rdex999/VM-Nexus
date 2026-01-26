@@ -146,7 +146,7 @@ public partial class MainWindowViewModel : ViewModelBase
 	/// <param name="value">The new tab (index) that was selected. Must be in valid range. value >= 0.</param>
 	/// <remarks>
 	/// Precondition: The user has clicked on another tab. value >= 0. <br/>
-	/// Postcondition:
+	/// Postcondition: The selected tab's content is displayed.
 	/// </remarks> 
 	partial void OnCurrentTabIndexChanged(int value)
 	{
