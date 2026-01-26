@@ -47,6 +47,7 @@ public partial class DrivesViewModel : ViewModelBase
 	[RelayCommand]
 	public async Task<ExitCode> RefreshAsync()
 	{
+		Drives.Clear();
 		DatabaseService.SearchedDrive[]? drives = await _databaseService.SearchDrivesAsync(Query);
 		if (drives == null)
 			return ExitCode.DatabaseOperationFailed;

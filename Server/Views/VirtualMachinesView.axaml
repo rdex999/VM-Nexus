@@ -25,13 +25,13 @@
 		<StyleInclude Source="/Resources/Styles.axaml" />
 	</UserControl.Styles>
 	
-	<Grid RowDefinitions="Auto, Auto, *">
+	<Grid RowDefinitions="Auto, *">
 		<Border Padding="8" Background="#f6f6f6">
 			<StackPanel Spacing="10">
 				<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, Auto" HorizontalAlignment="Stretch" ColumnSpacing="12"
 				      Margin="0, 0, 0, 0">
-					<TextBox Watermark="Search by name, id, or owner id." BorderBrush="#a0a0a0"
-					         MinWidth="280" MaxWidth="600" Text="{Binding Query}" />
+					<TextBox Watermark="Search by id, name, owner username, or owner id." BorderBrush="#a0a0a0"
+					         MinWidth="380" MaxWidth="600" Text="{Binding Query}" />
 
 					<Button Grid.Row="0" Grid.Column="1" CornerRadius="6" Command="{Binding RefreshCommand}">
 						<PathIcon Data="{StaticResource ArrowClockwiseRegular}" Foreground="#303030" />

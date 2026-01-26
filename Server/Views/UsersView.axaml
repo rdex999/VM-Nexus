@@ -25,7 +25,7 @@
 		<StyleInclude Source="/Resources/Styles.axaml" />
 	</UserControl.Styles>
 
-	<Grid RowDefinitions="Auto, Auto, *">
+	<Grid RowDefinitions="Auto, *">
 		<Border Padding="8" Background="#f6f6f6">
 			<StackPanel Spacing="10">
 				<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, Auto" HorizontalAlignment="Stretch" ColumnSpacing="12"

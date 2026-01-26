@@ -24,5 +24,56 @@
 		<StyleInclude Source="/Resources/Styles.axaml" />
 	</UserControl.Styles>
 	
-	Welcome to Avalonia!
+	<Grid RowDefinitions="Auto, Auto, *">
+		<Border Padding="8" Background="#f6f6f6">
+			<StackPanel Spacing="10">
+				<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, Auto" HorizontalAlignment="Stretch" ColumnSpacing="12"
+				      Margin="0, 0, 0, 0">
+					<TextBox Watermark="Search by id, name, owner username, or owner id." BorderBrush="#a0a0a0"
+					         MinWidth="380" MaxWidth="600" Text="{Binding Query}" />
+
+					<Button Grid.Row="0" Grid.Column="1" CornerRadius="6" Command="{Binding RefreshCommand}">
+						<PathIcon Data="{StaticResource ArrowClockwiseRegular}" Foreground="#303030" />
+					</Button>
+				</Grid>
+				
+				<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, Auto, 138, Auto, 90, Auto, 100" RowSpacing="8"
+				      ColumnSpacing="5" HorizontalAlignment="Left">
+					<TextBlock HorizontalAlignment="Center">Drive ID</TextBlock>
+					<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Row="0" Grid.Column="2" HorizontalAlignment="Center">Name</TextBlock>
+					<TextBlock Grid.Row="0" Grid.Column="3" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Row="0" Grid.Column="4" HorizontalAlignment="Center">Size</TextBlock>
+					<TextBlock Grid.Row="0" Grid.Column="5" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Row="0" Grid.Column="6" HorizontalAlignment="Center">Type</TextBlock>
+
+					<TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Center">Owner ID</TextBlock>
+					<TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Row="1" Grid.Column="2" HorizontalAlignment="Center">Owner Username</TextBlock>
+					<TextBlock Grid.Row="1" Grid.Column="3" HorizontalAlignment="Center">|</TextBlock>
+					<TextBlock Grid.Row="1" Grid.Column="5" HorizontalAlignment="Center">|</TextBlock>
+				</Grid>
+			</StackPanel>
+		</Border>
+		
+		<ScrollViewer Grid.Row="2" Margin="0, 5, 0, 0">
+			<ItemsControl ItemsSource="{Binding Drives}" HorizontalAlignment="Left">
+				<ItemsControl.ItemTemplate>
+					<DataTemplate DataType="vm:DriveItemTemplate">
+						<Border Background="#efefef" CornerRadius="5" Padding="8" Margin="15, 8" BoxShadow="0 0 10 0 #c0c0c0">
+							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, 250, 100, 80" ColumnSpacing="15" RowSpacing="8">
+								<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding Id}"/>
+								<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" FontSize="16" Text="{Binding Name}"/>
+								<TextBlock Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" FontSize="16" Text="{Binding Size}"/>
+								<TextBlock Grid.Row="0" Grid.Column="3" HorizontalAlignment="Left" FontSize="16" Text="{Binding DriveType}"/>
+								
+								<TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" FontSize="16" Text="{Binding OwnerId}"/>
+								<TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" FontSize="16" Text="{Binding OwnerUsername}"/>
+							</Grid>
+						</Border>
+					</DataTemplate>
+				</ItemsControl.ItemTemplate>
+			</ItemsControl>
+		</ScrollViewer>
+	</Grid>
 </UserControl>
