@@ -33,6 +33,7 @@
         <entry key="Server/App.axaml" value="Server/Server.csproj" />
         <entry key="Server/Resources/Geometries.axaml" value="Server/Server.csproj" />
         <entry key="Server/Resources/Styles.axaml" value="Server/Server.csproj" />
+        <entry key="Server/Views/DrivesView.axaml" value="Server/Server.csproj" />
         <entry key="Server/Views/MainWindow.axaml" value="Server/Server.csproj" />
         <entry key="Server/Views/UsersView.axaml" value="Server/Server.csproj" />
         <entry key="Server/Views/VirtualMachinesView.axaml" value="Server/Server.csproj" />

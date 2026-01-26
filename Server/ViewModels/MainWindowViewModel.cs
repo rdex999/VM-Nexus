@@ -38,6 +38,7 @@ public partial class MainWindowViewModel : ViewModelBase
 	
 	private readonly UsersViewModel _usersViewModel;
 	private readonly VirtualMachinesViewModel _virtualMachinesViewModel;
+	private readonly DrivesViewModel _drivesViewModel;
 
 	private class LoggingSink : ILogEventSink
 	{
@@ -77,6 +78,7 @@ public partial class MainWindowViewModel : ViewModelBase
 		
 		_usersViewModel = new UsersViewModel(databaseService);
 		_virtualMachinesViewModel = new VirtualMachinesViewModel(databaseService);
+		_drivesViewModel = new DrivesViewModel(databaseService);
 		CurrentTab = _usersViewModel;
 	}
 
@@ -131,7 +133,7 @@ public partial class MainWindowViewModel : ViewModelBase
 				ServerStateIsChecked = true;
 		}
 
-		await Task.WhenAll(_usersViewModel.RefreshAsync(), _virtualMachinesViewModel.RefreshAsync());
+		await Task.WhenAll(_usersViewModel.RefreshAsync(), _virtualMachinesViewModel.RefreshAsync(), _drivesViewModel.RefreshAsync());
 	}
 
 	/// <summary>
@@ -148,6 +150,7 @@ public partial class MainWindowViewModel : ViewModelBase
 		{
 			0 => _usersViewModel,
 			1 => _virtualMachinesViewModel,
+			2 => _drivesViewModel,
 			_ => _usersViewModel
 		};
 	}
