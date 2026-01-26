@@ -996,7 +996,8 @@ public class DatabaseService
 			reader = await ExecuteReaderAsync($@"SELECT vms.id, vms.owner_id, usrs.username, vms.name, vms.operating_system, 
        															vms.cpu_architecture, vms.ram_size, vms.boot_mode, vms.state
 															FROM virtual_machines vms JOIN users usrs ON usrs.id = vms.owner_id 
-															WHERE vms.id = @id OR vms.owner_id = @id OR STRPOS(vms.name, @query) > 0",
+															WHERE vms.id = @id OR vms.owner_id = @id 
+															OR STRPOS(vms.name, @query) > 0 OR STRPOS(usrs.username, @query) > 0",
 				new NpgsqlParameter("@id", id),
 				new NpgsqlParameter("@query", q)
 			);
@@ -1006,7 +1007,7 @@ public class DatabaseService
 			reader = await ExecuteReaderAsync($@"SELECT vms.id, vms.owner_id, usrs.username, vms.name, vms.operating_system, 
        															vms.cpu_architecture, vms.ram_size, vms.boot_mode, vms.state
 															FROM virtual_machines vms JOIN users usrs ON usrs.id = vms.owner_id 
-															WHERE STRPOS(vms.name, @query) > 0",
+															WHERE STRPOS(vms.name, @query) > 0 OR STRPOS(usrs.username, @query) > 0",
 				new NpgsqlParameter("@query", q)
 			);
 		}
