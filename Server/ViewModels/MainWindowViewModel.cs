@@ -2,6 +2,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Threading.Tasks;
+using Avalonia;
 using Avalonia.Media;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -21,6 +22,12 @@ public partial class MainWindowViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private bool _serverStateIsChecked;
+	
+	[ObservableProperty]
+	private Vector _logScrollPosition;
+
+	[ObservableProperty] 
+	private bool _logsFocused = false;
 
 	private class LoggingSink : ILogEventSink
 	{
@@ -45,6 +52,7 @@ public partial class MainWindowViewModel : ViewModelBase
 	/// </remarks>
 	public MainWindowViewModel()
 	{
+		LogScrollPosition = new Vector(0, 0);
 		Directory.CreateDirectory("../../../Logs");
 		Logger logger = new LoggerConfiguration()
 			.MinimumLevel.Verbose()
@@ -66,8 +74,22 @@ public partial class MainWindowViewModel : ViewModelBase
 	/// Precondition: A log was logged. log != null. <br/>
 	/// Postcondition: The log is displayed.
 	/// </remarks>
-	private void OnLog(LogEvent log) => Dispatcher.UIThread.Post(() => Logs.Add(new LogItemTemplate(log)));
-	
+	private void OnLog(LogEvent log)
+	{
+		Dispatcher.UIThread.Post(() =>
+		{
+			Logs.Add(new LogItemTemplate(log));
+			if (Logs.Count > 1000)
+			{
+				for (int i = 0; i < Logs.Count - 1000; ++i)
+					Logs.RemoveAt(0);
+			}
+
+			if (!LogsFocused)
+				LogScrollPosition = new Vector(0, double.PositiveInfinity);
+		});
+	}
+
 	/// <summary>
 	/// Handles a toggle of the server on/off button.
 	/// </summary>
@@ -113,12 +135,12 @@ public class LogItemTemplate
 
 		LevelColor = log.Level switch
 		{
-			LogEventLevel.Verbose		=> new SolidColorBrush(Color.Parse("#404040")),
-			LogEventLevel.Debug			=> new SolidColorBrush(Color.Parse("#1a4f22")),
-			LogEventLevel.Information	=> new SolidColorBrush(Color.Parse("#202020")),
-			LogEventLevel.Warning		=> new SolidColorBrush(Color.Parse("#63481a")),
-			LogEventLevel.Error			=> new SolidColorBrush(Color.Parse("#631a1a")),
-			LogEventLevel.Fatal			=> new SolidColorBrush(Color.Parse("#600000")),
+			LogEventLevel.Verbose		=> new SolidColorBrush(Color.Parse("#c8c8c8")),
+			LogEventLevel.Debug			=> new SolidColorBrush(Color.Parse("#4fe256")),
+			LogEventLevel.Information	=> new SolidColorBrush(Color.Parse("#d0d0d0")),
+			LogEventLevel.Warning		=> new SolidColorBrush(Color.Parse("#efac37")),
+			LogEventLevel.Error			=> new SolidColorBrush(Color.Parse("#f23a3a")),
+			LogEventLevel.Fatal			=> new SolidColorBrush(Color.Parse("#ff0000")),
 			_ => new SolidColorBrush(Color.Parse("#000000"))
 		};
 	}

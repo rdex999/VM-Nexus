@@ -72,6 +72,8 @@ public class MainWindowModel : IDisposable
 			return status;
 		}
 		
+		_virtualMachineService.Initialize();
+		
 		/* Socket initialization and listening */
 		IPHostEntry ipHost = await Dns.GetHostEntryAsync(Dns.GetHostName());		/* Get local host ip addresses */
 

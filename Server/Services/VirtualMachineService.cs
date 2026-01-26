@@ -37,7 +37,19 @@ public class VirtualMachineService
 		_driveService = driveService;
 		_aliveVirtualMachines = new ConcurrentDictionary<int, VirtualMachine>();
 		_libvirtConnection = new Connect("qemu:///system");
-		_libvirtConnection.Open();
+	}
+
+	/// <summary>
+	/// Initializes the virtual machine service. Connects to libvirt.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Service uninitialized. <br/>
+	/// Postcondition: Service initialized, connected to libvirt.
+	/// </remarks>
+	public void Initialize()
+	{
+		if (!_libvirtConnection.IsOpen)
+			_libvirtConnection.Open();
 	}
 
 	/// <summary>
