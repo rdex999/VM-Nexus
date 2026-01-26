@@ -37,7 +37,7 @@
 					</Button>
 				</Grid>
 				
-				<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, Auto, 138, Auto, 90, Auto, 100" RowSpacing="8"
+				<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, Auto, 220, Auto, 100, Auto, 80" RowSpacing="8"
 				      ColumnSpacing="5" HorizontalAlignment="Left">
 					<TextBlock HorizontalAlignment="Center">Drive ID</TextBlock>
 					<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center">|</TextBlock>
