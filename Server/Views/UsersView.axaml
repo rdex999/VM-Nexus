@@ -59,12 +59,12 @@
 			</StackPanel>
 		</Border>
 
-		<ScrollViewer Grid.Row="2" Margin="0, 5, 0, 0">
+		<ScrollViewer Grid.Row="1" Margin="0, 5, 0, 0">
 			<ItemsControl ItemsSource="{Binding Users}" HorizontalAlignment="Left">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate DataType="vm:UserItemTemplate">
 						<Border Margin="15, 8" Background="#efefef" CornerRadius="5" Width="700" Padding="10, 5"
-						        BoxShadow="0 0 7 0 #b5b5b5">
+						        BoxShadow="0 0 7 0 #c0c0c0">
 							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, *, 1.7*, 1.5*" ColumnSpacing="20">
 								<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
 								           Text="{Binding User.Id}" />

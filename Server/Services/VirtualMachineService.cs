@@ -580,7 +580,7 @@ public class VirtualMachineService
 			return false;
 
 		_vmUsedRamMiB += sizeMiB;
-		_logger.Information($"Virtual machines use {_vmUsedRamMiB/1024f} GiB of RAM. {availableMiB/1024} GiB left.");
+		_logger.Information($"Virtual machines use {_vmUsedRamMiB/1024f} GiB of RAM. {availableMiB/1024f - _vmUsedRamMiB/1024f} GiB left.");
 		return true;
 	}
 
