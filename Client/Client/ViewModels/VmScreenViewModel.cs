@@ -415,8 +415,9 @@ public partial class VmScreenViewModel : ViewModelBase
 		}
 
 		OnVmPoweredOff(sender, id);
-		
-		/* TODO: Display a message */
+
+		ErrorMessage = "The virtual machine has crashed.";
+		HasError = true;
 	}
 
 	/// <summary>
