@@ -63,7 +63,7 @@
 			<ItemsControl ItemsSource="{Binding Users}" HorizontalAlignment="Left">
 				<ItemsControl.ItemTemplate>
 					<DataTemplate DataType="vm:UserItemTemplate">
-						<Border Margin="15, 7" Background="#efefef" CornerRadius="5" Width="700" Padding="10, 5"
+						<Border Margin="15, 8" Background="#efefef" CornerRadius="5" Width="700" Padding="10, 5"
 						        BoxShadow="0 0 7 0 #b5b5b5">
 							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, *, 1.7*, 1.5*" ColumnSpacing="20">
 								<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"

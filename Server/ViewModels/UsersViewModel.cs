@@ -62,7 +62,11 @@ public partial class UsersViewModel : ViewModelBase
 	/// <summary>
 	/// Handles a change in the query field. Updates the users list according to the set query.
 	/// </summary>
-	/// <param name="value"></param>
+	/// <param name="value">Unused.</param>
+	/// <remarks>
+	/// Precondition: The query field has changed - the user has changed its content. <br/>
+	/// Postcondition: A refresh of the users list is started according to the set query.
+	/// </remarks>
 	partial void OnQueryChanged(string value) => _ = RefreshAsync();
 }
 

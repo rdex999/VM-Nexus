@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Konscious.Security.Cryptography;
 using Npgsql;
-using Npgsql.Internal;
 using NpgsqlTypes;
 using Serilog;
 using Server.Drives;
@@ -29,6 +28,33 @@ public class DatabaseService
 	private const int Argon2Iterations = 4;
 	private const int Argon2Threads = 2;
 
+	public class SearchedVirtualMachine
+	{
+		public int Id { get; }
+		public int OwnerId { get; }
+		public string OwnerUsername { get; }
+		public string Name { get; }
+		public OperatingSystem OperatingSystem { get; }
+		public CpuArchitecture CpuArchitecture { get; }
+		public int RamSizeMiB { get; }
+		public BootMode BootMode { get; }
+		public VmState State { get; }
+
+		public SearchedVirtualMachine(int id, int ownerId, string ownerUsername, string name, OperatingSystem operatingSystem, 
+			CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode, VmState state)
+		{
+			Id = id;
+			OwnerId = ownerId;
+			OwnerUsername = ownerUsername;
+			Name = name;
+			OperatingSystem = operatingSystem;
+			CpuArchitecture = cpuArchitecture;
+			RamSizeMiB = ramSizeMiB;
+			BootMode = bootMode;
+			State = state;
+		}
+	}
+	
 	public DatabaseService(ILogger logger)
 	{
 		_logger = logger;
@@ -961,23 +987,26 @@ public class DatabaseService
 	/// Precondition: query != null. <br/>
 	/// Postcondition: An array of users describing the found users is returned. Returns or null on failure.
 	/// </remarks>
-	public async Task<VmGeneralDescriptor[]?> SearchVirtualMachinesAsync(string query)
+	public async Task<SearchedVirtualMachine[]?> SearchVirtualMachinesAsync(string query)
 	{
 		string q = query.Trim();
 		NpgsqlDataReader? reader;
 		if (int.TryParse(q, out int id))
 		{
-			reader = await ExecuteReaderAsync($@"SELECT id, name, operating_system, cpu_architecture, state, ram_size, boot_mode
-															FROM virtual_machines WHERE id = @id OR owner_id = @id 
-															OR STRPOS(name, @query) > 0",
+			reader = await ExecuteReaderAsync($@"SELECT vms.id, vms.owner_id, usrs.username, vms.name, vms.operating_system, 
+       															vms.cpu_architecture, vms.ram_size, vms.boot_mode, vms.state
+															FROM virtual_machines vms JOIN users usrs ON usrs.id = vms.owner_id 
+															WHERE vms.id = @id OR vms.owner_id = @id OR STRPOS(vms.name, @query) > 0",
 				new NpgsqlParameter("@id", id),
 				new NpgsqlParameter("@query", q)
 			);
 		}
 		else
 		{
-			reader = await ExecuteReaderAsync($@"SELECT id, name, operating_system, cpu_architecture, state, ram_size, boot_mode
-															FROM virtual_machines WHERE STRPOS(name, @query) > 0",
+			reader = await ExecuteReaderAsync($@"SELECT vms.id, vms.owner_id, usrs.username, vms.name, vms.operating_system, 
+       															vms.cpu_architecture, vms.ram_size, vms.boot_mode, vms.state
+															FROM virtual_machines vms JOIN users usrs ON usrs.id = vms.owner_id 
+															WHERE STRPOS(vms.name, @query) > 0",
 				new NpgsqlParameter("@query", q)
 			);
 		}
@@ -985,17 +1014,19 @@ public class DatabaseService
 		if (reader == null)
 			return null;
 
-		List<VmGeneralDescriptor> descriptors = new List<VmGeneralDescriptor>();
+		List<SearchedVirtualMachine> descriptors = new List<SearchedVirtualMachine>();
 		while (await reader.ReadAsync())
 		{
-			descriptors.Add(new VmGeneralDescriptor(
+			descriptors.Add(new SearchedVirtualMachine(
 				reader.GetInt32(0),
-				reader.GetString(1),
-				(OperatingSystem)reader.GetInt32(2),
-				(CpuArchitecture)reader.GetInt32(3),
-				(VmState)reader.GetInt32(4),
-				reader.GetInt32(5),
-				(BootMode)reader.GetInt32(6)
+				reader.GetInt32(1),
+				reader.GetString(2),
+				reader.GetString(3),
+				(OperatingSystem)reader.GetInt32(4),
+				(CpuArchitecture)reader.GetInt32(5),
+				reader.GetInt32(6),
+				(BootMode)reader.GetInt32(7),
+				(VmState)reader.GetInt32(8)
 			));
 		}
 
