@@ -27,33 +27,6 @@ public class DatabaseService
 	private const int Argon2MemorySize = 1024 * 512;	/* 512 MiB */
 	private const int Argon2Iterations = 4;
 	private const int Argon2Threads = 2;
-
-	public class SearchedVirtualMachine
-	{
-		public int Id { get; }
-		public int OwnerId { get; }
-		public string OwnerUsername { get; }
-		public string Name { get; }
-		public OperatingSystem OperatingSystem { get; }
-		public CpuArchitecture CpuArchitecture { get; }
-		public int RamSizeMiB { get; }
-		public BootMode BootMode { get; }
-		public VmState State { get; }
-
-		public SearchedVirtualMachine(int id, int ownerId, string ownerUsername, string name, OperatingSystem operatingSystem, 
-			CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode, VmState state)
-		{
-			Id = id;
-			OwnerId = ownerId;
-			OwnerUsername = ownerUsername;
-			Name = name;
-			OperatingSystem = operatingSystem;
-			CpuArchitecture = cpuArchitecture;
-			RamSizeMiB = ramSizeMiB;
-			BootMode = bootMode;
-			State = state;
-		}
-	}
 	
 	public DatabaseService(ILogger logger)
 	{
@@ -1239,6 +1212,59 @@ public class DatabaseService
 		
 		return ExitCode.DatabaseOperationFailed;
 	}
+	
+	/// <summary>
+	/// Searches for drives using the given query.
+	/// </summary>
+	/// <param name="query">The query to search for drives with. query != null.</param>
+	/// <returns>An array of drives describing the found drives, or null on failure.</returns>
+	/// <remarks>
+	/// Precondition: query != null. <br/>
+	/// Postcondition: An array of users describing the found users is returned. Returns or null on failure.
+	/// </remarks>
+	public async Task<SearchedDrive[]?> SearchDrivesAsync(string query)
+	{
+		string q = query.Trim();
+		NpgsqlDataReader? reader;
+		if (int.TryParse(q, out int id))
+		{
+			reader = await ExecuteReaderAsync($@"SELECT d.id, d.owner_id, u.username, d.name, d.size, d.type
+															FROM drives d JOIN users u ON d.owner_id = u.id
+															WHERE d.id = @id OR d.owner_id = @id 
+															OR STRPOS(d.name, @query) > 0 OR STRPOS(u.username, @query) > 0",
+				new NpgsqlParameter("@id", id),
+				new NpgsqlParameter("@query", q)
+			);
+		}
+		else
+		{
+			reader = await ExecuteReaderAsync($@"SELECT d.id, d.owner_id, u.username, d.name, d.size, d.type
+															FROM drives d JOIN users u ON d.owner_id = u.id
+															WHERE STRPOS(d.name, @query) > 0 OR STRPOS(u.username, @query) > 0",
+				new NpgsqlParameter("@query", q)
+			);
+		}
+
+		if (reader == null)
+			return null;
+
+		List<SearchedDrive> drives = new List<SearchedDrive>();
+		while (await reader.ReadAsync())
+		{
+			drives.Add(new SearchedDrive(
+				reader.GetInt32(0),
+				reader.GetInt32(1),
+				reader.GetString(2),
+				reader.GetString(3),
+				reader.GetInt32(4),
+				(DriveType)reader.GetInt32(5)
+			));
+		}
+
+		await reader.DisposeAsync();
+		
+		return drives.ToArray();
+	}	
 
 	/// <summary>
 	/// Registers a drive-VM connection. (Means that when the VM starts, the drive will be connected to it.)
@@ -1673,5 +1699,52 @@ public class DatabaseService
 		rng.GetBytes(salt);
 
 		return salt;
+	}
+	
+	public class SearchedVirtualMachine
+	{
+		public int Id { get; }
+		public int OwnerId { get; }
+		public string OwnerUsername { get; }
+		public string Name { get; }
+		public OperatingSystem OperatingSystem { get; }
+		public CpuArchitecture CpuArchitecture { get; }
+		public int RamSizeMiB { get; }
+		public BootMode BootMode { get; }
+		public VmState State { get; }
+
+		public SearchedVirtualMachine(int id, int ownerId, string ownerUsername, string name, OperatingSystem operatingSystem, 
+			CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode, VmState state)
+		{
+			Id = id;
+			OwnerId = ownerId;
+			OwnerUsername = ownerUsername;
+			Name = name;
+			OperatingSystem = operatingSystem;
+			CpuArchitecture = cpuArchitecture;
+			RamSizeMiB = ramSizeMiB;
+			BootMode = bootMode;
+			State = state;
+		}
+	}
+	
+	public class SearchedDrive
+	{
+		public int Id { get; }
+		public int OwnerId { get; }
+		public string OwnerUsername { get; }
+		public string Name { get; }
+		public int SizeMiB { get; }
+		public DriveType DriveType { get; }
+
+		public SearchedDrive(int id, int ownerId, string ownerUsername, string name, int sizeMiB, DriveType driveType)
+		{
+			Id = id;
+			OwnerId = ownerId;
+			OwnerUsername = ownerUsername;
+			Name = name;
+			SizeMiB = sizeMiB;
+			DriveType = driveType;
+		}
 	}
 }
