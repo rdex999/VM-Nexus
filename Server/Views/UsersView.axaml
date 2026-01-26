@@ -21,6 +21,10 @@
 		</ResourceDictionary>
 	</UserControl.Resources>
 	
+	<UserControl.Styles>
+		<StyleInclude Source="/Resources/Styles.axaml" />
+	</UserControl.Styles>
+
 	<Grid RowDefinitions="Auto, Auto, *">
 		<Grid ColumnDefinitions="Auto, Auto" HorizontalAlignment="Left" ColumnSpacing="12">
 			<TextBox Watermark="Search by username or id." Background="#f2f2f2" BorderBrush="#a0a0a0" MinWidth="280"/>
@@ -57,7 +61,7 @@
 				<ItemsControl.ItemTemplate>
 					<DataTemplate DataType="vm:UserItemTemplate">
 						<Border Margin="5, 7" Background="#e4e4e4" CornerRadius="5" Width="600" Padding="10, 5"
-						        BoxShadow="0 0 8 0 #a8a8a8">
+						        BoxShadow="0 0 7 0 #a4a4a4">
 							<StackPanel Spacing="7">
 								<Grid ColumnDefinitions="Auto, *, 1.7*, 1.5*" ColumnSpacing="20">
 									<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16" 
@@ -86,6 +90,26 @@
 											<TextBlock>Owner Permissions</TextBlock>
 											<PathIcon Data="{StaticResource ChevronDownRegular}" Foreground="#454545" Width="18" />
 										</StackPanel>
+										
+										<Button.Flyout>
+											<Flyout VerticalOffset="5">
+												<ScrollViewer MaxHeight="240">
+													<ItemsControl ItemsSource="{Binding Permissions}">
+														<ItemsControl.DataTemplates>
+															<DataTemplate DataType="vm:UserPermissionItemTemplate">
+																<Border Background="#dfdfdf" CornerRadius="4" Margin="0, 4"
+																        Padding="5, 4" ToolTip.Placement="Right" ToolTip.HorizontalOffset="6"
+																        ToolTip.VerticalOffset="0"
+																        ToolTip.Tip="{Binding Description}">
+
+																	<TextBlock Text="{Binding Permission}" />
+																</Border>
+															</DataTemplate>
+														</ItemsControl.DataTemplates>
+													</ItemsControl>
+												</ScrollViewer>
+											</Flyout>
+										</Button.Flyout>
 									</Button>
 								</Grid>
 							</StackPanel>
