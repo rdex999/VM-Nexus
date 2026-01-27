@@ -1,8 +1,10 @@
 using System;
+using System.Buffers;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
@@ -38,6 +40,9 @@ public partial class VmScreenViewModel : ViewModelBase
 	private bool _numLockOn = false;
 	private bool _scrollLockOn = false;
 	private readonly PcmAudioPlayerService _audioPlayerService;
+	private CancellationTokenSource? _frameReceiverCts;
+	private SemaphoreSlim _frameAvailable;
+	private volatile MessageInfoVmScreenFrame? _frame;
 	
 	[ObservableProperty] 
 	private WriteableBitmap? _vmScreenBitmap = null;
@@ -73,6 +78,7 @@ public partial class VmScreenViewModel : ViewModelBase
 		: base(navigationSvc, clientSvc)
 	{
 		_audioPlayerService = new PcmAudioPlayerService();
+		_frameAvailable = new SemaphoreSlim(0);
 
 		if (Application.Current!.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 		{
@@ -236,6 +242,8 @@ public partial class VmScreenViewModel : ViewModelBase
 				VmFramebufferSizeChanged?.Invoke(VmScreenBitmap.PixelSize.Width, VmScreenBitmap.PixelSize.Height);
 			}
 
+			_frameReceiverCts = new CancellationTokenSource();
+			_ = FrameReceiverAsync();
 			return ExitCode.Success;
 		}
 
@@ -266,16 +274,17 @@ public partial class VmScreenViewModel : ViewModelBase
 		
 		_streamRunning = false;
 		_audioPlayerService.Close();
+		if (_frameReceiverCts != null)
+			await _frameReceiverCts.CancelAsync();
+		
 		MessageResponseVmStreamStop.Status result = await ClientSvc.VirtualMachineStopStreamAsync(_vmDescriptor!.Id);
+		_frameReceiverCts?.Dispose();
+		_frameReceiverCts = null;
 		if (result == MessageResponseVmStreamStop.Status.Success)
-		{
 			return ExitCode.Success;
-		}
 
 		if (result == MessageResponseVmStreamStop.Status.StreamNotRunning)
-		{
 			return ExitCode.VmScreenStreamNotRunning;
-		}
 		
 		return ExitCode.VmScreenStreamStopFailed;
 	}
@@ -292,34 +301,87 @@ public partial class VmScreenViewModel : ViewModelBase
 	private void OnVmScreenFrameReceived(object? sender, MessageInfoVmScreenFrame frame)
 	{
 		if (!_streamRunning || _vmDescriptor == null || frame.VmId != _vmDescriptor.Id || _pixelFormat == null)
-		{
 			return;
-		}
-
-		if (VmScreenBitmap == null || VmScreenBitmap.PixelSize.Width * VmScreenBitmap.PixelSize.Height != frame.Size.Width * frame.Size.Height)
-		{
-			VmFramebufferSizeChanged?.Invoke(frame.Size.Width, frame.Size.Height);
-			VmScreenBitmap = new WriteableBitmap(new PixelSize(frame.Size.Width, frame.Size.Height), new Vector(96, 96), _pixelFormat);
-		}
-
-		using MemoryStream input = new MemoryStream(frame.CompressedFramebuffer);
-		using MemoryStream output = new MemoryStream();
-		if (OperatingSystem.IsBrowser())
-		{
-			using GZipStream gzip = new GZipStream(input, CompressionMode.Decompress);
-			gzip.CopyTo(output);
-		}
-		else
-		{
-			using BrotliStream brotliStream = new BrotliStream(input, CompressionMode.Decompress);
-			brotliStream.CopyTo(output);
-		}
 		
-		byte[] framebuffer = output.ToArray();
+		Interlocked.Exchange(ref _frame, frame);
+		_frameAvailable.Release();
+	}
 
-		using ILockedFramebuffer buffer = VmScreenBitmap.Lock();
-		Marshal.Copy(framebuffer, 0, buffer.Address, frame.Size.Width * frame.Size.Height * (_pixelFormat.Value.BitsPerPixel / 8));
-		Dispatcher.UIThread.Invoke(NewFrameReceived!);
+	/// <summary>
+	/// Receives frames, renders latest available frame.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The screen stream was started - StartStreamAsync() was called. (This method only starts from it) <br/>
+	/// Postcondition: While running, renders the latest received frames. After returning, either the stream was stopped or an error occured.
+	/// </remarks>
+	private async Task FrameReceiverAsync()
+	{
+		while (_frameReceiverCts != null && !_frameReceiverCts.IsCancellationRequested)
+		{
+			try
+			{
+				await _frameAvailable.WaitAsync(_frameReceiverCts.Token).ConfigureAwait(false);
+			}
+			catch (Exception)
+			{
+				return;
+			}
+			
+			MessageInfoVmScreenFrame? frame = Interlocked.Exchange(ref _frame, null);
+			if (frame == null || _pixelFormat == null)
+				continue;
+
+			int bytesPerPixel = _pixelFormat.Value.BitsPerPixel / 8;
+			int size = frame.Size.Width * frame.Size.Height * bytesPerPixel;
+			
+			byte[] framebuffer = ArrayPool<byte>.Shared.Rent(size);
+			using MemoryStream input = new MemoryStream(frame.CompressedFramebuffer);
+			await using Stream decompressed = OperatingSystem.IsBrowser() 
+				? new GZipStream(input, CompressionMode.Decompress)
+				: new BrotliStream(input, CompressionMode.Decompress);
+
+			int totalRead = 0;
+			while (totalRead < size)
+			{
+				int read;
+				try
+				{
+					read = await decompressed.ReadAsync(framebuffer, totalRead, framebuffer.Length - totalRead, 
+						_frameReceiverCts.Token).ConfigureAwait(false);
+				}
+				catch (Exception)
+				{
+					ArrayPool<byte>.Shared.Return(framebuffer);
+					return;	
+				}
+				
+				if (read == 0)
+					break;
+
+				totalRead += read;
+			}
+
+			if (totalRead != size)
+			{
+				ArrayPool<byte>.Shared.Return(framebuffer);
+				return;
+			}
+
+			Dispatcher.UIThread.Post(() =>
+			{
+				if (VmScreenBitmap == null || VmScreenBitmap.PixelSize.Width * VmScreenBitmap.PixelSize.Height != frame.Size.Width * frame.Size.Height)
+				{
+					VmFramebufferSizeChanged?.Invoke(frame.Size.Width, frame.Size.Height);
+					VmScreenBitmap = new WriteableBitmap(new PixelSize(frame.Size.Width, frame.Size.Height), new Vector(96, 96), _pixelFormat);
+				}
+
+				using ILockedFramebuffer buffer = VmScreenBitmap.Lock();
+				Marshal.Copy(framebuffer, 0, buffer.Address, size);
+				Dispatcher.UIThread.Invoke(NewFrameReceived!);
+				ArrayPool<byte>.Shared.Return(framebuffer);
+				NewFrameReceived?.Invoke();
+			});
+		}
 	}
 
 	/// <summary>
