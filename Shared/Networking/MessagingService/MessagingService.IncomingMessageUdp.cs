@@ -83,13 +83,8 @@ public partial class MessagingService
 			if (_chunks[chunk])
 				return ExitCode.UdpPacketDuplicate;
 
-			int chunkSize;
-			if (chunk == _chunks.Length - 1)
-				chunkSize = _data.Length % UdpPacket.MaxPayloadSize;
-			else
-				chunkSize = UdpPacket.MaxPayloadSize;
-
-			if (packet.PayloadSize > chunkSize)
+			int expectedChunkSize = Math.Min(UdpPacket.MaxPayloadSize, _data.Length - packet.Offset);
+			if (packet.PayloadSize != expectedChunkSize)
 			{
 				Close();
 				return ExitCode.InvalidUdpPacket;
@@ -97,7 +92,7 @@ public partial class MessagingService
 			
 			packet.Payload.CopyTo(_data.AsSpan(packet.Offset));
 			_chunks[chunk] = true;
-			_bytesReceived += chunkSize;
+			_bytesReceived += expectedChunkSize;
 
 			if (_bytesReceived >= packet.MessageSize)
 			{

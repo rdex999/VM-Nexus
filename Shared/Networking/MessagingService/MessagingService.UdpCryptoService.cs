@@ -44,8 +44,6 @@ public partial class MessagingService
 			byte[] c2S = HKDF.Expand(HashAlgorithmName.SHA256, prk, 32, "CLIENT TO SERVER"u8.ToArray());
 			byte[] sessionId4 = HKDF.Expand(HashAlgorithmName.SHA256, prk, 4, "SESSION ID"u8.ToArray());
 
-			Debug.WriteLine($"CRYPTO RESET ON {_encCounter}");
-			
 			lock (_syncLock)
 			{
 				_sessionId4 = sessionId4;
@@ -96,8 +94,7 @@ public partial class MessagingService
 		/// </remarks>
 		public UdpPacket? Encrypt(Guid messageId, int messageSize, int offset, ReadOnlySpan<byte> payload)
 		{
-			ulong sequence = _encCounter;
-			Interlocked.Increment(ref _encCounter);
+			ulong sequence = Interlocked.Increment(ref _encCounter);
 			
 			byte[] nonce = BuildNonce(sequence);
 			byte[] tag = new byte[16];
@@ -115,7 +112,7 @@ public partial class MessagingService
 				return null;
 			}
 			
-			if (_encCounter > Math.Pow(2, 24))
+			if (_encCounter > 1 << 24)
 				ResetRequired?.Invoke(this, EventArgs.Empty);
 
 			return new UdpPacket(sequence, tag, messageId, messageSize, offset, cipher);

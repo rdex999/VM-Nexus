@@ -25,7 +25,7 @@ public partial class MessagingService
 	private readonly ManualResetEventSlim _messageUdpAvailable;
 	protected bool IsUdpMessagingRunning = false;
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
-	private readonly Dictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
+	private readonly ConcurrentDictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
 	private readonly ConcurrentDictionary<Guid, TransferHandler> _ongoingTransfers;
 	protected readonly TransferRateLimiter TransferLimiter;
 	private UdpCryptoService? CryptoService;
@@ -47,7 +47,7 @@ public partial class MessagingService
 		_messageUdpQueue = new ConcurrentQueue<Message>();
 		_messageTcpAvailable = new ManualResetEventSlim(false);
 		_messageUdpAvailable = new ManualResetEventSlim(false);
-		_incomingUdpMessages = new Dictionary<Guid, IncomingMessageUdp>();
+		_incomingUdpMessages = new ConcurrentDictionary<Guid, IncomingMessageUdp>();
 		_ongoingTransfers = new ConcurrentDictionary<Guid, TransferHandler>();
 		TransferLimiter = new TransferRateLimiter();
 	}
@@ -224,7 +224,7 @@ public partial class MessagingService
 				continue;
 			}
 			
-			if (!UdpPacket.IsValidPacket(buffer) || CryptoService == null)
+			if (!UdpPacket.IsValidPacket(buffer, size) || CryptoService == null)
 				continue;
 
 			UdpPacket packet = new UdpPacket(buffer, size);
@@ -240,7 +240,7 @@ public partial class MessagingService
 				
 				if (result == ExitCode.InvalidUdpPacket)
 				{
-					_incomingUdpMessages.Remove(packet.MessageId);
+					_incomingUdpMessages.TryRemove(packet.MessageId, out IncomingMessageUdp _);
 					continue;
 				}
 			}
@@ -258,11 +258,11 @@ public partial class MessagingService
 			{
 				case ExitCode.Success:
 					await ProcessMessageAsync(message!);
-					_incomingUdpMessages.Remove(decrypted.MessageId);
+					_incomingUdpMessages.TryRemove(decrypted.MessageId, out IncomingMessageUdp _);
 					break;
 					
 				case ExitCode.InvalidUdpPacket or ExitCode.MessageUdpCorrupted:
-					_incomingUdpMessages.Remove(decrypted.MessageId);
+					_incomingUdpMessages.TryRemove(decrypted.MessageId, out IncomingMessageUdp _);
 					break;
 			}
 		}
@@ -277,7 +277,7 @@ public partial class MessagingService
 	/// Postcondition: The message is removed and used resources are freed.
 	/// </remarks>
 	private void OnIncomingMessageTimeout(Guid messageId) =>
-		_incomingUdpMessages.Remove(messageId);
+		_incomingUdpMessages.TryRemove(messageId, out IncomingMessageUdp _);
 
 	/// <summary>
 	/// Runs in the MessageSenderThread. Sends messages that arrive in the message queue by the order that they arrive in.

@@ -88,20 +88,24 @@ public partial class MessagingService
 			
 			payload.CopyTo(_packet.AsSpan(nextField));
 		}
-		
+
 		/// <summary>
 		/// Checks whether the given UDP packet is valid or not. (Checks magic and payload size)
 		/// </summary>
 		/// <param name="packet">The UDP packet. packet != null.</param>
+		/// <param name="packetSize">The actual size of the packet. packetSize &lt;= packet.Length.</param>
 		/// <returns>True if the UDP packet is valid, false otherwise.</returns>
 		/// <remarks>
 		/// This method should be called before constructing a UdpPacket instance. <br/>
-		/// Precondition: A UDP packet was received, and validating it is required. packet != null. <br/>
+		/// Precondition: A UDP packet was received, and validating it is required. packet != null. packetSize > 0 &amp;&amp; packetSize &lt;= packet.Length. <br/>
 		/// Postcondition: Returns true if the UDP packet is valid, false otherwise.
 		/// </remarks>
-		public static bool IsValidPacket(byte[] packet)
+		public static bool IsValidPacket(byte[] packet, int packetSize)
 		{
-			if (packet.Length > DatagramSize || packet.Length < HeaderSize)
+			if (packetSize <= 0 || packetSize > packet.Length)
+				return false;
+			
+			if (packetSize > DatagramSize || packetSize < HeaderSize)
 				return false;
 
 			/* Protects against large memory allocation attacks. (attacker set large size so server allocates memory) */
@@ -110,10 +114,8 @@ public partial class MessagingService
 				return false;
 			
 			bool validMagic = packet.AsSpan(0, MessageMagic.Length).SequenceEqual(MessageMagic);
-			if (!validMagic)
-				return false;
 
-			return true;
+			return validMagic;
 		}
 
 		/// <summary>
