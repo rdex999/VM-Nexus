@@ -41,7 +41,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	private bool _scrollLockOn = false;
 	private readonly PcmAudioPlayerService _audioPlayerService;
 	private CancellationTokenSource? _frameReceiverCts;
-	private SemaphoreSlim _frameAvailable;
+	private readonly SemaphoreSlim _frameAvailable;
 	private volatile MessageInfoVmScreenFrame? _frame;
 	
 	[ObservableProperty] 
@@ -379,7 +379,6 @@ public partial class VmScreenViewModel : ViewModelBase
 				Marshal.Copy(framebuffer, 0, buffer.Address, size);
 				Dispatcher.UIThread.Invoke(NewFrameReceived!);
 				ArrayPool<byte>.Shared.Return(framebuffer);
-				NewFrameReceived?.Invoke();
 			});
 		}
 	}
@@ -501,6 +500,13 @@ public partial class VmScreenViewModel : ViewModelBase
 		ClientSvc.VmScreenFrameReceived -= OnVmScreenFrameReceived;
 		ClientSvc.VmAudioPacketReceived -= OnVmAudioPacketReceived;
 		_audioPlayerService.Close();
+		if (_frameReceiverCts != null)
+		{
+			_frameReceiverCts.Cancel();
+			_frameReceiverCts.Dispose();
+		}
+		
+		_frameAvailable.Dispose();
 
 		Task.Run(() => ((IClassicDesktopStyleApplicationLifetime)Application.Current!.ApplicationLifetime!).TryShutdown());
 	}

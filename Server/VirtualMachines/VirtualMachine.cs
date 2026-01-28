@@ -62,8 +62,8 @@ public class VirtualMachine
 	private bool _isLeftShiftKeyDown = false;
 	private bool _isRightShiftKeyDown = false;
 	private readonly string _pcmAudioFilePath;
-	private int _fps = 20;
-	private readonly Lock _frameLock;
+	private readonly int _fps = 20;
+	private SemaphoreSlim _frameAvailable;
 	private VirtualMachineFrame? _lastFrame = null;
 	private Task _allBackgroundTasks = null!;
 	private bool _closing = false;
@@ -84,7 +84,7 @@ public class VirtualMachine
 		PoweredOffTcs = new TaskCompletionSource<virDomainState>();
 		_cts = new CancellationTokenSource();
 		_rfbMessageCts = new CancellationTokenSource();
-		_frameLock = new Lock();
+		_frameAvailable = new SemaphoreSlim(0);
 	}
 
 	/// <summary>
@@ -437,10 +437,8 @@ public class VirtualMachine
 
 		GetRenderTarget()!.NewFrameReceived += (_, frame) =>
 		{
-			lock (_frameLock)
-			{
-				_lastFrame = frame;
-			}
+			Interlocked.Exchange(ref _lastFrame, frame);
+			_frameAvailable.Release();
 		};
 			
 		return ExitCode.Success;
@@ -517,15 +515,7 @@ public class VirtualMachine
 		while (!_cts.IsCancellationRequested)
 		{
 			stopwatch.Restart();
-			VirtualMachineFrame? frame = null;
-			lock (_frameLock)
-			{
-				if (_lastFrame != null)
-				{
-					frame = _lastFrame;
-					_lastFrame = null;
-				}
-			}
+			VirtualMachineFrame? frame = Interlocked.Exchange(ref _lastFrame, null);
 
 			if (frame != null)
 			{
@@ -534,26 +524,27 @@ public class VirtualMachine
 					using MemoryStream stream = new MemoryStream();
 					await using (BrotliStream brotliStream = new BrotliStream(stream, CompressionLevel.Optimal, true))
 					{
-						brotliStream.Write(frame.CompressedFramebuffer.AsSpan());
+						await brotliStream.WriteAsync(frame.CompressedFramebuffer.AsMemory()).ConfigureAwait(false);
 					}
 
-					BrotliFrameReceived?.Invoke(this, new VirtualMachineFrame(Id, frame.Size, stream.ToArray()));
+					BrotliFrameReceived?.Invoke(this, new VirtualMachineFrame(Id, frame.Size, stream.GetBuffer()));
 				}
 				if (GzipFrameReceived != null)
 				{
 					using MemoryStream stream = new MemoryStream();
 					await using (GZipStream gzip = new GZipStream(stream, CompressionLevel.Optimal, leaveOpen: true))
 					{
-						gzip.Write(frame.CompressedFramebuffer, 0, frame.CompressedFramebuffer.Length);
+						await gzip.WriteAsync(frame.CompressedFramebuffer.AsMemory()).ConfigureAwait(false);
 					}
-					
-					GzipFrameReceived?.Invoke(this, new VirtualMachineFrame(Id, frame.Size, stream.ToArray()));
+				
+					GzipFrameReceived?.Invoke(this, new VirtualMachineFrame(Id, frame.Size, stream.GetBuffer()));
 				}
 			}
 
 			try
 			{
-				await Task.Delay(Math.Max(0, (int)(1000 / _fps - stopwatch.ElapsedMilliseconds)), _cts.Token).ConfigureAwait(false);
+				await Task.Delay(Math.Max(0, 1000 / _fps - (int)stopwatch.ElapsedMilliseconds), _cts.Token).ConfigureAwait(false);
+				await _frameAvailable.WaitAsync(_cts.Token).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{
