@@ -57,6 +57,11 @@
 							<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding VmRam}" FlowDirection="LeftToRight"/>
 							<TextBlock HorizontalAlignment="Right" FontSize="16" FontWeight="DemiBold">RAM</TextBlock>
 						</Grid>
+						
+						<Grid>
+							<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding Fps}" FlowDirection="LeftToRight"/>
+							<TextBlock HorizontalAlignment="Right" FontSize="16" FontWeight="DemiBold">FPS</TextBlock>
+						</Grid>
 					
 						<Border Padding="15" Margin="0, 0, 0, 0">
 							<StackPanel Spacing="13" HorizontalAlignment="Stretch">

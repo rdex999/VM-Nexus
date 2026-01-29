@@ -34,7 +34,7 @@
 			</LinearGradientBrush>
 		</Border.Background>
 		
-		<ScrollViewer>
+		<ScrollViewer HorizontalScrollBarVisibility="Auto">
 			<Grid RowDefinitions="Auto, Auto">
 				<TextBlock HorizontalAlignment="Center" VerticalAlignment="Top" TextWrapping="Wrap" TextAlignment="Center"
 				           Margin="0, 25" Padding="0" Classes="h2" Foreground="#607b7c">

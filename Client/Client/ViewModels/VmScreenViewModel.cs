@@ -43,6 +43,8 @@ public partial class VmScreenViewModel : ViewModelBase
 	private CancellationTokenSource? _frameReceiverCts;
 	private readonly SemaphoreSlim _frameAvailable;
 	private volatile MessageInfoVmScreenFrame? _frame;
+	private readonly Stopwatch _frameStopwatch;
+	private int _currentSecFrames = 0;
 	
 	[ObservableProperty] 
 	private WriteableBitmap? _vmScreenBitmap = null;
@@ -67,6 +69,9 @@ public partial class VmScreenViewModel : ViewModelBase
 
 	[ObservableProperty] 
 	private Brush _vmStateColor;
+
+	[ObservableProperty] 
+	private int _fps = 0;
 	
 	[ObservableProperty] 
 	private string _errorMessage = string.Empty;
@@ -79,6 +84,7 @@ public partial class VmScreenViewModel : ViewModelBase
 	{
 		_audioPlayerService = new PcmAudioPlayerService();
 		_frameAvailable = new SemaphoreSlim(0);
+		_frameStopwatch = new Stopwatch();
 
 		if (Application.Current!.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 		{
@@ -243,6 +249,8 @@ public partial class VmScreenViewModel : ViewModelBase
 			}
 
 			_frameReceiverCts = new CancellationTokenSource();
+			_frameStopwatch.Start();
+			_currentSecFrames = 0;
 			_ = FrameReceiverAsync();
 			return ExitCode.Success;
 		}
@@ -274,6 +282,9 @@ public partial class VmScreenViewModel : ViewModelBase
 		
 		_streamRunning = false;
 		_audioPlayerService.Close();
+		_frameStopwatch.Stop();
+		_currentSecFrames = 0;
+		Fps = 0;
 		if (_frameReceiverCts != null)
 			await _frameReceiverCts.CancelAsync();
 		
@@ -379,6 +390,15 @@ public partial class VmScreenViewModel : ViewModelBase
 				Marshal.Copy(framebuffer, 0, buffer.Address, size);
 				Dispatcher.UIThread.Invoke(NewFrameReceived!);
 				ArrayPool<byte>.Shared.Return(framebuffer);
+
+				if (_frameStopwatch.Elapsed.TotalSeconds >= 1)
+				{
+					Fps = _currentSecFrames;
+					_currentSecFrames = 0;
+					_frameStopwatch.Restart();
+				}
+
+				++_currentSecFrames;
 			});
 		}
 	}
