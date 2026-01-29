@@ -391,14 +391,13 @@ public partial class VmScreenViewModel : ViewModelBase
 				Dispatcher.UIThread.Invoke(NewFrameReceived!);
 				ArrayPool<byte>.Shared.Return(framebuffer);
 
+				++_currentSecFrames;
 				if (_frameStopwatch.Elapsed.TotalSeconds >= 1)
 				{
-					Fps = _currentSecFrames;
+					Fps = (int)double.Round(_currentSecFrames / _frameStopwatch.Elapsed.TotalSeconds);
 					_currentSecFrames = 0;
 					_frameStopwatch.Restart();
 				}
-
-				++_currentSecFrames;
 			});
 		}
 	}
