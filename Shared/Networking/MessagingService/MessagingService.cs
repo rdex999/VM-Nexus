@@ -569,7 +569,7 @@ public partial class MessagingService
 		if (!IsConnected())
 			return;
 		
-		if (message is MessageTcp || UdpSocket == null)
+		if (message is MessageTcp || UdpSocket == null || !IsUdpMessagingRunning)
 		{
 			_messageTcpQueue.Enqueue(message);
 			_messageTcpAvailable.Set();

@@ -730,8 +730,8 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				/* Audio not supported on web. */
-				if (WebSocket == null)		/* If the client is not on web. */
+				/* Audio not supported on web and android. */
+				if (IsUdpMessagingRunning)
 				{
 					result = _virtualMachineService.SubscribeToVmAudioPacketReceived(reqVmStreamStart.VmId, OnVmNewAudioPacket);
 

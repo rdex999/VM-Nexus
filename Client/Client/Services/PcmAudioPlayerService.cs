@@ -34,7 +34,7 @@ public class PcmAudioPlayerService
 		if (IsInitialized) 
 			return ExitCode.AlreadyInitialized;
 
-		if (OperatingSystem.IsBrowser())
+		if (OperatingSystem.IsBrowser() || OperatingSystem.IsAndroid())
 			return ExitCode.UnsupportedPlatform;
 		
 		_cts = new CancellationTokenSource();

@@ -64,7 +64,9 @@ public class ClientService : MessagingService
 		else
 		{
 			TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+			
+			if (!System.OperatingSystem.IsAndroid())
+				UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 		}
 
 		bool connected;
@@ -79,7 +81,7 @@ public class ClientService : MessagingService
 		
 		StartTcp();
 		
-		if (!System.OperatingSystem.IsBrowser())
+		if (!System.OperatingSystem.IsBrowser() && !System.OperatingSystem.IsAndroid())
 			StartUdp();
 	}
 
@@ -915,10 +917,13 @@ public class ClientService : MessagingService
 				TcpSocket!.Close();
 				TcpSocket.Dispose();
 				TcpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			
-				UdpSocket!.Close();
-				UdpSocket.Dispose();
-				UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+
+				if (!System.OperatingSystem.IsAndroid())
+				{
+					UdpSocket!.Close();
+					UdpSocket.Dispose();
+					UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
+				}
 			}
 			
 			try
@@ -1028,6 +1033,12 @@ public class ClientService : MessagingService
 		{
 			OnFailure(ExitCode.ConnectionToServerFailed);
 			return false;
+		}
+		
+		if (System.OperatingSystem.IsAndroid())		/* No UDP for android. */
+		{
+			IsServiceInitialized = true;
+			return true;
 		}
 		
 		/* TCP socket is connected. Now try connecting the UDP socket. */
