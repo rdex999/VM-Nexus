@@ -44,6 +44,7 @@ public class ClientService : MessagingService
 	public ClientService()
 		: base(false)
 	{
+		_ = InitializeAsync();
 	}
 	
 	/// <summary>
@@ -1209,6 +1210,7 @@ public class ClientService : MessagingService
 	protected override void HandleSuddenDisconnection()
 	{
 		base.HandleSuddenDisconnection();
-		ConnectToServerAsync().Wait();
+		IsServiceInitialized = false;
+		InitializeAsync().Wait();
 	}
 }

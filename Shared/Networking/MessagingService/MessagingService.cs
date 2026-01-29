@@ -4,6 +4,7 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Text;
+using System.Threading.Channels;
 
 namespace Shared.Networking;
 
@@ -18,17 +19,14 @@ public partial class MessagingService
 	protected readonly CancellationTokenSource Cts;
 	protected bool IsServiceInitialized;
 	private readonly ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
-	private readonly Thread _messageUdpSenderThread;
-	private readonly ConcurrentQueue<Message> _messageTcpQueue;
-	private readonly ConcurrentQueue<Message> _messageUdpQueue;
-	private readonly ManualResetEventSlim _messageTcpAvailable;
-	private readonly ManualResetEventSlim _messageUdpAvailable;
+	private readonly Channel<Message> _messageTcpChannel;
+	private readonly Channel<Message> _messageUdpChannel;
 	protected bool IsUdpMessagingRunning = false;
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
 	private readonly ConcurrentDictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
 	private readonly ConcurrentDictionary<Guid, TransferHandler> _ongoingTransfers;
 	protected readonly TransferRateLimiter TransferLimiter;
-	private UdpCryptoService? CryptoService;
+	private UdpCryptoService? _cryptoService;
 	private const int DatagramSize = 1200;
 
 	/// <remarks>
@@ -41,12 +39,9 @@ public partial class MessagingService
 		IsServiceInitialized = false;
 		
 		Cts = new CancellationTokenSource();
-		_messageUdpSenderThread = new Thread(MessageUdpSender);
 		_responses = new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
-		_messageTcpQueue = new ConcurrentQueue<Message>();
-		_messageUdpQueue = new ConcurrentQueue<Message>();
-		_messageTcpAvailable = new ManualResetEventSlim(false);
-		_messageUdpAvailable = new ManualResetEventSlim(false);
+		_messageTcpChannel = Channel.CreateUnbounded<Message>();
+		_messageUdpChannel = Channel.CreateUnbounded<Message>();
 		_incomingUdpMessages = new ConcurrentDictionary<Guid, IncomingMessageUdp>();
 		_ongoingTransfers = new ConcurrentDictionary<Guid, TransferHandler>();
 		TransferLimiter = new TransferRateLimiter();
@@ -77,9 +72,7 @@ public partial class MessagingService
 	protected void StartUdp()
 	{
 		_ = MessageUdpReceiverAsync();
-		
-		if (!_messageUdpSenderThread.IsAlive)
-			_messageUdpSenderThread.Start();
+		_ = MessageUdpSenderAsync();	
 
 		IsUdpMessagingRunning = true;
 	}
@@ -95,13 +88,13 @@ public partial class MessagingService
 	/// </remarks>
 	private void ResetUdpCrypto(byte[] key32, byte[] salt32)
 	{
-		if (CryptoService == null)
+		if (_cryptoService == null)
 		{
-			CryptoService = new UdpCryptoService(_isServer, key32, salt32);
-			CryptoService.ResetRequired += (_, _) => ResetUdpCrypto();
+			_cryptoService = new UdpCryptoService(_isServer, key32, salt32);
+			_cryptoService.ResetRequired += (_, _) => ResetUdpCrypto();
 		}
 		else
-			CryptoService.Reset(key32, salt32);
+			_cryptoService.Reset(key32, salt32);
 	}
 	
 	/// <summary>
@@ -115,13 +108,13 @@ public partial class MessagingService
 	{
 		byte[] key32;
 		byte[] salt32;
-		if (CryptoService == null)
+		if (_cryptoService == null)
 		{
-			CryptoService = new UdpCryptoService(_isServer, out key32, out salt32);
-			CryptoService.ResetRequired += (_, _) => ResetUdpCrypto();
+			_cryptoService = new UdpCryptoService(_isServer, out key32, out salt32);
+			_cryptoService.ResetRequired += (_, _) => ResetUdpCrypto();
 		}
 		else
-			CryptoService.Reset(out key32, out salt32);
+			_cryptoService.Reset(out key32, out salt32);
 		
 		SendInfo(new MessageInfoCryptoUdp(true, key32, salt32));
 	}
@@ -164,12 +157,14 @@ public partial class MessagingService
 			{
 				try
 				{
-					await Task.Run(() => HandleSuddenDisconnection(), Cts.Token);
+					await Task.Run(HandleSuddenDisconnection, Cts.Token);
 				}
 				catch (Exception)
 				{
-					return;
+					// ignored
 				}
+
+				return;
 			}
 
 			Message? message;
@@ -179,6 +174,15 @@ public partial class MessagingService
 			}
 			catch (Exception)
 			{
+				try
+				{
+					await Task.Run(HandleSuddenDisconnection, Cts.Token);
+				}
+				catch (Exception e)
+				{
+					// ignored
+				}
+
 				return;
 			}
 			
@@ -186,13 +190,14 @@ public partial class MessagingService
 			{
 				try
 				{
-					await Task.Delay(50, Cts.Token).ConfigureAwait(false);
+					await Task.Run(HandleSuddenDisconnection, Cts.Token);
 				}
 				catch (Exception)
 				{
-					return;
+					// ignored
 				}
-				continue;	
+
+				return;
 			}
 
 			await ProcessMessageAsync(message);
@@ -224,7 +229,7 @@ public partial class MessagingService
 				continue;
 			}
 			
-			if (!UdpPacket.IsValidPacket(buffer, size) || CryptoService == null)
+			if (!UdpPacket.IsValidPacket(buffer, size) || _cryptoService == null)
 				continue;
 
 			UdpPacket packet = new UdpPacket(buffer, size);
@@ -245,7 +250,7 @@ public partial class MessagingService
 				}
 			}
 
-			UdpPacket? decrypted = CryptoService.Decrypt(packet);
+			UdpPacket? decrypted = _cryptoService.Decrypt(packet);
 			if (decrypted == null)
 				continue;
 
@@ -292,27 +297,17 @@ public partial class MessagingService
 		{
 			try
 			{
-				if (OperatingSystem.IsBrowser())
-					while (!_messageTcpAvailable.IsSet)
-						await Task.Delay(50, Cts.Token);
-				
-				else
-					await Task.Run(() => _messageTcpAvailable.Wait(Cts.Token));		/* Wait until there is a message available */
-				
-				/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
-				while (_messageTcpQueue.TryDequeue(out Message? message) && !Cts.Token.IsCancellationRequested)		
-				{
-					await SendMessageTcpOnSocketAsync(message);
-				}
-
-				if (_messageTcpQueue.IsEmpty)
-				{
-					_messageTcpAvailable.Reset();
-				}
+				await _messageTcpChannel.Reader.WaitToReadAsync(Cts.Token);
 			}
 			catch (Exception)
 			{
 				break;
+			}
+
+			/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
+			while (_messageTcpChannel.Reader.TryRead(out Message? message) && !Cts.Token.IsCancellationRequested)
+			{
+				await SendMessageTcpOnSocketAsync(message);
 			}
 		}
 	}
@@ -324,32 +319,32 @@ public partial class MessagingService
 	/// Precondition: Service fully initialized and connected to the other side. This method should be started only from the StartUdp() method. <br/>
 	/// Postcondition: While running, receives and processes UDP messages from the other side. Returns when the given cancellation token requires cancellation.
 	/// </remarks>
-	private void MessageUdpSender()
+	private async Task MessageUdpSenderAsync()
 	{
 		while (!Cts.Token.IsCancellationRequested)
 		{
 			try
 			{
-				_messageUdpAvailable.Wait(Cts.Token);
+				await _messageUdpChannel.Reader.WaitToReadAsync(Cts.Token);
 			}
 			catch (Exception)
 			{
 				continue;
 			}
 
-			if (CryptoService == null)
+			if (_cryptoService == null)
 			{
-				_messageUdpQueue.Clear();
+				while (_messageUdpChannel.Reader.TryRead(out _));
 				continue;
 			}
 
-			while (_messageUdpQueue.TryDequeue(out Message? message))
+			while (_messageUdpChannel.Reader.TryRead(out Message? message))
 			{
 				byte[] messageBytes = Common.ToByteArrayWithType(message);
 				int bytesSent = 0;
 				while (bytesSent < messageBytes.Length && !Cts.Token.IsCancellationRequested)
 				{
-					UdpPacket? packet = CryptoService.Encrypt(
+					UdpPacket? packet = _cryptoService.Encrypt(
 						message.Id,
 						messageBytes.Length,
 						bytesSent,
@@ -372,9 +367,6 @@ public partial class MessagingService
 					bytesSent += Math.Max(0, sent - UdpPacket.HeaderSize);
 				}
 			}
-			
-			if (_messageUdpQueue.IsEmpty)
-				_messageUdpAvailable.Reset();
 		}
 	}
 	
@@ -570,15 +562,10 @@ public partial class MessagingService
 			return;
 		
 		if (message is MessageTcp || UdpSocket == null || !IsUdpMessagingRunning)
-		{
-			_messageTcpQueue.Enqueue(message);
-			_messageTcpAvailable.Set();
-		}
+			_messageTcpChannel.Writer.TryWrite(message);
+		
 		else if (message is MessageUdp)
-		{
-			_messageUdpQueue.Enqueue(message);
-			_messageUdpAvailable.Set();
-		}
+			_messageUdpChannel.Writer.TryWrite(message);
 	}
 
 	/// <summary>
@@ -866,10 +853,11 @@ public partial class MessagingService
 		try
 		{
 			Cts.Cancel();
+			Cts.Dispose();
 		}
 		catch (Exception)
 		{
-			return;
+			// ignored
 		}
 
 		TcpSslStream?.Dispose();
@@ -880,11 +868,7 @@ public partial class MessagingService
 			UdpSocket.Dispose();
 		}
 
-		if (Thread.CurrentThread != _messageUdpSenderThread && _messageUdpSenderThread.IsAlive) 
-			_messageUdpSenderThread.Join();
-
-		Cts.Dispose();
-		CryptoService?.Dispose();
+		_cryptoService?.Dispose();
 		
 		IsServiceInitialized = false;
 		

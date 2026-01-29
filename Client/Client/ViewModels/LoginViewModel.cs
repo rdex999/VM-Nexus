@@ -45,21 +45,6 @@ public partial class LoginViewModel : ViewModelBase
 	}
 
 	/// <summary>
-	/// Initializes the login view model and the client service.
-	/// </summary>
-	/// <remarks>
-	/// Precondition: UI is fully loaded. <br/>
-	/// Postcondition: LoginViewModel and its client service are fully initialized.
-	/// </remarks>
-	public async Task InitializeAsync()
-	{
-		if (IsInitialized())
-			return;
-		
-		await ClientSvc.InitializeAsync();
-	}
-
-	/// <summary>
 	/// Checks whether this view model is initialized or not.
 	/// </summary>
 	/// <returns>

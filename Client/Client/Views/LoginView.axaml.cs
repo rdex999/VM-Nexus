@@ -9,23 +9,6 @@ public partial class LoginView : UserControl
 	public LoginView()
 	{
 		InitializeComponent();
-		this.Loaded += OnLoaded;
-	}
-
-	/// <summary>
-	/// Handles the Loaded event - initializes LoginViewModel.
-	/// </summary>
-	/// <remarks>
-	/// Precondition: LoginView is loaded. <br/>
-	/// Postcondition: LoginViewModel started initialization procedure.
-	/// </remarks>
-	private void OnLoaded(object? sender, RoutedEventArgs e)
-	{
-		if (DataContext is not LoginViewModel loginViewModel)
-			return;
-		
-		if (!loginViewModel.IsInitialized())
-			_ = loginViewModel.InitializeAsync();
 	}
 
 	/// <summary>
