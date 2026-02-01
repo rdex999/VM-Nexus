@@ -102,7 +102,8 @@
 
 			<Border Grid.Row="2" Background="#b8b8b8">
 				<Border Margin="10" Background="#5a5a5a" CornerRadius="8">
-					<ScrollViewer Offset="{Binding LogScrollPosition, Mode=TwoWay}" IsFocused="{Binding LogsFocused}">
+					<ScrollViewer Offset="{Binding LogScrollPosition, Mode=TwoWay}" 
+					              IsFocused="{Binding LogsFocused}" HorizontalScrollBarVisibility="Auto">
 						<ItemsControl ItemsSource="{Binding Logs}" Padding="5">
 							<ItemsControl.ItemTemplate>
 								<DataTemplate DataType="vm:LogItemTemplate">

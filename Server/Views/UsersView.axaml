@@ -25,8 +25,26 @@
 		<StyleInclude Source="/Resources/Styles.axaml" />
 	</UserControl.Styles>
 
-	<Grid RowDefinitions="Auto, *">
-		<Border Padding="8" Background="#f6f6f6">
+	<Grid RowDefinitions="Auto, *" x:Name="Grid">
+		<Popup PlacementTarget="Grid" Placement="Center" IsLightDismissEnabled="True"
+		       IsOpen="{Binding UserDeletePopupIsOpen}">
+			<Border BorderBrush="LightGray" BorderThickness="1" CornerRadius="5" Background="White" Padding="10" Width="500">
+				<StackPanel Spacing="10">
+					<Grid Margin="0,0, 0, 10">
+						<TextBlock HorizontalAlignment="Center" FontWeight="DemiBold" FontSize="16">Warning</TextBlock>
+						<Button HorizontalAlignment="Right" VerticalAlignment="Center" Padding="4" Opacity="0.8">
+							<PathIcon Data="{StaticResource DismissRegular}" Width="14" Height="14"/>
+						</Button>
+					</Grid>
+					<TextBlock TextWrapping="Wrap">Deleting a user will permanently delete all of its virtual machines and drives.</TextBlock>
+					<TextBlock TextWrapping="Wrap">The user's sub-users will be transferred to the user's owner, or be orphaned if the user does not have an owner.</TextBlock>
+					<TextBlock FontWeight="DemiBold" Text="{Binding UserDeletePopupConfirmation}" />
+					<Button HorizontalAlignment="Center" FontSize="16" FontWeight="Bold">Delete</Button>
+				</StackPanel>
+			</Border>
+		</Popup>
+		
+		<Border Grid.Row="0" Padding="8" Background="#f6f6f6">
 			<StackPanel Spacing="10">
 				<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, Auto" HorizontalAlignment="Stretch" ColumnSpacing="12"
 				      Margin="0, 0, 0, 0">
@@ -65,7 +83,7 @@
 					<DataTemplate DataType="vm:UserItemTemplate">
 						<Border Margin="15, 8" Background="#efefef" CornerRadius="5" Width="700" Padding="10, 5"
 						        BoxShadow="0 0 7 0 #c0c0c0">
-							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, *, 1.7*, 1.5*" ColumnSpacing="20">
+							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, *, 1.7*, 1.5*, Auto" ColumnSpacing="20">
 								<TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
 								           Text="{Binding User.Id}" />
 
@@ -78,6 +96,16 @@
 
 								<TextBlock Grid.Row="0" Grid.Column="3" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16"
 								           Text="{Binding User.CreatedAt}" />
+								
+								<Button Grid.Row="0" Grid.Column="4" Padding="4, 2.8">
+									<PathIcon Data="{StaticResource ChevronDownRegular}" Width="15" Height="16" />
+									
+									<Button.Flyout>
+										<MenuFlyout Placement="Right" HorizontalOffset="5">
+											<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}"/>
+										</MenuFlyout>
+									</Button.Flyout>
+								</Button>
 
 								<TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="16" 
 								           Margin="0, 8, 0, 0"

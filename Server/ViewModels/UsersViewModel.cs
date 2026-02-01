@@ -1,5 +1,6 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -17,6 +18,14 @@ public partial class UsersViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private string _query = string.Empty;
+	
+	[ObservableProperty]
+	private bool _userDeletePopupIsOpen = false;
+	
+	[ObservableProperty]
+	private string _userDeletePopupConfirmation = string.Empty;
+
+	private User? _userDeletePopupUser = null;
 
 	public UsersViewModel(DatabaseService databaseService, AccountService accountService)
 	{
@@ -38,6 +47,9 @@ public partial class UsersViewModel : ViewModelBase
 			new UserItemTemplate(new SubUser(100, 1, UserPermissions.VirtualMachineCreate,"d", 
 				"d@gmail.com", "child", "child@gmail.com", DateTime.Now)),
 		};
+		
+		foreach (var user in Users)
+			user.DeleteClicked += OnUserDeleteClicked;
 	}
 
 	/// <summary>
@@ -57,7 +69,10 @@ public partial class UsersViewModel : ViewModelBase
 			return ExitCode.DatabaseOperationFailed;
 
 		foreach (User user in users)
+		{
 			Users.Add(new UserItemTemplate(user));
+			Users.Last().DeleteClicked += OnUserDeleteClicked;
+		}
 		
 		return ExitCode.Success;
 	}
@@ -71,10 +86,26 @@ public partial class UsersViewModel : ViewModelBase
 	/// Postcondition: A refresh of the users list is started according to the set query.
 	/// </remarks>
 	partial void OnQueryChanged(string value) => _ = RefreshAsync();
+
+	/// <summary>
+	/// Handles a click on a users delete button. Displays the user deletion popup.
+	/// </summary>
+	/// <param name="user">The user that the delete button was clicked upon. user != null.</param>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the delete button of a user. user != null.<br/>
+	/// Postcondition: The user deletion popup is displayed.
+	/// </remarks>
+	private void OnUserDeleteClicked(User user)
+	{
+		_userDeletePopupUser = user;
+		UserDeletePopupConfirmation = $"Are you sure you want to delete {user.Username}?";
+		UserDeletePopupIsOpen = true;
+	}
 }
 
-public class UserItemTemplate
+public partial class UserItemTemplate
 {
+	public Action<User>? DeleteClicked;
 	public bool IsSubUser => SubUser != null;
 	public User User { get; }
 	public SubUser? SubUser { get; }
@@ -95,6 +126,16 @@ public class UserItemTemplate
 		if (prms.Length == 0)
 			Permissions[0] = new UserPermissionItemTemplate(UserPermissions.None);
 	}
+
+	/// <summary>
+	/// Handles a click on the delete button on a user. Displays the user deletion popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the delete button of a user. <br/>
+	/// Postcondition: The user deletion popup is displayed.
+	/// </remarks>
+	[RelayCommand]
+	private void DeleteClick() => DeleteClicked?.Invoke(User);
 }
 
 public class UserPermissionItemTemplate
