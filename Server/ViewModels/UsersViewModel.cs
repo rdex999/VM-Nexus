@@ -101,6 +101,36 @@ public partial class UsersViewModel : ViewModelBase
 		UserDeletePopupConfirmation = $"Are you sure you want to delete {user.Username}?";
 		UserDeletePopupIsOpen = true;
 	}
+
+	/// <summary>
+	/// Closes the user deletion popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the popup is being closed, or closing it is needed. <br/>
+	/// Postcondition: The user deletion popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	public void CloseUserDeletePopup() => UserDeletePopupIsOpen = false;
+
+	/// <summary>
+	/// Handles a click on the delete button on the user deletion popup. Attempts to delete the user.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the delete button on the user deletion popup. <br/>
+	/// Postcondition: The user is deleted, users list is refreshed.
+	/// </remarks>
+	[RelayCommand]
+	private async Task UserDeletePopupDeleteClickAsync()
+	{
+		if (!UserDeletePopupIsOpen || _userDeletePopupUser == null)
+			return;
+		
+		await _accountService.DeleteAccountAsync(_userDeletePopupUser.Id);
+		
+		CloseUserDeletePopup();
+		
+		await RefreshAsync();
+	}
 }
 
 public partial class UserItemTemplate

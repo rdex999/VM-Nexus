@@ -27,19 +27,25 @@
 
 	<Grid RowDefinitions="Auto, *" x:Name="Grid">
 		<Popup PlacementTarget="Grid" Placement="Center" IsLightDismissEnabled="True"
-		       IsOpen="{Binding UserDeletePopupIsOpen}">
+		       IsOpen="{Binding UserDeletePopupIsOpen}"
+		       Closed="OnUserDeletePopupClosed">
 			<Border BorderBrush="LightGray" BorderThickness="1" CornerRadius="5" Background="White" Padding="10" Width="500">
 				<StackPanel Spacing="10">
 					<Grid Margin="0,0, 0, 10">
 						<TextBlock HorizontalAlignment="Center" FontWeight="DemiBold" FontSize="16">Warning</TextBlock>
-						<Button HorizontalAlignment="Right" VerticalAlignment="Center" Padding="4" Opacity="0.8">
+						<Button HorizontalAlignment="Right" VerticalAlignment="Center" Padding="4" Opacity="0.8"
+						        Command="{Binding CloseUserDeletePopupCommand}">
 							<PathIcon Data="{StaticResource DismissRegular}" Width="14" Height="14"/>
 						</Button>
 					</Grid>
 					<TextBlock TextWrapping="Wrap">Deleting a user will permanently delete all of its virtual machines and drives.</TextBlock>
 					<TextBlock TextWrapping="Wrap">The user's sub-users will be transferred to the user's owner, or be orphaned if the user does not have an owner.</TextBlock>
+					<TextBlock TextWrapping="Wrap">Note: This might take a couple of minutes.</TextBlock>
 					<TextBlock FontWeight="DemiBold" Text="{Binding UserDeletePopupConfirmation}" />
-					<Button HorizontalAlignment="Center" FontSize="16" FontWeight="Bold">Delete</Button>
+					<Button HorizontalAlignment="Center" FontSize="16" FontWeight="Bold" 
+					        Command="{Binding UserDeletePopupDeleteClickCommand}">
+						Delete
+					</Button>
 				</StackPanel>
 			</Border>
 		</Popup>
