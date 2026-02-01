@@ -1,4 +1,6 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,21 +8,26 @@ using CommunityToolkit.Mvvm.Input;
 using Server.Services;
 using Shared;
 using Shared.VirtualMachines;
+using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Server.ViewModels;
 
 public partial class VirtualMachinesViewModel : ViewModelBase
 {
 	private readonly DatabaseService _databaseService;
+	private readonly UserService _userService;
+	private readonly VirtualMachineService _virtualMachineService;
 
 	public ObservableCollection<VirtualMachineItemTemplate> VirtualMachines { get; }
 
 	[ObservableProperty]
 	private string _query = string.Empty;
 	
-	public VirtualMachinesViewModel(DatabaseService databaseService)
+	public VirtualMachinesViewModel(DatabaseService databaseService, UserService userService, VirtualMachineService virtualMachineService)
 	{
 		_databaseService = databaseService;
+		_userService = userService;
+		_virtualMachineService = virtualMachineService;
 		VirtualMachines = new ObservableCollection<VirtualMachineItemTemplate>();
 		_ = RefreshAsync();
 	}
@@ -29,6 +36,8 @@ public partial class VirtualMachinesViewModel : ViewModelBase
 	public VirtualMachinesViewModel()
 	{
 		_databaseService = null!;
+		_userService = null!;
+		_virtualMachineService = null!;
 	
 		VirtualMachines = new ObservableCollection<VirtualMachineItemTemplate>()
 		{
@@ -57,11 +66,35 @@ public partial class VirtualMachinesViewModel : ViewModelBase
 			return ExitCode.DatabaseOperationFailed;
 
 		foreach (DatabaseService.SearchedVirtualMachine virtualMachine in virtualMachines)
+		{
 			VirtualMachines.Add(new VirtualMachineItemTemplate(virtualMachine));
+			VirtualMachines.Last().DeleteClicked += OnVirtualMachineDeleteClicked;
+		}
 		
 		return ExitCode.Success;
 	}
-	
+
+	/// <summary>
+	/// Handles a click on the delete button of a virtual machine. Deletes the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the delete button on a virtual machine. <br/>
+	/// Postcondition: The virtual machine is deleted, the virtual machines list is refreshed.
+	/// </remarks>
+	private async void OnVirtualMachineDeleteClicked(int vmId)
+	{
+		VmState state = await _virtualMachineService.GetVmStateAsync(vmId);
+		if (state == VmState.Running)
+		{
+			await RefreshAsync();
+			return;
+		}
+		
+		await _userService.NotifyVirtualMachineDeletedAsync(vmId);
+		await _databaseService.DeleteVmAsync(vmId);
+		await RefreshAsync();
+	}
+
 	/// <summary>
 	/// Handles a change in the query field. Updates the virtual machines list according to the set query.
 	/// </summary>
@@ -73,8 +106,9 @@ public partial class VirtualMachinesViewModel : ViewModelBase
 	partial void OnQueryChanged(string value) => _ = RefreshAsync();
 }
 
-public class VirtualMachineItemTemplate
+public partial class VirtualMachineItemTemplate
 {
+	public Action<int>? DeleteClicked;
 	public int Id { get; }
 	public int OwnerId { get; }
 	public string OwnerUsername { get; }
@@ -104,4 +138,14 @@ public class VirtualMachineItemTemplate
 			? SolidColorBrush.Parse("#64d670")
 			: SolidColorBrush.Parse("#202020");
 	}
+
+	/// <summary>
+	/// Handles a click on the delete button on a virtual machine. Deletes the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the delete button on a virtual machine. <br/>
+	/// Postcondition: The virtual machine is deleted.
+	/// </remarks>
+	[RelayCommand]
+	private void DeleteClick() => DeleteClicked?.Invoke(Id);
 }

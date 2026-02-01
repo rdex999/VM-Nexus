@@ -75,10 +75,11 @@ public partial class MainWindowViewModel : ViewModelBase
 			.CreateLogger();
 
 		Logs = new ObservableCollection<LogItemTemplate>();
-		MainWindowModel = new MainWindowModel(logger, out DatabaseService databaseService, out AccountService accountService);
+		MainWindowModel = new MainWindowModel(logger, out DatabaseService databaseService, out UserService userService,
+			out DriveService driveService, out VirtualMachineService virtualMachineService, out AccountService accountService);
 		
 		_usersViewModel = new UsersViewModel(databaseService, accountService);
-		_virtualMachinesViewModel = new VirtualMachinesViewModel(databaseService);
+		_virtualMachinesViewModel = new VirtualMachinesViewModel(databaseService, userService, virtualMachineService);
 		_drivesViewModel = new DrivesViewModel(databaseService);
 		_driveConnectionsViewModel = new DriveConnectionsViewModel(databaseService);
 		CurrentTab = _usersViewModel;

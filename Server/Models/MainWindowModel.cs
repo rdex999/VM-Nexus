@@ -24,14 +24,15 @@ public class MainWindowModel : IDisposable
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly AccountService _accountService;
 
-	public MainWindowModel(Logger logger, out DatabaseService databaseService, out AccountService accountService)
+	public MainWindowModel(Logger logger, out DatabaseService databaseService, out UserService userService, 
+		out DriveService driveService, out VirtualMachineService virtualMachineService, out AccountService accountService)
 	{
 		_logger = logger;
 		_clients = new ConcurrentDictionary<Guid, ClientConnection>();
 		_databaseService = databaseService = new DatabaseService(_logger.ForContext("Source", "Database Service"));
-		_userService = new UserService(_logger.ForContext("Source", "User Service"), _databaseService);
-		_driveService = new DriveService(_logger.ForContext("Source", "Drive Service"), _databaseService);
-		_virtualMachineService = new VirtualMachineService(_logger.ForContext("Source", "Virtual Machine Service"), 
+		_userService = userService = new UserService(_logger.ForContext("Source", "User Service"), _databaseService);
+		_driveService = driveService = new DriveService(_logger.ForContext("Source", "Drive Service"), _databaseService);
+		_virtualMachineService = virtualMachineService = new VirtualMachineService(_logger.ForContext("Source", "Virtual Machine Service"), 
 			_databaseService, _userService, _driveService);
 		_accountService = accountService = new AccountService(_databaseService, _userService, _virtualMachineService, _driveService);
 		

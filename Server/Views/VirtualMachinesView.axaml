@@ -71,7 +71,7 @@
 				<ItemsControl.ItemTemplate>
 					<DataTemplate DataType="vm:VirtualMachineItemTemplate">
 						<Border Background="#efefef" CornerRadius="5" Padding="8" Margin="15, 8" BoxShadow="0 0 10 0 #c0c0c0">
-							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, 150, 90, 120, 60, 70, 40" ColumnSpacing="15" RowSpacing="8">
+							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, 150, 90, 120, 60, 70, 40, Auto" ColumnSpacing="15" RowSpacing="8">
 								<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding Id}"/>
 								<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" FontSize="16" Text="{Binding Name}"/>
 								<TextBlock Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" FontSize="16" FontWeight="DemiBold" 
@@ -80,6 +80,16 @@
 								<TextBlock Grid.Row="0" Grid.Column="4" HorizontalAlignment="Left" FontSize="16" Text="{Binding CpuArchitecture}"/>
 								<TextBlock Grid.Row="0" Grid.Column="5" HorizontalAlignment="Left" FontSize="16" Text="{Binding RamSize}"/>
 								<TextBlock Grid.Row="0" Grid.Column="6" HorizontalAlignment="Left" FontSize="16" Text="{Binding BootMode}"/>
+								
+								<Button Grid.Row="0" Grid.Column="7" Padding="4, 2.8">
+									<PathIcon Data="{StaticResource ChevronDownRegular}" Width="15" Height="16" />
+									
+									<Button.Flyout>
+										<MenuFlyout Placement="Right" HorizontalOffset="5">
+											<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}"/>
+										</MenuFlyout>
+									</Button.Flyout>
+								</Button>
 								
 								<TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" FontSize="16" Text="{Binding OwnerId}"/>
 								<TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" FontSize="16" Text="{Binding OwnerUsername}"/>
