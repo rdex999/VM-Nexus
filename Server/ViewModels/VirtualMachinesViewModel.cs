@@ -68,8 +68,9 @@ public partial class VirtualMachinesViewModel : ViewModelBase
 		foreach (DatabaseService.SearchedVirtualMachine virtualMachine in virtualMachines)
 		{
 			VirtualMachines.Add(new VirtualMachineItemTemplate(virtualMachine));
-			VirtualMachines.Last().DeleteClicked += OnVirtualMachineDeleteClickedAsync;
 			VirtualMachines.Last().PowerOffClicked += OnVirtualMachinePowerOffClickedAsync;
+			VirtualMachines.Last().ForceOffClicked += OnVirtualMachineForceOffClickedAsync;
+			VirtualMachines.Last().DeleteClicked += OnVirtualMachineDeleteClickedAsync;
 		}
 		
 		return ExitCode.Success;
@@ -84,6 +85,33 @@ public partial class VirtualMachinesViewModel : ViewModelBase
 	/// Postcondition: A refresh of the virtual machines list is started according to the set query.
 	/// </remarks>
 	partial void OnQueryChanged(string value) => _ = RefreshAsync();
+	
+	/// <summary>
+	/// Handles a click on the power off button on a virtual machine. Sends a power off signal to the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the power off button on a virtual machine. <br/>
+	/// Postcondition: A power off signal is sent to the virtual machine.
+	/// </remarks>
+	private async void OnVirtualMachinePowerOffClickedAsync(int vmId)
+	{
+		await _virtualMachineService.PowerOffVirtualMachineAsync(vmId);
+		await RefreshAsync();
+	}
+	
+	/// <summary>
+	/// Handles a click on the force off button on a virtual machine. Forces off the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the force off button on a virtual machine. <br/>
+	/// Postcondition: The virtual machine is forced shutdown - powered off.
+	/// </remarks>
+	private async void OnVirtualMachineForceOffClickedAsync(int vmId)
+	{
+		_virtualMachineService.ForceOffVirtualMachine(vmId);
+		await Task.Delay(100);
+		await RefreshAsync();
+	}
 	
 	/// <summary>
 	/// Handles a click on the delete button of a virtual machine. Deletes the virtual machine.
@@ -105,25 +133,13 @@ public partial class VirtualMachinesViewModel : ViewModelBase
 		await _databaseService.DeleteVmAsync(vmId);
 		await RefreshAsync();
 	}
-
-	/// <summary>
-	/// Handles a click on the power off button on a virtual machine. Sends a power off signal to the virtual machine.
-	/// </summary>
-	/// <remarks>
-	/// Precondition: The server user has clicked on the power off button on a virtual machine. <br/>
-	/// Postcondition: A power off signal is sent to the virtual machine.
-	/// </remarks>
-	private async void OnVirtualMachinePowerOffClickedAsync(int vmId)
-	{
-		await _virtualMachineService.PowerOffVirtualMachineAsync(vmId);
-		await RefreshAsync();
-	}
 }
 
 public partial class VirtualMachineItemTemplate
 {
-	public Action<int>? DeleteClicked;
 	public Action<int>? PowerOffClicked;
+	public Action<int>? ForceOffClicked;
+	public Action<int>? DeleteClicked;
 	public int Id { get; }
 	public int OwnerId { get; }
 	public string OwnerUsername { get; }
@@ -173,4 +189,14 @@ public partial class VirtualMachineItemTemplate
 	/// </remarks>
 	[RelayCommand]
 	private void PowerOffClick() => PowerOffClicked?.Invoke(Id);
+	
+	/// <summary>
+	/// Handles a click on the force off button on a virtual machine. Forces off the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the force off button on a virtual machine. <br/>
+	/// Postcondition: The virtual machine is forced shutdown - powered off.
+	/// </remarks>
+	[RelayCommand]
+	private void ForceOffClick() => ForceOffClicked?.Invoke(Id);
 }

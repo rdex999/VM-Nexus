@@ -81,12 +81,13 @@
 								<TextBlock Grid.Row="0" Grid.Column="5" HorizontalAlignment="Left" FontSize="16" Text="{Binding RamSize}"/>
 								<TextBlock Grid.Row="0" Grid.Column="6" HorizontalAlignment="Left" FontSize="16" Text="{Binding BootMode}"/>
 								
-								<Button Grid.Row="0" Grid.Column="7" Padding="4, 2.8">
+								<Button Grid.Row="0" Grid.Column="7" Padding="4, 2.8" Opacity="0.8">
 									<PathIcon Data="{StaticResource ChevronDownRegular}" Width="15" Height="16" />
 									
 									<Button.Flyout>
 										<MenuFlyout Placement="Right" HorizontalOffset="5">
 											<MenuItem Header="Power Off" Command="{Binding PowerOffClickCommand}" />
+											<MenuItem Header="Force Off" Command="{Binding ForceOffClickCommand}" />
 											<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}"/>
 										</MenuFlyout>
 									</Button.Flyout>
