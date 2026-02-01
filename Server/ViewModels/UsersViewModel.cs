@@ -11,15 +11,17 @@ namespace Server.ViewModels;
 public partial class UsersViewModel : ViewModelBase
 {
 	private readonly DatabaseService _databaseService;
+	private readonly AccountService _accountService;
 	
 	public ObservableCollection<UserItemTemplate> Users { get; }
 	
 	[ObservableProperty]
 	private string _query = string.Empty;
 
-	public UsersViewModel(DatabaseService databaseService)
+	public UsersViewModel(DatabaseService databaseService, AccountService accountService)
 	{
 		_databaseService = databaseService;
+		_accountService = accountService;
 		Users = new ObservableCollection<UserItemTemplate>();
 		_ = RefreshAsync();
 	}
@@ -28,6 +30,7 @@ public partial class UsersViewModel : ViewModelBase
 	public UsersViewModel()
 	{
 		_databaseService = null!;
+		_accountService = null!;
 		Users = new ObservableCollection<UserItemTemplate>()
 		{
 			new UserItemTemplate(new User(1, "d", "d@gmail.com", DateTime.Now)),

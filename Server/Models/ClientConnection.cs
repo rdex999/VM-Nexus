@@ -48,6 +48,7 @@ public sealed class ClientConnection : MessagingService
 	private readonly UserService _userService;
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
+	private readonly AccountService _accountService;
 	private readonly ConcurrentDictionary<Guid, TransferHandler> _downloads;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
 	private int _streamVmId = -1;
@@ -60,19 +61,22 @@ public sealed class ClientConnection : MessagingService
 	/// <param name="userService">A reference to the user service. userService != null.</param>
 	/// <param name="virtualMachineService">A reference to the virtual machine service. virtualMachineService != null.</param>
 	/// <param name="driveService">A reference to the drive service. driveService != null.</param>
+	/// <param name="accountService">A reference to the account service. accountService != null.</param>
 	/// <remarks>
 	/// Precondition: Client has connected to the server.
-	/// socket != null &amp;&amp; userService != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null. &amp;&amp; driveService != null.<br/>
+	/// socket != null &amp;&amp; userService != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null.
+	/// &amp;&amp; driveService != null &amp;&amp; accountService != null. <br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
 	public ClientConnection(Socket tcpSocket, DatabaseService databaseService, UserService userService, 
-		VirtualMachineService virtualMachineService, DriveService driveService)
+		VirtualMachineService virtualMachineService, DriveService driveService, AccountService accountService)
 		: base(true)
 	{
 		_databaseService = databaseService;
 		_userService = userService;
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
+		_accountService = accountService;
 		_downloads = new ConcurrentDictionary<Guid, TransferHandler>();
 		ClientId = Guid.NewGuid();
 
@@ -94,19 +98,21 @@ public sealed class ClientConnection : MessagingService
 	/// <param name="userService">A reference to the user service. userService != null.</param>
 	/// <param name="virtualMachineService">A reference to the virtual machine service. virtualMachineService != null.</param>
 	/// <param name="driveService">A reference to the drive service. driveService != null.</param>
+	/// <param name="accountService">A reference to the account service. accountService != null.</param>
 	/// <remarks>
 	/// Precondition: Client has connected to the server.
 	/// socket != null &amp;&amp; userService != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null. &amp;&amp; driveService != null.<br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
 	public ClientConnection(WebSocket socket, DatabaseService databaseService, UserService userService, 
-		VirtualMachineService virtualMachineService, DriveService driveService)
+		VirtualMachineService virtualMachineService, DriveService driveService, AccountService accountService)
 		: base(true)
 	{
 		_databaseService = databaseService;
 		_userService = userService;
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
+		_accountService = accountService;
 		_downloads = new ConcurrentDictionary<Guid, TransferHandler>();
 		ClientId = Guid.NewGuid();
 
@@ -295,17 +301,14 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 				
-				int? newOwnerId;
 				if (reqDeleteAccount.UserId == ActionUser!.Id)
 				{
-					newOwnerId = ActualUser is SubUser actionAsSub ? actionAsSub.OwnerId : null;
 					if (IsLoggedInAsSubUser && !HasPermission(UserPermissions.UserDelete))
 					{
 						SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
 						break;
 					}
 				}
-
 				else
 				{
 					User? user = await _databaseService.GetUserAsync(reqDeleteAccount.UserId);
@@ -315,67 +318,11 @@ public sealed class ClientConnection : MessagingService
 						SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
 						break;
 					}
-
-					newOwnerId = ActualUser.Id;
 				}
 
-				Task<VmGeneralDescriptor[]?> vmsTask = _databaseService.GetVmGeneralDescriptorsOfUserAsync(reqDeleteAccount.UserId);
-				Task<int[]?> driveIdsTask = _databaseService.GetDriveIdsOfUserAsync(reqDeleteAccount.UserId);
-				Task<int[]?> subUsersTask = _databaseService.GetSubUserIdsAsync(reqDeleteAccount.UserId);
-				await Task.WhenAll(vmsTask, driveIdsTask, subUsersTask);
-
-				VmGeneralDescriptor[]? vms = vmsTask.Result;
-				int[]? driveIds = driveIdsTask.Result;
-				int[]? subUsers = subUsersTask.Result;
+				result = await _accountService.DeleteAccountAsync(reqDeleteAccount.UserId);
 				
-				if (vms == null || driveIds == null || subUsers == null)
-				{
-					SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
-					break;				
-				}
-
-				List<Task<ExitCode>> shutdownTasks = new List<Task<ExitCode>>();
-				foreach (VmGeneralDescriptor vm in vms)
-				{
-					if (vm.State == VmState.Running)
-						shutdownTasks.Add(_virtualMachineService.PowerOffAndDestroyOnTimeoutAsync(vm.Id));
-				}
-				await Task.WhenAll(shutdownTasks);
-
-				List<Task<ExitCode>> vmDeleteTasks = new List<Task<ExitCode>>();
-				foreach (VmGeneralDescriptor vm in vms)
-					vmDeleteTasks.Add(_databaseService.DeleteVmAsync(vm.Id));
-
-				List<Task<ExitCode>> driveDeleteTasks = new List<Task<ExitCode>>();
-				foreach (int driveId in driveIds)
-					driveDeleteTasks.Add(_driveService.DeleteDriveAsync(driveId));
-
-				List<Task<ExitCode>> subUsersUpdateTasks = new List<Task<ExitCode>>();
-				foreach (int subUserId in subUsers)
-					subUsersUpdateTasks.Add(_databaseService.UpdateUserOwnerAsync(subUserId, newOwnerId));
-				
-				await Task.WhenAll(vmDeleteTasks.Concat(driveDeleteTasks).Concat(subUsersUpdateTasks));
-
-				await _userService.NotifyUserDeletedAsync(reqDeleteAccount.UserId);
-				result = await _databaseService.DeleteUserAsync(reqDeleteAccount.UserId);
-				if (result != ExitCode.Success)
-				{
-					SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, false));
-					break;
-				}
-				
-				SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, true));
-
-				if (newOwnerId != null)
-				{
-					/* The new owner of the sub-users of the deleted user, should be notified that he has "new" sub-users. */
-					SubUser[]? updatedSubUsers = await _databaseService.GetSubUsersAsync(newOwnerId.Value);
-					if (updatedSubUsers == null)
-						break;
-					
-					foreach (SubUser subUser in updatedSubUsers)
-						_userService.NotifySubUserCreated(subUser);
-				}
+				SendResponse(new MessageResponseDeleteAccount(true, reqDeleteAccount.Id, result == ExitCode.Success));
 				break;
 			}
 

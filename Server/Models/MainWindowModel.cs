@@ -20,10 +20,11 @@ public class MainWindowModel : IDisposable
 	private readonly ConcurrentDictionary<Guid, ClientConnection> _clients;	
 	private readonly DatabaseService _databaseService;
 	private readonly UserService _userService;
-	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
+	private readonly VirtualMachineService _virtualMachineService;
+	private readonly AccountService _accountService;
 
-	public MainWindowModel(Logger logger, out DatabaseService databaseService)
+	public MainWindowModel(Logger logger, out DatabaseService databaseService, out AccountService accountService)
 	{
 		_logger = logger;
 		_clients = new ConcurrentDictionary<Guid, ClientConnection>();
@@ -32,6 +33,7 @@ public class MainWindowModel : IDisposable
 		_driveService = new DriveService(_logger.ForContext("Source", "Drive Service"), _databaseService);
 		_virtualMachineService = new VirtualMachineService(_logger.ForContext("Source", "Virtual Machine Service"), 
 			_databaseService, _userService, _driveService);
+		_accountService = accountService = new AccountService(_databaseService, _userService, _virtualMachineService, _driveService);
 		
 		_userService.UserLoggedIn += (sender, connection) => _clients.TryRemove(connection.ClientId, out _);
 		_userService.UserLoggedOut += (_, connection) => _clients.TryAdd(connection.ClientId, connection);
@@ -162,7 +164,9 @@ public class MainWindowModel : IDisposable
 				bool added;
 				do
 				{
-					ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService, _userService, _virtualMachineService, _driveService);
+					ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService, _userService, 
+						_virtualMachineService, _driveService, _accountService);
+					
 					clientConnection.Disconnected += OnClientDisconnected;
 					added = _clients.TryAdd(clientConnection.ClientId, clientConnection);
 				} while (!added);
@@ -212,7 +216,7 @@ public class MainWindowModel : IDisposable
 			do
 			{
 				ClientConnection clientConnection = new ClientConnection(wsContext.WebSocket, _databaseService, 
-					_userService, _virtualMachineService, _driveService);
+					_userService, _virtualMachineService, _driveService, _accountService);
 				
 				clientConnection.Disconnected += OnClientDisconnected;
 				added = _clients.TryAdd(clientConnection.ClientId, clientConnection);
