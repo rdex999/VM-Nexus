@@ -68,12 +68,23 @@ public partial class VirtualMachinesViewModel : ViewModelBase
 		foreach (DatabaseService.SearchedVirtualMachine virtualMachine in virtualMachines)
 		{
 			VirtualMachines.Add(new VirtualMachineItemTemplate(virtualMachine));
-			VirtualMachines.Last().DeleteClicked += OnVirtualMachineDeleteClicked;
+			VirtualMachines.Last().DeleteClicked += OnVirtualMachineDeleteClickedAsync;
+			VirtualMachines.Last().PowerOffClicked += OnVirtualMachinePowerOffClickedAsync;
 		}
 		
 		return ExitCode.Success;
 	}
 
+	/// <summary>
+	/// Handles a change in the query field. Updates the virtual machines list according to the set query.
+	/// </summary>
+	/// <param name="value">Unused.</param>
+	/// <remarks>
+	/// Precondition: The query field has changed - the user has changed its content. <br/>
+	/// Postcondition: A refresh of the virtual machines list is started according to the set query.
+	/// </remarks>
+	partial void OnQueryChanged(string value) => _ = RefreshAsync();
+	
 	/// <summary>
 	/// Handles a click on the delete button of a virtual machine. Deletes the virtual machine.
 	/// </summary>
@@ -81,7 +92,7 @@ public partial class VirtualMachinesViewModel : ViewModelBase
 	/// Precondition: The server user has clicked on the delete button on a virtual machine. <br/>
 	/// Postcondition: The virtual machine is deleted, the virtual machines list is refreshed.
 	/// </remarks>
-	private async void OnVirtualMachineDeleteClicked(int vmId)
+	private async void OnVirtualMachineDeleteClickedAsync(int vmId)
 	{
 		VmState state = await _virtualMachineService.GetVmStateAsync(vmId);
 		if (state == VmState.Running)
@@ -96,19 +107,23 @@ public partial class VirtualMachinesViewModel : ViewModelBase
 	}
 
 	/// <summary>
-	/// Handles a change in the query field. Updates the virtual machines list according to the set query.
+	/// Handles a click on the power off button on a virtual machine. Sends a power off signal to the virtual machine.
 	/// </summary>
-	/// <param name="value">Unused.</param>
 	/// <remarks>
-	/// Precondition: The query field has changed - the user has changed its content. <br/>
-	/// Postcondition: A refresh of the virtual machines list is started according to the set query.
+	/// Precondition: The server user has clicked on the power off button on a virtual machine. <br/>
+	/// Postcondition: A power off signal is sent to the virtual machine.
 	/// </remarks>
-	partial void OnQueryChanged(string value) => _ = RefreshAsync();
+	private async void OnVirtualMachinePowerOffClickedAsync(int vmId)
+	{
+		await _virtualMachineService.PowerOffVirtualMachineAsync(vmId);
+		await RefreshAsync();
+	}
 }
 
 public partial class VirtualMachineItemTemplate
 {
 	public Action<int>? DeleteClicked;
+	public Action<int>? PowerOffClicked;
 	public int Id { get; }
 	public int OwnerId { get; }
 	public string OwnerUsername { get; }
@@ -148,4 +163,14 @@ public partial class VirtualMachineItemTemplate
 	/// </remarks>
 	[RelayCommand]
 	private void DeleteClick() => DeleteClicked?.Invoke(Id);
+
+	/// <summary>
+	/// Handles a click on the power off button on a virtual machine. Sends a power off signal to the virtual machine.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the power off button on a virtual machine. <br/>
+	/// Postcondition: A power off signal is sent to the virtual machine.
+	/// </remarks>
+	[RelayCommand]
+	private void PowerOffClick() => PowerOffClicked?.Invoke(Id);
 }
