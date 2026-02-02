@@ -61,11 +61,21 @@
 				<ItemsControl.ItemTemplate>
 					<DataTemplate DataType="vm:DriveItemTemplate">
 						<Border Background="#efefef" CornerRadius="5" Padding="8" Margin="15, 8" BoxShadow="0 0 10 0 #c0c0c0">
-							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, 250, 100, 80" ColumnSpacing="15" RowSpacing="8">
+							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, 250, 100, 80, Auto" ColumnSpacing="15" RowSpacing="8">
 								<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding Id}"/>
 								<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" FontSize="16" Text="{Binding Name}"/>
 								<TextBlock Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" FontSize="16" Text="{Binding Size}"/>
 								<TextBlock Grid.Row="0" Grid.Column="3" HorizontalAlignment="Left" FontSize="16" Text="{Binding DriveType}"/>
+							
+								<Button Grid.Row="0" Grid.Column="4" Padding="4, 2.8" Opacity="0.8">
+									<PathIcon Data="{StaticResource ChevronDownRegular}" Width="15" Height="16" />
+									
+									<Button.Flyout>
+										<MenuFlyout Placement="Right" HorizontalOffset="5">
+											<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}" />
+										</MenuFlyout>
+									</Button.Flyout>
+								</Button>
 								
 								<TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" FontSize="16" Text="{Binding OwnerId}"/>
 								<TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" FontSize="16" Text="{Binding OwnerUsername}"/>

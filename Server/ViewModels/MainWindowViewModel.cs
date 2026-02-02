@@ -80,7 +80,7 @@ public partial class MainWindowViewModel : ViewModelBase
 		
 		_usersViewModel = new UsersViewModel(databaseService, accountService);
 		_virtualMachinesViewModel = new VirtualMachinesViewModel(databaseService, userService, virtualMachineService);
-		_drivesViewModel = new DrivesViewModel(databaseService);
+		_drivesViewModel = new DrivesViewModel(databaseService, userService, driveService);
 		_driveConnectionsViewModel = new DriveConnectionsViewModel(databaseService);
 		CurrentTab = _usersViewModel;
 	}

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -11,15 +13,19 @@ namespace Server.ViewModels;
 public partial class DrivesViewModel : ViewModelBase
 {
 	private readonly DatabaseService _databaseService;
+	private readonly UserService _userService;
+	private readonly DriveService _driveService;
 	
 	public ObservableCollection<DriveItemTemplate> Drives { get; }
 
 	[ObservableProperty]
 	private string _query = string.Empty;
 
-	public DrivesViewModel(DatabaseService databaseService)
+	public DrivesViewModel(DatabaseService databaseService, UserService userService, DriveService driveService)
 	{
 		_databaseService = databaseService;
+		_userService = userService;
+		_driveService = driveService;
 		Drives = new ObservableCollection<DriveItemTemplate>();
 		_ = RefreshAsync();
 	}
@@ -28,6 +34,7 @@ public partial class DrivesViewModel : ViewModelBase
 	public DrivesViewModel()
 	{
 		_databaseService = null!;
+		_driveService = null!;
 
 		Drives = new ObservableCollection<DriveItemTemplate>()
 		{
@@ -51,13 +58,16 @@ public partial class DrivesViewModel : ViewModelBase
 		DatabaseService.SearchedDrive[]? drives = await _databaseService.SearchDrivesAsync(Query);
 		if (drives == null)
 			return ExitCode.DatabaseOperationFailed;
-		
+
 		foreach (DatabaseService.SearchedDrive drive in drives)
+		{
 			Drives.Add(new DriveItemTemplate(drive));
+			Drives.Last().DeleteClicked += OnDriveDeleteClicked;
+		}
 
 		return ExitCode.Success;
 	}
-	
+
 	/// <summary>
 	/// Handles a change in the query field. Updates the drives list according to the set query.
 	/// </summary>
@@ -67,10 +77,25 @@ public partial class DrivesViewModel : ViewModelBase
 	/// Postcondition: A refresh of the drives list is started according to the set query.
 	/// </remarks>
 	partial void OnQueryChanged(string value) => _ = RefreshAsync();
+	
+	/// <summary>
+	/// Handles a click on the delete button on a drive. Deletes the drive.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the delete button on a drive. <br/>
+	/// Postcondition: The drive is deleted.
+	/// </remarks>
+	private async void OnDriveDeleteClicked(int driveId)
+	{
+		await _userService.NotifyItemDeletedAsync(driveId, string.Empty);
+		await _driveService.DeleteDriveAsync(driveId);
+		await RefreshAsync();
+	}
 }
 
-public class DriveItemTemplate
+public partial class DriveItemTemplate
 {
+	public Action<int>? DeleteClicked;
 	public int Id { get; }
 	public int OwnerId { get; }
 	public string OwnerUsername { get; }
@@ -90,4 +115,14 @@ public class DriveItemTemplate
 		
 		DriveType = drive.DriveType;
 	}
+
+	/// <summary>
+	/// Handles a click on the delete button on a drive. Deletes the drive.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The server user has clicked on the delete button on a drive. <br/>
+	/// Postcondition: The drive is deleted.
+	/// </remarks>
+	[RelayCommand]
+	private void DeleteClick() => DeleteClicked?.Invoke(Id);
 }
