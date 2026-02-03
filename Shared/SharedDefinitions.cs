@@ -14,6 +14,7 @@ public static class SharedDefinitions
 	public const int ConnectionDeniedRetryTimeout = 4000;
 
 	public const int CredentialsMaxLength = 64;
+	public const int PasswordMinLength = 8;
 	public static readonly char[] InvalidUsernameCharacters = { '"', '\'', '/', '<', '>', '|' };
 	public static readonly char[] DirectorySeparators = { '/', '\\' };
 	

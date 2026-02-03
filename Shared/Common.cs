@@ -222,7 +222,45 @@ public static class Common
 	}
 
 	/// <summary>
-	/// Seperates words in a string by spaces. Words are indicated by their first letter being capital. (pascal/camel case)
+	/// Checks the strength of the given password.
+	/// </summary>
+	/// <param name="password">The password to check. password != null.</param>
+	/// <returns>The strength of the password, where the weakest is 0, and the strongest is 5.</returns>
+	/// <remarks>
+	/// Precondition: password != null. <br/>
+	/// Postcondition: The strength of the password is returned, where the weakest is 0, and the strongest is 5.
+	/// </remarks>
+	public static int PasswordStrength(string password)
+	{
+		if (password.Length < SharedDefinitions.PasswordMinLength)
+			return 0;
+		
+		int symbol = 0;
+		int number = 0;
+		int upper = 0;
+		int lower = 0;
+		foreach (char ch in password)
+		{
+			if (char.IsSymbol(ch))
+				symbol = 1;
+			
+			else if (char.IsDigit(ch))
+				number = 1;
+			
+			else if (char.IsUpper(ch))
+				upper = 1;
+			
+			else if (char.IsLower(ch))
+				lower = 1;
+		}
+
+		int strength = 1 + symbol + number + upper + lower;
+		
+		return strength;
+	}
+
+	/// <summary>
+	/// Separates words in a string by spaces. Words are indicated by their first letter being capital. (pascal/camel case)
 	/// </summary>
 	/// <param name="str">The string to separate the words in. str != null.</param>
 	/// <returns>A new space-seperated string.</returns>
