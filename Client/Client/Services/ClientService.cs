@@ -287,6 +287,28 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Attempts to reset the password of the user.
+	/// </summary>
+	/// <param name="password">The current password of the user. password != null.</param>
+	/// <param name="newPassword">The new password to set to the user. newPassword != null.</param>
+	/// <returns>A status indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialzied and connected to the server, the user is logged in as itself. (not to a sub-user)
+	/// password != null &amp;&amp; newPassword != null. <br/>
+	/// Postcondition: On success, the user's password is reset and the returned status indicates success.
+	/// On failure, the password is not reset and the returned status indicates the error.
+	/// </remarks>
+	public async Task<MessageResponseResetPassword.Status> ResetPasswordAsync(string password, string newPassword)
+	{
+		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestResetPassword(true, password, newPassword));
+
+		if (result != ExitCode.Success)
+			return MessageResponseResetPassword.Status.Failure;
+
+		return ((MessageResponseResetPassword)response!).Result;
+	}
+
+	/// <summary>
 	/// Requests a list of all sub-users of the current user.
 	/// </summary>
 	/// <returns>A list of users, describing the sub-users of the current user. Returns null on failure.</returns>

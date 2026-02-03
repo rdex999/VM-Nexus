@@ -425,6 +425,30 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestResetPassword reqResetPassword:
+			{
+				if (!IsLoggedIn || IsLoggedInAsSubUser)
+				{
+					SendResponse(new MessageResponseResetPassword(true, reqResetPassword.Id, MessageResponseResetPassword.Status.Failure));
+					break;
+				}
+
+				if (!await _databaseService.IsValidLoginAsync(ActionUser!.Username, reqResetPassword.Password))
+				{
+					SendResponse(new MessageResponseResetPassword(true, reqResetPassword.Id, MessageResponseResetPassword.Status.InvalidPassword));
+					break;
+				}
+
+				result = await _databaseService.ResetUserPasswordAsync(ActionUser.Id, reqResetPassword.NewPassword);
+				
+				if (result == ExitCode.Success)
+					SendResponse(new MessageResponseResetPassword(true, reqResetPassword.Id, MessageResponseResetPassword.Status.Success));
+				else
+					SendResponse(new MessageResponseResetPassword(true, reqResetPassword.Id, MessageResponseResetPassword.Status.Failure));
+				
+				break;
+			}
+
 			case MessageRequestListSubUsers reqListSubUsers:
 			{
 				if (!IsLoggedIn)
