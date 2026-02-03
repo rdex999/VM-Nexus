@@ -66,11 +66,13 @@
 						<Border Padding="15" Margin="0, 0, 0, 0">
 							<StackPanel Spacing="13" HorizontalAlignment="Stretch">
 								<Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Classes="submit_dark"
+								        IsEnabled="{Binding VmUsable}"
 								        Command="{Binding PowerOnClickCommand}">
 									Start
 								</Button>
 								
 								<Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" Classes="submit_dark"
+								        IsEnabled="{Binding VmUsable}"
 								        Command="{Binding PowerOffClickCommand}">
 									Power Off
 								</Button>

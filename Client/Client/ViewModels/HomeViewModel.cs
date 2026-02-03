@@ -23,6 +23,8 @@ public partial class HomeViewModel : ViewModelBase
 	private readonly DriveService _driveService;
 	
 	private VmItemTemplate _forceOffWarningVm = null!;
+
+	public bool VmsUsable { get; } = true;
 	
 	[ObservableProperty] 
 	private bool _forceOffWarningIsOpen = false;
@@ -68,6 +70,10 @@ public partial class HomeViewModel : ViewModelBase
 		DeleteVmPopupDrives = new ObservableCollection<DeletionDriveItemTemplate>();
 		ConPopupDriveConnections = new ObservableCollection<DriveConnectionItemTemplate>();
 		_driveService = driveService;
+		
+		if (ClientSvc.IsLoggedInAsSubUser && ClientSvc.User is SubUser subUser)
+			VmsUsable = subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineUse);
+		
 		_driveService.Initialized += (sender, code) =>
 		{
 			if (code == ExitCode.Success) 

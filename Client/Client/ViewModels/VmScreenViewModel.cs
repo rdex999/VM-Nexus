@@ -45,6 +45,8 @@ public partial class VmScreenViewModel : ViewModelBase
 	private volatile MessageInfoVmScreenFrame? _frame;
 	private readonly Stopwatch _frameStopwatch;
 	private int _currentSecFrames = 0;
+
+	public bool VmUsable { get; } = true;
 	
 	[ObservableProperty] 
 	private WriteableBitmap? _vmScreenBitmap = null;
@@ -85,6 +87,9 @@ public partial class VmScreenViewModel : ViewModelBase
 		_audioPlayerService = new PcmAudioPlayerService();
 		_frameAvailable = new SemaphoreSlim(0);
 		_frameStopwatch = new Stopwatch();
+		
+		if (ClientSvc.IsLoggedInAsSubUser && ClientSvc.User is SubUser subUser)
+			VmUsable = subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineUse);
 
 		if (Application.Current!.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
 		{

@@ -51,7 +51,8 @@
 					
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
 						<Button FontWeight="Bold" Foreground="#3a3a3a" Command="{Binding ForceOffWarningClosedCommand}">Cancel</Button>
-						<Button FontWeight="Bold" Foreground="#3a3a3a" Command="{Binding ForceOffConfirmClickCommand}">Force Off</Button>
+						<Button FontWeight="Bold" Foreground="#3a3a3a" IsEnabled="{Binding VmsUsable}"
+						        Command="{Binding ForceOffConfirmClickCommand}">Force Off</Button>
 					</StackPanel>
 				</StackPanel>
 			</templated:OverlayPopup>
@@ -218,11 +219,15 @@
 											</Button>
 
 											<StackPanel Orientation="Horizontal" Spacing="10">
-												<Button Width="80" Command="{Binding PowerOnClickCommand}" Classes="vm_action">
+												<Button Width="80" Command="{Binding PowerOnClickCommand}" Classes="vm_action"
+												        x:CompileBindings="False"
+												        IsEnabled="{Binding Path=DataContext.VmsUsable, RelativeSource={RelativeSource AncestorType=UserControl}}">
 													Start
 												</Button>
 
-												<Button Command="{Binding PowerOffClickCommand}" Classes="vm_action">
+												<Button Command="{Binding PowerOffClickCommand}" Classes="vm_action"
+												        x:CompileBindings="False"
+												        IsEnabled="{Binding Path=DataContext.VmsUsable, RelativeSource={RelativeSource AncestorType=UserControl}}">
 													Power Off
 												</Button>
 											</StackPanel>
