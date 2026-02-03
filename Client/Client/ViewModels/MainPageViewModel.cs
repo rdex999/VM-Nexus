@@ -52,22 +52,31 @@ public partial class MainPageViewModel : ViewModelBase
 	private UserPermissionItemTemplate[]? _ownerPermissions;
 
 	[ObservableProperty] 
+	private bool _resetPswdPopupResetEnabled = false;
+	
+	[ObservableProperty] 
 	private bool _resetPswdPopupIsOpen = false;
 
 	[ObservableProperty] 
 	private bool _resetPswdPopupPasswordValid = false;
 	
 	[ObservableProperty] 
-	private bool _resetPswdPopupNewPasswordValid = false;
+	private string _resetPswdPopupPassword = string.Empty;
 	
 	[ObservableProperty] 
-	private string _resetPswdPopupPassword = string.Empty;
+	private string _resetPswdPopupPasswordMessage = string.Empty;
+	
+	[ObservableProperty] 
+	private bool _resetPswdPopupNewPasswordValid = false;
 	
 	[ObservableProperty] 
 	private string _resetPswdPopupNewPassword = string.Empty;
 	
 	[ObservableProperty] 
 	private string _resetPswdPopupNewPasswordConfirm = string.Empty;
+	
+	[ObservableProperty] 
+	private string _resetPswdPopupNewPasswordMessage = string.Empty;
 	
 	[ObservableProperty]
 	private bool _canDeleteAccount;
@@ -356,6 +365,65 @@ public partial class MainPageViewModel : ViewModelBase
 	/// </remarks>
 	[RelayCommand]
 	private void CloseResetPswdPopup() => ResetPswdPopupIsOpen = false;
+
+	/// <summary>
+	/// Handles a change in the current password field in the password reset popup. Validates the field and displays errors.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has changed the content of the current password field in the password reset popup. <br/>
+	/// Postcondition: Success and error, messages and indications are displayed as needed.
+	/// </remarks>
+	public void OnResetPswdPopupPasswordChanged()
+	{
+		ResetPswdPopupPasswordValid = false;
+		ResetPswdPopupPasswordMessage = string.Empty;
+
+		if (string.IsNullOrEmpty(ResetPswdPopupPassword))
+			ResetPswdPopupPasswordMessage = "Password cannot be empty.";
+		else
+			ResetPswdPopupPasswordValid = true;
+		
+		ResetPswdPopupValidate();
+	}
+	
+	/// <summary>
+	/// Handles a change in the new password and new password confirmation fields in the password reset popup. Validates the field and displays errors.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has changed the content of either the new password or new password confirmation fields in the password reset popup. <br/>
+	/// Postcondition: Success and error, messages and indications are displayed as needed.
+	/// </remarks>
+	public void OnResetPswdPopupNewPasswordChanged()
+	{
+		ResetPswdPopupNewPasswordValid = false;
+		ResetPswdPopupNewPasswordMessage = string.Empty;
+		
+		if (string.IsNullOrEmpty(ResetPswdPopupNewPassword))
+			ResetPswdPopupNewPasswordMessage = "New password cannot be empty.";
+		
+		else if (string.IsNullOrEmpty(ResetPswdPopupNewPasswordConfirm) || ResetPswdPopupNewPassword != ResetPswdPopupNewPasswordConfirm)
+			ResetPswdPopupNewPasswordMessage = "Passwords are not the same.";
+
+		else
+			ResetPswdPopupNewPasswordValid = true;
+
+		ResetPswdPopupValidate();
+	}
+
+	/// <summary>
+	/// Validates the password reset fields, and enables the reset button if everything is valid.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Validation of the password reset fields is needed. (For example, one of the fields has changed) <br/>
+	/// Postcondition: If everything is valid, the reset button is enabled. Otherwise, the reset button is disabled.
+	/// </remarks>
+	private void ResetPswdPopupValidate()
+	{
+		ResetPswdPopupResetEnabled = !string.IsNullOrEmpty(ResetPswdPopupPassword)
+		                             && !string.IsNullOrEmpty(ResetPswdPopupNewPassword) 
+		                             && !string.IsNullOrEmpty(ResetPswdPopupNewPasswordConfirm)
+		                             && ResetPswdPopupNewPassword == ResetPswdPopupNewPasswordConfirm;
+	}
 
 	/// <summary>
 	/// Change the mode of the side menu. Not extended is for when there is no selected VM tab, and extended is for when there is a tab selected.

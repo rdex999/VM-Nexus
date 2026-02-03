@@ -55,32 +55,37 @@
 		                        ClosedCommand="{Binding CloseResetPswdPopupCommand}">
 			<StackPanel Spacing="15">
 				<TextBlock>Reset the password for this account.</TextBlock>
-				
-				<Grid>
-					<!-- Padding for stopping the text before the button -->
-					<TextBox Name="PasswordTextBox" Classes.error="{Binding !ResetPswdPopupPasswordValid}"
-					         Classes.success="{Binding ResetPswdPopupPasswordValid}"
-					         HorizontalAlignment="Stretch" Watermark="Current password" Padding="10, 6, 40, 0"
-					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
-					         Text="{Binding ResetPswdPopupPassword}" TextChanged="OnResetPswdPopupPasswordChanged" />
+			
+				<StackPanel Spacing="5">
+					<Grid>
+						<!-- Padding for stopping the text before the button -->
+						<TextBox Name="PasswordTextBox" Classes.error="{Binding !ResetPswdPopupPasswordValid}"
+						         Classes.success="{Binding ResetPswdPopupPasswordValid}"
+						         HorizontalAlignment="Stretch" Watermark="Current password" Padding="10, 6, 40, 0"
+						         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
+						         Text="{Binding ResetPswdPopupPassword}" TextChanged="OnResetPswdPopupPasswordChanged" />
 
-					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2"
-					              Background="Transparent" IsChecked="{Binding RevealPassword, ElementName=PasswordTextBox}">
-						<Panel>
-							<PathIcon IsVisible="{Binding !IsChecked, ElementName=PasswordStateButton}"
-							          Data="{StaticResource EyeShowRegular}" />
-							<PathIcon IsVisible="{Binding IsChecked, ElementName=PasswordStateButton}"
-							          Data="{StaticResource EyeHideRegular}" />
-						</Panel>
-					</ToggleButton>
-				</Grid>
+						<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2"
+						              Background="Transparent" IsChecked="{Binding RevealPassword, ElementName=PasswordTextBox}">
+							<Panel>
+								<PathIcon IsVisible="{Binding !IsChecked, ElementName=PasswordStateButton}"
+								          Data="{StaticResource EyeShowRegular}" />
+								<PathIcon IsVisible="{Binding IsChecked, ElementName=PasswordStateButton}"
+								          Data="{StaticResource EyeHideRegular}" />
+							</Panel>
+						</ToggleButton>
+					</Grid>
+					
+					<TextBlock Classes="error" IsVisible="{Binding !ResetPswdPopupPasswordValid}"
+					           Text="{Binding ResetPswdPopupPasswordMessage}" />
+				</StackPanel>
 
 				<Grid>
 					<TextBox Name="NewPasswordTextBox" Classes.error="{Binding !ResetPswdPopupNewPasswordValid}"
 					         Classes.success="{Binding ResetPswdPopupNewPasswordValid}"
 					         HorizontalAlignment="Stretch" Watermark="New password" Padding="10, 6, 40, 0"
 					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=NewPasswordStateButton}"
-					         Text="{Binding ResetPswdPopupNewPassword}" TextChanged="OnResetPswdPopupPasswordChanged" />
+					         Text="{Binding ResetPswdPopupNewPassword}" TextChanged="OnResetPswdPopupNewPasswordChanged" />
 
 					<ToggleButton Name="NewPasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2"
 					              Background="Transparent" IsChecked="{Binding RevealPassword, ElementName=NewPasswordTextBox}">
@@ -93,14 +98,21 @@
 					</ToggleButton>
 				</Grid>
 
-				<TextBox Name="PasswordConfirmTextBox" Classes.error="{Binding !ResetPswdPopupNewPasswordValid}"
-				         Classes.success="{Binding ResetPswdPopupNewPasswordValid}"
-				         HorizontalAlignment="Stretch" Watermark="Repeat new password"
-				         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=NewPasswordStateButton}"
-				         Text="{Binding ResetPswdPopupNewPasswordConfirm}" TextChanged="OnResetPswdPopupPasswordChanged"
-				         LostFocus="OnResetPswdPopupPasswordConfirmLostFocus" />
-				
-				<Button Classes="submit_dark" HorizontalAlignment="Center" Margin="0, 10, 0, 0">Reset Password</Button>
+				<StackPanel Spacing="5">
+					<TextBox Name="PasswordConfirmTextBox" Classes.error="{Binding !ResetPswdPopupNewPasswordValid}"
+					         Classes.success="{Binding ResetPswdPopupNewPasswordValid}"
+					         HorizontalAlignment="Stretch" Watermark="Repeat new password"
+					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=NewPasswordStateButton}"
+					         Text="{Binding ResetPswdPopupNewPasswordConfirm}" TextChanged="OnResetPswdPopupNewPasswordChanged" />
+
+					<TextBlock Classes="error" IsVisible="{Binding !ResetPswdPopupNewPasswordValid}"
+					           Text="{Binding ResetPswdPopupNewPasswordMessage}" />
+				</StackPanel>
+
+				<Button Classes="submit_dark" HorizontalAlignment="Center" Margin="0, 10, 0, 0"
+				        IsEnabled="{Binding ResetPswdPopupResetEnabled}">
+					Reset Password
+				</Button>
 			</StackPanel>
 		</templated:OverlayPopup>
 		

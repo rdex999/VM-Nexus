@@ -218,13 +218,29 @@ public partial class MainPageView : UserControl
 		viewModel.CloseVmTab(tab);
 	}
 
+	/// <summary>
+	/// Handles a change in the current password field in the password reset popup. Validates the field and displays errors.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has changed the content of the current password field in the password reset popup. <br/>
+	/// Postcondition: Success and error, messages and indications are displayed as needed.
+	/// </remarks>
 	private void OnResetPswdPopupPasswordChanged(object? sender, TextChangedEventArgs e)
 	{
-		
+		if (DataContext is MainPageViewModel vm)
+			vm.OnResetPswdPopupPasswordChanged();
 	}
 
-	private void OnResetPswdPopupPasswordConfirmLostFocus(object? sender, RoutedEventArgs e)
+	/// <summary>
+	/// Handles a change in the new password and new password confirmation fields in the password reset popup. Validates the field and displays errors.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has changed the content of either the new password or new password confirmation fields in the password reset popup. <br/>
+	/// Postcondition: Success and error, messages and indications are displayed as needed.
+	/// </remarks>
+	private void OnResetPswdPopupNewPasswordChanged(object? sender, TextChangedEventArgs e)
 	{
-		
+		if (DataContext is MainPageViewModel vm)
+			vm.OnResetPswdPopupNewPasswordChanged();
 	}
 }
