@@ -278,6 +278,38 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Update the password of a user.
+	/// </summary>
+	/// <param name="userId">The ID of the user of which to change the password. userId >= 1.</param>
+	/// <param name="password">The new password to set to the user. password != null.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. userId >= 1 &amp;&amp; password != null. <br/>
+	/// Postcondition: On success, the user's password is updated and the returned exit code indicates success.
+	/// On failure, the password is not updated and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> ResetUserPasswordAsync(int userId, string password)
+	{
+		if (userId < 1)
+			return ExitCode.InvalidParameter;
+
+		byte[] passwordSalt = GenerateSalt();
+		byte[] passwordHash = await EncryptPasswordAsync(password, passwordSalt);
+
+		int? rows = await ExecuteNonQueryAsync(
+			"UPDATE users SET password_hashed = @password_hashed, password_salt = @password_salt WHERE id = @id",
+			new NpgsqlParameter("@password_hashed", passwordHash),
+			new NpgsqlParameter("@password_salt", passwordSalt),
+			new NpgsqlParameter("@id", userId)
+		);
+
+		if (rows == 1)
+			return ExitCode.Success;
+		
+		return ExitCode.DatabaseOperationFailed;
+	}
+
+	/// <summary>
 	/// Get the ID of a user with the given username.
 	/// </summary>
 	/// <param name="username">The username of the user. username != null.</param>
