@@ -170,6 +170,24 @@ public class MessageResponseCreateSubUser : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+public class MessageResponseResetPassword : MessageResponse
+{
+	public Status Result { get; }
+
+	public MessageResponseResetPassword(bool generateGuid, Guid requestId, Status result)
+		: base(generateGuid, requestId)
+	{
+		Result = result;
+	}
+	
+	public enum Status
+	{
+		Success,
+		InvalidPassword,
+		Failure
+	}
+}
+
 public class MessageResponseListSubUsers : MessageResponse
 {
 	public Status Result { get; }

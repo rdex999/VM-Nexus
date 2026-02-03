@@ -120,6 +120,21 @@ public class MessageRequestCreateSubUser : MessageRequest
 	                                         !string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(Password);
 }
 
+public class MessageRequestResetPassword : MessageRequest
+{
+	public string Password { get; }
+	public string NewPassword { get; }
+
+	public MessageRequestResetPassword(bool generateGuid, string password, string newPassword)
+		: base(generateGuid)
+	{
+		Password = password;
+		NewPassword = newPassword;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Password) && !string.IsNullOrEmpty(NewPassword);
+}
+
 public class MessageRequestListSubUsers : MessageRequest
 {
 	public MessageRequestListSubUsers(bool generateGuid)
