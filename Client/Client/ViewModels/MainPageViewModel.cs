@@ -51,6 +51,24 @@ public partial class MainPageViewModel : ViewModelBase
 	[ObservableProperty] 
 	private UserPermissionItemTemplate[]? _ownerPermissions;
 
+	[ObservableProperty] 
+	private bool _resetPswdPopupIsOpen = false;
+
+	[ObservableProperty] 
+	private bool _resetPswdPopupPasswordValid = false;
+	
+	[ObservableProperty] 
+	private bool _resetPswdPopupNewPasswordValid = false;
+	
+	[ObservableProperty] 
+	private string _resetPswdPopupPassword = string.Empty;
+	
+	[ObservableProperty] 
+	private string _resetPswdPopupNewPassword = string.Empty;
+	
+	[ObservableProperty] 
+	private string _resetPswdPopupNewPasswordConfirm = string.Empty;
+	
 	[ObservableProperty]
 	private bool _canDeleteAccount;
 	
@@ -318,6 +336,26 @@ public partial class MainPageViewModel : ViewModelBase
 	/// </remarks>
 	[RelayCommand]
 	private async Task DeleteAccountPopupDeleteAsync() => await ClientSvc.DeleteAccountAsync(ClientSvc.User!.Id);
+
+	/// <summary>
+	/// Handles a click on the reset password menu button. Opens the password reset popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the password reset button. <br/>
+	/// Postcondition: The password reset popup is opened.
+	/// </remarks>
+	[RelayCommand]
+	private void ResetPswdClick() => ResetPswdPopupIsOpen = true;
+	
+	/// <summary>
+	/// Closes the password reset popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the password reset popup is closing or closing it is needed. <br/>
+	/// Postcondition: The password reset popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private void CloseResetPswdPopup() => ResetPswdPopupIsOpen = false;
 
 	/// <summary>
 	/// Change the mode of the side menu. Not extended is for when there is no selected VM tab, and extended is for when there is a tab selected.

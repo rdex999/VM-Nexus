@@ -17,7 +17,7 @@ public partial class SubUsersViewModel : ViewModelBase
 {
 	public ObservableCollection<SubUserItemTemplate> SubUsers { get; set; }
 
-	public bool SubUserOpenIsEnabled { get; }
+	public bool SubUserLoginIsEnabled { get; }
 	
 	[ObservableProperty]
 	private bool _newSubUserPopupIsOpen = false;
@@ -74,7 +74,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		SubUsers = new ObservableCollection<SubUserItemTemplate>();
 		ClientSvc.UserDeleted += OnUserDeleted;
 		ClientSvc.SubUserCreated += OnSubUserCreated;
-		SubUserOpenIsEnabled = !ClientSvc.IsLoggedInAsSubUser;
+		SubUserLoginIsEnabled = !ClientSvc.IsLoggedInAsSubUser;
 
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
 		NewSubUserPopupPermissions = new UserPermissionItemTemplate[permissions.Length - 1];	/* The "None" permission is not included. */
@@ -91,7 +91,7 @@ public partial class SubUsersViewModel : ViewModelBase
 	/* Use for IDE preview only. */
 	public SubUsersViewModel()
 	{
-		SubUserOpenIsEnabled = !ClientSvc.IsLoggedInAsSubUser;
+		SubUserLoginIsEnabled = true;
 		
 		SubUsers = new ObservableCollection<SubUserItemTemplate>()
 		{

@@ -186,7 +186,7 @@
 					
 											<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" Classes="submit_dark"
 											        CornerRadius="8" FontWeight="Bold" FontSize="15" Padding="19, 4" x:CompileBindings="False"
-											        IsEnabled="{Binding Path=DataContext.SubUserOpenIsEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}" 
+											        IsEnabled="{Binding Path=DataContext.SubUserLoginIsEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}" 
 											        Command="{Binding LoginToSubUserClickCommand}">
 												Login
 											</Button>

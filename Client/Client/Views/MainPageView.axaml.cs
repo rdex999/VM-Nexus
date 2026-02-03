@@ -217,4 +217,14 @@ public partial class MainPageView : UserControl
 
 		viewModel.CloseVmTab(tab);
 	}
+
+	private void OnResetPswdPopupPasswordChanged(object? sender, TextChangedEventArgs e)
+	{
+		
+	}
+
+	private void OnResetPswdPopupPasswordConfirmLostFocus(object? sender, RoutedEventArgs e)
+	{
+		
+	}
 }
