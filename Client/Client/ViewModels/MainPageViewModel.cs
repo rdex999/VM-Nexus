@@ -359,7 +359,7 @@ public partial class MainPageViewModel : ViewModelBase
 	/// </remarks>
 	[RelayCommand]
 	private void ResetPswdClick() => ResetPswdPopupIsOpen = true;
-	
+
 	/// <summary>
 	/// Closes the password reset popup.
 	/// </summary>
@@ -368,7 +368,15 @@ public partial class MainPageViewModel : ViewModelBase
 	/// Postcondition: The password reset popup is closed.
 	/// </remarks>
 	[RelayCommand]
-	private void CloseResetPswdPopup() => ResetPswdPopupIsOpen = false;
+	private void CloseResetPswdPopup()
+	{
+		ResetPswdPopupIsOpen = false;
+		
+		/* Clear password from memory. */
+		ResetPswdPopupPassword = string.Empty;
+		ResetPswdPopupNewPassword = string.Empty;
+		ResetPswdPopupNewPasswordConfirm = string.Empty;
+	}
 
 	/// <summary>
 	/// Handles a change in the current password field in the password reset popup. Validates the field and displays errors.
@@ -427,6 +435,35 @@ public partial class MainPageViewModel : ViewModelBase
 		                             && !string.IsNullOrEmpty(ResetPswdPopupNewPassword) 
 		                             && !string.IsNullOrEmpty(ResetPswdPopupNewPasswordConfirm)
 		                             && ResetPswdPopupNewPassword == ResetPswdPopupNewPasswordConfirm;
+	}
+
+	/// <summary>
+	/// Handles a click on the reset button, on the password reset popup. Attempts to reset the password.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the reset password button, on the password reset popup. <br/>
+	/// Postcondition: An attempt to reset the password is performed. On success, the password is reset and the password reset popup is closed.
+	/// On failure, the password is not reset and an error message is displayed.
+	/// </remarks>
+	[RelayCommand]
+	private async Task ResetPswdPopupResetClick()
+	{
+		ResetPswdPopupNewPasswordValid = true;
+		ResetPswdPopupPasswordValid = true;
+		ResetPswdPopupPasswordMessage = string.Empty;
+		ResetPswdPopupNewPasswordMessage = string.Empty;
+		
+		MessageResponseResetPassword.Status result = await ClientSvc.ResetPasswordAsync(ResetPswdPopupPassword, ResetPswdPopupNewPassword);
+
+		if (result == MessageResponseResetPassword.Status.Success)
+			CloseResetPswdPopup();
+			
+		else if (result == MessageResponseResetPassword.Status.InvalidPassword)
+		{
+			ResetPswdPopupPasswordValid = false;
+			ResetPswdPopupResetEnabled = false;
+			ResetPswdPopupPasswordMessage = "Invalid password.";
+		}
 	}
 
 	/// <summary>

@@ -110,7 +110,8 @@
 				</StackPanel>
 
 				<Button Classes="submit_dark" HorizontalAlignment="Center" Margin="0, 10, 0, 0"
-				        IsEnabled="{Binding ResetPswdPopupResetEnabled}">
+				        IsEnabled="{Binding ResetPswdPopupResetEnabled}"
+				        Command="{Binding ResetPswdPopupResetClickCommand}">
 					Reset Password
 				</Button>
 			</StackPanel>
