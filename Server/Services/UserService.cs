@@ -405,7 +405,7 @@ public class UserService
 	/// Precondition: Service initialized. The given drive and virtual machine exist, and are disconnected. driveId >= 1 &amp;&amp; vmId >= 1. <br/>
 	/// Postcondition: Related users are notified of the drive disconnection.
 	/// </remarks>
-	public async Task NotifyDriveDisconnected(int driveId, int vmId)
+	public async Task NotifyDriveDisconnectedAsync(int driveId, int vmId)
 	{
 		int owner = await _databaseService.GetDriveOwnerIdAsync(vmId);
 		if (owner < 1)

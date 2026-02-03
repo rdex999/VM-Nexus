@@ -63,11 +63,22 @@
 				<ItemsControl.ItemTemplate>
 					<DataTemplate DataType="vm:DriveConnectionItemTemplate">
 						<Border Background="#efefef" CornerRadius="5" Padding="8" Margin="15, 8" BoxShadow="0 0 10 0 #c0c0c0">
-							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="120, 220, 150, 185" ColumnSpacing="15" RowSpacing="8">
+							<Grid RowDefinitions="Auto, Auto" ColumnDefinitions="120, 220, 150, 185, Auto" ColumnSpacing="15" RowSpacing="8">
 								<TextBlock HorizontalAlignment="Left" FontSize="16" Text="{Binding OwnerUsername}"/>
 								<TextBlock Grid.Row="0" Grid.Column="1" HorizontalAlignment="Left" FontSize="16" Text="{Binding DriveName}"/>
 								<TextBlock Grid.Row="0" Grid.Column="2" HorizontalAlignment="Left" FontSize="16" Text="{Binding VirtualMachineName}"/>
 								<TextBlock Grid.Row="0" Grid.Column="3" HorizontalAlignment="Left" FontSize="16" Text="{Binding ConnectedAt}"/>
+							
+								<Button Grid.Row="0" Grid.Column="4" Padding="4, 2.8" Opacity="0.8">
+									<PathIcon Data="{StaticResource ChevronDownRegular}" Width="15" Height="16" />
+									
+									<Button.Flyout>
+										<MenuFlyout Placement="Right" HorizontalOffset="5">
+											<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}"
+											          ToolTip.Tip="Disconnect the drive from the virtual machine. The drive will not be connected on next VM startup." />
+										</MenuFlyout>
+									</Button.Flyout>
+								</Button>	
 								
 								<TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Left" FontSize="16" Text="{Binding OwnerId}"/>
 								<TextBlock Grid.Row="1" Grid.Column="1" HorizontalAlignment="Left" FontSize="16" Text="{Binding DriveId}"/>

@@ -881,7 +881,7 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseDisconnectDrive(true, reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.Success));
-					await _userService.NotifyDriveDisconnected(reqDisconnectDrive.DriveId, reqDisconnectDrive.VmId);
+					await _userService.NotifyDriveDisconnectedAsync(reqDisconnectDrive.DriveId, reqDisconnectDrive.VmId);
 				}
 				else if (result == ExitCode.DriveConnectionAlreadyExists)
 					SendResponse(new MessageResponseDisconnectDrive(true, reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.NotConnected));
