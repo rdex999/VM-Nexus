@@ -188,8 +188,8 @@
 											</Button>
 										</Grid>
 
-										<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="0, 0, 50, 3"
-												Classes="enter" IsEnabled="{Binding OpenEnabled}"
+										<Button Grid.Row="1" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="0, 0, 50, 3" Classes="enter" 
+												IsEnabled="{Binding Path=DataContext.DriveOpenIsEnabled, RelativeSource={RelativeSource AncestorType=UserControl}}" x:CompileBindings="False"
 										        Command="{Binding OpenCommand}">
 											Open
 										</Button>

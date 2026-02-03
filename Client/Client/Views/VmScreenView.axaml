@@ -90,14 +90,16 @@
 				</Border>
 			</SplitView.Pane>
 
-			<Image Name="VmScreenImage" Source="{Binding VmScreenBitmap}" Focusable="True"
-			       SizeChanged="OnVmScreenSizeChanged"
-			       PointerMoved="OnPointerMoved"
-			       PointerPressed="OnPointerPressed"
-			       PointerReleased="OnPointerReleased"
-			       PointerWheelChanged="OnPointerWheelChanged"
-			       KeyDown="OnKeyDown"
-			       KeyUp="OnKeyUp" />
+			<Border CornerRadius="6" HorizontalAlignment="Center" VerticalAlignment="Center" ClipToBounds="True">
+				<Image Name="VmScreenImage" Source="{Binding VmScreenBitmap}" Focusable="True"
+				       SizeChanged="OnVmScreenSizeChanged"
+				       PointerMoved="OnPointerMoved"
+				       PointerPressed="OnPointerPressed"
+				       PointerReleased="OnPointerReleased"
+				       PointerWheelChanged="OnPointerWheelChanged"
+				       KeyDown="OnKeyDown"
+				       KeyUp="OnKeyUp" />
+			</Border>
 		</SplitView>
 		
 		<ToggleButton Name="ToggleButton" IsVisible="{Binding !IsChecked, ElementName=ToggleButton}" Height="150" HorizontalAlignment="Right"

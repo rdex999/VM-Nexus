@@ -27,8 +27,8 @@ public partial class DrivesViewModel : DriveExplorerMode
 	public ObservableCollection<VmConnectionItemTemplate> ConPopupVmConnections { get; }
 	private int _conPopupDriveId = -1;
 
-	private readonly bool _driveOpenIsEnabled = true;
-	
+	public bool DriveOpenIsEnabled { get; } = true;
+
 	[ObservableProperty] 
 	private bool _conPopupIsOpen = false;
 
@@ -94,7 +94,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 		ClientSvc.ItemDeleted += OnItemDeleted;
 
 		if (ClientSvc.IsLoggedInAsSubUser && ClientSvc.User is SubUser subUser)
-			_driveOpenIsEnabled = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemList);
+			DriveOpenIsEnabled = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemList);
 		
 		if (_driveService.IsInitialized)
 			UpdateDrives();
@@ -107,9 +107,9 @@ public partial class DrivesViewModel : DriveExplorerMode
 		ConPopupVmConnections = new ObservableCollection<VmConnectionItemTemplate>();
 		DriveItems = new ObservableCollection<DriveItemTemplate>()
 		{
-			new DriveItemTemplate(new DriveGeneralDescriptor(1, "test_vm0 - Ubuntu", 50000, 512, DriveType.Disk, PartitionTableType.GuidPartitionTable), true),
-			new DriveItemTemplate(new DriveGeneralDescriptor(2, "test_vm1 - MiniCoffeeOS", 15, 512, DriveType.Floppy, PartitionTableType.Unpartitioned), true),
-			new DriveItemTemplate(new DriveGeneralDescriptor(2, "OS iso", 4192, 512, DriveType.CDROM, PartitionTableType.Unpartitioned), true),
+			new DriveItemTemplate(new DriveGeneralDescriptor(1, "test_vm0 - Ubuntu", 50000, 512, DriveType.Disk, PartitionTableType.GuidPartitionTable)),
+			new DriveItemTemplate(new DriveGeneralDescriptor(2, "test_vm1 - MiniCoffeeOS", 15, 512, DriveType.Floppy, PartitionTableType.Unpartitioned)),
+			new DriveItemTemplate(new DriveGeneralDescriptor(2, "OS iso", 4192, 512, DriveType.CDROM, PartitionTableType.Unpartitioned))
 		};
 	}
 
@@ -152,7 +152,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 		DriveItems.Clear();
 		foreach (DriveGeneralDescriptor descriptor in _driveService.GetDrives())
 		{
-			DriveItems.Add(new DriveItemTemplate(descriptor, _driveOpenIsEnabled));
+			DriveItems.Add(new DriveItemTemplate(descriptor));
 			DriveItems.Last().OpenClick += OnDriveOpenClicked;
 			DriveItems.Last().DownloadClick += OnDriveDownloadRequested;
 			DriveItems.Last().DeleteClick += OnDriveDeleteRequested;
@@ -171,7 +171,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 	/// </remarks>
 	private void OnDriveCreated(object? sender, DriveGeneralDescriptor descriptor)
 	{
-		DriveItems.Add(new DriveItemTemplate(descriptor, _driveOpenIsEnabled));
+		DriveItems.Add(new DriveItemTemplate(descriptor));
 		DriveItems.Last().OpenClick += OnDriveOpenClicked;
 		DriveItems.Last().DownloadClick += OnDriveDownloadRequested;
 		DriveItems.Last().DeleteClick += OnDriveDeleteRequested;
@@ -558,9 +558,6 @@ public partial class DriveItemTemplate : ObservableObject
 	}
 
 	[ObservableProperty]
-	private bool _openEnabled;
-
-	[ObservableProperty]
 	private string _name;
 
 	[ObservableProperty] 
@@ -569,13 +566,12 @@ public partial class DriveItemTemplate : ObservableObject
 	[ObservableProperty] 
 	private DriveType _driveType;
 
-	public DriveItemTemplate(DriveGeneralDescriptor descriptor, bool openEnabled)
+	public DriveItemTemplate(DriveGeneralDescriptor descriptor)
 	{
 		Id = descriptor.Id;
 		Name = descriptor.Name;
 		Size = descriptor.Size;
 		DriveType = descriptor.DriveType;
-		OpenEnabled = openEnabled;
 	}
 
 	/// <summary>

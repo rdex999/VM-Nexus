@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Client.ViewModels"
              xmlns:templated="clr-namespace:Client.Controls.Templated"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="450"
              x:Class="Client.Views.MainPageView"
              x:DataType="vm:MainPageViewModel">
 	
@@ -53,7 +53,7 @@
 		<Border Grid.Row="0" Background="#d3e6eb" Padding="7">		<!-- Also looks good #e2e7e8 -->
 			<Grid ColumnDefinitions="*, Auto, *">
 				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}"
-				              Width="40" Height="40" Margin="5, 0, 0, 0">
+				              Width="40" Height="40" Margin="5, 0, 0, 0" Background="#a1b5ba" Opacity="0.8" CornerRadius="4.5">
 					<PathIcon Data="{StaticResource NavigationRegular}" />
 				</ToggleButton>
 
