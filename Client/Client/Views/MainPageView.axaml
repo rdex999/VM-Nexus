@@ -215,7 +215,8 @@
 								
 								<MenuItem Header="-"/>
 								<MenuItem Header="Log Out" Command="{Binding LogoutCommand}"/>
-								<MenuItem Header="Reset Password" Command="{Binding ResetPswdClickCommand}" />
+								<MenuItem Header="Reset Password" Command="{Binding ResetPswdClickCommand}" 
+								          IsEnabled="{Binding CanResetPassword}"/>
 								<MenuItem Header="Delete Account" Command="{Binding DeleteAccountClickCommand}" 
 								          IsEnabled="{Binding CanDeleteAccount}"/>
 							</MenuFlyout>

@@ -24,6 +24,8 @@ public partial class MainPageViewModel : ViewModelBase
 	
 	public ObservableCollection<VmTabTemplate> VmTabs { get; }
 
+	public bool CanResetPassword { get; private set; }
+	
 	private const int SideMenuIdxHome = 0;
 	private const int SideMenuIdxCreateVm = 1;
 	private const int SideMenuIdxDrives = 2;
@@ -180,6 +182,8 @@ public partial class MainPageViewModel : ViewModelBase
 		IsSubUser = ClientSvc.User is SubUser;
 		CanDeleteAccount = !ClientSvc.IsLoggedInAsSubUser || (ClientSvc.IsLoggedInAsSubUser &&
 		                                                      ((SubUser)ClientSvc.User).OwnerPermissions.HasPermission(UserPermissions.UserDelete.AddIncluded()));
+		CanResetPassword = !ClientSvc.IsLoggedInAsSubUser;
+		
 		if (IsSubUser)
 		{
 			SubUser = (SubUser)ClientSvc.User;
