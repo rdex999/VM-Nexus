@@ -262,6 +262,12 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.InvalidEmail));
 					break;
 				}
+
+				if (Common.PasswordStrength(reqCreateAccount.Password) < 5)
+				{
+					SendResponse(new MessageResponseCreateAccount(true, reqCreateAccount.Id, MessageResponseCreateAccount.Status.Failure));
+					break;				
+				}
 				
 				string usernameTrimmed = reqCreateAccount.Username.Trim();
 				string emailTrimmed = reqCreateAccount.Email.Trim();
@@ -388,7 +394,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestCreateSubUser reqCreateSubUser:
 			{
-				if (!IsLoggedIn || IsLoggedInAsSubUser)
+				if (!IsLoggedIn || IsLoggedInAsSubUser || Common.PasswordStrength(reqCreateSubUser.Password) < 5)
 				{
 					SendResponse(new MessageResponseCreateSubUser(true, reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Failure));
 					break;
@@ -427,7 +433,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestResetPassword reqResetPassword:
 			{
-				if (!IsLoggedIn || IsLoggedInAsSubUser)
+				if (!IsLoggedIn || IsLoggedInAsSubUser || Common.PasswordStrength(reqResetPassword.Password) < 5)
 				{
 					SendResponse(new MessageResponseResetPassword(true, reqResetPassword.Id, MessageResponseResetPassword.Status.Failure));
 					break;
