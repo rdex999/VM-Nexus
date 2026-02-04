@@ -61,6 +61,7 @@ public enum ExitCode
 	OpenAlInitializationFailed,
 	OpeningFileFailed,
 	InvalidPath,
+	InvalidFileName,
 	ItemDownloadFailed,
 	ItemDoesntExist,
 	ItemAlreadyExists,

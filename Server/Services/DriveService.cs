@@ -750,7 +750,9 @@ public class DriveService
 			return null;
 		}
 
-		if (!fileSystem.DirectoryExists(Path.GetDirectoryName(fileSystemPath)) || (!createFileIfNotExists && !fileSystem.Exists(fileSystemPath)))
+		if ((fileSystem is FatFileSystem && !IsValidFileName83Fat(pathParts.Last())) 
+		    ||!fileSystem.DirectoryExists(Path.GetDirectoryName(fileSystemPath)) 
+		    || (!createFileIfNotExists && !fileSystem.Exists(fileSystemPath)))
 		{
 			fileSystem.Dispose();
 			drive.Dispose();
@@ -835,7 +837,10 @@ public class DriveService
 
 		try
 		{
-			if (fileSystem.Exists(fileSystemPath))
+			if (fileSystem is FatFileSystem && !IsValidFileName83Fat(pathParts.Last()))
+				result = ExitCode.InvalidFileName;
+			
+			else if (fileSystem.Exists(fileSystemPath))
 				result = ExitCode.ItemAlreadyExists;
 			
 			else if (!fileSystem.Exists(string.Join('\\', pathParts[..^1])))
@@ -919,6 +924,13 @@ public class DriveService
 		
 		if (fileSystem == null)
 		{
+			drive.Dispose();
+			return false;
+		}
+
+		if (fileSystem is FatFileSystem && !IsValidFileName83Fat(pathParts.Last()))
+		{
+			fileSystem.Dispose();
 			drive.Dispose();
 			return false;
 		}
@@ -1043,6 +1055,50 @@ public class DriveService
 		Stream filesystem = drive.Content;
 		filesystem.Seek(0, SeekOrigin.Begin);
 		return drive.IsPartitioned && GetStreamFileSystem(filesystem) == null;
+	}
+
+	/// <summary>
+	/// Checks if the given file name is valid according to 8.3 FAT short-name rules.
+	/// </summary>
+	/// <param name="fileName">The file name to check. fileName != null.</param>
+	/// <returns>True if the file name is valid, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: fileName != null. <br/>
+	/// Postcondition: Returns true if the file name is valid, false otherwise.
+	/// </remarks>
+	private bool IsValidFileName83Fat(string fileName)
+	{
+		if (string.IsNullOrEmpty(fileName) || fileName == "." || fileName == "..")
+			return false;
+		
+		string upper = fileName.ToUpper();
+		int extIdx = upper.LastIndexOf('.');
+		char[] special = { '$', '%', '\'', '-', '_', '@', '~', '`', '!', '(', ')', '^', '#', '&', '}', '{' };
+		
+		if (extIdx != -1)
+			if (extIdx > 8 || upper.Length - 1 - extIdx > 3)
+				return false;
+
+		bool foundDot = false;
+		foreach (char ch in upper)
+		{
+			if (ch == '.')
+			{
+				if (foundDot)
+					return false;
+				
+				foundDot = true;
+				continue;
+			}
+
+			if (char.IsUpper(ch) || char.IsDigit(ch))
+				continue;
+
+			if (!special.Contains(ch))
+				return false;
+		}
+
+		return true;
 	}
 	
 	/// <summary>
