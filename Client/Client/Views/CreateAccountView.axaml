@@ -37,81 +37,92 @@
 			<TextBlock HorizontalAlignment="Center" TextAlignment="Center" Classes="error" Text="{Binding ConnectionErrorMessage}" />
 		</StackPanel>
 		
-		<Border Grid.Row="1" HorizontalAlignment="Center" Background="#d4eff1" CornerRadius="15" Padding="30, 5" Width="340" Height="440">
+		<Border Grid.Row="1" HorizontalAlignment="Center" Background="#d4eff1" CornerRadius="15" Padding="30, 5" Width="340" MinHeight="440">
 			<Border.KeyBindings>
 				<KeyBinding Gesture="Enter" Command="{Binding CreateAccountCommand}" />
 			</Border.KeyBindings>
-			
-			<StackPanel Spacing="15">
-				<TextBlock TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" 
-				           FontSize="36" FontWeight="Bold" Foreground="{StaticResource Title}"
-				           Padding="0, 10, 0, 0">Create Account</TextBlock>
 
-				<StackPanel>
-					<TextBox Text="{Binding Username}" TextChanged="OnUsernameTextChangedAsync"
-					         Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"
-					         Classes.success="{Binding UsernameAvailabilitySuccessClass}"
-					         Classes.error="{Binding UsernameAvailabilityErrorClass}" />
+			<Grid RowDefinitions="*, Auto">
+				<StackPanel Spacing="15">
+					<TextBlock TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center"
+					           FontSize="36" FontWeight="Bold" Foreground="{StaticResource Title}"
+					           Padding="0, 10, 0, 0">
+						Create Account
+					</TextBlock>
 
-					<TextBlock Text="{Binding UsernameAvailabilityMessage}"
-					           Classes.success="{Binding UsernameAvailabilitySuccessClass}"
-					           Classes.error="{Binding UsernameAvailabilityErrorClass}" />
-				</StackPanel>
-				
-				<StackPanel>
-					<TextBox Text="{Binding Email}" TextChanged="OnEmailTextChanged"
-					         Classes="form" HorizontalAlignment="Stretch" Watermark="Email"
-					         Classes.success="{Binding EmailSuccessClass}"
-					         Classes.error="{Binding !EmailSuccessClass}" 
-					         MaxLength="254" />
+					<StackPanel>
+						<TextBox Text="{Binding Username}" TextChanged="OnUsernameTextChangedAsync"
+						         Classes="form" HorizontalAlignment="Stretch" Watermark="Username" Margin="0, 20, 0, 0"
+						         Classes.success="{Binding UsernameAvailabilitySuccessClass}"
+						         Classes.error="{Binding UsernameAvailabilityErrorClass}" />
 
-					<TextBlock Text="{Binding EmailErrorMessage}" Classes="error"/>
-				</StackPanel>
-				
-				<Grid>
-					<!-- Padding for stopping the text before the button -->
-					<TextBox Name="PasswordTextBox" Classes="form" Classes.error="{Binding PasswordClassError}" 
-					         Classes.success="{Binding PasswordClassSuccess}"
-					         HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0"
-					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
-					         Text="{Binding Password}" TextChanged="OnPasswordTextChanged"/>
-					
-					<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2" 
-					              Background="Transparent" IsChecked="{Binding RevealPassword, ElementName=PasswordTextBox}">
-						<Panel>
-							<PathIcon IsVisible="{Binding !IsChecked, ElementName=PasswordStateButton}" Data="{StaticResource EyeShowRegular}"/>
-							<PathIcon IsVisible="{Binding IsChecked, ElementName=PasswordStateButton}" Data="{StaticResource EyeHideRegular}"/>
-						</Panel>
-					</ToggleButton>
-				</Grid>
-					
-				<Grid>
-					<!-- Padding for stopping the text before the button -->
-					<TextBox Name="PasswordConfirmTextBox" Classes="form" Classes.error="{Binding PasswordClassError}" 
-					         Classes.success="{Binding PasswordClassSuccess}"
-					         HorizontalAlignment="Stretch" Watermark="Repeat Password"
-					         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
-					         Text="{Binding PasswordConfirm}" TextChanged="OnPasswordTextChanged"
-					         LostFocus="PasswordConfirmTextBox_OnLostFocus"/>
-				</Grid>
-			
-				<StackPanel>
-					<TextBlock IsVisible="{Binding PasswordNotEqualTextIsVisible}" 
-					           HorizontalAlignment="Center" Classes="error">Passwords are not the same.</TextBlock>
-					
+						<TextBlock Text="{Binding UsernameAvailabilityMessage}"
+						           Classes.success="{Binding UsernameAvailabilitySuccessClass}"
+						           Classes.error="{Binding UsernameAvailabilityErrorClass}" />
+					</StackPanel>
+
+					<StackPanel>
+						<TextBox Text="{Binding Email}" TextChanged="OnEmailTextChanged"
+						         Classes="form" HorizontalAlignment="Stretch" Watermark="Email"
+						         Classes.success="{Binding EmailValid}"
+						         Classes.error="{Binding !EmailValid}"
+						         MaxLength="254" />
+
+						<TextBlock Classes="error" IsVisible="{Binding !EmailValid}"
+						           Text="{Binding EmailErrorMessage}" />
+					</StackPanel>
+
+					<Grid>
+						<!-- Padding for stopping the text before the button -->
+						<TextBox Name="PasswordTextBox" Classes="form" Classes.error="{Binding !PasswordValid}"
+						         Classes.success="{Binding PasswordValid}"
+						         HorizontalAlignment="Stretch" Watermark="Password" Padding="10, 6, 40, 0"
+						         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
+						         Text="{Binding Password}" TextChanged="OnPasswordTextChanged" />
+
+						<ToggleButton Name="PasswordStateButton" HorizontalAlignment="Right" Margin="0, 0, 8, 0" Padding="2"
+						              Background="Transparent" IsChecked="{Binding RevealPassword, ElementName=PasswordTextBox}">
+							<Panel>
+								<PathIcon IsVisible="{Binding !IsChecked, ElementName=PasswordStateButton}"
+								          Data="{StaticResource EyeShowRegular}" />
+								<PathIcon IsVisible="{Binding IsChecked, ElementName=PasswordStateButton}"
+								          Data="{StaticResource EyeHideRegular}" />
+							</Panel>
+						</ToggleButton>
+					</Grid>
+
+					<StackPanel Spacing="5">
+						<!-- Padding for stopping the text before the button -->
+						<TextBox Name="PasswordConfirmTextBox" Classes="form" Classes.error="{Binding !PasswordValid}"
+						         Classes.success="{Binding PasswordValid}"
+						         HorizontalAlignment="Stretch" Watermark="Repeat Password"
+						         PasswordChar="•" RevealPassword="{Binding IsChecked, ElementName=PasswordStateButton}"
+						         Text="{Binding PasswordConfirm}" TextChanged="OnPasswordTextChanged"
+						         LostFocus="PasswordConfirmTextBox_OnLostFocus" />
+
+						<TextBlock IsVisible="{Binding !PasswordValid}" HorizontalAlignment="Left"
+						           Classes="error" TextWrapping="Wrap" Text="{Binding PasswordError}" />
+					</StackPanel>
+
 					<TextBlock IsVisible="{Binding AccountCreationFailedTextIsVisible}"
-					         Text="{Binding AccountCreationFailedText}"
-					         HorizontalAlignment="Center" Classes="error"/>
+					           Text="{Binding AccountCreationFailedText}"
+					           HorizontalAlignment="Center" Classes="error" />
+
 				</StackPanel>
 				
-				<Button IsEnabled="{Binding CreateAccountIsEnabled}" 
-				        Command="{Binding CreateAccountCommand}"
-				        HorizontalAlignment="Center" Classes="submit" Margin="0, 10, 0, 5">Create Account</Button>
-				
-				<TextBlock HorizontalAlignment="Center" Foreground="{StaticResource Title}" FontWeight="DemiBold" Text="Already have an account? ">
-					<HyperlinkButton Command="{Binding NavigateToLoginCommand}">Login</HyperlinkButton>
-				</TextBlock>
-			</StackPanel>
+				<StackPanel Grid.Row="1" Spacing="7" Margin="0, 0, 0, 10">
+					<Button IsEnabled="{Binding CreateAccountIsEnabled}"
+					        Command="{Binding CreateAccountCommand}"
+					        HorizontalAlignment="Center" Classes="submit">
+						Create Account
+					</Button>
+
+					<TextBlock HorizontalAlignment="Center" Foreground="{StaticResource Title}"
+					           FontWeight="DemiBold" Text="Already have an account? ">
+						<HyperlinkButton Command="{Binding NavigateToLoginCommand}">Login</HyperlinkButton>
+					</TextBlock>
+				</StackPanel>
+			</Grid>
 		</Border>
 	</Grid>	
 </UserControl>

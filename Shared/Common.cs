@@ -241,10 +241,7 @@ public static class Common
 		int lower = 0;
 		foreach (char ch in password)
 		{
-			if (char.IsSymbol(ch))
-				symbol = 1;
-			
-			else if (char.IsDigit(ch))
+			if (char.IsDigit(ch))
 				number = 1;
 			
 			else if (char.IsUpper(ch))
@@ -252,6 +249,9 @@ public static class Common
 			
 			else if (char.IsLower(ch))
 				lower = 1;
+			
+			else
+				symbol = 1;
 		}
 
 		int strength = 1 + symbol + number + upper + lower;

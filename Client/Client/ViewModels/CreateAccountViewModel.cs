@@ -22,13 +22,10 @@ public partial class CreateAccountViewModel : ViewModelBase
 	private string _passwordConfirm  = string.Empty;
 
 	[ObservableProperty]
-	private bool _passwordNotEqualTextIsVisible = false;
+	private string _passwordError = string.Empty;
 
 	[ObservableProperty] 
-	private bool _passwordClassError = false;
-
-	[ObservableProperty] 
-	private bool _passwordClassSuccess = false;
+	private bool _passwordValid = false;
 	
 	[ObservableProperty]
 	private bool _createAccountIsEnabled = false;
@@ -52,7 +49,7 @@ public partial class CreateAccountViewModel : ViewModelBase
 	private string _email = string.Empty;
 	
 	[ObservableProperty] 
-	private bool _emailSuccessClass = false;
+	private bool _emailValid = false;
 	
 	[ObservableProperty]
 	private string _emailErrorMessage = string.Empty;
@@ -224,28 +221,28 @@ public partial class CreateAccountViewModel : ViewModelBase
 	public void PasswordTextChanged()
 	{
 		AccountCreationFailedTextIsVisible = false;
-		if (Password == PasswordConfirm && Password.Length == 0)
-		{
-			PasswordNotEqualTextIsVisible = false;
-			PasswordClassError = false;	
-			PasswordClassSuccess = false;
-			CreateAccountIsEnabled = false;
-		}
+		PasswordValid = false;
+		CreateAccountIsEnabled = false;
+		
+		if (string.IsNullOrEmpty(Password))
+			PasswordError = "Password must not be empty.";
+		
 		else if (Password == PasswordConfirm)
 		{
-			PasswordNotEqualTextIsVisible = false;
-			PasswordClassError = false;
-			PasswordClassSuccess = true;
-
-			CreateAccountIsEnabledSetup();
+			int strength = Common.PasswordStrength(Password);
+			if (strength >= 5)
+			{
+				PasswordValid = true;
+				CreateAccountIsEnabledSetup();
+			}
+			else
+			{
+				PasswordError = $"Password is too weak. Password must be at least {SharedDefinitions.PasswordMinLength} characters long, " +
+				                "include at least one symbol, number, upper-case, and lower-case characters.";
+			}
 		}
 		else
-		{
-			PasswordNotEqualTextIsVisible = true;
-			PasswordClassError = true;
-			PasswordClassSuccess = false;
-			CreateAccountIsEnabled = false;
-		}
+			PasswordError = "Passwords are not the same.";
 	}
 
 	/// <summary>
@@ -257,23 +254,17 @@ public partial class CreateAccountViewModel : ViewModelBase
 	/// </remarks>
 	public void OnEmailTextChanged()
 	{
+		EmailValid = false;
 		if (string.IsNullOrEmpty(Email))
-		{
-			EmailSuccessClass = false;
 			EmailErrorMessage = "Email must not be empty.";
-			return;
-		}
 
-		if (Common.IsValidEmail(Email))
+		else if (Common.IsValidEmail(Email))
 		{
-			EmailSuccessClass = true;
+			EmailValid = true;
 			EmailErrorMessage = string.Empty;
 		}
 		else
-		{
-			EmailSuccessClass = false;
 			EmailErrorMessage = "Invalid email address.";
-		}
 	}
 	
 	/// <summary>
