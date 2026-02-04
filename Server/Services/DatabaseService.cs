@@ -321,6 +321,38 @@ public class DatabaseService
 	}
 
 	/// <summary>
+	/// Increases the bad login count of a user. Blocks user login for some time if needed.
+	/// </summary>
+	/// <param name="userId">The ID of the user to increase the bad login count of. userId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists, and has attempted a bad login. <br/>
+	/// Postcondition: The bad login count is increased, login blocked for some time if needed.
+	/// </remarks>
+	public async Task UserBadLoginAsync(int userId)
+	{
+		if (userId < 1)
+			return;
+
+		object? res = await ExecuteScalarAsync("SELECT bad_login_count FROM users WHERE id = @id", 
+			new NpgsqlParameter("@id", userId)
+		);
+
+		if (res is not int badLoginCount)
+			return;
+	
+		DateTime? loginBlockedAt = null;
+		if (++badLoginCount >= SharedDefinitions.BadLoginBlockCount)
+			loginBlockedAt = DateTime.Now;
+		
+		await ExecuteNonQueryAsync(
+			"UPDATE users SET bad_login_count = @bad_login_count, login_blocked_at = @login_blocked_at WHERE id = @id",
+			new NpgsqlParameter("@id", userId),
+			new NpgsqlParameter("@bad_login_count", badLoginCount),
+			new NpgsqlParameter("@login_blocked_at", loginBlockedAt)
+		);
+	}
+
+	/// <summary>
 	/// Update the password of a user.
 	/// </summary>
 	/// <param name="userId">The ID of the user of which to change the password. userId >= 1.</param>
