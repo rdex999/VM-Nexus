@@ -81,18 +81,37 @@ public class MessageResponseLogin : MessageResponse
 {
 	public bool Accepted => User != null;
 	public User? User { get; }
+	public TimeSpan LoginBlock { get; }
 
 	[JsonConstructor]
-	public MessageResponseLogin(bool generateGuid, Guid requestId, User user)		/* Successful login. */
+	public MessageResponseLogin(bool generateGuid, Guid requestId, User user, TimeSpan loginBlock)
 		: base(generateGuid, requestId)
 	{
 		User = user;
+		LoginBlock = loginBlock;
 	}
 	
-	public MessageResponseLogin(bool generateGuid, Guid requestId)					/* Login failed. */
+	/* Successful login. */
+	public MessageResponseLogin(bool generateGuid, Guid requestId, User user)				
+		: base(generateGuid, requestId)
+	{
+		User = user;
+		LoginBlock = TimeSpan.Zero;
+	}
+	
+	/* Login failed. (error) */
+	public MessageResponseLogin(bool generateGuid, Guid requestId)							
 		: base(generateGuid, requestId)
 	{
 		User = null;
+	}
+	
+	/* Login failed. (blocked) */
+	public MessageResponseLogin(bool generateGuid, Guid requestId, TimeSpan loginBlock)		
+		: base(generateGuid, requestId)
+	{
+		User = null;
+		LoginBlock = loginBlock;
 	}
 }
 

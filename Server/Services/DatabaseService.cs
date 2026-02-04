@@ -325,7 +325,7 @@ public class DatabaseService
 	/// </summary>
 	/// <param name="userId">The ID of the user to increase the bad login count of. userId >= 1.</param>
 	/// <remarks>
-	/// Precondition: A user with the given ID exists, and has attempted a bad login. <br/>
+	/// Precondition: A user with the given ID exists, and has attempted a bad login. userId >= 1.<br/>
 	/// Postcondition: The bad login count is increased, login blocked for some time if needed.
 	/// </remarks>
 	public async Task UserBadLoginAsync(int userId)
@@ -349,6 +349,24 @@ public class DatabaseService
 			new NpgsqlParameter("@id", userId),
 			new NpgsqlParameter("@bad_login_count", badLoginCount),
 			new NpgsqlParameter("@login_blocked_at", loginBlockedAt)
+		);
+	}
+
+	/// <summary>
+	/// Resets the bad login count and removes login time block for a given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user to reset the login count and time block. userId >= 1.</param>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists, and has successfully logged in. <br/>
+	/// Postcondition: The user's bad login count and login time block are reset.
+	/// </remarks>
+	public async Task UserGoodLoginAsync(int userId)
+	{
+		if (userId < 1)
+			return;
+
+		await ExecuteNonQueryAsync("UPDATE users SET bad_login_count = 0, login_blocked_at = null WHERE id = @id",
+			new NpgsqlParameter("@id", userId)
 		);
 	}
 

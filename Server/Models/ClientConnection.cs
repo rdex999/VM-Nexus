@@ -335,22 +335,40 @@ public sealed class ClientConnection : MessagingService
 			case MessageRequestLogin reqLogin:
 			{
 				string usernameTrimmed = reqLogin.Username.Trim();
+				User? user = await _databaseService.GetUserAsync(usernameTrimmed);
+				if (user == null)
+				{
+					SendResponse(new MessageResponseLogin(true, reqLogin.Id));
+					break;	
+				}
+
+				TimeSpan? loginBlock = await _databaseService.CanUserLoginAsync(user.Id);
+				if (loginBlock.HasValue)
+				{
+					if (loginBlock.Value == TimeSpan.MaxValue)
+						SendResponse(new MessageResponseLogin(true, reqLogin.Id));
+					
+					else 
+						SendResponse(new MessageResponseLogin(true, reqLogin.Id, loginBlock.Value));
+					
+					await _databaseService.UserBadLoginAsync(user.Id);
+					break;
+				}
+				
 				result = await _userService.LoginAsync(usernameTrimmed, reqLogin.Password, this);
 				if (result != ExitCode.Success)
 				{
 					SendResponse(new MessageResponseLogin(true, reqLogin.Id));
+					await _databaseService.UserBadLoginAsync(user.Id);
 					break;
 				}
 
 				User = null;
-				ActualUser = await _databaseService.GetUserAsync(usernameTrimmed);
-				if (ActualUser == null)
-				{
-					SendResponse(new MessageResponseLogin(true, reqLogin.Id));
-					break;
-				}				
+				ActualUser = user;
 
 				SendResponse(new MessageResponseLogin(true, reqLogin.Id, ActualUser));
+				
+				await _databaseService.UserGoodLoginAsync(ActualUser.Id);
 				break;
 			}
 
