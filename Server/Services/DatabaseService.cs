@@ -55,7 +55,9 @@ public class DatabaseService
 		                                       email VARCHAR(254) NOT NULL,
 		                                       password_hashed BYTEA NOT NULL, 
 		                                       password_salt BYTEA NOT NULL,
-		                                       created_at TIMESTAMP NOT NULL DEFAULT now()
+		                                       created_at TIMESTAMP NOT NULL DEFAULT now(),
+		                                       bad_login_count INT NOT NULL DEFAULT 0,
+		                                       login_blocked_at TIMESTAMP DEFAULT NULL
 		                                   )
 		                                   """);
 
@@ -266,7 +268,7 @@ public class DatabaseService
 				new NpgsqlParameter("@username", username)
 		);
 		
-		if (reader == null || !reader.Read() || reader.IsDBNull(0) || reader.IsDBNull(1))
+		if (reader == null || !await reader.ReadAsync())
 			return false;
 		
 		byte[] dbPasswordHash = (byte[])reader.GetValue(0);
@@ -275,6 +277,47 @@ public class DatabaseService
 		byte[] passwordHash = await EncryptPasswordAsync(password, passwordSalt);
 
 		return dbPasswordHash.SequenceEqual(passwordHash);
+	}
+
+	/// <summary>
+	/// Checks if the given user can log in, according to its current bad login count and block time.
+	/// </summary>
+	/// <param name="userId">The ID of the user to check if can log in. userId >= 1.</param>
+	/// <returns>
+	/// null if the user can log in, TimeSpan.MaxValue on error.
+	/// If the user has exceeded the bad log in count limit, returns the time left for the user to wait for him to be able to log in.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists. <br/>
+	/// Postcondition: Returns null if the user can log in, TimeSpan.MaxValue on error.
+	/// If the user has exceeded the bad log in count limit, returns the time left for the user to wait for him to be able to log in.
+	/// </remarks>
+	public async Task<TimeSpan?> CanUserLoginAsync(int userId)
+	{
+		if (userId < 1)
+			return TimeSpan.MaxValue;
+		
+		await using NpgsqlDataReader? reader = await ExecuteReaderAsync(
+			"SELECT bad_login_count, login_blocked_at FROM users WHERE id = @id",
+			new NpgsqlParameter("@id", userId)
+		);
+		
+		if (reader == null || !await reader.ReadAsync())
+			return TimeSpan.MaxValue;
+		
+		int badLoginCount = reader.GetInt32(0);
+		if (badLoginCount >= SharedDefinitions.BadLoginBlockCount)
+		{
+			if (reader.IsDBNull(1))
+				return TimeSpan.MaxValue;
+			
+			DateTime loginBlockedAt = reader.GetDateTime(1);
+			TimeSpan blockTimeLeft = DateTime.Now - loginBlockedAt;
+			if (blockTimeLeft < TimeSpan.FromMinutes(SharedDefinitions.BadLoginBlockMinutes))
+				return blockTimeLeft;
+		}
+
+		return null;
 	}
 
 	/// <summary>
