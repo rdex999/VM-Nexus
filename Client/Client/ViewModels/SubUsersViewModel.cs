@@ -355,7 +355,15 @@ public partial class SubUsersViewModel : ViewModelBase
 			NewSubUserPopupPasswordMessage = "Passwords are not the same.";
 
 		else
-			NewSubUserPopupPasswordValid = true;
+		{
+			int strength = Common.PasswordStrength(NewSubUserPopupPassword);
+			if (strength >= 5)
+				NewSubUserPopupPasswordValid = true;
+			
+			else
+				NewSubUserPopupPasswordMessage = $"Password is too weak. Password must be at least {SharedDefinitions.PasswordMinLength} characters long, " +
+				                                   "include at least one symbol, number, upper-case, and lower-case characters.";
+		}
 		
 		SetupNewSubUserPopupCreateIsEnabled();
 	}

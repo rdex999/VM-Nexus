@@ -417,7 +417,15 @@ public partial class MainPageViewModel : ViewModelBase
 			ResetPswdPopupNewPasswordMessage = "Passwords are not the same.";
 
 		else
-			ResetPswdPopupNewPasswordValid = true;
+		{
+			int strength = Common.PasswordStrength(ResetPswdPopupNewPassword);
+			if (strength >= 5)
+				ResetPswdPopupNewPasswordValid = true;
+			
+			else
+				ResetPswdPopupNewPasswordMessage = $"Password is too weak. Password must be at least {SharedDefinitions.PasswordMinLength} characters long, " +
+				                                   "include at least one symbol, number, upper-case, and lower-case characters.";
+		}
 
 		ResetPswdPopupValidate();
 	}

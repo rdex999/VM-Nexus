@@ -84,7 +84,7 @@
 						         LostFocus="OnNewSubUserPopupPasswordConfirmLostFocus" />
 
 						<TextBlock Classes="error" Text="{Binding NewSubUserPopupPasswordMessage}"
-						           IsVisible="{Binding !NewSubUserPopupPasswordValid}" />
+						           IsVisible="{Binding !NewSubUserPopupPasswordValid}" TextWrapping="Wrap"/>
 					</StackPanel>
 					
 					<DropDownButton Grid.Row="4" CornerRadius="6" Classes="submit">
