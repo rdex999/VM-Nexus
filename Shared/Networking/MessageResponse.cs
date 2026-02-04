@@ -79,40 +79,54 @@ public class MessageResponseDeleteAccount : MessageResponse
 
 public class MessageResponseLogin : MessageResponse
 {
-	public bool Accepted => User != null;
+	public Status Result { get; }
 	public User? User { get; }
 	public TimeSpan LoginBlock { get; }
 
 	[JsonConstructor]
-	public MessageResponseLogin(bool generateGuid, Guid requestId, User user, TimeSpan loginBlock)
+	public MessageResponseLogin(bool generateGuid, Guid requestId, Status result, User user, TimeSpan loginBlock)
 		: base(generateGuid, requestId)
 	{
+		Result = result;
 		User = user;
 		LoginBlock = loginBlock;
 	}
 	
 	/* Successful login. */
-	public MessageResponseLogin(bool generateGuid, Guid requestId, User user)				
+	public MessageResponseLogin(bool generateGuid, Guid requestId, User user)
 		: base(generateGuid, requestId)
 	{
+		Result = Status.Success;
 		User = user;
 		LoginBlock = TimeSpan.Zero;
 	}
 	
-	/* Login failed. (error) */
-	public MessageResponseLogin(bool generateGuid, Guid requestId)							
+	/* Login failed. */
+	public MessageResponseLogin(bool generateGuid, Guid requestId)
 		: base(generateGuid, requestId)
 	{
+		Result = Status.Failure;
 		User = null;
+		LoginBlock = TimeSpan.MaxValue;
 	}
 	
 	/* Login failed. (blocked) */
 	public MessageResponseLogin(bool generateGuid, Guid requestId, TimeSpan loginBlock)		
 		: base(generateGuid, requestId)
 	{
+		Result = Status.Blocked;
 		User = null;
 		LoginBlock = loginBlock;
 	}
+
+	public enum Status
+	{
+		Success,
+		Blocked,
+		Failure,
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
 public class MessageResponseLogout : MessageResponse

@@ -351,15 +351,20 @@ public sealed class ClientConnection : MessagingService
 					else 
 						SendResponse(new MessageResponseLogin(true, reqLogin.Id, loginBlock.Value));
 					
-					await _databaseService.UserBadLoginAsync(user.Id);
 					break;
 				}
 				
 				result = await _userService.LoginAsync(usernameTrimmed, reqLogin.Password, this);
 				if (result != ExitCode.Success)
 				{
-					SendResponse(new MessageResponseLogin(true, reqLogin.Id));
-					await _databaseService.UserBadLoginAsync(user.Id);
+					bool blocked = await _databaseService.UserBadLoginAsync(user.Id);
+
+					if (blocked)
+						SendResponse(new MessageResponseLogin(true, reqLogin.Id, SharedDefinitions.BadLoginBlock));
+
+					else
+						SendResponse(new MessageResponseLogin(true, reqLogin.Id));
+					
 					break;
 				}
 

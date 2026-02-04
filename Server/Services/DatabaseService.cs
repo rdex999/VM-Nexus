@@ -312,9 +312,8 @@ public class DatabaseService
 				return TimeSpan.MaxValue;
 			
 			DateTime loginBlockedAt = reader.GetDateTime(1);
-			TimeSpan blockTimeLeft = DateTime.Now - loginBlockedAt;
-			if (blockTimeLeft < TimeSpan.FromMinutes(SharedDefinitions.BadLoginBlockMinutes))
-				return blockTimeLeft;
+			if (DateTime.Now - loginBlockedAt < SharedDefinitions.BadLoginBlock)
+				return SharedDefinitions.BadLoginBlock - (DateTime.Now - loginBlockedAt);
 		}
 
 		return null;
@@ -324,21 +323,23 @@ public class DatabaseService
 	/// Increases the bad login count of a user. Blocks user login for some time if needed.
 	/// </summary>
 	/// <param name="userId">The ID of the user to increase the bad login count of. userId >= 1.</param>
+	/// <returns>True if the user is now blocked from logging in, false otherwise.</returns>
 	/// <remarks>
 	/// Precondition: A user with the given ID exists, and has attempted a bad login. userId >= 1.<br/>
 	/// Postcondition: The bad login count is increased, login blocked for some time if needed.
+	/// If log in is blocked, true is returned. Otherwise, false is returned.
 	/// </remarks>
-	public async Task UserBadLoginAsync(int userId)
+	public async Task<bool> UserBadLoginAsync(int userId)
 	{
 		if (userId < 1)
-			return;
+			return false;
 
 		object? res = await ExecuteScalarAsync("SELECT bad_login_count FROM users WHERE id = @id", 
 			new NpgsqlParameter("@id", userId)
 		);
 
 		if (res is not int badLoginCount)
-			return;
+			return false;
 	
 		DateTime? loginBlockedAt = null;
 		if (++badLoginCount >= SharedDefinitions.BadLoginBlockCount)
@@ -348,8 +349,10 @@ public class DatabaseService
 			"UPDATE users SET bad_login_count = @bad_login_count, login_blocked_at = @login_blocked_at WHERE id = @id",
 			new NpgsqlParameter("@id", userId),
 			new NpgsqlParameter("@bad_login_count", badLoginCount),
-			new NpgsqlParameter("@login_blocked_at", loginBlockedAt)
+			new NpgsqlParameter("@login_blocked_at", (object?)loginBlockedAt ?? DBNull.Value)
 		);
+
+		return loginBlockedAt.HasValue;
 	}
 
 	/// <summary>

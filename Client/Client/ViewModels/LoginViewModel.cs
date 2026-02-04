@@ -5,6 +5,7 @@ using Client.Services;
 using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Shared;
+using Shared.Networking;
 
 
 namespace Client.ViewModels;
@@ -82,19 +83,23 @@ public partial class LoginViewModel : ViewModelBase
 		if (!LoginButtonIsEnabled)
 			return;
 		
-		bool? result = await ClientSvc.LoginAsync(Username, Password);
-		if (result == null)
-			ErrorMessage = "Server error. Try again later.";
+		MessageResponseLogin? res = await ClientSvc.LoginAsync(Username, Password);
 		
-		else if (result.Value)
+		if (res == null)
+			ErrorMessage = "Server error. Try again later.";
+	
+		else if (res.Result == MessageResponseLogin.Status.Success)
 		{
 			NavigationSvc.NavigateToMainPage();
 			Username = string.Empty;
 			Password = string.Empty;
 		}
 		
+		else if (res.Result == MessageResponseLogin.Status.Failure)
+			ErrorMessage = "Invalid username or password.";
+		
 		else
-			ErrorMessage = "Incorrect username or password.";
+			ErrorMessage = $"Too many failed login attempts. Try again in {double.Ceiling(res.LoginBlock.TotalMinutes)} minutes.";
 	}
 
 	/// <summary>

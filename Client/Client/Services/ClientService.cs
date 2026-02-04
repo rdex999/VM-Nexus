@@ -175,20 +175,20 @@ public class ClientService : MessagingService
 	/// Postcondition: Returns true if login has succeeded, false otherwise. <br/>
 	/// Will return null on operational failure, for example, if sending the login request has failed.
 	/// </remarks>
-	public async Task<bool?> LoginAsync(string username, string password)
+	public async Task<MessageResponseLogin?> LoginAsync(string username, string password)
 	{
 		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogin(true, username, password));
 		if (result != ExitCode.Success)
 			return null;
 		
 		MessageResponseLogin res = (MessageResponseLogin)response!;
-		if (res.Accepted)
+		if (res.Result == MessageResponseLogin.Status.Success)
 		{
 			User = res.User;
 			IsLoggedInAsSubUser = false;
 		}
 		
-		return res.Accepted;
+		return res;
 	}
 
 	/// <summary>

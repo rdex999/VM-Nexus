@@ -65,7 +65,7 @@
 				</Grid>
 				
 				<StackPanel>
-					<TextBlock Text="{Binding ErrorMessage}" HorizontalAlignment="Center" Classes="error"/>
+					<TextBlock Text="{Binding ErrorMessage}" HorizontalAlignment="Center" Classes="error" TextWrapping="Wrap"/>
 				</StackPanel>
 				
 				<Button HorizontalAlignment="Center" Classes="submit" Margin="0, 70, 0, 0"

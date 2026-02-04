@@ -16,7 +16,7 @@ public static class SharedDefinitions
 	public const int CredentialsMaxLength = 64;
 	public const int PasswordMinLength = 8;
 	public const int BadLoginBlockCount = 7;
-	public const int BadLoginBlockMinutes = 5;
+	public static readonly TimeSpan BadLoginBlock = TimeSpan.FromMinutes(10);
 	public static readonly char[] InvalidUsernameCharacters = { '"', '\'', '/', '<', '>', '|' };
 	public static readonly char[] DirectorySeparators = { '/', '\\' };
 	
