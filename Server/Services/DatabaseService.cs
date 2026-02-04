@@ -133,11 +133,11 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<bool> IsUserExistAsync(string username)
 	{
-		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM users WHERE username = @username)",
+		object? res = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM users WHERE username = @username)",
 			new NpgsqlParameter("@username", username)
 		);
 		
-		return exists != null && (bool)exists;
+		return res != null && res is bool exists && exists;
 	}
 
 	/// <summary>
@@ -320,11 +320,12 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int> GetUserIdAsync(string username)
 	{
-		object? id = await ExecuteScalarAsync("SELECT id FROM users WHERE username = @username", new NpgsqlParameter("@username", username));
-		if (id == null) 
-			return -1;
+		object? res = await ExecuteScalarAsync("SELECT id FROM users WHERE username = @username", new NpgsqlParameter("@username", username));
 		
-		return (int)id;
+		if (res is int id)
+			return id;
+
+		return -1;
 	}
 
 	/// <summary>
@@ -513,14 +514,14 @@ public class DatabaseService
 		if (userId < 1)
 			return -1;
 		
-		object? id = await ExecuteScalarAsync("SELECT owner_id FROM users WHERE id = @user_id",
+		object? res = await ExecuteScalarAsync("SELECT owner_id FROM users WHERE id = @user_id",
 			new NpgsqlParameter("@user_id", userId)
 		);
-		
-		if (id == null) 
-			return -1;
-		
-		return (int)id;
+
+		if (res is int id)
+			return id;
+
+		return -1;
 	}
 
 	/// <summary>
@@ -684,12 +685,12 @@ public class DatabaseService
 		if (userId < 1) 
 			return false;
 		
-		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM virtual_machines WHERE owner_id = @owner_id AND name = @name)",
+		object? res = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM virtual_machines WHERE owner_id = @owner_id AND name = @name)",
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
 		);
 		
-		return exists != null && (bool)exists;
+		return res != null && res is bool exists && exists;
 	}
 
 	/// <summary>
@@ -706,11 +707,11 @@ public class DatabaseService
 		if (vmId < 1) 
 			return false;
 		
-		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM virtual_machines WHERE id = @id)",
+		object? res = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM virtual_machines WHERE id = @id)",
 			new NpgsqlParameter("@id", vmId)
 		);
 		
-		return exists != null && (bool)exists;	
+		return res != null && res is bool exists && exists;
 	}
 
 	/// <summary>
@@ -728,15 +729,15 @@ public class DatabaseService
 		if (userId < 1) 
 			return -1;
 		
-		object? id = await ExecuteScalarAsync("SELECT id FROM virtual_machines WHERE owner_id = @owner_id AND name = @name", 
+		object? res = await ExecuteScalarAsync("SELECT id FROM virtual_machines WHERE owner_id = @owner_id AND name = @name", 
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
 		);
 		
-		if (id == null) 
-			return -1;
-		
-		return (int)id;
+		if (res is int id)
+			return id;
+
+		return -1;
 	}
 
 	/// <summary>
@@ -753,14 +754,14 @@ public class DatabaseService
 		if (vmId < 1) 
 			return -1;
 
-		object? id = await ExecuteScalarAsync("SELECT owner_id FROM virtual_machines WHERE id = @id",
+		object? res = await ExecuteScalarAsync("SELECT owner_id FROM virtual_machines WHERE id = @id",
 			new NpgsqlParameter("@id", vmId)
 		);
 		
-		if (id == null) 
-			return -1;
-		
-		return (int)id;
+		if (res is int id)
+			return id;
+
+		return -1;
 	}
 
 	/// <summary>
@@ -913,15 +914,15 @@ public class DatabaseService
 		if (id < 1)
 			return (VmState)(-1);
 
-		object? state = await ExecuteScalarAsync(
+		object? res = await ExecuteScalarAsync(
 			"SELECT state FROM virtual_machines WHERE id = @id",
 			new NpgsqlParameter("@id", id)
 		);
 
-		if (state == null)
-			return (VmState)(-1);
-		
-		return (VmState)state;
+		if (res is int state)
+			return (VmState)state;
+
+		return (VmState)(-1);
 	}
 
 	/// <summary>
@@ -1130,12 +1131,12 @@ public class DatabaseService
 		if (userId < 1 || string.IsNullOrEmpty(name)) 
 			return false;
 		
-		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM drives WHERE owner_id = @owner_id AND name = @name)",
+		object? res = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM drives WHERE owner_id = @owner_id AND name = @name)",
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
 		);
-		
-		return exists != null && (bool)exists;
+
+		return res != null && res is bool exists && exists;
 	}
 
 	/// <summary>
@@ -1152,11 +1153,11 @@ public class DatabaseService
 		if (driveId < 1) 
 			return false;
 		
-		object? exists = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM drives WHERE id = @id)",
+		object? res = await ExecuteScalarAsync($"SELECT EXISTS (SELECT 1 FROM drives WHERE id = @id)",
 			new NpgsqlParameter("@id", driveId)
 		);
 		
-		return exists != null && (bool)exists;	
+		return res != null && res is bool exists && exists;
 	}
 	
 	
@@ -1172,15 +1173,15 @@ public class DatabaseService
 	/// </remarks>
 	public async Task<int> GetDriveIdAsync(int userId, string name)
 	{
-		object? id = await ExecuteScalarAsync("SELECT id FROM drives WHERE owner_id = @owner_id AND name = @name", 
+		object? res = await ExecuteScalarAsync("SELECT id FROM drives WHERE owner_id = @owner_id AND name = @name", 
 			new NpgsqlParameter("@owner_id", userId),
 			new NpgsqlParameter("@name", name)
 		);
 		
-		if (id == null)
-			return -1;
-		
-		return (int)id;
+		if (res is int id)
+			return id;
+
+		return -1;
 	}
 
 	/// <summary>
@@ -1197,14 +1198,14 @@ public class DatabaseService
 		if (driveId < 1) 
 			return -1;
 
-		object? id = await ExecuteScalarAsync("SELECT owner_id FROM drives WHERE id = @drive_id",
+		object? res = await ExecuteScalarAsync("SELECT owner_id FROM drives WHERE id = @drive_id",
 			new NpgsqlParameter("@drive_id", driveId)
 		);
 
-		if (id == null) 
-			return -1;
-		
-		return (int)id;
+		if (res is int id)
+			return id;
+
+		return -1;
 	}
 
 	/// <summary>
@@ -1398,13 +1399,13 @@ public class DatabaseService
 			return false;
 		}
 
-		object? exists = await ExecuteScalarAsync(
+		object? res = await ExecuteScalarAsync(
 			$"SELECT EXISTS (SELECT 1 FROM drive_connections WHERE drive_id = @drive_id AND vm_id = @vm_id)",
 			new NpgsqlParameter("@drive_id", driveId),
 			new NpgsqlParameter("@vm_id", vmId)
 		);
-		
-		return exists != null && (bool)exists;
+
+		return res != null && res is bool exists && exists;
 	}
 	
 	
