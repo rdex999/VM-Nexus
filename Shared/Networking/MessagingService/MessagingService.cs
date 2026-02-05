@@ -235,7 +235,7 @@ public partial class MessagingService
 			UdpPacket packet = new UdpPacket(buffer, size);
 			
 			ExitCode result;
-			Message? message;
+			IMessage? message;
 			if (_incomingUdpMessages.TryGetValue(packet.MessageId, out IncomingMessageUdp? incoming))
 			{
 				/* Checking here before decrypting to save decryption time. We might detect an invalid packet before its decrypted. */
@@ -379,7 +379,7 @@ public partial class MessagingService
 	/// Postcondition: Message is redirected to appropriate handler. Handler is handling the message.
 	/// In the case of a response, it is registered as a response for a request that was sent. (if any)
 	/// </remarks>
-	private async Task ProcessMessageAsync(Message message)
+	private async Task ProcessMessageAsync(IMessage message)
 	{
 		switch (message)
 		{

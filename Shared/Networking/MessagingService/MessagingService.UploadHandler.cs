@@ -7,7 +7,7 @@ public partial class MessagingService
 	public class UploadHandler : TransferHandler
 	{
 		private readonly MessagingService _messagingService;
-		private Stream _source;
+		private readonly Stream _source;
 
 		public UploadHandler(MessagingService messagingService, Stream source)
 			: base((ulong)source.Length)

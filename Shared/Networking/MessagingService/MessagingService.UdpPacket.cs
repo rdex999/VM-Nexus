@@ -14,7 +14,7 @@ public partial class MessagingService
 		public int Offset { get; }
 		public ReadOnlySpan<byte> Payload => _packet.AsSpan(HeaderSize, PayloadSize);
 		public ReadOnlySpan<byte> Packet => _packet.AsSpan();
-		private byte[] _packet;
+		private readonly byte[] _packet;
 	
 		/*
 		 * UDP Packet structure, by byte offset, and length. (offset:length)
@@ -56,11 +56,11 @@ public partial class MessagingService
 		/// <param name="messageSize">The size of the entier message, in bytes. messageSize > 0.</param>
 		/// <param name="offset">The offset of this packet's payload in the message. offset >= 0.</param>
 		/// <param name="payload">The payload, the content of this packet.
-		/// payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize.</param>
+		/// payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght &lt;= DatagramSize - HeaderSize.</param>
 		/// <returns>A byte array representing the packet with the given data.</returns>
 		/// <remarks>
 		/// Precondition: tag16 != null &amp;&amp; messageId != null &amp;&amp; messageSize > 0 &amp;&amp; offset >= 0
-		/// &amp;&amp; payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght <= DatagramSize - HeaderSize. <br/>
+		/// &amp;&amp; payload != null &amp;&amp; payload.Length > 0 &amp;&amp; payload.Lenght &lt;= DatagramSize - HeaderSize. <br/>
 		/// Postcondition: A byte array representing the packet with the given data is returned.
 		/// </remarks>
 		public UdpPacket(ulong sequence, ReadOnlySpan<byte> tag16, Guid messageId, int messageSize, int offset, ReadOnlySpan<byte> payload)

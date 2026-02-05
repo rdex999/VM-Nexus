@@ -4,9 +4,9 @@ namespace Shared.Networking;
 
 public partial class MessagingService
 {
-	public class TransferRateLimiter
+	protected class TransferRateLimiter
 	{
-		private readonly object _lock = new object();
+		private readonly Lock _lock = new Lock();
 		private double _rateBps = 0;
 		private double _capacity = 0;
 		private double _tokens = 0;

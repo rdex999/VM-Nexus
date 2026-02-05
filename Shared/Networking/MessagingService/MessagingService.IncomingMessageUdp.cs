@@ -25,7 +25,7 @@ public partial class MessagingService
 		/// Precondition: A packet was received and no instance of IncomingMessageUdp exists for it. firstPacket != null. <br/>
 		/// Postcondition: This IncomingMessageUdp is created. As for the result and message parameters, see documentation of ReceivePacket().
 		/// </remarks>
-		public IncomingMessageUdp(UdpPacket firstPacket, Action<Guid> timeout, out ExitCode result, out Message? message)
+		public IncomingMessageUdp(UdpPacket firstPacket, Action<Guid> timeout, out ExitCode result, out IMessage? message)
 		{
 			_timeout += timeout;
 			_timeoutTimer = new Timer(TimeSpan.FromSeconds(3));
@@ -63,7 +63,7 @@ public partial class MessagingService
 		///		is corrupted and thus cannot be formed. (The message parameter contains null) The caller should remove this message.<br/>
 		/// - 5: MessageUdpNotCompleted	- There are more packets to come. 
 		/// </remarks>
-		public ExitCode ReceivePacket(UdpPacket packet, out Message? message)
+		public ExitCode ReceivePacket(UdpPacket packet, out IMessage? message)
 		{
 			message = null;
 
@@ -98,7 +98,7 @@ public partial class MessagingService
 			{
 				Close();
 				
-				Message? msg = (Message?)Common.FromByteArrayWithType(_data);
+				IMessage? msg = (IMessage?)Common.FromByteArrayWithType(_data);
 				if (msg == null)
 					return ExitCode.MessageUdpCorrupted;
 
