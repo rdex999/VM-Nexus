@@ -4,12 +4,23 @@ using Shared.VirtualMachines;
 
 namespace Shared.Networking;
 
-public class MessageResponse : MessageTcp
+public interface IMessageResponse : IMessageTcp
 {
 	public Guid RequestId { get; }		/* This is a response for request ID=... */
+}
+
+public abstract class MessageResponse : Message, IMessageResponse
+{
+	public Guid RequestId { get; }
 	
-	public MessageResponse(bool generateGuid, Guid requestId)
-		: base(generateGuid)
+	public MessageResponse(Guid requestId)
+	{
+		RequestId = requestId;
+	}
+
+	[JsonConstructor]
+	protected MessageResponse(Guid id, Guid requestId)
+		: base(id)
 	{
 		RequestId = requestId;
 	}
@@ -17,18 +28,25 @@ public class MessageResponse : MessageTcp
 
 public class MessageResponseInvalidRequestData : MessageResponse	/* If the received request is invalid, this is the response. (haha) */
 {
-	public MessageResponseInvalidRequestData(bool generateGuid, Guid requestId)
-		: base(generateGuid, requestId)
-	{
-	}
+	public MessageResponseInvalidRequestData(Guid requestId) : base(requestId) { }
+	
+	[JsonConstructor]
+	private MessageResponseInvalidRequestData(Guid id, Guid requestId) : base(id, requestId) { }
 }
 
 public class MessageResponseCheckUsername : MessageResponse
 {
 	public bool Available { get; }
 
-	public MessageResponseCheckUsername(bool generateGuid, Guid requestId, bool available)
-		: base(generateGuid, requestId)
+	public MessageResponseCheckUsername(Guid requestId, bool available)
+		: base(requestId)
+	{
+		Available = available;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseCheckUsername(Guid id, Guid requestId, bool available)
+		: base(id, requestId)
 	{
 		Available = available;
 	}
@@ -38,20 +56,27 @@ public class MessageResponseCreateAccount : MessageResponse
 {
 	public Status Result { get; }
 	public User? User { get; }
-
-	[JsonConstructor]
-	public MessageResponseCreateAccount(bool generateGuid, Guid requestId, Status result, User user)
-		: base(generateGuid, requestId)
+	
+	public MessageResponseCreateAccount(Guid requestId, Status result)
+		: base(requestId)
+	{ 
+		Result = result;
+		User = null;
+	}
+	
+	public MessageResponseCreateAccount(Guid requestId, Status result, User user)
+		: base(requestId)
 	{ 
 		Result = result;
 		User = user;
 	}
 	
-	public MessageResponseCreateAccount(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	[JsonConstructor]
+	private MessageResponseCreateAccount(Guid id, Guid requestId, Status result, User user)
+		: base(id, requestId)
 	{ 
 		Result = result;
-		User = null;
+		User = user;
 	}
 
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
@@ -70,8 +95,15 @@ public class MessageResponseDeleteAccount : MessageResponse
 {
 	public bool Deleted { get; }
 
-	public MessageResponseDeleteAccount(bool generateGuid, Guid requestId, bool deleted)
-		: base(generateGuid, requestId)
+	public MessageResponseDeleteAccount(Guid requestId, bool deleted)
+		: base(requestId)
+	{
+		Deleted = deleted;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseDeleteAccount(Guid id, Guid requestId, bool deleted)
+		: base(id, requestId)
 	{
 		Deleted = deleted;
 	}
@@ -83,18 +115,10 @@ public class MessageResponseLogin : MessageResponse
 	public User? User { get; }
 	public TimeSpan LoginBlock { get; }
 
-	[JsonConstructor]
-	public MessageResponseLogin(bool generateGuid, Guid requestId, Status result, User user, TimeSpan loginBlock)
-		: base(generateGuid, requestId)
-	{
-		Result = result;
-		User = user;
-		LoginBlock = loginBlock;
-	}
 	
 	/* Successful login. */
-	public MessageResponseLogin(bool generateGuid, Guid requestId, User user)
-		: base(generateGuid, requestId)
+	public MessageResponseLogin(Guid requestId, User user)
+		: base(requestId)
 	{
 		Result = Status.Success;
 		User = user;
@@ -102,8 +126,8 @@ public class MessageResponseLogin : MessageResponse
 	}
 	
 	/* Login failed. */
-	public MessageResponseLogin(bool generateGuid, Guid requestId)
-		: base(generateGuid, requestId)
+	public MessageResponseLogin(Guid requestId)
+		: base(requestId)
 	{
 		Result = Status.Failure;
 		User = null;
@@ -111,11 +135,20 @@ public class MessageResponseLogin : MessageResponse
 	}
 	
 	/* Login failed. (blocked) */
-	public MessageResponseLogin(bool generateGuid, Guid requestId, TimeSpan loginBlock)		
-		: base(generateGuid, requestId)
+	public MessageResponseLogin(Guid requestId, TimeSpan loginBlock)		
+		: base(requestId)
 	{
 		Result = Status.Blocked;
 		User = null;
+		LoginBlock = loginBlock;
+	}
+
+	[JsonConstructor]
+	private MessageResponseLogin(Guid id, Guid requestId, Status result, User user, TimeSpan loginBlock)
+		: base(id, requestId)
+	{
+		Result = result;
+		User = user;
 		LoginBlock = loginBlock;
 	}
 
@@ -134,25 +167,29 @@ public class MessageResponseLogout : MessageResponse
 	public Status Result { get; }
 	public User? User { get; }
 
-	[JsonConstructor]
-	public MessageResponseLogout(bool generateGuid, Guid requestId, Status result, User? user)
-		:  base(generateGuid, requestId)
+	public MessageResponseLogout(Guid requestId, Status result)
+		:  base(requestId)
+	{
+		Result = result;
+		User = null;
+	}
+	
+	public MessageResponseLogout(Guid requestId, Status result, User? user)
+		:  base(requestId)
 	{
 		Result = result;
 		User = user;
 	}
 	
-	public MessageResponseLogout(bool generateGuid, Guid requestId, Status result)
-		:  base(generateGuid, requestId)
+	[JsonConstructor]
+	private MessageResponseLogout(Guid id, Guid requestId, Status result, User? user)
+		:  base(id, requestId)
 	{
 		Result = result;
-		User = null;
+		User = user;
 	}
 
-	public override bool IsValidMessage()
-	{
-		return base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
-	}
+	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 	
 	public enum Status
 	{
@@ -167,17 +204,23 @@ public class MessageResponseLoginSubUser : MessageResponse
 	public bool Success => SubUser != null;
 	public SubUser? SubUser { get; }
 
-	[JsonConstructor]
-	public MessageResponseLoginSubUser(bool generateGuid, Guid requestId, SubUser subUser)
-		: base(generateGuid, requestId)
+	public MessageResponseLoginSubUser(Guid requestId)
+		: base(requestId)
+	{
+		SubUser = null;
+	}
+	
+	public MessageResponseLoginSubUser(Guid requestId, SubUser subUser)
+		: base(requestId)
 	{
 		SubUser = subUser;
 	}
-	
-	public MessageResponseLoginSubUser(bool generateGuid, Guid requestId)
-		: base(generateGuid, requestId)
+
+	[JsonConstructor]
+	private MessageResponseLoginSubUser(Guid id, Guid requestId, SubUser subUser)
+		: base(id, requestId)
 	{
-		SubUser = null;
+		SubUser = subUser;
 	}
 }
 
@@ -185,8 +228,15 @@ public class MessageResponseCreateSubUser : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseCreateSubUser(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseCreateSubUser(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+
+	[JsonConstructor]
+	private MessageResponseCreateSubUser(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -207,12 +257,18 @@ public class MessageResponseResetPassword : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseResetPassword(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseResetPassword(Guid requestId, Status result)
+		: base(requestId)
 	{
 		Result = result;
 	}
 	
+	[JsonConstructor]
+	private MessageResponseResetPassword(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
+	{
+		Result = result;
+	}
 	public enum Status
 	{
 		Success,
@@ -226,19 +282,26 @@ public class MessageResponseListSubUsers : MessageResponse
 	public Status Result { get; }
 	public SubUser[]? Users { get; }
 
-	[JsonConstructor]
-	public MessageResponseListSubUsers(bool generateGuid, Guid requestId, Status result, SubUser[]? users)
-		: base(generateGuid, requestId)
+	public MessageResponseListSubUsers(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+		Users = null;
+	}
+	
+	public MessageResponseListSubUsers(Guid requestId, Status result, SubUser[] users)
+		: base(requestId)
 	{
 		Result = result;
 		Users = users;
 	}
 	
-	public MessageResponseListSubUsers(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	[JsonConstructor]
+	private MessageResponseListSubUsers(Guid id, Guid requestId, Status result, SubUser[]? users)
+		: base(id, requestId)
 	{
 		Result = result;
-		Users = null;
+		Users = users;
 	}
 	
 	public enum Status
@@ -256,19 +319,27 @@ public class MessageResponseCreateVm : MessageResponse
 {
 	public Status Result { get; }
 	public int VmId { get; }
+
+	public MessageResponseCreateVm(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+		VmId = -1;
+	}
 	
-	[JsonConstructor]
-	public MessageResponseCreateVm(bool generateGuid, Guid requestId, Status result, int vmId)
-		: base(generateGuid, requestId)
+	public MessageResponseCreateVm(Guid requestId, Status result, int vmId)
+		: base(requestId)
 	{
 		Result = result;
 		VmId = vmId;
 	}
-	public MessageResponseCreateVm(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	
+	[JsonConstructor]
+	private MessageResponseCreateVm(Guid id, Guid requestId, Status result, int vmId)
+		: base(id, requestId)
 	{
 		Result = result;
-		VmId = -1;
+		VmId = vmId;
 	}
 
 	public enum Status
@@ -285,8 +356,15 @@ public class MessageResponseDeleteVm : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseDeleteVm(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseDeleteVm(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseDeleteVm(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -306,19 +384,26 @@ public class MessageResponseListVms : MessageResponse
 	public Status Result { get; }
 	public VmGeneralDescriptor[]? Vms { get; }
 
-	[JsonConstructor]
-	public MessageResponseListVms(bool generateGuid, Guid requestId, Status result, VmGeneralDescriptor[]? vms)
-		: base(generateGuid, requestId)
+	public MessageResponseListVms(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+		Vms = null;
+	}
+	
+	public MessageResponseListVms(Guid requestId, Status result, VmGeneralDescriptor[] vms)
+		: base(requestId)
 	{
 		Result = result;
 		Vms = vms;
 	}
 
-	public MessageResponseListVms(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	[JsonConstructor]
+	private MessageResponseListVms(Guid id, Guid requestId, Status result, VmGeneralDescriptor[]? vms)
+		: base(id, requestId)
 	{
 		Result = result;
-		Vms = null;
+		Vms = vms;
 	}
 	
 	public enum Status
@@ -334,8 +419,15 @@ public class MessageResponseCheckVmExist : MessageResponse
 {
 	public bool Exists { get; }
 
-	public MessageResponseCheckVmExist(bool generateGuid, Guid requestId, bool exists)
-		: base(generateGuid, requestId)
+	public MessageResponseCheckVmExist(Guid requestId, bool exists)
+		: base(requestId)
+	{
+		Exists = exists;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseCheckVmExist(Guid id, Guid requestId, bool exists)
+		: base(id, requestId)
 	{
 		Exists = exists;
 	}
@@ -345,8 +437,15 @@ public class MessageResponseCreateDriveFs : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseCreateDriveFs(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseCreateDriveFs(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseCreateDriveFs(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -364,19 +463,26 @@ public class MessageResponseCreateDriveFromImage : MessageResponse
 	public Status Result { get; }
 	public Guid ImageTransferId { get; }
 
-	[JsonConstructor]
-	public MessageResponseCreateDriveFromImage(bool generateGuid, Guid requestId, Status result, Guid imageTransferId)
-		: base(generateGuid, requestId)
+	public MessageResponseCreateDriveFromImage(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+		ImageTransferId = Guid.Empty;
+	}
+	
+	public MessageResponseCreateDriveFromImage(Guid requestId, Status result, Guid imageTransferId)
+		: base(requestId)
 	{
 		Result = result;
 		ImageTransferId = imageTransferId;
 	}
-
-	public MessageResponseCreateDriveFromImage(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	
+	[JsonConstructor]
+	private MessageResponseCreateDriveFromImage(Guid id, Guid requestId, Status result, Guid imageTransferId)
+		: base(id, requestId)
 	{
 		Result = result;
-		ImageTransferId = Guid.Empty;
+		ImageTransferId = imageTransferId;
 	}
 	
 	public enum Status
@@ -394,20 +500,28 @@ public class MessageResponseCreateDriveOs : MessageResponse
 	public Status Result { get; }
 	public int DriveId { get; }		/* The ID of the new drive */
 
-	[JsonConstructor]
-	public MessageResponseCreateDriveOs(bool generateGuid, Guid requestId, Status result, int driveId)
-		: base(generateGuid, requestId)
-	{
-		Result = result;
-		DriveId = driveId;
-	}
-	public MessageResponseCreateDriveOs(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseCreateDriveOs(Guid requestId, Status result)
+		: base(requestId)
 	{
 		Result = result;
 		DriveId = -1;
 	}
+	
+	public MessageResponseCreateDriveOs(Guid requestId, Status result, int driveId)
+		: base(requestId)
+	{
+		Result = result;
+		DriveId = driveId;
+	}
 
+	[JsonConstructor]
+	private MessageResponseCreateDriveOs(Guid id, Guid requestId, Status result, int driveId)
+		: base(id, requestId)
+	{
+		Result = result;
+		DriveId = driveId;
+	}
+	
 	public enum Status
 	{
 		Success,
@@ -422,8 +536,15 @@ public class MessageResponseConnectDrive : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseConnectDrive(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseConnectDrive(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseConnectDrive(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -442,8 +563,15 @@ public class MessageResponseDisconnectDrive : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseDisconnectDrive(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseDisconnectDrive(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseDisconnectDrive(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -463,20 +591,26 @@ public class MessageResponseListDriveConnections : MessageResponse
 	public Status Result { get; }
 	public DriveConnection[]? Connections { get; }
 
-	[JsonConstructor]
-	public MessageResponseListDriveConnections(bool generateGuid, Guid requestId, Status result,
-		DriveConnection[]? connections)
-		: base(generateGuid, requestId)
+	public MessageResponseListDriveConnections(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+		Connections = null;
+	}
+	
+	public MessageResponseListDriveConnections(Guid requestId, Status result, DriveConnection[] connections)
+		: base(requestId)
 	{
 		Result = result;
 		Connections = connections;
 	}
-
-	public MessageResponseListDriveConnections(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	
+	[JsonConstructor]
+	private MessageResponseListDriveConnections(Guid id, Guid requestId, Status result, DriveConnection[]? connections)
+		: base(id, requestId)
 	{
 		Result = result;
-		Connections = null;
+		Connections = connections;
 	}
 	
 	public enum Status
@@ -493,19 +627,26 @@ public class MessageResponseListDrives : MessageResponse
 	public Status Result { get; }
 	public DriveGeneralDescriptor[]? Drives { get; }
 
-	[JsonConstructor]
-	public MessageResponseListDrives(bool generateGuid, Guid requestId, Status result, DriveGeneralDescriptor[]? drives)
-		: base(generateGuid, requestId)
+	public MessageResponseListDrives(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+		Drives = null;
+	}
+	
+	public MessageResponseListDrives(Guid requestId, Status result, DriveGeneralDescriptor[] drives)
+		: base(requestId)
 	{
 		Result = result;
 		Drives = drives;
 	}
-
-	public MessageResponseListDrives(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	
+	[JsonConstructor]
+	private MessageResponseListDrives(Guid id, Guid requestId, Status result, DriveGeneralDescriptor[]? drives)
+		: base(id, requestId)
 	{
 		Result = result;
-		Drives = null;
+		Drives = drives;
 	}
 	
 	public enum Status
@@ -522,29 +663,28 @@ public class MessageResponseListPathItems : MessageResponse
 	public Status Result { get; }
 	public PathItem[]? PathItems { get; }
 
-	[JsonConstructor]
-	public MessageResponseListPathItems(bool generateGuid, Guid requestId, Status result, PathItem[]? pathItems)
-		: base(generateGuid, requestId)
-	{
-		Result = result;
-		Result = result;
-		PathItems = pathItems;
-	}
-
-	public MessageResponseListPathItems(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseListPathItems(Guid requestId, Status result)
+		: base(requestId)
 	{
 		Result = result;
 		PathItems = null;
 	}
 
-	public MessageResponseListPathItems(bool generateGuid, Guid requestId, PathItem[] pathItems)
-		: base(generateGuid, requestId)
+	public MessageResponseListPathItems(Guid requestId, PathItem[] pathItems)
+		: base(requestId)
 	{
 		Result = Status.Success;
 		PathItems = pathItems;
 	}
 	
+	[JsonConstructor]
+	private MessageResponseListPathItems(Guid id, Guid requestId, Status result, PathItem[]? pathItems)
+		: base(id, requestId)
+	{
+		Result = result;
+		Result = result;
+		PathItems = pathItems;
+	}
 	
 	public enum Status
 	{
@@ -562,21 +702,29 @@ public class MessageResponseDownloadItem : MessageResponse		/* Download from cli
 	public Guid StreamId { get; }
 	public ulong ItemSize { get; }
 
-	[JsonConstructor]
-	public MessageResponseDownloadItem(bool generateGuid, Guid requestId, Status result, Guid streamId, ulong itemSize)
-		: base(generateGuid, requestId)
+	public MessageResponseDownloadItem(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+		StreamId = Guid.Empty;
+		ItemSize = ulong.MaxValue;
+	}
+	
+	public MessageResponseDownloadItem(Guid requestId, Status result, Guid streamId, ulong itemSize)
+		: base(requestId)
 	{
 		Result = result;
 		StreamId = streamId;
 		ItemSize = itemSize;
 	}
-
-	public MessageResponseDownloadItem(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	
+	[JsonConstructor]
+	private MessageResponseDownloadItem(Guid id, Guid requestId, Status result, Guid streamId, ulong itemSize)
+		: base(id, requestId)
 	{
 		Result = result;
-		StreamId = Guid.Empty;
-		ItemSize = ulong.MaxValue;
+		StreamId = streamId;
+		ItemSize = itemSize;
 	}
 	
 	public enum Status
@@ -594,19 +742,26 @@ public class MessageResponseUploadFile : MessageResponse		/* Upload from client 
 	public Status Result { get; }
 	public Guid StreamId { get; }
 
-	[JsonConstructor]
-	public MessageResponseUploadFile(bool generateGuid, Guid requestId, Status result, Guid streamId)
-		: base(generateGuid, requestId)
+	public MessageResponseUploadFile(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+		StreamId = Guid.Empty;
+	}
+	
+	public MessageResponseUploadFile(Guid requestId, Status result, Guid streamId)
+		: base(requestId)
 	{
 		Result = result;
 		StreamId = streamId;
 	}
-
-	public MessageResponseUploadFile(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	
+	[JsonConstructor]
+	private MessageResponseUploadFile(Guid id, Guid requestId, Status result, Guid streamId)
+		: base(id, requestId)
 	{
 		Result = result;
-		StreamId = Guid.Empty;
+		StreamId = streamId;
 	}
 	
 	public enum Status
@@ -624,8 +779,15 @@ public class MessageResponseCreateDirectory : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseCreateDirectory(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseCreateDirectory(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+
+	[JsonConstructor]
+	private MessageResponseCreateDirectory(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -644,8 +806,15 @@ public class MessageResponseDeleteItem : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseDeleteItem(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseDeleteItem(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseDeleteItem(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -664,8 +833,15 @@ public class MessageResponseVmStartup : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseVmStartup(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseVmStartup(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseVmStartup(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -685,8 +861,15 @@ public class MessageResponseVmShutdown : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseVmShutdown(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseVmShutdown(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseVmShutdown(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -705,8 +888,15 @@ public class MessageResponseVmForceOff : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseVmForceOff(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseVmForceOff(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseVmForceOff(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -725,20 +915,27 @@ public class MessageResponseVmStreamStart : MessageResponse
 {
 	public Status Result { get; }
 	public PixelFormat? PixelFormat { get; }
-
-	[JsonConstructor]
-	public MessageResponseVmStreamStart(bool generateGuid, Guid requestId, Status result, PixelFormat pixelFormat)
-		: base(generateGuid, requestId)
+	
+	public MessageResponseVmStreamStart(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+		PixelFormat = null;
+	}
+	
+	public MessageResponseVmStreamStart(Guid requestId, Status result, PixelFormat pixelFormat)
+		: base(requestId)
 	{
 		Result = result;
 		PixelFormat = pixelFormat;
 	}
 	
-	public MessageResponseVmStreamStart(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	[JsonConstructor]
+	private MessageResponseVmStreamStart(Guid id, Guid requestId, Status result, PixelFormat pixelFormat)
+		: base(id, requestId)
 	{
 		Result = result;
-		PixelFormat = null;
+		PixelFormat = pixelFormat;
 	}
 	
 	public enum Status
@@ -756,8 +953,15 @@ public class MessageResponseVmStreamStop : MessageResponse
 {
 	public Status Result { get; }
 
-	public MessageResponseVmStreamStop(bool generateGuid, Guid requestId, Status result)
-		: base(generateGuid, requestId)
+	public MessageResponseVmStreamStop(Guid requestId, Status result)
+		: base(requestId)
+	{
+		Result = result;
+	}
+	
+	[JsonConstructor]
+	private MessageResponseVmStreamStop(Guid id, Guid requestId, Status result)
+		: base(id, requestId)
 	{
 		Result = result;
 	}

@@ -1,33 +1,32 @@
+using Newtonsoft.Json;
+
 namespace Shared.Networking;
 
-public class Message
+public interface IMessage
 {
-	public Guid Id { get; set; }
-
-	public Message(bool generateGuid)
-	{
-		if (generateGuid)
-			Id = Guid.NewGuid();
-	}
-
-	public virtual bool IsValidMessage()
-	{
-		return true; 
-	}
+	public Guid Id { get; }
+	
+	public bool IsValidMessage();
 }
 
-public class MessageTcp : Message
-{
-	public MessageTcp(bool generateGuid)
-		: base(generateGuid)
-	{
-	}
-}
+public interface IMessageTcp : IMessage {}
+public interface IMessageUdp : IMessage {}
 
-public class MessageUdp : Message
+
+public abstract class Message : IMessage
 {
-	public MessageUdp(bool generateGuid)
-		: base(generateGuid)
+	public Guid Id { get; }
+
+	protected Message()
 	{
+		Id = Guid.NewGuid();
 	}
+	
+	[JsonConstructor]
+	protected Message(Guid id)
+	{
+		Id = id;
+	}
+
+	public virtual bool IsValidMessage() => true; 
 }

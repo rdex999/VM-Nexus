@@ -18,9 +18,9 @@ public partial class MessagingService
 	protected SslStream? TcpSslStream;
 	protected readonly CancellationTokenSource Cts;
 	protected bool IsServiceInitialized;
-	private readonly ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>> _responses;
-	private readonly Channel<Message> _messageTcpChannel;
-	private readonly Channel<Message> _messageUdpChannel;
+	private readonly ConcurrentDictionary<Guid, TaskCompletionSource<IMessageResponse>> _responses;
+	private readonly Channel<IMessage> _messageTcpChannel;
+	private readonly Channel<IMessage> _messageUdpChannel;
 	protected bool IsUdpMessagingRunning = false;
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
 	private readonly ConcurrentDictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
@@ -39,9 +39,9 @@ public partial class MessagingService
 		IsServiceInitialized = false;
 		
 		Cts = new CancellationTokenSource();
-		_responses = new ConcurrentDictionary<Guid, TaskCompletionSource<MessageResponse>>();
-		_messageTcpChannel = Channel.CreateUnbounded<Message>();
-		_messageUdpChannel = Channel.CreateUnbounded<Message>();
+		_responses = new ConcurrentDictionary<Guid, TaskCompletionSource<IMessageResponse>>();
+		_messageTcpChannel = Channel.CreateUnbounded<IMessage>();
+		_messageUdpChannel = Channel.CreateUnbounded<IMessage>();
 		_incomingUdpMessages = new ConcurrentDictionary<Guid, IncomingMessageUdp>();
 		_ongoingTransfers = new ConcurrentDictionary<Guid, TransferHandler>();
 		TransferLimiter = new TransferRateLimiter();
@@ -116,7 +116,7 @@ public partial class MessagingService
 		else
 			_cryptoService.Reset(out key32, out salt32);
 		
-		SendInfo(new MessageInfoCryptoUdp(true, key32, salt32));
+		SendInfo(new MessageInfoCryptoUdp(key32, salt32));
 	}
 
 	/// <summary>
@@ -305,7 +305,7 @@ public partial class MessagingService
 			}
 
 			/* Runs until there are no messages left. message cannot be null because TryDequeue returned true. */
-			while (_messageTcpChannel.Reader.TryRead(out Message? message) && !Cts.Token.IsCancellationRequested)
+			while (_messageTcpChannel.Reader.TryRead(out IMessage? message) && !Cts.Token.IsCancellationRequested)
 			{
 				await SendMessageTcpOnSocketAsync(message);
 			}
@@ -338,7 +338,7 @@ public partial class MessagingService
 				continue;
 			}
 
-			while (_messageUdpChannel.Reader.TryRead(out Message? message))
+			while (_messageUdpChannel.Reader.TryRead(out IMessage? message))
 			{
 				byte[] messageBytes = Common.ToByteArrayWithType(message);
 				int bytesSent = 0;
@@ -383,7 +383,7 @@ public partial class MessagingService
 	{
 		switch (message)
 		{
-			case MessageResponse response:
+			case IMessageResponse response:
 			{
 				if (_responses.TryRemove(response.RequestId, out var tcs))
 				{
@@ -391,11 +391,11 @@ public partial class MessagingService
 				}
 				break;
 			}
-			case MessageRequest request:
+			case IMessageRequest request:
 			{
 				if (!request.IsValidMessage())
 				{
-					SendResponse(new MessageResponseInvalidRequestData(true, request.Id));
+					SendResponse(new MessageResponseInvalidRequestData(request.Id));
 					break;
 				}
 				_ = HandleRequestAsync(request);
@@ -408,8 +408,7 @@ public partial class MessagingService
 				
 				break;
 			}
-			case MessageInfoTcp:
-			case MessageInfoUdp:
+			case IMessageInfo:
 			{
 				if (message.IsValidMessage())
 					_ = HandleInfoAsync(message);
@@ -487,16 +486,16 @@ public partial class MessagingService
 	/// Postcondition: On success, returns the response for the request. <br/>
 	/// On failure, the returned response is set to null and the exit code indicates the error.
 	/// </remarks>
-	protected async Task<(MessageResponse?, ExitCode)> SendRequestAsync(MessageRequest message)
+	protected async Task<(IMessageResponse?, ExitCode)> SendRequestAsync(IMessageRequest message)
 	{
 		SendMessage(message);
 		
-		TaskCompletionSource<MessageResponse> tcs = new TaskCompletionSource<MessageResponse>();
+		TaskCompletionSource<IMessageResponse> tcs = new TaskCompletionSource<IMessageResponse>();
 		_responses[message.Id] = tcs;
 		
 		/* Now wait for the response for this specific request that we just send */
 		ExitCode result = ExitCode.Success;
-		MessageResponse? response = null;
+		IMessageResponse? response = null;
 		try
 		{
 			response = await tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(SharedDefinitions.MessageTimeoutMilliseconds));
@@ -556,15 +555,15 @@ public partial class MessagingService
 	/// Precondition: Service fully initialized and connected to the other side. (server/client) message != null. <br/>
 	/// Postcondition: Message is in the messages queue. (And will be sent very soon)
 	/// </remarks>
-	private void SendMessage(Message message)
+	private void SendMessage(IMessage message)
 	{
 		if (!IsConnected())
 			return;
 		
-		if (message is MessageTcp || UdpSocket == null || !IsUdpMessagingRunning)
+		if (message is IMessageTcp || UdpSocket == null || !IsUdpMessagingRunning)
 			_messageTcpChannel.Writer.TryWrite(message);
 		
-		else if (message is MessageUdp)
+		else if (message is IMessageUdp)
 			_messageUdpChannel.Writer.TryWrite(message);
 	}
 
@@ -582,7 +581,7 @@ public partial class MessagingService
 	/// Postcondition: On success the message is fully sent, and the exit code indicates success. <br/>
 	/// On failure, the message should be considered as not sent, and the exit code will indicate the error.
 	/// </remarks>
-	private async Task<ExitCode> SendMessageTcpOnSocketAsync(Message message)
+	private async Task<ExitCode> SendMessageTcpOnSocketAsync(IMessage message)
 	{
 		ExitCode result;
 		Stopwatch stopwatch = Stopwatch.StartNew();
@@ -647,7 +646,7 @@ public partial class MessagingService
 	/// If the token requests' cancellation while processing the request, <br/>
 	/// this method will return and the request should be considered not handled/processed.
 	/// </remarks>
-	private async Task HandleRequestAsync(MessageRequest request)
+	private async Task HandleRequestAsync(IMessageRequest request)
 	{
 		try
 		{
@@ -670,7 +669,7 @@ public partial class MessagingService
 	/// If the token requests' cancellation while processing the info message, <br/>
 	/// this method will return and the info message should be considered not handled/processed.
 	/// </remarks>
-	private async Task HandleInfoAsync(Message info)
+	private async Task HandleInfoAsync(IMessage info)
 	{
 		try
 		{
@@ -801,7 +800,7 @@ public partial class MessagingService
 	/// A message of request type was received - should be processed. request != null. <br/>
 	/// Postcondition: Request is considered processed.
 	/// </remarks>
-	protected virtual async Task ProcessRequestAsync(MessageRequest request)
+	protected virtual async Task ProcessRequestAsync(IMessageRequest request)
 	{
 	}
 	
@@ -817,7 +816,7 @@ public partial class MessagingService
 	/// A message of info type was received - should be processed. info != null &amp;&amp; (info is MessageInfoTcp || info is MessageInfoUdp) <br/>
 	/// Postcondition: Info is considered processed.
 	/// </remarks>
-	protected virtual async Task ProcessInfoAsync(Message info)
+	protected virtual async Task ProcessInfoAsync(IMessage info)
 	{
 		switch (info)
 		{

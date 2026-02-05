@@ -113,7 +113,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<bool?> IsUsernameAvailableAsync(string username)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCheckUsername(true, username));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCheckUsername(username));
 
 		if (result != ExitCode.Success)
 		{
@@ -145,7 +145,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseCreateAccount.Status> CreateAccountAsync(string username, string email, string password)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateAccount(true, username, email, password));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateAccount(username, email, password));
 		if (result != ExitCode.Success)
 			return MessageResponseCreateAccount.Status.Failure;
 		
@@ -177,7 +177,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseLogin?> LoginAsync(string username, string password)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogin(true, username, password));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogin(username, password));
 		if (result != ExitCode.Success)
 			return null;
 		
@@ -203,7 +203,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<bool> DeleteAccountAsync(int userId)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteAccount(true, userId));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteAccount(userId));
 		if (result != ExitCode.Success)
 			return false;
 
@@ -224,7 +224,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseLogout.Status> LogoutAsync()
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogout(true));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLogout());
 		if (result != ExitCode.Success)
 			return  MessageResponseLogout.Status.Failure;
 		
@@ -247,7 +247,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<bool> LoginToSubUserAsync(int subUserId)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLoginSubUser(true, subUserId));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestLoginSubUser(subUserId));
 		if (result != ExitCode.Success)
 			return false;
 		
@@ -277,8 +277,9 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseCreateSubUser.Status> CreateSubUserAsync(string username, string email, string password, UserPermissions permissions)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateSubUser(
-			true, username, email, password, permissions));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(
+			new MessageRequestCreateSubUser(username, email, password, permissions)
+		);
 
 		if (result != ExitCode.Success)
 			return MessageResponseCreateSubUser.Status.Failure;
@@ -300,7 +301,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseResetPassword.Status> ResetPasswordAsync(string password, string newPassword)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestResetPassword(true, password, newPassword));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestResetPassword(password, newPassword));
 
 		if (result != ExitCode.Success)
 			return MessageResponseResetPassword.Status.Failure;
@@ -319,7 +320,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<SubUser[]?> GetSubUsersAsync()
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestListSubUsers(true));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestListSubUsers());
 		if (result != ExitCode.Success)
 			return null;
 
@@ -347,8 +348,8 @@ public class ClientService : MessagingService
 	public async Task<MessageResponseCreateVm?> CreateVirtualMachineAsync(string name,
 		OperatingSystem operatingSystem, CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode)
 	{
-		(MessageResponse? response, ExitCode _) = await SendRequestAsync(
-			new MessageRequestCreateVm(true, name, operatingSystem, cpuArchitecture, ramSizeMiB, bootMode)
+		(IMessageResponse? response, ExitCode _) = await SendRequestAsync(
+			new MessageRequestCreateVm(name, operatingSystem, cpuArchitecture, ramSizeMiB, bootMode)
 		);
 
 		if (response == null)
@@ -371,7 +372,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseDeleteVm.Status> DeleteVirtualMachineAsync(int id)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteVm(true, id));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteVm(id));
 		if (result != ExitCode.Success) return MessageResponseDeleteVm.Status.Failure;
 
 		return ((MessageResponseDeleteVm)response!).Result;
@@ -387,7 +388,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseListVms?> GetVirtualMachinesAsync()
 	{
-		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListVms(true));
+		(IMessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListVms());
 
 		if (response == null) return null;
 		
@@ -405,7 +406,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<bool> IsVmExistsAsync(string name)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCheckVmExist(true, name));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCheckVmExist(name));
 		return result == ExitCode.Success && ((MessageResponseCheckVmExist)response!).Exists;
 	}
 
@@ -425,7 +426,7 @@ public class ClientService : MessagingService
 	public async Task<MessageResponseCreateDriveFs.Status> CreateDriveFsAsync(string name, int sizeMb,
 		FileSystemType fileSystem)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDriveFs(true, name, sizeMb, fileSystem));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDriveFs(name, sizeMb, fileSystem));
 		if (result != ExitCode.Success) 
 			return MessageResponseCreateDriveFs.Status.Failure;
 
@@ -446,7 +447,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<UploadHandler?> CreateDriveFromImageAsync(string name, DriveType type, Stream iso)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDriveFromImage(true, name, type, (ulong)iso.Length));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDriveFromImage(name, type, (ulong)iso.Length));
 		if (result != ExitCode.Success)
 			return null;
 
@@ -475,7 +476,7 @@ public class ClientService : MessagingService
 	public async Task<MessageResponseCreateDriveOs?> CreateDriveOsAsync(
 		string name, int size, OperatingSystem operatingSystem)
 	{
-		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestCreateDriveOs(true, name, size, operatingSystem));
+		(IMessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestCreateDriveOs(name, size, operatingSystem));
 		if (response == null)
 		{
 			return null;
@@ -498,7 +499,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseConnectDrive.Status> ConnectDriveAsync(int driveId, int vmId)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnectDrive(true, driveId, vmId));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestConnectDrive(driveId, vmId));
 		if (result != ExitCode.Success)
 			return MessageResponseConnectDrive.Status.Failure;
 		
@@ -520,7 +521,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseDisconnectDrive.Status> DisconnectDriveAsync(int driveId, int vmId)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDisconnectDrive(true, driveId, vmId));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDisconnectDrive(driveId, vmId));
 		if (result != ExitCode.Success)
 			return MessageResponseDisconnectDrive.Status.Failure;
 		
@@ -537,7 +538,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseListDriveConnections?> GetDriveConnectionsAsync()
 	{
-		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListDriveConnections(true));
+		(IMessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListDriveConnections());
 		if (response == null) 
 			return null;
 		
@@ -554,7 +555,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseListDrives?> GetDrivesAsync()
 	{
-		(MessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListDrives(true));
+		(IMessageResponse? response, ExitCode _) = await SendRequestAsync(new MessageRequestListDrives());
 		if (response == null) 
 			return null;
 		
@@ -574,7 +575,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<PathItem[]?> ListItemsOnDrivePathAsync(int driveId, string path)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestListPathItems(true, driveId, path));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestListPathItems(driveId, path));
 		if (result != ExitCode.Success) 
 			return null;
 
@@ -594,7 +595,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<DownloadHandler?> StartItemDownloadAsync(int driveId, string path, string destination)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDownloadItem(true, driveId, path));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDownloadItem(driveId, path));
 		if (result != ExitCode.Success)
 			return null;
 
@@ -631,7 +632,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<DownloadHandler?> StartItemDownloadAsync(int driveId, string path, Stream destination)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDownloadItem(true, driveId, path));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDownloadItem(driveId, path));
 		if (result != ExitCode.Success)
 			return null;
 
@@ -673,7 +674,7 @@ public class ClientService : MessagingService
 			return (MessageResponseUploadFile.Status.Failure, null);
 		}
 		
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestUploadFile(true, driveId, path, (ulong)file.Length));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestUploadFile(driveId, path, (ulong)file.Length));
 		if (result != ExitCode.Success)
 		{
 			await file.DisposeAsync();
@@ -710,7 +711,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<(MessageResponseUploadFile.Status, UploadHandler?)> StartFileUploadAsync(int driveId, string path, Stream source)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestUploadFile(true, driveId, path, (ulong)source.Length));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestUploadFile(driveId, path, (ulong)source.Length));
 		if (result != ExitCode.Success)
 			return (MessageResponseUploadFile.Status.Failure, null);
 
@@ -739,7 +740,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseCreateDirectory.Status> CreateDirectoryAsync(int driveId, string path)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDirectory(true, driveId, path));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestCreateDirectory(driveId, path));
 		if (result != ExitCode.Success)
 			return MessageResponseCreateDirectory.Status.Failure;
 
@@ -760,7 +761,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseDeleteItem.Status> DeleteItemAsync(int driveId, string path)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteItem(true, driveId, path));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestDeleteItem(driveId, path));
 		if (result != ExitCode.Success)
 			return MessageResponseDeleteItem.Status.Failure;
 
@@ -780,7 +781,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseVmStartup.Status> PowerOnVirtualMachineAsync(int id)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmStartup(true, id));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmStartup(id));
 		if (result != ExitCode.Success)
 		{
 			return MessageResponseVmStartup.Status.Failure;
@@ -801,7 +802,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseVmShutdown.Status> PowerOffVirtualMachineAsync(int id)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmShutdown(true, id));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmShutdown(id));
 		if (result != ExitCode.Success)
 		{
 			return MessageResponseVmShutdown.Status.Failure;
@@ -822,7 +823,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseVmForceOff.Status> ForceOffVirtualMachineAsync(int id)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmForceOff(true, id));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmForceOff(id));
 		if (result != ExitCode.Success)
 		{
 			return MessageResponseVmForceOff.Status.Failure;
@@ -842,7 +843,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseVmStreamStart?> VirtualMachineStartStreamAsync(int id)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmStreamStart(true, id));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmStreamStart(id));
 		if (result != ExitCode.Success)
 		{
 			return null;
@@ -863,7 +864,7 @@ public class ClientService : MessagingService
 	/// </remarks>
 	public async Task<MessageResponseVmStreamStop.Status> VirtualMachineStopStreamAsync(int id)
 	{
-		(MessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmStreamStop(true, id));
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestVmStreamStop(id));
 		if (result != ExitCode.Success)
 		{
 			return MessageResponseVmStreamStop.Status.Failure;
@@ -882,7 +883,7 @@ public class ClientService : MessagingService
 	/// Postcondition: The server is notified of the event.
 	/// </remarks>
 	public void NotifyPointerMovement(int id, Point position) =>
-		SendInfo(new MessageInfoPointerMoved(true, id, position));
+		SendInfo(new MessageInfoPointerMoved(id, position));
 
 	/// <summary>
 	/// Notifies the server of pointer buttons press/release event. <br/>
@@ -896,7 +897,7 @@ public class ClientService : MessagingService
 	/// Postcondition: The server is notified of the event.
 	/// </remarks>
 	public void NotifyPointerButtonEvent(int id, Point position, int pressedButtons) =>
-		SendInfo(new MessageInfoPointerButtonEvent(true, id, position, pressedButtons));
+		SendInfo(new MessageInfoPointerButtonEvent(id, position, pressedButtons));
 
 	/// <summary>
 	/// Notifies the server of a keyboard key event (pressed/released) on a virtual machine.
@@ -909,7 +910,7 @@ public class ClientService : MessagingService
 	/// Postcondition: The server is notified of the event.
 	/// </remarks>
 	public void NotifyKeyboardKeyEvent(int id, PhysicalKey key, bool pressed) =>
-		SendInfo(new MessageInfoKeyboardKeyEvent(true, id, key, pressed));
+		SendInfo(new MessageInfoKeyboardKeyEvent(id, key, pressed));
 	
 	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
@@ -1093,7 +1094,7 @@ public class ClientService : MessagingService
 		}
 
 		IsServiceInitialized = true;
-		SendInfo(new MessageInfoIdentifyUdpPort(true, localPort));
+		SendInfo(new MessageInfoIdentifyUdpPort(localPort));
 
 		return true;
 	}
@@ -1108,7 +1109,7 @@ public class ClientService : MessagingService
 	/// Precondition: Service fully initialized and connected to the server. A request has been sent from the server. request != null. <br/>
 	/// Postcondition: The request is considered as handled.
 	/// </remarks>
-	protected override async Task ProcessRequestAsync(MessageRequest request)
+	protected override async Task ProcessRequestAsync(IMessageRequest request)
 	{
 		await base.ProcessRequestAsync(request);
 
@@ -1138,7 +1139,7 @@ public class ClientService : MessagingService
 	/// info != null &amp;&amp; (info is MessageInfoTcp || info is MessageInfoUdp) <br/>
 	/// Postcondition: The info message is considered as handled.
 	/// </remarks>
-	protected override async Task ProcessInfoAsync(Message info)
+	protected override async Task ProcessInfoAsync(IMessage info)
 	{
 		await base.ProcessInfoAsync(info);
 		

@@ -28,7 +28,7 @@ public partial class MessagingService
 		public override Task ReceiveAsync(byte[] data, ulong offset)
 		{
 			BytesReceived += (ulong)data.Length;
-			_messagingService.SendInfo(new MessageInfoTransferData(true, Id, offset, data));
+			_messagingService.SendInfo(new MessageInfoTransferData(Id, offset, data));
 			RaiseDataReceived();
 			return Task.CompletedTask;
 		}
