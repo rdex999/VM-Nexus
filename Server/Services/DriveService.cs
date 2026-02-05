@@ -1074,10 +1074,14 @@ public class DriveService
 		string upper = fileName.ToUpper();
 		int extIdx = upper.LastIndexOf('.');
 		char[] special = { '$', '%', '\'', '-', '_', '@', '~', '`', '!', '(', ')', '^', '#', '&', '}', '{' };
-		
-		if (extIdx != -1)
-			if (extIdx > 8 || upper.Length - 1 - extIdx > 3)
+
+		if (extIdx == -1)
+		{
+			if (upper.Length > 11)
 				return false;
+		}
+		else if (extIdx > 8 || upper.Length - 1 - extIdx > 3)
+			return false;
 
 		bool foundDot = false;
 		foreach (char ch in upper)
