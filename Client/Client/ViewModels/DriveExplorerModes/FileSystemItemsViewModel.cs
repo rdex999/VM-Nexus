@@ -25,7 +25,8 @@ public partial class FileSystemItemsViewModel : DriveExplorerMode
 	private readonly string _path;
 	
 	public ObservableCollection<FileSystemItemItemTemplate> Items { get; }
-
+	public bool CanCreateItems { get; }
+	
 	[ObservableProperty] 
 	private bool _directoryCreatePopupIsOpen = false;
 	
@@ -47,6 +48,19 @@ public partial class FileSystemItemsViewModel : DriveExplorerMode
 		
 		Items = new ObservableCollection<FileSystemItemItemTemplate>();
 
+		if (ClientSvc.IsLoggedInAsSubUser && ClientSvc.User is SubUser subUser)
+		{
+			CanCreateItems = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemCreate);
+			FileSystemItemItemTemplate.CanDownload = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDownload);
+			FileSystemItemItemTemplate.CanDelete = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDelete);
+		}
+		else
+		{
+			CanCreateItems = true;
+			FileSystemItemItemTemplate.CanDownload = true;
+			FileSystemItemItemTemplate.CanDelete = true;
+		}
+
 		foreach (PathItem item in items)
 		{
 			if (item is PathItemFile file)
@@ -66,6 +80,9 @@ public partial class FileSystemItemsViewModel : DriveExplorerMode
 		_driveService = null!;
 		_driveDescriptor = null!;
 		_path = string.Empty;
+		CanCreateItems = true;
+		FileSystemItemItemTemplate.CanDownload = true;
+		FileSystemItemItemTemplate.CanDelete = true;
 		
 		Items = new ObservableCollection<FileSystemItemItemTemplate>()
 		{
@@ -188,10 +205,12 @@ public partial class FileSystemItemsViewModel : DriveExplorerMode
 	public void CreateDirectoryExitClick() => DirectoryCreatePopupIsOpen = false;
 }
 
-public partial class FileSystemItemItemTemplate		/* FilesystemItem - item template (i know) */
+public partial class FileSystemItemItemTemplate		/* FilesystemItem - item template (I know) */
 {
 	public Action<string>? DownloadRequested;
 	public Action<string>? DeleteRequested;
+	public static bool CanDownload { get; set; } = false;
+	public static bool CanDelete { get; set; } = false;
 	public bool IsFile { get; private set; }		/* Is this a file or a directory? */
 	public bool IsDirectory
 	{
@@ -251,11 +270,13 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 					new MenuItem
 					{
 						Header = "Download",
+						IsEnabled = CanDownload,
 						Command = DownloadCommand
 					},
 					new MenuItem
 					{
 						Header = "Delete",
+						IsEnabled = CanDelete,
 						Command = DeleteCommand
 					}
 				}
@@ -271,6 +292,7 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 					new MenuItem
 					{
 						Header = "Delete",
+						IsEnabled = CanDelete,
 						Command = DeleteCommand
 					}
 				}

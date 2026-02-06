@@ -39,8 +39,10 @@
 		<ItemsControl ItemsSource="{Binding Items}">
 			<ItemsControl.ContextMenu>
 				<ContextMenu>
-					<MenuItem Header="Upload file" Command="{Binding UploadFileClickCommand}" />
-					<MenuItem Header="Create directory" Command="{Binding CreateDirectoryClickCommand}" />
+					<MenuItem Header="Upload file" IsEnabled="{Binding CanCreateItems}"
+					          Command="{Binding UploadFileClickCommand}" />
+					<MenuItem Header="Create directory" IsEnabled="{Binding CanCreateItems}"
+					          Command="{Binding CreateDirectoryClickCommand}" />
 				</ContextMenu>
 			</ItemsControl.ContextMenu>
 
