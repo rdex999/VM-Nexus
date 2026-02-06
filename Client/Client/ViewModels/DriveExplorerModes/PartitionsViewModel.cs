@@ -24,7 +24,9 @@ public class PartitionsViewModel : DriveExplorerMode
 		Partitions = new ObservableCollection<PartitionItemTemplate>();
 
 		if (ClientSvc.IsLoggedInAsSubUser && ClientSvc.User is SubUser subUser)
-			PartitionItemTemplate.CanDownload= subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDownload);
+			PartitionItemTemplate.CanDownload = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDownload);
+		else
+			PartitionItemTemplate.CanDownload = true;
 		
 		for (int i = 0; i < partitions.Length; ++i)
 		{
@@ -88,7 +90,7 @@ public partial class PartitionItemTemplate
 {
 	public Action<int>? Opened;
 	public Action<int>? DownloadRequested;
-	public static bool CanDownload { get; set; } = true;
+	public static bool CanDownload { get; set; }
 	public int Index { get; }
 	public int SizeMiB { get; }
 	public string SizeMiBString =>

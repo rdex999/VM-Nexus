@@ -100,6 +100,15 @@ public partial class DrivesViewModel : DriveExplorerMode
 			CanCreateDrives = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveCreate);
 			DriveItemTemplate.CanDownload = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDownload);
 			DriveItemTemplate.CanDelete = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveDelete);
+			VmConnectionItemTemplate.CanConnect = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveConnect);
+			VmConnectionItemTemplate.CanDisconnect = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveDisconnect);
+		}
+		else
+		{
+			DriveItemTemplate.CanDownload = true;
+			DriveItemTemplate.CanDelete = true;
+			VmConnectionItemTemplate.CanConnect = true;
+			VmConnectionItemTemplate.CanDisconnect = true;
 		}
 		
 		if (_driveService.IsInitialized)
@@ -547,8 +556,8 @@ public partial class DriveItemTemplate : ObservableObject
 	public Action<int>? DownloadClick;
 	public Action<int>? DeleteClick;
 	public Action<int>? ManageVmConnectionsClick;
-	public static bool CanDownload { get; set; } = true;
-	public static bool CanDelete { get; set; } = true;
+	public static bool CanDownload { get; set; }
+	public static bool CanDelete { get; set; }
 	
 	public int Id { get; }
 
@@ -626,9 +635,12 @@ public partial class DriveItemTemplate : ObservableObject
 
 public partial class VmConnectionItemTemplate : ObservableObject
 {
+	public static bool CanConnect { get; set; }
+	public static bool CanDisconnect { get; set; }
 	public int Id { get; }
 	public string Name { get; }
 	public string OperatingSystem { get; }
+	public bool IsEnabled { get; }
 
 	[ObservableProperty] 
 	private bool _isChecked;
@@ -639,5 +651,6 @@ public partial class VmConnectionItemTemplate : ObservableObject
 		Name = descriptor.Name;
 		OperatingSystem = Common.SeparateStringWords(descriptor.OperatingSystem.ToString());
 		IsChecked = connected;
+		IsEnabled = connected ? CanDisconnect : CanConnect;
 	}
 }

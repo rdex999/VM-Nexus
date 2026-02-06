@@ -54,6 +54,11 @@ public partial class FileSystemItemsViewModel : DriveExplorerMode
 			FileSystemItemItemTemplate.CanDownload = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDownload);
 			FileSystemItemItemTemplate.CanDelete = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDelete);
 		}
+		else
+		{
+			FileSystemItemItemTemplate.CanDownload = true;
+			FileSystemItemItemTemplate.CanDelete = true;
+		}
 
 		foreach (PathItem item in items)
 		{
@@ -203,8 +208,8 @@ public partial class FileSystemItemItemTemplate		/* FilesystemItem - item templa
 {
 	public Action<string>? DownloadRequested;
 	public Action<string>? DeleteRequested;
-	public static bool CanDownload { get; set; } = true;
-	public static bool CanDelete { get; set; } = true;
+	public static bool CanDownload { get; set; }
+	public static bool CanDelete { get; set; }
 	public bool IsFile { get; private set; }		/* Is this a file or a directory? */
 	public bool IsDirectory
 	{

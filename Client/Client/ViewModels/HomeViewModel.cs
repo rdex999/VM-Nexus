@@ -72,7 +72,16 @@ public partial class HomeViewModel : ViewModelBase
 		_driveService = driveService;
 		
 		if (ClientSvc.IsLoggedInAsSubUser && ClientSvc.User is SubUser subUser)
+		{
 			VmsUsable = subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineUse);
+			DriveConnectionItemTemplate.CanConnect = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveConnect);
+			DriveConnectionItemTemplate.CanDisconnect = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveDisconnect);
+		}
+		else
+		{
+			DriveConnectionItemTemplate.CanConnect = true;
+			DriveConnectionItemTemplate.CanDisconnect = true;
+		}
 		
 		_driveService.Initialized += (sender, code) =>
 		{
@@ -824,11 +833,13 @@ public partial class DeletionDriveItemTemplate : ObservableObject
 
 public partial class DriveConnectionItemTemplate : ObservableObject
 {
+	public static bool CanConnect { get; set; }
+	public static bool CanDisconnect { get; set; }
 	public int Id { get; }
 	public string Name { get; }
 	public string Size { get; }
 	public DriveType DriveType { get; }
-	
+	public bool IsEnabled { get; }
 	[ObservableProperty] 
 	private bool _isChecked = false;
 
@@ -842,5 +853,6 @@ public partial class DriveConnectionItemTemplate : ObservableObject
 			: $"{descriptor.Size} MiB";
 		
 		IsChecked = connected;
+		IsEnabled = connected ? CanDisconnect : CanConnect;
 	}
 }
