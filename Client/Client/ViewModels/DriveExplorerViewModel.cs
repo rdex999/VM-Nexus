@@ -53,6 +53,9 @@ public partial class DriveExplorerViewModel : ViewModelBase
 	[ObservableProperty]
 	private string _itemDeletePopupConfirmText = string.Empty;
 
+	[ObservableProperty] 
+	private bool _itemDeletePopupHasPrms = true;
+
 	private int _itemDeleteDriveId = -1;
 	private string _itemDeletePath = string.Empty;
 	
@@ -328,12 +331,22 @@ public partial class DriveExplorerViewModel : ViewModelBase
 			if (driveDescriptor == null)
 				return;
 
+			ItemDeletePopupHasPrms = !ClientSvc.IsLoggedInAsSubUser || (ClientSvc.IsLoggedInAsSubUser &&
+			                                                            ClientSvc.User is SubUser subUser &&
+			                                                            subUser.OwnerPermissions.HasPermission(UserPermissions.DriveDelete));
+			
 			ItemDeletePopupTitle = "Delete this drive?";
 			ItemDeletePopupInfoText = "The drive will be permanently deleted, with all of its content.";
-			ItemDeletePopupConfirmText = $"Are you sure you want to delete \"{driveDescriptor.Name}\"?";
+			ItemDeletePopupConfirmText = ItemDeletePopupHasPrms 
+				? $"Are you sure you want to delete \"{driveDescriptor.Name}\"?" 
+				: "You do not have Drive Delete permissions.";
 		}
 		else
 		{
+			ItemDeletePopupHasPrms = !ClientSvc.IsLoggedInAsSubUser || (ClientSvc.IsLoggedInAsSubUser &&
+			                                                            ClientSvc.User is SubUser subUser &&
+			                                                            subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDelete));
+			
 			if (path.EndsWith('/'))
 			{
 				ItemDeletePopupTitle = "Delete this directory?";
@@ -344,7 +357,9 @@ public partial class DriveExplorerViewModel : ViewModelBase
 				ItemDeletePopupTitle = "Delete this file?";
 				ItemDeletePopupInfoText = "The file will be permanently deleted.";
 			}
-			ItemDeletePopupConfirmText = "Are you sure you want to delete " + pathTrimmed + '?';
+			ItemDeletePopupConfirmText = ItemDeletePopupHasPrms 
+				? "Are you sure you want to delete " + pathTrimmed + '?' 
+				: "You do not have Drive Item Delete permissions.";
 		}
 
 		_itemDeleteDriveId = driveId;
