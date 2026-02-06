@@ -134,6 +134,7 @@
 		<ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto">
 			<StackPanel>
 				<Button Padding="15, 10" Margin="10" Height="50" Classes="clean"
+				        IsEnabled="{Binding CanCreateDrives}"
 				        Command="{Binding CreateNewDriveClickCommand}">
 
 					<StackPanel Spacing="20" Orientation="Horizontal" VerticalAlignment="Center">
@@ -180,9 +181,13 @@
 
 												<Button.Flyout>
 													<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
-														<MenuItem Header="Download" Command="{Binding DownloadCommand}" />
+														<MenuItem Header="Download" IsEnabled="{Binding CanDownload}"
+														          Command="{Binding DownloadCommand}" />
+														
 														<MenuItem Header="Manage connected virtual machines" Command="{Binding ManageVmConnectionsCommand}" />
-														<MenuItem Header="Delete" Command="{Binding DeleteCommand}" />
+														
+														<MenuItem Header="Delete" IsEnabled="{Binding CanDelete}"
+														          Command="{Binding DeleteCommand}" />
 													</MenuFlyout>
 												</Button.Flyout>
 											</Button>

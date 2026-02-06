@@ -28,6 +28,7 @@ public partial class DrivesViewModel : DriveExplorerMode
 	private int _conPopupDriveId = -1;
 
 	public bool DriveOpenIsEnabled { get; } = true;
+	public bool CanCreateDrives { get; } = true;
 
 	[ObservableProperty] 
 	private bool _conPopupIsOpen = false;
@@ -94,7 +95,12 @@ public partial class DrivesViewModel : DriveExplorerMode
 		ClientSvc.ItemDeleted += OnItemDeleted;
 
 		if (ClientSvc.IsLoggedInAsSubUser && ClientSvc.User is SubUser subUser)
+		{
 			DriveOpenIsEnabled = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemList);
+			CanCreateDrives = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveCreate);
+			DriveItemTemplate.CanDownload = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDownload);
+			DriveItemTemplate.CanDelete = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveDelete);
+		}
 		
 		if (_driveService.IsInitialized)
 			UpdateDrives();
@@ -541,6 +547,9 @@ public partial class DriveItemTemplate : ObservableObject
 	public Action<int>? DownloadClick;
 	public Action<int>? DeleteClick;
 	public Action<int>? ManageVmConnectionsClick;
+	public static bool CanDownload { get; set; } = true;
+	public static bool CanDelete { get; set; } = true;
+	
 	public int Id { get; }
 
 	private int _size;		/* In MiB */

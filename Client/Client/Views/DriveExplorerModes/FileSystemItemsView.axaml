@@ -22,6 +22,10 @@
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
+	
+	<UserControl.Styles>
+		<StyleInclude Source="/Resources/Styles.axaml" />
+	</UserControl.Styles>
 
 	<Grid x:Name="Grid">
 		<Popup Placement="Pointer" MinWidth="140" IsLightDismissEnabled="True" Closed="DirectoryCreatePopupClosed"

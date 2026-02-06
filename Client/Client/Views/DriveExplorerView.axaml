@@ -34,7 +34,6 @@
 				
 				<Button FontSize="16" FontWeight="Bold" HorizontalAlignment="Center" 
 				        Margin="0, 20, 0, 0" CornerRadius="8"
-				        IsEnabled="{Binding ItemDeletePopupHasPrms}"
 				        Command="{Binding ItemDeleteConfirmDeleteClickCommand}"
 				        >Delete</Button>
 			</StackPanel>
