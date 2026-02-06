@@ -51,7 +51,7 @@
 					
 					<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="10">
 						<Button FontWeight="Bold" Foreground="#3a3a3a" Command="{Binding ForceOffWarningClosedCommand}">Cancel</Button>
-						<Button FontWeight="Bold" Foreground="#3a3a3a" IsEnabled="{Binding VmsUsable}"
+						<Button FontWeight="Bold" Foreground="#3a3a3a" 
 						        Command="{Binding ForceOffConfirmClickCommand}">Force Off</Button>
 					</StackPanel>
 				</StackPanel>
@@ -195,9 +195,14 @@
 													<PathIcon Data="{StaticResource CaretDownRegular}" Width="16" Height="16" />
 													<Button.Flyout>
 														<MenuFlyout VerticalOffset="5">
-															<MenuItem Header="Force off" Command="{Binding ForceOffClickCommand}" />
-															<MenuItem Header="Manage connected drives" Command="{Binding ManageDriveConnectionsClickCommand}" />
-															<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}" />
+															<MenuItem Header="Force off" IsEnabled="{Binding CanUse}"
+															          Command="{Binding ForceOffClickCommand}" />
+															
+															<MenuItem Header="Manage connected drives" 
+															          Command="{Binding ManageDriveConnectionsClickCommand}" />
+															
+															<MenuItem Header="Delete" IsEnabled="{Binding CanDelete}"
+															          Command="{Binding DeleteClickCommand}" />
 														</MenuFlyout>
 													</Button.Flyout>
 												</Button>
@@ -221,14 +226,12 @@
 
 											<StackPanel Orientation="Horizontal" Spacing="10">
 												<Button Width="80" Command="{Binding PowerOnClickCommand}" Classes="vm_action"
-												        x:CompileBindings="False"
-												        IsEnabled="{Binding Path=DataContext.VmsUsable, RelativeSource={RelativeSource AncestorType=UserControl}}">
+												        IsEnabled="{Binding CanUse}">
 													Start
 												</Button>
 
 												<Button Command="{Binding PowerOffClickCommand}" Classes="vm_action"
-												        x:CompileBindings="False"
-												        IsEnabled="{Binding Path=DataContext.VmsUsable, RelativeSource={RelativeSource AncestorType=UserControl}}">
+												        IsEnabled="{Binding CanUse}">
 													Power Off
 												</Button>
 											</StackPanel>

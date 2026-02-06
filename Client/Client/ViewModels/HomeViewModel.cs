@@ -23,8 +23,6 @@ public partial class HomeViewModel : ViewModelBase
 	private readonly DriveService _driveService;
 	
 	private VmItemTemplate _forceOffWarningVm = null!;
-
-	public bool VmsUsable { get; } = true;
 	
 	[ObservableProperty] 
 	private bool _forceOffWarningIsOpen = false;
@@ -73,12 +71,15 @@ public partial class HomeViewModel : ViewModelBase
 		
 		if (ClientSvc.IsLoggedInAsSubUser && ClientSvc.User is SubUser subUser)
 		{
-			VmsUsable = subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineUse);
+			VmItemTemplate.CanUse = subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineUse);
+			VmItemTemplate.CanDelete = subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineDelete);
 			DriveConnectionItemTemplate.CanConnect = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveConnect);
 			DriveConnectionItemTemplate.CanDisconnect = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveDisconnect);
 		}
 		else
 		{
+			VmItemTemplate.CanUse = true;
+			VmItemTemplate.CanDelete = true;
 			DriveConnectionItemTemplate.CanConnect = true;
 			DriveConnectionItemTemplate.CanDisconnect = true;
 		}
@@ -527,6 +528,8 @@ public partial class VmItemTemplate : ObservableObject
 	public Action<int>? ManageDriveConnectionsClicked;
 	public Action<VmGeneralDescriptor>? DeleteClicked;
 	
+	public static bool CanUse { get; set; }
+	public static bool CanDelete { get; set; }
 	public int Id { get; }
 
 	[ObservableProperty] 
