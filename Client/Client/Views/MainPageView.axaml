@@ -124,6 +124,29 @@
 				<TextBlock TextWrapping="Wrap">The following are permissions your owner does not have over your account.</TextBlock>
 				<TextBlock TextWrapping="Wrap">You may grant the owner permissions, but you cannot remove the owner's permissions.</TextBlock>
 				<TextBlock TextWrapping="Wrap">The owner may remove his permissions over your account, but he may not grant himself permissions.</TextBlock>
+
+				<ScrollViewer HorizontalScrollBarVisibility="Auto" MaxHeight="300">
+					<ItemsControl ItemsSource="{Binding GrantPermissions}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate DataType="vm:PermissionItemTemplate">
+								<Border Background="#ebedf0" CornerRadius="5" Margin="5, 5" Padding="6, 0" Width="350"
+								        ToolTip.Placement="Left" ToolTip.HorizontalOffset="-5" ToolTip.VerticalOffset="1"
+								        ToolTip.Tip="{Binding Description}"
+								        BoxShadow="0 0 5 0 #b7b7b7">
+
+									<Grid ColumnDefinitions="*, Auto">
+										<TextBlock VerticalAlignment="Center" Foreground="#303030"
+										           Text="{Binding PermissionString}" />
+
+										<CheckBox Grid.Column="1" IsChecked="{Binding IsChecked}" />
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</ScrollViewer>
+				
+				<Button Classes="enter" HorizontalAlignment="Center" Margin="0, 5, 0, 0">Apply</Button>
 			</StackPanel>
 		</templated:OverlayPopup>
 		

@@ -148,6 +148,7 @@ public partial class MainPageViewModel : ViewModelBase
 		(UserPermissions.DriveItemList | UserPermissions.VirtualMachineList).AddIncluded(),
 		"owner", "owner@gmail.com", "sub_user", "user@gmail.com", DateTime.Now);
 		AccountMenuTitle = $"Welcome, {SubUser.Username}.";
+		LoggedInAsUser = true;
 		
 		UserPermissions[] permissions = SubUser.OwnerPermissions.ToArray();
 		OwnerPermissions = new UserPermissionItemTemplate[permissions.Length];
@@ -488,8 +489,25 @@ public partial class MainPageViewModel : ViewModelBase
 	/// Postcondition: The permission granting popup is open.
 	/// </remarks>
 	[RelayCommand]
-	private void GrantPermissionsClick() => PrmsPopupIsOpen = true;
-	
+	private void GrantPermissionsClick()
+	{
+		if (ClientSvc.User is not SubUser subUser)
+			return;
+		
+		GrantPermissions.Clear();
+		
+		foreach (UserPermissions prms in Enum.GetValues(typeof(UserPermissions)))
+		{
+			if (prms == UserPermissions.None)
+				continue;
+		
+			if (!subUser.OwnerPermissions.HasPermission(prms))
+				GrantPermissions.Add(new PermissionItemTemplate(prms));
+		}
+		
+		PrmsPopupIsOpen = true;
+	}
+
 	/// <summary>
 	/// Closes the permission granting popup.
 	/// </summary>
