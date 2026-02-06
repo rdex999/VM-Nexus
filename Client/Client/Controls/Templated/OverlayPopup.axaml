@@ -32,8 +32,9 @@
 								           TextAlignment="Center" TextWrapping="Wrap"
 								           Foreground="SlateGray" FontWeight="Bold" FontSize="24" />
 
-								<Button Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" Padding="5" Name="CloseButton">
-									<PathIcon Data="{StaticResource DismissRegular}" Width="15" Height="15"/>
+								<Button Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Top" CornerRadius="5"
+								        Opacity="0.8" Padding="5" Name="CloseButton">
+									<PathIcon Data="{StaticResource DismissRegular}" Width="15" Height="15" Foreground="#20202a"/>
 								</Button>
 							</Grid>
 							

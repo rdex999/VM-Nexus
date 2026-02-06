@@ -21,10 +21,10 @@ public partial class MainPageViewModel : ViewModelBase
 	public SplitViewDisplayMode MenuDisplayMode { get; }
 	
 	public ObservableCollection<SideMenuItemTemplate> SideMenuItems { get; }
-	
 	public ObservableCollection<VmTabTemplate> VmTabs { get; }
+	public ObservableCollection<PermissionItemTemplate> GrantPermissions { get; }
 
-	public bool CanResetPassword { get; private set; }
+	public bool LoggedInAsUser { get; private set; }			/* If logged in as the user itself, not into a sub-user. */
 	
 	private const int SideMenuIdxHome = 0;
 	private const int SideMenuIdxCreateVm = 1;
@@ -91,6 +91,9 @@ public partial class MainPageViewModel : ViewModelBase
 	
 	[ObservableProperty] 
 	private string _deleteAccountPopupConfirmation = string.Empty;
+
+	[ObservableProperty] 
+	private bool _prmsPopupIsOpen = false;
 	
 	/// <summary>
 	/// Creates the MainViewModel object. Initializes UI.
@@ -115,6 +118,7 @@ public partial class MainPageViewModel : ViewModelBase
 
 		_driveService = new DriveService(ClientSvc);
 		VmTabs = new ObservableCollection<VmTabTemplate>();
+		GrantPermissions = new ObservableCollection<PermissionItemTemplate>();
 
 		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
 			MenuDisplayMode = SplitViewDisplayMode.Overlay;
@@ -149,7 +153,8 @@ public partial class MainPageViewModel : ViewModelBase
 		OwnerPermissions = new UserPermissionItemTemplate[permissions.Length];
 		for (int i = 0; i < permissions.Length; ++i)
 			OwnerPermissions[i] = new UserPermissionItemTemplate(permissions[i]);
-		
+
+		GrantPermissions = new ObservableCollection<PermissionItemTemplate>();
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
 			new SideMenuItemTemplate("Home", new HomeViewModel(), "HomeRegular"),
@@ -182,7 +187,7 @@ public partial class MainPageViewModel : ViewModelBase
 		IsSubUser = ClientSvc.User is SubUser;
 		CanDeleteAccount = !ClientSvc.IsLoggedInAsSubUser || (ClientSvc.IsLoggedInAsSubUser &&
 		                                                      ((SubUser)ClientSvc.User).OwnerPermissions.HasPermission(UserPermissions.UserDelete.AddIncluded()));
-		CanResetPassword = !ClientSvc.IsLoggedInAsSubUser;
+		LoggedInAsUser = !ClientSvc.IsLoggedInAsSubUser;
 		
 		if (IsSubUser)
 		{
@@ -475,6 +480,27 @@ public partial class MainPageViewModel : ViewModelBase
 	}
 
 	/// <summary>
+	/// Handles a click on the grant permissions button, in the permissions drop down.
+	/// Opens the permission granting popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the grant permissions button, in the permissions drop down. <br/>
+	/// Postcondition: The permission granting popup is open.
+	/// </remarks>
+	[RelayCommand]
+	private void GrantPermissionsClick() => PrmsPopupIsOpen = true;
+	
+	/// <summary>
+	/// Closes the permission granting popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either closing the permission granting popup is needed, or it is closing. <br/>
+	/// Postcondition: The permission granting popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private void ClosePrmsPopup() => PrmsPopupIsOpen = false;
+
+	/// <summary>
 	/// Change the mode of the side menu. Not extended is for when there is no selected VM tab, and extended is for when there is a tab selected.
 	/// The extended mode includes more side menu items, such as a screen view of the VM.
 	/// </summary>
@@ -616,5 +642,22 @@ public class VmTabTemplate
 	public VmTabTemplate(VmGeneralDescriptor descriptor)
 	{
 		Descriptor = descriptor;
+	}
+}
+
+public partial class PermissionItemTemplate : ObservableObject
+{
+	public UserPermissions Permission { get; }
+	public string PermissionString { get; }
+	public string Description { get; }
+
+	[ObservableProperty] 
+	private bool _isChecked = false;
+	
+	public PermissionItemTemplate(UserPermissions permission)
+	{
+		Permission = permission;
+		PermissionString = Common.SeparateStringWords(permission.ToString());
+		Description = permission.Description();
 	}
 }

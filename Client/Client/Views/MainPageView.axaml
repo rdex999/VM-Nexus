@@ -117,6 +117,16 @@
 			</StackPanel>
 		</templated:OverlayPopup>
 		
+		<templated:OverlayPopup Grid.Row="0" IsOpen="{Binding PrmsPopupIsOpen}"
+		                        PlacementTarget="Grid" Background="White" Placement="Center" Title="Grant Permissions"
+		                        ClosedCommand="{Binding ClosePrmsPopupCommand}">
+			<StackPanel Spacing="5">
+				<TextBlock TextWrapping="Wrap">The following are permissions your owner does not have over your account.</TextBlock>
+				<TextBlock TextWrapping="Wrap">You may grant the owner permissions, but you cannot remove the owner's permissions.</TextBlock>
+				<TextBlock TextWrapping="Wrap">The owner may remove his permissions over your account, but he may not grant himself permissions.</TextBlock>
+			</StackPanel>
+		</templated:OverlayPopup>
+		
 		<Border Grid.Row="0" Background="#d3e6eb" Padding="7">		<!-- Also looks good #e2e7e8 -->
 			<Grid ColumnDefinitions="*, Auto, *">
 				<ToggleButton Name="MenuToggle" HorizontalAlignment="Left" IsChecked="{Binding IsPaneOpen, ElementName=SplitView}"
@@ -147,7 +157,9 @@
 							<Flyout VerticalOffset="5">
 								<ScrollViewer MaxHeight="240">
 									<StackPanel Spacing="5">
-										<Button FontWeight="DemiBold" CornerRadius="7" HorizontalAlignment="Center" Opacity="0.75">
+										<Button FontWeight="DemiBold" CornerRadius="7" HorizontalAlignment="Center" Opacity="0.75"
+										        IsEnabled="{Binding LoggedInAsUser}"
+										        Command="{Binding GrantPermissionsClickCommand}">
 											Grant Permissions
 											
 											<Button.Styles>
@@ -241,7 +253,7 @@
 								<MenuItem Header="-"/>
 								<MenuItem Header="Log Out" Command="{Binding LogoutCommand}"/>
 								<MenuItem Header="Reset Password" Command="{Binding ResetPswdClickCommand}" 
-								          IsEnabled="{Binding CanResetPassword}"/>
+								          IsEnabled="{Binding LoggedInAsUser}"/>
 								<MenuItem Header="Delete Account" Command="{Binding DeleteAccountClickCommand}" 
 								          IsEnabled="{Binding CanDeleteAccount}"/>
 							</MenuFlyout>
