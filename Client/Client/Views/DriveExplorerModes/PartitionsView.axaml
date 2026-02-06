@@ -48,7 +48,8 @@
 
 										<Button.Flyout>
 											<MenuFlyout HorizontalOffset="8" Placement="RightEdgeAlignedTop">
-												<MenuItem Header="Download" Command="{Binding DownloadCommand}" />
+												<MenuItem Header="Download" IsEnabled="{Binding CanDownload}"
+												          Command="{Binding DownloadCommand}" />
 											</MenuFlyout>
 										</Button.Flyout>
 									</Button>

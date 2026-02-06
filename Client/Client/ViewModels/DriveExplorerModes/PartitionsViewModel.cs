@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Client.Services;
 using CommunityToolkit.Mvvm.Input;
+using Shared;
 using Shared.Drives;
 
 namespace Client.ViewModels.DriveExplorerModes;
@@ -12,7 +13,7 @@ public class PartitionsViewModel : DriveExplorerMode
 {
 	private readonly DriveService _driveService;
 	public ObservableCollection<PartitionItemTemplate> Partitions { get; }
-	private DriveGeneralDescriptor _driveDescriptor;
+	private readonly DriveGeneralDescriptor _driveDescriptor;
 	
 	public PartitionsViewModel(NavigationService navigationService, ClientService clientService, 
 		DriveService driveService, DriveGeneralDescriptor driveDescriptor, PathItem[] partitions) 
@@ -21,6 +22,9 @@ public class PartitionsViewModel : DriveExplorerMode
 		_driveService = driveService;
 		_driveDescriptor = driveDescriptor;
 		Partitions = new ObservableCollection<PartitionItemTemplate>();
+
+		if (ClientSvc.IsLoggedInAsSubUser && ClientSvc.User is SubUser subUser)
+			PartitionItemTemplate.CanDownload= subUser.OwnerPermissions.HasPermission(UserPermissions.DriveItemDownload);
 		
 		for (int i = 0; i < partitions.Length; ++i)
 		{
@@ -84,6 +88,7 @@ public partial class PartitionItemTemplate
 {
 	public Action<int>? Opened;
 	public Action<int>? DownloadRequested;
+	public static bool CanDownload { get; set; } = true;
 	public int Index { get; }
 	public int SizeMiB { get; }
 	public string SizeMiBString =>
