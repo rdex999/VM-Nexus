@@ -163,6 +163,29 @@ public class MessageRequestCreateSubUser : MessageRequest
 	                                         !string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(Password);
 }
 
+/* Set new permissions the owner will have over the given user. */
+public class MessageRequestSetOwnerPermissions : MessageRequest
+{
+	public int UserId { get; }		/* The ID of the user to change the owner permissions of. */
+	public UserPermissions Permissions { get; }
+
+	public MessageRequestSetOwnerPermissions(int userId, UserPermissions permissions)
+	{
+		UserId = userId;
+		Permissions = permissions;
+	}
+	
+	[JsonConstructor]
+	public MessageRequestSetOwnerPermissions(Guid id, int userId, UserPermissions permissions)
+		: base(id)
+	{
+		UserId = userId;
+		Permissions = permissions;
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
+}
+
 public class MessageRequestResetPassword : MessageRequest
 {
 	public string Password { get; }

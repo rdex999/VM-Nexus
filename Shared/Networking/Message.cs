@@ -5,7 +5,7 @@ namespace Shared.Networking;
 public interface IMessage
 {
 	public Guid Id { get; }
-	
+
 	public bool IsValidMessage();
 }
 
@@ -27,6 +27,6 @@ public abstract class Message : IMessage
 	{
 		Id = id;
 	}
-
-	public virtual bool IsValidMessage() => true; 
+	
+	public virtual bool IsValidMessage() => Id != Guid.Empty;
 }

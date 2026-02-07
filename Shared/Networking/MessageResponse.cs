@@ -24,6 +24,8 @@ public abstract class MessageResponse : Message, IMessageResponse
 	{
 		RequestId = requestId;
 	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && RequestId != Guid.Empty;
 }
 
 public class MessageResponseInvalidRequestData : MessageResponse	/* If the received request is invalid, this is the response. (haha) */
@@ -251,6 +253,24 @@ public class MessageResponseCreateSubUser : MessageResponse
 	}
 
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
+}
+
+public class MessageResponseSetOwnerPermissions : MessageResponse
+{
+	public bool Success { get; }
+
+	public MessageResponseSetOwnerPermissions(Guid requestId, bool success)
+		: base(requestId)
+	{
+		Success = success;
+	}
+	
+	[JsonConstructor]
+	public MessageResponseSetOwnerPermissions(Guid id, Guid requestId, bool success)
+		: base(id, requestId)
+	{
+		Success = success;
+	}
 }
 
 public class MessageResponseResetPassword : MessageResponse
