@@ -69,10 +69,16 @@ public partial class SubUsersViewModel : ViewModelBase
 
 	private int _deleteSubUserPopupUserId = -1;
 	
+	[ObservableProperty]
+	private bool _removePrmsPopupIsOpen = false;
+	
+	public ObservableCollection<UserPermissionItemTemplate> RemovePrmsPopupPermissions { get; }
+	
 	public SubUsersViewModel(NavigationService navigationSvc, ClientService clientSvc) 
 		: base(navigationSvc, clientSvc)
 	{
 		SubUsers = new ObservableCollection<SubUserItemTemplate>();
+		RemovePrmsPopupPermissions = new ObservableCollection<UserPermissionItemTemplate>();
 		ClientSvc.UserDeleted += OnUserDeleted;
 		ClientSvc.SubUserCreated += OnSubUserCreated;
 		SubUserLoginIsEnabled = !ClientSvc.IsLoggedInAsSubUser;
@@ -89,7 +95,7 @@ public partial class SubUsersViewModel : ViewModelBase
 	public SubUsersViewModel()
 	{
 		SubUserLoginIsEnabled = true;
-		
+		RemovePrmsPopupPermissions = new ObservableCollection<UserPermissionItemTemplate>();
 		SubUsers = new ObservableCollection<SubUserItemTemplate>()
 		{
 			new SubUserItemTemplate(new SubUser(2, 1, 
@@ -146,6 +152,7 @@ public partial class SubUsersViewModel : ViewModelBase
 	{
 		SubUsers.Add(new SubUserItemTemplate(subUser));
 		SubUsers.Last().LoginClick += async void (user) => await LoginToSubUserAsync(user);
+		SubUsers.Last().RemoveOwnerPermissionsClick += OnSubUserRemovePermissionsClick;
 		SubUsers.Last().DeleteClick += OnSubUserDeleteClicked;
 	}
 
@@ -369,6 +376,28 @@ public partial class SubUsersViewModel : ViewModelBase
 	private void CloseDeleteSubUserPopup() => DeleteSubUserPopupIsOpen = false;
 
 	/// <summary>
+	/// Handles a click on the remove permissions button of a sub-user. Displays the permission removing popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the remove permissions button on the sub-user. <br/>
+	/// Postcondition: Displays the permission removing popup.
+	/// </remarks>	
+	private void OnSubUserRemovePermissionsClick(SubUser obj)
+	{
+		RemovePrmsPopupIsOpen = true;
+	}
+
+	/// <summary>
+	/// Closes the permission removing popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: Either the user has closed the permission removing popup or it is closing. <br/>
+	/// Postcondition: The permission removing popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private void CloseRemovePrmsPopup() => RemovePrmsPopupIsOpen = false;
+	
+	/// <summary>
 	/// Handles a click on a sub-users delete button. Displays the sub-user deletion popup.
 	/// </summary>
 	/// <param name="subUser">The sub-user on which the delete button was clicked. subUser != null.</param>
@@ -419,6 +448,7 @@ public partial class SubUsersViewModel : ViewModelBase
 public partial class SubUserItemTemplate : ObservableObject
 {
 	public Action<SubUser>? LoginClick;
+	public Action<SubUser>? RemoveOwnerPermissionsClick;
 	public Action<SubUser>? DeleteClick;
 	public string UserName { get; }
 	public string Email { get; }
@@ -454,6 +484,16 @@ public partial class SubUserItemTemplate : ObservableObject
 	/// </remarks>
 	[RelayCommand]
 	private void LoginToSubUserClick() => LoginClick?.Invoke(SubUser);
+	
+	/// <summary>
+	/// Handles a click on the remove permissions button of a sub-user. Displays the permission removing popup.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the remove permissions button on the sub-user. <br/>
+	/// Postcondition: Displays the permission removing popup.
+	/// </remarks>	
+	[RelayCommand]
+	private void RemovePermissionsClick() => RemoveOwnerPermissionsClick?.Invoke(SubUser);
 	
 	/// <summary>
 	/// Handles a click on the delete button of a sub-user. Displays the sub-user deletion popup.
@@ -493,12 +533,12 @@ public partial class UserPermissionItemTemplate : ObservableObject
 	}
 
 	/// <summary>
-	/// Handles the event that the permission was checked or unchecked. Raises events.
+	/// Handles the event that the permission was checked or unchecked.
 	/// </summary>
 	/// <param name="value">The new value of the IsChecked property.</param>
 	/// <remarks>
 	/// Precondition: Either the user has checked or unchecked this permission. <br/>
-	/// Postcondition: Event is handled, events are raised.
+	/// Postcondition: Event is handled. Other permissions are checked and unchecked if needed.
 	/// </remarks>
 	partial void OnIsCheckedChanged(bool value)
 	{
@@ -513,11 +553,11 @@ public partial class UserPermissionItemTemplate : ObservableObject
 					continue;
 			
 				UserPermissions[] included = permission.Permission.GetIncluded().ToArray();
-				for (int i = 0; i < included.Length; ++i)
+				foreach (UserPermissions pr in included)
 				{
 					foreach (UserPermissionItemTemplate p in _permissions)
 					{
-						if (p.Permission == included[i])
+						if (p.Permission == pr)
 							p.IsChecked = true;
 					}
 				}

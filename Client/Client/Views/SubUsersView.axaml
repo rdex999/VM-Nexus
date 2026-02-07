@@ -144,6 +144,39 @@
 			</StackPanel>
 		</templated:OverlayPopup>
 		
+		<templated:OverlayPopup Grid.Row="0" IsOpen="{Binding RemovePrmsPopupIsOpen}"
+		                        PlacementTarget="Grid" Background="White" Placement="Center" Title="Grant Permissions"
+		                        ClosedCommand="{Binding CloseRemovePrmsPopupCommand}">
+
+			<StackPanel Spacing="5">
+				<TextBlock TextWrapping="Wrap">The following are permissions you have over the sub-user.</TextBlock>
+				<TextBlock TextWrapping="Wrap">You may remove some (or all) of your permissions over the sub-user, however you cannot add permissions.</TextBlock>
+				<TextBlock TextWrapping="Wrap">The sub-user may grant you permissions over his account.</TextBlock>
+				
+				<ScrollViewer HorizontalScrollBarVisibility="Auto" MaxHeight="300">
+					<ItemsControl ItemsSource="{Binding RemovePrmsPopupPermissions}">
+						<ItemsControl.ItemTemplate>
+							<DataTemplate DataType="viewModels:UserPermissionItemTemplate">
+								<Border Background="#ebedf0" CornerRadius="5" Margin="5, 5" Padding="6, 0" Width="350"
+								        ToolTip.Placement="Left" ToolTip.HorizontalOffset="-5" ToolTip.VerticalOffset="1"
+								        ToolTip.Tip="{Binding Description}"
+								        BoxShadow="0 0 5 0 #b7b7b7">
+
+									<Grid ColumnDefinitions="*, Auto">
+										<TextBlock VerticalAlignment="Center" Foreground="#303030"
+										           Text="{Binding PermissionString}" />
+
+										<CheckBox Grid.Column="1"
+										          IsChecked="{Binding IsChecked}" />
+									</Grid>
+								</Border>
+							</DataTemplate>
+						</ItemsControl.ItemTemplate>
+					</ItemsControl>
+				</ScrollViewer>
+			</StackPanel>
+		</templated:OverlayPopup>
+		
 		<Border CornerRadius="15" Margin="6" Padding="4">
 			<Border.Background>
 				<LinearGradientBrush StartPoint="0%, 0%" EndPoint="100%, 100%">
@@ -231,6 +264,7 @@
 											
 											<Button.Flyout>
 												<MenuFlyout VerticalOffset="5">
+													<MenuItem Header="Remove Permissions" Command="{Binding RemovePermissionsClickCommand}"/>
 													<MenuItem Header="Delete" 
 													          Command="{Binding DeleteSubUserClickCommand}"
 													          IsEnabled="{Binding CanBeDeleted}" />
