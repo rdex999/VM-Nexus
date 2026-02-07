@@ -453,6 +453,42 @@ public sealed class ClientConnection : MessagingService
 				break;
 			}
 
+			case MessageRequestSetOwnerPermissions reqSetOwnerPermissions:
+			{
+				if (!IsLoggedIn)
+				{
+					SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
+					break;
+				}
+
+				if (IsLoggedInAsSubUser)
+				{
+					if (reqSetOwnerPermissions.UserId != User!.Id
+						|| (User.OwnerPermissions & reqSetOwnerPermissions.Permissions) != User.OwnerPermissions)
+					{
+						SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
+						break;
+					}
+				}
+				else 
+				{
+					User? user = await _databaseService.GetUserAsync(reqSetOwnerPermissions.UserId);
+					
+					if (user is not SubUser subUser || subUser.OwnerId != ActualUser!.Id
+					    || (reqSetOwnerPermissions.Permissions & subUser.OwnerPermissions) != reqSetOwnerPermissions.Permissions)
+					{
+						SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
+						break;					
+					}
+				}
+
+				result = await _databaseService.UpdateOwnerPermissionsAsync(reqSetOwnerPermissions.UserId, reqSetOwnerPermissions.Permissions);
+				
+				SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, result == ExitCode.Success));
+				
+				break;
+			}
+
 			case MessageRequestResetPassword reqResetPassword:
 			{
 				if (!IsLoggedIn || IsLoggedInAsSubUser || Common.PasswordStrength(reqResetPassword.Password) < 5)
