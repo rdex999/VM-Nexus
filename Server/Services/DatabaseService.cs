@@ -105,6 +105,7 @@ public class DatabaseService
 		if (rows == null)
 			return ExitCode.DatabaseStartupFailed;
 
+		ExitCode c = await UpdateOwnerPermissionsAsync(1, UserPermissions.VirtualMachineUse.AddIncluded());
 		return ExitCode.Success;
 	}
 
@@ -644,6 +645,34 @@ public class DatabaseService
 		if (rows == 1)
 			return ExitCode.Success;
 
+		return ExitCode.DatabaseOperationFailed;
+	}
+
+	/// <summary>
+	/// Update permissions the owner has over the given user.
+	/// </summary>
+	/// <param name="userId">The user to update the owner's permissions of. userId >= 1.</param>
+	/// <param name="permissions">The new permissions the owner has over the given user.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given ID exists, and is a sub-user. userId >= 1. <br/>
+	/// Postcondition: On success, the owner's permissions over the given user are updated,
+	/// and the returned exit code indicates success. <br/>
+	/// On failure, the owner's permissions are not updated and the returned exit code indicates the error.
+	/// </remarks>
+	public async Task<ExitCode> UpdateOwnerPermissionsAsync(int userId, UserPermissions permissions)
+	{
+		if (userId < 1)
+			return ExitCode.InvalidParameter;
+
+		int? rows = await ExecuteNonQueryAsync("UPDATE users SET owner_permissions = @permissions WHERE id = @user_id",
+			new NpgsqlParameter("@user_id", userId),
+			new NpgsqlParameter("@permissions", (int)permissions)
+		);
+
+		if (rows == 1)
+			return ExitCode.Success;
+		
 		return ExitCode.DatabaseOperationFailed;
 	}
 
