@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
@@ -79,11 +80,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
 		NewSubUserPopupPermissions = new UserPermissionItemTemplate[permissions.Length - 1];	/* The "None" permission is not included. */
 		for (int i = 0; i < NewSubUserPopupPermissions.Length; ++i)
-		{
-			NewSubUserPopupPermissions[i] = new UserPermissionItemTemplate(permissions[i + 1]);
-			NewSubUserPopupPermissions[i].Checked += OnNewSubUserPopupPermissionChecked;
-			NewSubUserPopupPermissions[i].UnChecked += OnNewSubUserPopupPermissionUnChecked;
-		}
+			NewSubUserPopupPermissions[i] = new UserPermissionItemTemplate(permissions[i + 1], NewSubUserPopupPermissions);
 		
 		_ = InitializeAsync();
 	}
@@ -115,7 +112,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
 		NewSubUserPopupPermissions = new UserPermissionItemTemplate[permissions.Length - 1];	/* The "None" permission is not included. */
 		for (int i = 0; i < NewSubUserPopupPermissions.Length; ++i)
-			NewSubUserPopupPermissions[i] = new UserPermissionItemTemplate(permissions[i + 1]);
+			NewSubUserPopupPermissions[i] = new UserPermissionItemTemplate(permissions[i + 1], NewSubUserPopupPermissions);
 	}
 
 	/// <summary>
@@ -215,57 +212,6 @@ public partial class SubUsersViewModel : ViewModelBase
 	[RelayCommand]
 	private void CloseNewSubUserPopup() => NewSubUserPopupIsOpen = false;
 	
-	/// <summary>
-	/// Handles a permission check event. Checks all required permissions for the checked permission.
-	/// </summary>
-	/// <remarks>
-	/// Precondition: The user has checked some permission in the permissions in the new sub-user creation popup. <br/>
-	/// Postcondition: All required permissions for the checked permission are checked.
-	/// </remarks>
-	private void OnNewSubUserPopupPermissionChecked()
-	{
-		foreach (UserPermissionItemTemplate permission in NewSubUserPopupPermissions)
-		{
-			if (!permission.IsChecked)
-				continue;
-			
-			UserPermissions[] included = permission.Permission.GetIncluded().ToArray();
-			for (int i = 0; i < included.Length; ++i)
-			{
-				foreach (UserPermissionItemTemplate p in NewSubUserPopupPermissions)
-				{
-					if (p.Permission == included[i])
-						p.IsChecked = true;
-				}
-			}
-		}
-	}
-	
-	/// <summary>
-	/// Handles a permission uncheck event. Unchecks all permissions that require the unchecked permission.
-	/// </summary>
-	/// <remarks>
-	/// Precondition: The user has unchecked some permission in the permissions in the new sub-user creation popup. <br/>
-	/// Postcondition: All permissions that require the unchecked permission are unchecked.
-	/// </remarks>
-	private void OnNewSubUserPopupPermissionUnChecked()
-	{
-		foreach (UserPermissionItemTemplate permission in NewSubUserPopupPermissions)
-		{
-			if (permission.IsChecked)
-				continue;
-			
-			foreach (UserPermissionItemTemplate p in NewSubUserPopupPermissions)
-			{
-				if (p.Permission == permission.Permission || !p.IsChecked)
-					continue;
-
-				if (p.Permission.GetIncluded().HasPermission(permission.Permission))
-					p.IsChecked = false;
-			}
-		}
-	}
-
 	/// <summary>
 	/// Handles a change in the username field of the sub-user creation popup.
 	/// </summary>
@@ -522,8 +468,7 @@ public partial class SubUserItemTemplate : ObservableObject
 
 public partial class UserPermissionItemTemplate : ObservableObject
 {
-	public Action? Checked;
-	public Action? UnChecked;
+	private readonly IEnumerable<UserPermissionItemTemplate>? _permissions;
 	public UserPermissions Permission { get; }
 	public string PermissionString { get; }
 	public string Description { get; }
@@ -533,6 +478,15 @@ public partial class UserPermissionItemTemplate : ObservableObject
 
 	public UserPermissionItemTemplate(UserPermissions permission)
 	{
+		_permissions = null;
+		Permission = permission;
+		PermissionString = Common.SeparateStringWords(permission.ToString());
+		Description = permission.Description();
+	}
+	
+	public UserPermissionItemTemplate(UserPermissions permission, IEnumerable<UserPermissionItemTemplate> permissions)
+	{
+		_permissions = permissions;
 		Permission = permission;
 		PermissionString = Common.SeparateStringWords(permission.ToString());
 		Description = permission.Description();
@@ -548,9 +502,43 @@ public partial class UserPermissionItemTemplate : ObservableObject
 	/// </remarks>
 	partial void OnIsCheckedChanged(bool value)
 	{
+		if (_permissions == null)
+			return;
+		
 		if (value)
-			Checked?.Invoke();
+		{
+			foreach (UserPermissionItemTemplate permission in _permissions)
+			{
+				if (!permission.IsChecked)
+					continue;
+			
+				UserPermissions[] included = permission.Permission.GetIncluded().ToArray();
+				for (int i = 0; i < included.Length; ++i)
+				{
+					foreach (UserPermissionItemTemplate p in _permissions)
+					{
+						if (p.Permission == included[i])
+							p.IsChecked = true;
+					}
+				}
+			}
+		}
 		else
-			UnChecked?.Invoke();
+		{
+			foreach (UserPermissionItemTemplate permission in _permissions)
+			{
+				if (permission.IsChecked)
+					continue;
+			
+				foreach (UserPermissionItemTemplate p in _permissions)
+				{
+					if (p.Permission == permission.Permission || !p.IsChecked)
+						continue;
+
+					if (p.Permission.GetIncluded().HasPermission(permission.Permission))
+						p.IsChecked = false;
+				}
+			}
+		}
 	}
 }

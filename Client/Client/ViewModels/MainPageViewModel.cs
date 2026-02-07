@@ -22,7 +22,7 @@ public partial class MainPageViewModel : ViewModelBase
 	
 	public ObservableCollection<SideMenuItemTemplate> SideMenuItems { get; }
 	public ObservableCollection<VmTabTemplate> VmTabs { get; }
-	public ObservableCollection<PermissionItemTemplate> GrantPermissions { get; }
+	public ObservableCollection<UserPermissionItemTemplate> GrantPermissions { get; }
 
 	public bool LoggedInAsUser { get; private set; }			/* If logged in as the user itself, not into a sub-user. */
 	
@@ -118,7 +118,7 @@ public partial class MainPageViewModel : ViewModelBase
 
 		_driveService = new DriveService(ClientSvc);
 		VmTabs = new ObservableCollection<VmTabTemplate>();
-		GrantPermissions = new ObservableCollection<PermissionItemTemplate>();
+		GrantPermissions = new ObservableCollection<UserPermissionItemTemplate>();
 
 		if (OperatingSystem.IsAndroid() || OperatingSystem.IsIOS())
 			MenuDisplayMode = SplitViewDisplayMode.Overlay;
@@ -153,9 +153,9 @@ public partial class MainPageViewModel : ViewModelBase
 		UserPermissions[] permissions = SubUser.OwnerPermissions.ToArray();
 		OwnerPermissions = new UserPermissionItemTemplate[permissions.Length];
 		for (int i = 0; i < permissions.Length; ++i)
-			OwnerPermissions[i] = new UserPermissionItemTemplate(permissions[i]);
+			OwnerPermissions[i] = new UserPermissionItemTemplate(permissions[i], OwnerPermissions);
 
-		GrantPermissions = new ObservableCollection<PermissionItemTemplate>();
+		GrantPermissions = new ObservableCollection<UserPermissionItemTemplate>();
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
 		{
 			new SideMenuItemTemplate("Home", new HomeViewModel(), "HomeRegular"),
@@ -500,14 +500,14 @@ public partial class MainPageViewModel : ViewModelBase
 		{
 			if (prms == UserPermissions.None)
 				continue;
-		
+
 			if (!subUser.OwnerPermissions.HasPermission(prms))
-				GrantPermissions.Add(new PermissionItemTemplate(prms));
+				GrantPermissions.Add(new UserPermissionItemTemplate(prms, GrantPermissions));
 		}
 		
 		PrmsPopupIsOpen = true;
 	}
-
+	
 	/// <summary>
 	/// Closes the permission granting popup.
 	/// </summary>
@@ -533,7 +533,7 @@ public partial class MainPageViewModel : ViewModelBase
 			return;
 
 		UserPermissions prms = UserPermissions.None;
-		foreach (PermissionItemTemplate prm in GrantPermissions)
+		foreach (UserPermissionItemTemplate prm in GrantPermissions)
 		{
 			if (prm.IsChecked)
 				prms = prms.AddPermission(prm.Permission);
@@ -686,22 +686,5 @@ public class VmTabTemplate
 	public VmTabTemplate(VmGeneralDescriptor descriptor)
 	{
 		Descriptor = descriptor;
-	}
-}
-
-public partial class PermissionItemTemplate : ObservableObject
-{
-	public UserPermissions Permission { get; }
-	public string PermissionString { get; }
-	public string Description { get; }
-
-	[ObservableProperty] 
-	private bool _isChecked = false;
-	
-	public PermissionItemTemplate(UserPermissions permission)
-	{
-		Permission = permission;
-		PermissionString = Common.SeparateStringWords(permission.ToString());
-		Description = permission.Description();
 	}
 }

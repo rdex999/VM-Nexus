@@ -128,7 +128,7 @@
 				<ScrollViewer HorizontalScrollBarVisibility="Auto" MaxHeight="300">
 					<ItemsControl ItemsSource="{Binding GrantPermissions}">
 						<ItemsControl.ItemTemplate>
-							<DataTemplate DataType="vm:PermissionItemTemplate">
+							<DataTemplate DataType="vm:UserPermissionItemTemplate">
 								<Border Background="#ebedf0" CornerRadius="5" Margin="5, 5" Padding="6, 0" Width="350"
 								        ToolTip.Placement="Left" ToolTip.HorizontalOffset="-5" ToolTip.VerticalOffset="1"
 								        ToolTip.Tip="{Binding Description}"
@@ -138,7 +138,8 @@
 										<TextBlock VerticalAlignment="Center" Foreground="#303030"
 										           Text="{Binding PermissionString}" />
 
-										<CheckBox Grid.Column="1" IsChecked="{Binding IsChecked}" />
+										<CheckBox Grid.Column="1"
+										          IsChecked="{Binding IsChecked}" />
 									</Grid>
 								</Border>
 							</DataTemplate>
