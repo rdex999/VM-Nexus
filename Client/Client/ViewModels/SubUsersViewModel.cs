@@ -72,6 +72,8 @@ public partial class SubUsersViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _removePrmsPopupIsOpen = false;
 	
+	private int _removePrmsPopupUserId = -1;
+	
 	public ObservableCollection<UserPermissionItemTemplate> RemovePrmsPopupPermissions { get; }
 	
 	public SubUsersViewModel(NavigationService navigationSvc, ClientService clientSvc) 
@@ -378,12 +380,20 @@ public partial class SubUsersViewModel : ViewModelBase
 	/// <summary>
 	/// Handles a click on the remove permissions button of a sub-user. Displays the permission removing popup.
 	/// </summary>
+	/// <param name="subUser">The sub-user on which the remove permissions button was clicked. subUser != null.</param>
 	/// <remarks>
-	/// Precondition: The user has clicked on the remove permissions button on the sub-user. <br/>
+	/// Precondition: The user has clicked on the remove permissions button on the sub-user. subUser != null. <br/>
 	/// Postcondition: Displays the permission removing popup.
 	/// </remarks>	
-	private void OnSubUserRemovePermissionsClick(SubUser obj)
+	private void OnSubUserRemovePermissionsClick(SubUser subUser)
 	{
+		RemovePrmsPopupPermissions.Clear();
+		_removePrmsPopupUserId = subUser.Id;
+		
+		UserPermissions[] permissions = subUser.OwnerPermissions.ToArray();
+		foreach (UserPermissions permission in permissions)
+			RemovePrmsPopupPermissions.Add(new UserPermissionItemTemplate(permission, RemovePrmsPopupPermissions, true));
+		
 		RemovePrmsPopupIsOpen = true;
 	}
 
@@ -396,6 +406,29 @@ public partial class SubUsersViewModel : ViewModelBase
 	/// </remarks>
 	[RelayCommand]
 	private void CloseRemovePrmsPopup() => RemovePrmsPopupIsOpen = false;
+
+	/// <summary>
+	/// Handles a click on the apply button in the permission removing popup.
+	/// Removes unchecked permissions.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the apply button in the permission removing popup. <br/>
+	/// Postcondition: The permissions are set.
+	/// </remarks>
+	[RelayCommand]
+	private async Task ApplyRemovePrmsPopupClickAsync()
+	{
+		UserPermissions permissions = UserPermissions.None;
+		foreach (UserPermissionItemTemplate pr in RemovePrmsPopupPermissions)
+		{
+			if (pr.IsChecked)
+				permissions = permissions.AddPermission(pr.Permission);
+		}
+
+		await ClientSvc.SetOwnerPermissionsAsync(_removePrmsPopupUserId, permissions);
+		
+		CloseRemovePrmsPopup();
+	}
 	
 	/// <summary>
 	/// Handles a click on a sub-users delete button. Displays the sub-user deletion popup.
@@ -524,12 +557,13 @@ public partial class UserPermissionItemTemplate : ObservableObject
 		Description = permission.Description();
 	}
 	
-	public UserPermissionItemTemplate(UserPermissions permission, IEnumerable<UserPermissionItemTemplate> permissions)
+	public UserPermissionItemTemplate(UserPermissions permission, IEnumerable<UserPermissionItemTemplate> permissions, bool isChecked = false)
 	{
 		_permissions = permissions;
 		Permission = permission;
 		PermissionString = Common.SeparateStringWords(permission.ToString());
 		Description = permission.Description();
+		IsChecked = isChecked;
 	}
 
 	/// <summary>
