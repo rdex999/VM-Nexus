@@ -455,16 +455,17 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestSetOwnerPermissions reqSetOwnerPermissions:
 			{
-				if (!IsLoggedIn)
+				if (!IsLoggedIn || reqSetOwnerPermissions.Permissions.AddIncluded() != reqSetOwnerPermissions.Permissions)
 				{
 					SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
 					break;
 				}
 
-				if (IsLoggedInAsSubUser)
+				if (reqSetOwnerPermissions.UserId == ActualUser!.Id)
 				{
-					if (reqSetOwnerPermissions.UserId != User!.Id
-						|| (User.OwnerPermissions & reqSetOwnerPermissions.Permissions) != User.OwnerPermissions)
+					/* Can only grant the owner more permissions. */
+					if (ActualUser is not SubUser subUser 
+					    || (subUser.OwnerPermissions & reqSetOwnerPermissions.Permissions) != subUser.OwnerPermissions)
 					{
 						SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
 						break;
@@ -472,6 +473,7 @@ public sealed class ClientConnection : MessagingService
 				}
 				else 
 				{
+					/* Owner can only remove his permissions over his sub-users. */
 					User? user = await _databaseService.GetUserAsync(reqSetOwnerPermissions.UserId);
 					
 					if (user is not SubUser subUser || subUser.OwnerId != ActualUser!.Id

@@ -519,6 +519,32 @@ public partial class MainPageViewModel : ViewModelBase
 	private void ClosePrmsPopup() => PrmsPopupIsOpen = false;
 
 	/// <summary>
+	/// Handles a click on the apply button on the permission granting popup.
+	/// Sets the new permissions.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: The user has clicked on the apply button in the permission granting popup. <br/>
+	/// Postcondition: The permissions are set and the popup is closed.
+	/// </remarks>
+	[RelayCommand]
+	private async Task ApplyPrmsPopupClick()
+	{
+		if (ClientSvc.User is not SubUser subUser)
+			return;
+
+		UserPermissions prms = UserPermissions.None;
+		foreach (PermissionItemTemplate prm in GrantPermissions)
+		{
+			if (prm.IsChecked)
+				prms = prms.AddPermission(prm.Permission);
+		}
+		
+		await ClientSvc.SetOwnerPermissionsAsync(subUser.Id, subUser.OwnerPermissions.AddPermission(prms));
+		
+		ClosePrmsPopup();
+	}
+
+	/// <summary>
 	/// Change the mode of the side menu. Not extended is for when there is no selected VM tab, and extended is for when there is a tab selected.
 	/// The extended mode includes more side menu items, such as a screen view of the VM.
 	/// </summary>

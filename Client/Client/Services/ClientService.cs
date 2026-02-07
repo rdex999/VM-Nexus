@@ -288,13 +288,34 @@ public class ClientService : MessagingService
 	}
 
 	/// <summary>
+	/// Requests to update the owner's permissions over the given user.
+	/// </summary>
+	/// <param name="userId">The user to update the owner's permissions of. userId >= 1.</param>
+	/// <param name="permissions">The new permissions to set as the owner's permissions.</param>
+	/// <returns>True if the permissions were set, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: Service fully initialized and connected to the server.
+	/// A user with the given ID exists and can set owner permissions according to protocol. userId >= 1. <br/>
+	/// Postcondition: On success, the permissions are set and true is returned. On failure, the permissions are not set and false is returned.
+	/// </remarks>
+	public async Task<bool> SetOwnerPermissionsAsync(int userId, UserPermissions permissions)
+	{
+		(IMessageResponse? response, ExitCode result) = await SendRequestAsync(new MessageRequestSetOwnerPermissions(userId, permissions));
+		
+		if (result != ExitCode.Success)
+			return false;
+
+		return ((MessageResponseSetOwnerPermissions)response!).Success;
+	}
+
+	/// <summary>
 	/// Attempts to reset the password of the user.
 	/// </summary>
 	/// <param name="password">The current password of the user. password != null.</param>
 	/// <param name="newPassword">The new password to set to the user. newPassword != null.</param>
 	/// <returns>A status indicating the result of the operation.</returns>
 	/// <remarks>
-	/// Precondition: Service fully initialzied and connected to the server, the user is logged in as itself. (not to a sub-user)
+	/// Precondition: Service fully initialized and connected to the server, the user is logged in as itself. (not to a sub-user)
 	/// password != null &amp;&amp; newPassword != null. <br/>
 	/// Postcondition: On success, the user's password is reset and the returned status indicates success.
 	/// On failure, the password is not reset and the returned status indicates the error.
