@@ -494,7 +494,19 @@ public sealed class ClientConnection : MessagingService
 				SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, result == ExitCode.Success));
 
 				if (result == ExitCode.Success)
-					_userService.NotifyOwnerPermissionsChanged(ownerId, reqSetOwnerPermissions.UserId, reqSetOwnerPermissions.Permissions);
+				{
+					User? user = await _databaseService.GetUserAsync(reqSetOwnerPermissions.UserId);
+					if (user is not SubUser subUser)
+						break;
+
+					if (IsLoggedInAsSubUser && subUser.Id == User!.Id)
+						User = subUser;
+					
+					else if (!IsLoggedInAsSubUser && subUser.Id == ActualUser!.Id)
+						ActualUser = subUser;
+
+					_userService.NotifyUserDataChanged(user);
+				}
 				
 				break;
 			}
@@ -1295,16 +1307,15 @@ public sealed class ClientConnection : MessagingService
 		SendInfo(new MessageInfoSubUserCreated(subUser));
 
 	/// <summary>
-	/// Notifies that the owner's permissions over the given user have changed.
+	/// Notifies that the data of the given user has changed.
 	/// </summary>
-	/// <param name="userId">The user that the owner's permissions of has changed. userId >= 1.</param>
-	/// <param name="permissions">The new owner permissions over the given user.</param>
+	/// <param name="user"></param>
 	/// <remarks>
-	/// Precondition: The owner's permissions over the given user have changed. Service initialized and connected to client. userId >= 1. <br/>
-	/// Postcondition: Client is notified that the owner's permissions over the given user were changed.
+	/// Precondition: The data of the given user has changed. (username, owner permission, etc.) Service initialized and connected to client. user != null. <br/>
+	/// Postcondition: Client is notified of the user data change.
 	/// </remarks>
-	public void NotifyOwnerPermissionsChanged(int userId, UserPermissions permissions) =>
-		SendInfo(new MessageInfoOwnerPermissions(userId, permissions));
+	public void NotifyUserDataChanged(User user) =>
+		SendInfo(new MessageInfoUserData(user));
 	
 	/// <summary>
 	/// Notifies the client that a user was deleted. (Either a sub-user, or the current user itself)

@@ -143,27 +143,25 @@ public class UserService
 	}
 
 	/// <summary>
-	/// Notifies that the owner's permissions over the given user have changed.
+	/// Notifies of a user data change.
 	/// </summary>
-	/// <param name="ownerId">The ID of the owner of the given user. ownerId >= 1.</param>
-	/// <param name="userId">The user that the owner's permissions of has changed. userId >= 1.</param>
-	/// <param name="permissions">The new owner permissions over the given user.</param>
+	/// <param name="user"></param>
 	/// <remarks>
-	/// Precondition: The owner's permissions over the given user have changed. Service initialized and connected to client. userId >= 1. <br/>
-	/// Postcondition: Client is notified that the owner's permissions over the given user were changed.
+	/// Precondition: The data of the given user has changed. user != null. <br/>
+	/// Postcondition: Client is notified of the user data change.
 	/// </remarks>
-	public void NotifyOwnerPermissionsChanged(int ownerId, int userId, UserPermissions permissions)
+	public void NotifyUserDataChanged(User user)
 	{
-		if (_users.TryGetValue(ownerId, out ConcurrentDictionary<Guid, ClientConnection>? ownerConnections))
+		if (user is SubUser subUser && _users.TryGetValue(subUser.OwnerId, out ConcurrentDictionary<Guid, ClientConnection>? ownerConnections))
 		{
 			foreach (ClientConnection connection in ownerConnections.Values)
-				connection.NotifyOwnerPermissionsChanged(userId, permissions);
+				connection.NotifyUserDataChanged(user);
 		}
 
-		if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+		if (_users.TryGetValue(user.Id, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
 		{
 			foreach (ClientConnection connection in userConnections.Values)
-				connection.NotifyOwnerPermissionsChanged(userId, permissions);
+				connection.NotifyUserDataChanged(user);
 		}
 	}
 	

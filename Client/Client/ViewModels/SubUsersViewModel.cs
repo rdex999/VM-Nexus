@@ -83,7 +83,7 @@ public partial class SubUsersViewModel : ViewModelBase
 		RemovePrmsPopupPermissions = new ObservableCollection<UserPermissionItemTemplate>();
 		ClientSvc.UserDeleted += OnUserDeleted;
 		ClientSvc.SubUserCreated += OnSubUserCreated;
-		ClientSvc.OwnerPermissionsChanged += OnOwnerPermissionsChanged;
+		ClientSvc.UserDataChanged += OnUserDataChanged;
 		SubUserLoginIsEnabled = !ClientSvc.IsLoggedInAsSubUser;
 
 		UserPermissions[] permissions = (Enum.GetValues(typeof(UserPermissions)) as UserPermissions[])!;
@@ -187,26 +187,24 @@ public partial class SubUsersViewModel : ViewModelBase
 	/// Handles the event that the owner's permissions over a user have changed.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="info">The permission change information. info != null.</param>
+	/// <param name="user">The user of which the data was changed. user != null.</param>
 	/// <remarks>
-	/// Precondition: The owner's permissions over the given user (in info) have changed. info != null. <br/>
+	/// Precondition: The user data of the given user has changed. user != null. <br/>
 	/// Postcondition: If the given user is one of the sub-users of the currently logged-in user, the sub-user data is updated.
 	/// </remarks>
-	private void OnOwnerPermissionsChanged(object? sender, MessageInfoOwnerPermissions info)
+	private void OnUserDataChanged(object? sender, User user)
 	{
+		if (ClientSvc.User == null || user.Id == ClientSvc.User.Id || user is not SubUser subUser)
+			return;
+		
 		Dispatcher.UIThread.Post(() =>
 		{
 			for (int i = 0; i < SubUsers.Count; ++i)
 			{
-				if (SubUsers[i].SubUser.Id == info.UserId)
+				if (SubUsers[i].SubUser.Id == user.Id)
 				{
-					SubUser subUser = SubUsers[i].SubUser;
 					SubUsers.RemoveAt(i);
-					
-					OnSubUserCreated(null, new SubUser(subUser.Id, subUser.OwnerId, info.Permissions, 
-						subUser.OwnerUsername, subUser.OwnerEmail, subUser.Username, subUser.Email, subUser.CreatedAt
-					));
-
+					OnSubUserCreated(null, subUser);
 					return;
 				}
 			}

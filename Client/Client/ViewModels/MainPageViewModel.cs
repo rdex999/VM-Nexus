@@ -111,7 +111,7 @@ public partial class MainPageViewModel : ViewModelBase
 	public MainPageViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
-		ClientSvc.OwnerPermissionsChanged += OnOwnerPermissionsChanged;
+		ClientSvc.UserDataChanged += OnUserDataChanged;
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		ClientSvc.VmPoweredOff += OnVmPoweredOff;
 		ClientSvc.VmCrashed += OnVmCrashed;
@@ -593,27 +593,41 @@ public partial class MainPageViewModel : ViewModelBase
 	/// Handles the event that the owner's permissions over a user have changed.
 	/// </summary>
 	/// <param name="sender">Unused.</param>
-	/// <param name="info">The permission change information. info != null.</param>
+	/// <param name="user">The user of which the data was changed. user != null.</param>
 	/// <remarks>
-	/// Precondition: The owner's permissions over the given user (in info) have changed. info != null. <br/>
-	/// Postcondition: If the given user is the currently logged-in user, the owner permissions list is updated.
+	/// Precondition: The data of the given user has changed. user != null. <br/>
+	/// Postcondition: If the given user is the currently logged-in user, the user data is updated.
 	/// </remarks>	
-	private void OnOwnerPermissionsChanged(object? sender, MessageInfoOwnerPermissions info)
+	private void OnUserDataChanged(object? sender, User user)
 	{
-		if (ClientSvc.User is not SubUser subUser || subUser.Id != info.UserId)
+		if (ClientSvc.User == null || ClientSvc.User.Id != user.Id)
 			return;
-
+		
 		Dispatcher.UIThread.Post(() =>
 		{
-			UserPermissions[] permissions = info.Permissions.ToArray();
-		
-			if (OwnerPermissions == null)
-				OwnerPermissions = new ObservableCollection<UserPermissionItemTemplate>();
+			if (user is SubUser subUser)
+			{
+				IsSubUser = true;
+				SubUser = subUser;
+				UserPermissions[] permissions = subUser.OwnerPermissions.ToArray();
+
+				if (OwnerPermissions == null)
+					OwnerPermissions = new ObservableCollection<UserPermissionItemTemplate>();
+				else
+					OwnerPermissions.Clear();
+
+				foreach (UserPermissions permission in permissions)
+					OwnerPermissions.Add(new UserPermissionItemTemplate(permission));
+			}
 			else
-				OwnerPermissions.Clear();
+			{
+				IsSubUser = false;
+				SubUser = null;
+			}
 			
-			foreach (UserPermissions permission in permissions)
-				OwnerPermissions.Add(new UserPermissionItemTemplate(permission));
+			AccountMenuTitle = $"Welcome, {user.Username}.";
+			CanDeleteAccount = !ClientSvc.IsLoggedInAsSubUser || (ClientSvc.IsLoggedInAsSubUser &&
+			                                                      ((SubUser)ClientSvc.User).OwnerPermissions.HasPermission(UserPermissions.UserDelete.AddIncluded()));
 		});
 	}
 	

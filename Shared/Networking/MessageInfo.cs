@@ -76,27 +76,21 @@ public class MessageInfoSubUserCreated : MessageInfo, IMessageTcp
 	}
 }
 
-/* The owner's permissions over a user have changed. */
-public class MessageInfoOwnerPermissions : MessageInfo, IMessageTcp
+public class MessageInfoUserData : MessageInfo, IMessageTcp
 {
-	public int UserId { get; }		/* The user of which the owner's permissions changed. */
-	public UserPermissions Permissions { get; }
+	public User User { get; }
 
-	public MessageInfoOwnerPermissions(int userId, UserPermissions permissions)
+	public MessageInfoUserData(User user)
 	{
-		UserId = userId;
-		Permissions = permissions;
+		User = user;
 	}
 
 	[JsonConstructor]
-	public MessageInfoOwnerPermissions(Guid id, int userId, UserPermissions permissions)
+	public MessageInfoUserData(Guid id, User user)
 		: base(id)
 	{
-		UserId = userId;
-		Permissions = permissions;
+		User = user;
 	}
-	
-	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
 }
 
 public class MessageInfoUserDeleted : MessageInfo, IMessageTcp
