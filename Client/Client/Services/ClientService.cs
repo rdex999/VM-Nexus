@@ -24,6 +24,7 @@ public class ClientService : MessagingService
 	public event EventHandler? Reconnected;
 	public event EventHandler<int>? UserDeleted; 
 	public event EventHandler<SubUser>? SubUserCreated;
+	public event EventHandler<MessageInfoOwnerPermissions>? OwnerPermissionsChanged;
 	public event EventHandler<VmGeneralDescriptor>? VmCreated;
 	public event EventHandler<int>? VmDeleted;
 	public event EventHandler<MessageInfoVmScreenFrame>? VmScreenFrameReceived;
@@ -1174,6 +1175,11 @@ public class ClientService : MessagingService
 			case MessageInfoSubUserCreated infoSubUserCreated:
 			{
 				SubUserCreated?.Invoke(this, infoSubUserCreated.SubUser);
+				break;
+			}
+			case MessageInfoOwnerPermissions infoOwnerPermissions:
+			{
+				OwnerPermissionsChanged?.Invoke(this, infoOwnerPermissions);
 				break;
 			}
 			case MessageInfoVmCreated infoVmCreated:
