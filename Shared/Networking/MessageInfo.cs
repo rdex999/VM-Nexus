@@ -76,6 +76,29 @@ public class MessageInfoSubUserCreated : MessageInfo, IMessageTcp
 	}
 }
 
+/* The owner's permissions over a user have changed. */
+public class MessageInfoOwnerPermissions : MessageInfo, IMessageTcp
+{
+	public int UserId { get; }		/* The user of which the owner's permissions changed. */
+	public UserPermissions Permissions { get; }
+
+	public MessageInfoOwnerPermissions(int userId, UserPermissions permissions)
+	{
+		UserId = userId;
+		Permissions = permissions;
+	}
+
+	[JsonConstructor]
+	public MessageInfoOwnerPermissions(Guid id, int userId, UserPermissions permissions)
+		: base(id)
+	{
+		UserId = userId;
+		Permissions = permissions;
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
+}
+
 public class MessageInfoUserDeleted : MessageInfo, IMessageTcp
 {
 	public int UserId { get; }
