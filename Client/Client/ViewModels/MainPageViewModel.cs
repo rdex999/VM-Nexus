@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Threading;
 using Client.Services;
 using Client.Views;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -19,8 +20,9 @@ public partial class MainPageViewModel : ViewModelBase
 {
 	private DriveService _driveService;
 	public SplitViewDisplayMode MenuDisplayMode { get; }
-	
+
 	public ObservableCollection<SideMenuItemTemplate> SideMenuItems { get; }
+	public ObservableCollection<UserPermissionItemTemplate>? OwnerPermissions { get; private set; }
 	public ObservableCollection<VmTabTemplate> VmTabs { get; }
 	public ObservableCollection<UserPermissionItemTemplate> GrantPermissions { get; }
 
@@ -49,9 +51,6 @@ public partial class MainPageViewModel : ViewModelBase
 	
 	[ObservableProperty]
 	private SubUser? _subUser = null;
-
-	[ObservableProperty] 
-	private UserPermissionItemTemplate[]? _ownerPermissions;
 
 	[ObservableProperty] 
 	private bool _resetPswdPopupResetEnabled = false;
@@ -112,6 +111,7 @@ public partial class MainPageViewModel : ViewModelBase
 	public MainPageViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
+		ClientSvc.OwnerPermissionsChanged += OnOwnerPermissionsChanged;
 		ClientSvc.VmPoweredOn += OnVmPoweredOn;
 		ClientSvc.VmPoweredOff += OnVmPoweredOff;
 		ClientSvc.VmCrashed += OnVmCrashed;
@@ -151,9 +151,9 @@ public partial class MainPageViewModel : ViewModelBase
 		LoggedInAsUser = true;
 		
 		UserPermissions[] permissions = SubUser.OwnerPermissions.ToArray();
-		OwnerPermissions = new UserPermissionItemTemplate[permissions.Length];
-		for (int i = 0; i < permissions.Length; ++i)
-			OwnerPermissions[i] = new UserPermissionItemTemplate(permissions[i], OwnerPermissions);
+		OwnerPermissions = new ObservableCollection<UserPermissionItemTemplate>();
+		foreach (UserPermissions permission in permissions)
+			OwnerPermissions.Add(new UserPermissionItemTemplate(permission));
 
 		GrantPermissions = new ObservableCollection<UserPermissionItemTemplate>();
 		SideMenuItems = new ObservableCollection<SideMenuItemTemplate>()
@@ -195,9 +195,9 @@ public partial class MainPageViewModel : ViewModelBase
 			SubUser = (SubUser)ClientSvc.User;
 			
 			UserPermissions[] permissions = SubUser.OwnerPermissions.ToArray();
-			OwnerPermissions = new UserPermissionItemTemplate[permissions.Length];
-			for (int i = 0; i < permissions.Length; ++i)
-				OwnerPermissions[i] = new UserPermissionItemTemplate(permissions[i]);
+			OwnerPermissions = new ObservableCollection<UserPermissionItemTemplate>();
+			foreach (UserPermissions permission in permissions)
+				OwnerPermissions.Add(new UserPermissionItemTemplate(permission));
 		}
 		CurrentSideMenuItem = SideMenuItems[SideMenuIdxHome];
 		CurrentPageViewModel = SideMenuItems.First().ViewModel;
@@ -589,6 +589,34 @@ public partial class MainPageViewModel : ViewModelBase
 		_ = ((VmScreenViewModel)CurrentPageViewModel).SwitchVirtualMachineAsync(value.Descriptor);
 	}
 
+	/// <summary>
+	/// Handles the event that the owner's permissions over a user have changed.
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="info">The permission change information. info != null.</param>
+	/// <remarks>
+	/// Precondition: The owner's permissions over the given user (in info) have changed. info != null. <br/>
+	/// Postcondition: If the given user is the currently logged-in user, the owner permissions list is updated.
+	/// </remarks>	
+	private void OnOwnerPermissionsChanged(object? sender, MessageInfoOwnerPermissions info)
+	{
+		if (ClientSvc.User is not SubUser subUser || subUser.Id != info.UserId)
+			return;
+
+		Dispatcher.UIThread.Post(() =>
+		{
+			UserPermissions[] permissions = info.Permissions.ToArray();
+		
+			if (OwnerPermissions == null)
+				OwnerPermissions = new ObservableCollection<UserPermissionItemTemplate>();
+			else
+				OwnerPermissions.Clear();
+			
+			foreach (UserPermissions permission in permissions)
+				OwnerPermissions.Add(new UserPermissionItemTemplate(permission));
+		});
+	}
+	
 	/// <summary>
 	/// Handles the event of the virtual machine being powered on.
 	/// </summary>

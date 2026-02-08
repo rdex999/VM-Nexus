@@ -1179,6 +1179,13 @@ public class ClientService : MessagingService
 			}
 			case MessageInfoOwnerPermissions infoOwnerPermissions:
 			{
+				if (User is SubUser subUser && subUser.Id == infoOwnerPermissions.UserId)
+				{
+					User = new SubUser(subUser.Id, subUser.OwnerId, infoOwnerPermissions.Permissions, subUser.OwnerUsername,
+						subUser.OwnerEmail, subUser.Username, subUser.Email, subUser.CreatedAt
+					);
+				}
+					
 				OwnerPermissionsChanged?.Invoke(this, infoOwnerPermissions);
 				break;
 			}
