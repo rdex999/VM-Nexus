@@ -143,6 +143,31 @@ public class UserService
 	}
 
 	/// <summary>
+	/// Notifies that the owner's permissions over the given user have changed.
+	/// </summary>
+	/// <param name="ownerId">The ID of the owner of the given user. ownerId >= 1.</param>
+	/// <param name="userId">The user that the owner's permissions of has changed. userId >= 1.</param>
+	/// <param name="permissions">The new owner permissions over the given user.</param>
+	/// <remarks>
+	/// Precondition: The owner's permissions over the given user have changed. Service initialized and connected to client. userId >= 1. <br/>
+	/// Postcondition: Client is notified that the owner's permissions over the given user were changed.
+	/// </remarks>
+	public void NotifyOwnerPermissionsChanged(int ownerId, int userId, UserPermissions permissions)
+	{
+		if (_users.TryGetValue(ownerId, out ConcurrentDictionary<Guid, ClientConnection>? ownerConnections))
+		{
+			foreach (ClientConnection connection in ownerConnections.Values)
+				connection.NotifyOwnerPermissionsChanged(userId, permissions);
+		}
+
+		if (_users.TryGetValue(userId, out ConcurrentDictionary<Guid, ClientConnection>? userConnections))
+		{
+			foreach (ClientConnection connection in userConnections.Values)
+				connection.NotifyOwnerPermissionsChanged(userId, permissions);
+		}
+	}
+	
+	/// <summary>
 	/// Notifies all instances of the deleted user, and all instances of its owner, (if any) that the user was deleted.
 	/// </summary>
 	/// <param name="userId">The ID of the user that was deleted. userId >= 1.</param>

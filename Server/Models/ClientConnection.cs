@@ -461,6 +461,7 @@ public sealed class ClientConnection : MessagingService
 					break;
 				}
 
+				int ownerId;
 				if (reqSetOwnerPermissions.UserId == ActualUser!.Id)
 				{
 					/* Can only grant the owner more permissions. */
@@ -470,6 +471,8 @@ public sealed class ClientConnection : MessagingService
 						SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
 						break;
 					}
+					
+					ownerId = subUser.OwnerId;
 				}
 				else 
 				{
@@ -482,11 +485,16 @@ public sealed class ClientConnection : MessagingService
 						SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
 						break;					
 					}
+
+					ownerId = subUser.OwnerId;
 				}
 
 				result = await _databaseService.UpdateOwnerPermissionsAsync(reqSetOwnerPermissions.UserId, reqSetOwnerPermissions.Permissions);
 				
 				SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, result == ExitCode.Success));
+
+				if (result == ExitCode.Success)
+					_userService.NotifyOwnerPermissionsChanged(ownerId, reqSetOwnerPermissions.UserId, reqSetOwnerPermissions.Permissions);
 				
 				break;
 			}
@@ -1285,6 +1293,18 @@ public sealed class ClientConnection : MessagingService
 	/// </remarks>
 	public void NotifySubUserCreated(SubUser subUser) =>
 		SendInfo(new MessageInfoSubUserCreated(subUser));
+
+	/// <summary>
+	/// Notifies that the owner's permissions over the given user have changed.
+	/// </summary>
+	/// <param name="userId">The user that the owner's permissions of has changed. userId >= 1.</param>
+	/// <param name="permissions">The new owner permissions over the given user.</param>
+	/// <remarks>
+	/// Precondition: The owner's permissions over the given user have changed. Service initialized and connected to client. userId >= 1. <br/>
+	/// Postcondition: Client is notified that the owner's permissions over the given user were changed.
+	/// </remarks>
+	public void NotifyOwnerPermissionsChanged(int userId, UserPermissions permissions) =>
+		SendInfo(new MessageInfoOwnerPermissions(userId, permissions));
 	
 	/// <summary>
 	/// Notifies the client that a user was deleted. (Either a sub-user, or the current user itself)
