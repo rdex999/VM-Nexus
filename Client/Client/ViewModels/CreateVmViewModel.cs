@@ -297,109 +297,119 @@ public partial class CreateVmViewModel : ViewModelBase
 	[RelayCommand]
 	private async Task CreateVirtualMachineAsync()
 	{
-		string vmNameTrimmed = VmName.Trim();
-		bool createDrive = OperatingSystem != OperatingSystem.Other;
-		Task<MessageResponseCreateVm?> taskCreateVm = ClientSvc.CreateVirtualMachineAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, RamSizeMiB!.Value, BootMode);
-		Task<MessageResponseCreateDriveOs?> taskCreateDrive = null!;
+		if (RamSizeMiB == null || OsDriveSize == null)
+			return;
 		
-		MessageResponseCreateVm.Status createVmResult = MessageResponseCreateVm.Status.Failure;
-		MessageResponseCreateDriveOs.Status createDriveResult = MessageResponseCreateDriveOs.Status.Failure;
-		ExitCode connectDriveResult = ExitCode.Failure;
+		string vmNameTrimmed = VmName.Trim();
 
-		if (!createDrive)
+		bool success;
+		if (OperatingSystem == OperatingSystem.Other)
 		{
-			await taskCreateVm;
-			
-			createVmResult = taskCreateVm.Result?.Result ?? MessageResponseCreateVm.Status.Failure;
+			MessageResponseCreateVm? response = await ClientSvc.CreateVirtualMachineAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, RamSizeMiB.Value, BootMode);
+			success = response != null && response.Result == MessageResponseCreateVm.Status.Success;
 		}
 		else
 		{
-			string osDriveNameExtenstion = $" - {OperatingSystem.ToString()}";
-			string driveName = vmNameTrimmed.Substring(0,
-				Math.Min(vmNameTrimmed.Length, SharedDefinitions.CredentialsMaxLength - osDriveNameExtenstion.Length)
-			) + osDriveNameExtenstion;
-			
-			taskCreateDrive = ClientSvc.CreateDriveOsAsync(driveName, OsDriveSize!.Value, OperatingSystem);
-			await Task.WhenAll(taskCreateVm, taskCreateDrive);
-
-			createVmResult = taskCreateVm.Result?.Result ?? MessageResponseCreateVm.Status.Failure;
-			
-			createDriveResult = taskCreateDrive.Result?.Result ?? MessageResponseCreateDriveOs.Status.Failure;
-
-			if (createVmResult == MessageResponseCreateVm.Status.Success)
-			{
-				/* Search for an available drive name and use it. */
-				int cnt = 0;
-				while (createDriveResult == MessageResponseCreateDriveOs.Status.DriveAlreadyExists)
-				{
-					osDriveNameExtenstion = $" - {OperatingSystem.ToString()}_{cnt++}";
-					
-					driveName = vmNameTrimmed.Substring(0,
-						Math.Min(vmNameTrimmed.Length, SharedDefinitions.CredentialsMaxLength - osDriveNameExtenstion.Length)
-					) + osDriveNameExtenstion;
-					
-					taskCreateDrive = ClientSvc.CreateDriveOsAsync(driveName, OsDriveSize!.Value, OperatingSystem);
-
-					await taskCreateDrive;
-
-					createDriveResult = taskCreateDrive.Result == null
-						? MessageResponseCreateDriveOs.Status.Failure
-						: taskCreateDrive.Result.Result;
-				}
-
-				if (createDriveResult == MessageResponseCreateDriveOs.Status.Success)
-				{
-					connectDriveResult = await _driveService.ConnectDriveAsync(taskCreateDrive.Result!.DriveId, taskCreateVm.Result!.VmId);
-				}
-			}
+			CreateVmButtonIsEnabled = false;
+			ExitCode result = await CreateVirtualMachineWithDriveAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, RamSizeMiB.Value, BootMode, OsDriveSize.Value);
+			success = result == ExitCode.Success;
 		}
-	
-		/* If Other is selected as the operating system - taskCreateDrive wont have a value because we are not creating a drive. */
-		if (createVmResult == MessageResponseCreateVm.Status.Success && 
-		    (!createDrive || (createDriveResult == MessageResponseCreateDriveOs.Status.Success && connectDriveResult == ExitCode.Success)))
-		{	
+
+		if (success)
+		{
 			VmCreationMessageSuccessClass = true;
 			VmCreationMessage = "The virtual machine has been created successfully!";
-		} 
-		else if (createVmResult == MessageResponseCreateVm.Status.VmAlreadyExists)
-		{
-			VmCreationMessageSuccessClass = false;
-			VmCreationMessage = $"A virtual machine called \"{vmNameTrimmed}\" already exists.";
 		}
 		else
 		{
 			VmCreationMessageSuccessClass = false;
 			VmCreationMessage = "Could not create the virtual machine.";
+			CreateVmButtonIsEnabled = true;
 		}
+	}
 
-		/* If something went wrong */
-		if (createDrive && (
-			    createVmResult != MessageResponseCreateVm.Status.Success ||
-			    createDriveResult != MessageResponseCreateDriveOs.Status.Success ||
-			    connectDriveResult != ExitCode.Success)
-		   )
+	/// <summary>
+	/// Creates a virtual machine and an OS drive with the given settings.
+	/// </summary>
+	/// <param name="name">A name for the new virtual machine. Must be unique for the user. name != null.</param>
+	/// <param name="operatingSystem">The operating system the virtual machine will run. operatingSystem != OperatingSystem.Other.</param>
+	/// <param name="cpuArchitecture">The CPU architecture for the virtual machine's CPU.</param>
+	/// <param name="ramSizeMiB">The amount of RAM the virtual machine will use while running. Must be in valid range according to the given operating system. ramSizeMiB >= 1.</param>
+	/// <param name="bootMode">The boot mode the virtual machine will boot in. (BIOS, UEFI)</param>
+	/// <param name="driveSizeMiB">The size of the OS drive for the virtual machine, in MiB. Must be in valid range according to the given operating system. driveSizeMiB >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: The user has appropriate permissions for VM creation, drive creation, and drive connection. The given VM name is unique for the user.
+	/// name != null &amp;&amp; operatingSystem != OperatingSystem.Other &amp;&amp; ramSizeMiB >= 1 &amp;&amp; driveSizeMiB >= 1. <br/>
+	/// Postcondition: On success, the virtual machine and the OS drive are created and connected, and the returned exit code indicates success. <br/>
+	/// If either operation (VM creation, drive creation, drive connection to VM) fails,
+	/// an attempt to undo the succeeded operations is performed, and the returned exit code indicates the error.
+	/// </remarks>
+	private async Task<ExitCode> CreateVirtualMachineWithDriveAsync(string name, OperatingSystem operatingSystem,
+		CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode, int driveSizeMiB)
+	{
+		if (string.IsNullOrEmpty(name) || operatingSystem == OperatingSystem.Other || ramSizeMiB < 1 || ramSizeMiB > SharedDefinitions.VmRamSizeMbMax ||
+		    !Common.IsOperatingSystemDriveSizeValid(operatingSystem, driveSizeMiB))
 		{
-			/* One or more of the operations has failed - delete the ones that have succeeded. */
-			
+			return ExitCode.InvalidParameter;
+		}
+		
+		string osDriveNameExtenstion = $" - {operatingSystem.ToString()}";
+		string driveName = name.Substring(0,
+			Math.Min(name.Length, SharedDefinitions.CredentialsMaxLength - osDriveNameExtenstion.Length)
+		) + osDriveNameExtenstion;
+
+		MessageResponseCreateDriveOs? driveRes = await ClientSvc.CreateDriveOsAsync(driveName, driveSizeMiB, operatingSystem);
+		if (driveRes == null)
+			return ExitCode.MessageFailure;
+
+		if (driveRes.Result == MessageResponseCreateDriveOs.Status.Failure)
+			return ExitCode.DriveCreationFailed;
+	
+		/* Search for an available drive name and use it. */
+		int cnt = 0;
+		while (driveRes.Result == MessageResponseCreateDriveOs.Status.DriveAlreadyExists)
+		{
+			osDriveNameExtenstion = $" - {operatingSystem.ToString()}_{cnt++}";
+
+			driveName = name.Substring(0,
+				Math.Min(name.Length,
+					SharedDefinitions.CredentialsMaxLength - osDriveNameExtenstion.Length)
+			) + osDriveNameExtenstion;
+
+			driveRes = await ClientSvc.CreateDriveOsAsync(driveName, OsDriveSize!.Value, operatingSystem);
+			if (driveRes == null)
+				return ExitCode.MessageFailure;
+
+			if (driveRes.Result == MessageResponseCreateDriveOs.Status.Failure)
+				return ExitCode.DriveCreationFailed;		
+		}
+		
+		/* Drive created successfully. */
+		
+		MessageResponseCreateVm? vmCreateRes = await ClientSvc.CreateVirtualMachineAsync(name, operatingSystem, cpuArchitecture, ramSizeMiB, bootMode);
+		ExitCode result = ExitCode.Success;
+		
+		if (vmCreateRes == null)
+			result = ExitCode.MessageFailure;
+		
+		else if (vmCreateRes.Result == MessageResponseCreateVm.Status.Failure)
+			result = ExitCode.VmCreationFailed;
+
+		if (result == ExitCode.Success)
+			result = await _driveService.ConnectDriveAsync(driveRes.DriveId, vmCreateRes!.VmId);
+
+		if (result != ExitCode.Success)
+		{
 			List<Task> tasks = new List<Task>();
-			if (connectDriveResult == ExitCode.Success)
-			{
-				tasks.Add(_driveService.DisconnectDriveAsync(taskCreateDrive.Result!.DriveId, taskCreateVm.Result!.VmId));		/* Both should be valid. (because connected) */
-			}
+			tasks.Add(ClientSvc.DeleteItemAsync(driveRes.DriveId, string.Empty));
 			
-			if (createDriveResult == MessageResponseCreateDriveOs.Status.Success)
-			{
-				tasks.Add(ClientSvc.DeleteItemAsync(taskCreateDrive.Result!.DriveId, string.Empty));
-			}
-			
-			if (createVmResult == MessageResponseCreateVm.Status.Success)
-			{
-				tasks.Add(ClientSvc.DeleteVirtualMachineAsync(taskCreateVm.Result!.VmId));
-			}
+			if (vmCreateRes != null && vmCreateRes.Result == MessageResponseCreateVm.Status.Success)
+				tasks.Add(ClientSvc.DeleteVirtualMachineAsync(vmCreateRes.VmId));
 			
 			await Task.WhenAll(tasks);
 		}
-
-		CreateVmButtonIsEnabled = false;
+		
+		return result;
 	}
 }

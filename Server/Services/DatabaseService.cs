@@ -744,7 +744,7 @@ public class DatabaseService
 	public async Task<ExitCode> CreateVmAsync(int userId, string name, OperatingSystem operatingSystem, 
 		CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode)
 	{
-		if (userId < 1 || ramSizeMiB <= 1 || ramSizeMiB > SharedDefinitions.VmRamSizeMbMax) 
+		if (userId < 1 || ramSizeMiB < 1 || ramSizeMiB > SharedDefinitions.VmRamSizeMbMax) 
 			return ExitCode.InvalidParameter;
 		
 		bool vmExists = await IsVmExistsAsync(userId, name);
