@@ -173,7 +173,7 @@
 
 							<TextBlock HorizontalAlignment="Center" Margin="0, 15" TextWrapping="Wrap"
 							           Classes.success="{Binding VmCreationMessageSuccessClass}"
-							           Classes.error="{Binding !VmCreationMessageSuccessClass}"
+							           Classes.error="{Binding VmCreationMessageErrorClass}"
 							           Text="{Binding VmCreationMessage}" />
 
 							<Button VerticalAlignment="Bottom" HorizontalAlignment="Center" Classes="submit_dark"

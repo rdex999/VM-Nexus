@@ -83,6 +83,9 @@ public partial class CreateVmViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _vmCreationMessageSuccessClass = true;
 	
+	[ObservableProperty]
+	private bool _vmCreationMessageErrorClass = false;
+	
 	public CreateVmViewModel(NavigationService navigationSvc, ClientService clientSvc, DriveService driveService)
 		: base(navigationSvc, clientSvc)
 	{
@@ -272,6 +275,7 @@ public partial class CreateVmViewModel : ViewModelBase
 			    .AddIncluded()) && OperatingSystem != OperatingSystem.Other)
 		{
 			VmCreationMessageSuccessClass = false;
+			VmCreationMessageErrorClass = true;
 			VmCreationMessage = "You don't have permissions to create a virtual machine with an OS drive.";
 			return false;
 		}
@@ -279,6 +283,7 @@ public partial class CreateVmViewModel : ViewModelBase
 		if (!subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineCreate.AddIncluded()))
 		{
 			VmCreationMessageSuccessClass = false;
+			VmCreationMessageErrorClass = true;
 			VmCreationMessage = "You don't have permissions to create a virtual machine.";
 			return false;
 		}
@@ -302,6 +307,11 @@ public partial class CreateVmViewModel : ViewModelBase
 		
 		string vmNameTrimmed = VmName.Trim();
 
+		CreateVmButtonIsEnabled = false;
+		VmCreationMessageErrorClass = false;
+		VmCreationMessageSuccessClass = false;
+		VmCreationMessage = "Creating the virtual machine - hang tight..";
+		
 		bool success;
 		if (OperatingSystem == OperatingSystem.Other)
 		{
@@ -310,7 +320,6 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 		else
 		{
-			CreateVmButtonIsEnabled = false;
 			ExitCode result = await CreateVirtualMachineWithDriveAsync(vmNameTrimmed, OperatingSystem, CpuArchitecture, RamSizeMiB.Value, BootMode, OsDriveSize.Value);
 			success = result == ExitCode.Success;
 		}
@@ -318,11 +327,13 @@ public partial class CreateVmViewModel : ViewModelBase
 		if (success)
 		{
 			VmCreationMessageSuccessClass = true;
+			VmCreationMessageErrorClass = false;
 			VmCreationMessage = "The virtual machine has been created successfully!";
 		}
 		else
 		{
 			VmCreationMessageSuccessClass = false;
+			VmCreationMessageErrorClass = true;
 			VmCreationMessage = "Could not create the virtual machine.";
 			CreateVmButtonIsEnabled = true;
 		}
