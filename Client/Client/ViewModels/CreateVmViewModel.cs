@@ -163,6 +163,25 @@ public partial class CreateVmViewModel : ViewModelBase
 
 			OsDriveSettingsIsVisible = true;
 		}
+		else if (OperatingSystem == OperatingSystem.KaliLinux)
+		{
+			_osDriveSizeMax = 1024 * 256;
+			_osDriveSizeMin = 1024 * 20;
+		
+			CpuArchitecture = CpuArchitecture.X86_64;
+			CpuArchitectureIsEnabled = false;
+			
+			BootMode = BootMode.Uefi;
+			BootModeIsEnabled = false;
+			
+			OsDriveType = DriveType.Disk;
+			OsDriveTypeIsEnabled = false;
+			
+			OsDriveSizeIsEnabled = true;
+			OsSetupMessageIsVisible = true;
+
+			OsDriveSettingsIsVisible = true;	
+		}
 		else if (OperatingSystem == OperatingSystem.ManjaroLinux)
 		{
 			_osDriveSizeMax = 1024 * 256;

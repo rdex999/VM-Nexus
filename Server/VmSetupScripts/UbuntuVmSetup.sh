@@ -62,5 +62,6 @@ then
 fi
 
 echo -e "\nThe new user was created successfully!"
-echo -e "You may now log in as the new user."
+echo -e "The system will now reboot, after that tou may now log in as the new user."
+sleep 3
 reboot
