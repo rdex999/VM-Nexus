@@ -171,7 +171,7 @@
 							</Grid>
 							<TextBlock Classes="error" TextWrapping="Wrap" Text="{Binding OsDriveSizeErrorMessage}" />
 
-							<TextBlock HorizontalAlignment="Center" Margin="0, 15"
+							<TextBlock HorizontalAlignment="Center" Margin="0, 15" TextWrapping="Wrap"
 							           Classes.success="{Binding VmCreationMessageSuccessClass}"
 							           Classes.error="{Binding !VmCreationMessageSuccessClass}"
 							           Text="{Binding VmCreationMessage}" />

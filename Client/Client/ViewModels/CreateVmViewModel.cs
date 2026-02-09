@@ -86,7 +86,9 @@ public partial class CreateVmViewModel : ViewModelBase
 	public CreateVmViewModel(NavigationService navigationSvc, ClientService clientSvc, DriveService driveService)
 		: base(navigationSvc, clientSvc)
 	{
+		ClientSvc.UserDataChanged += OnUserDataChanged;
 		_driveService = driveService;
+		CheckCreationPermissions();
 	}
 
 	/* Use for IDE preview only. */
@@ -95,6 +97,12 @@ public partial class CreateVmViewModel : ViewModelBase
 		_driveService = null!;
 	}
 
+	private void OnUserDataChanged(object? sender, User user)
+	{
+		if (ClientSvc.User != null && user.Id == ClientSvc.User.Id)
+			CheckCreationPermissions();
+	}
+	
 	/// <summary>
 	/// Called when the operating system input field changes. (Called from the code-behind file)
 	/// </summary>
@@ -235,8 +243,47 @@ public partial class CreateVmViewModel : ViewModelBase
 		}
 		VmCreationMessage = string.Empty;
 		
-		CreateVmButtonIsEnabled = _driveService.IsInitialized && isVmNameValid && RamSizeValid && OsDriveSize != null && 
+		CreateVmButtonIsEnabled = _driveService.IsInitialized && CheckCreationPermissions() && isVmNameValid && RamSizeValid && OsDriveSize != null && 
 		                          ((OsDriveSize >= _osDriveSizeMin && OsDriveSize <= _osDriveSizeMax) || OperatingSystem == OperatingSystem.Other);
+	}
+
+	/// <summary>
+	/// Checks whether the currently logged-in user has permissions to create a virtual machine with the current settings.
+	/// </summary>
+	/// <returns>True if the user has permissions, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: Checking user permissions is needed. Either user data has changed, or VM creation settings have changed. <br/>
+	/// Postcondition: If the user has appropriate permissions, true is returned.
+	/// If the user does not have appropriate permissions, false is returned and error messages are displayed.
+	/// </remarks>
+	private bool CheckCreationPermissions()
+	{
+		if (!ClientSvc.IsLoggedInAsSubUser)
+		{
+			VmCreationMessage = string.Empty;
+			return true;
+		}
+
+		if (ClientSvc.User is not SubUser subUser)
+			return false;
+
+		if (!subUser.OwnerPermissions.HasPermission(
+			    (UserPermissions.VirtualMachineCreate | UserPermissions.DriveCreate | UserPermissions.DriveConnect)
+			    .AddIncluded()) && OperatingSystem != OperatingSystem.Other)
+		{
+			VmCreationMessageSuccessClass = false;
+			VmCreationMessage = "You don't have permissions to create a virtual machine with an OS drive.";
+			return false;
+		}
+
+		if (!subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineCreate.AddIncluded()))
+		{
+			VmCreationMessageSuccessClass = false;
+			VmCreationMessage = "You don't have permissions to create a virtual machine.";
+			return false;
+		}
+
+		return true;
 	}
 
 	/// <summary>
