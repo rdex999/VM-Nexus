@@ -1,17 +1,15 @@
-using Newtonsoft.Json;
+using MessagePack;
 
 namespace Shared;
 
+[MessagePackObject]
 public class PixelFormat
 {
-	public PixelFormatType Type { get; }
+	[Key(0)]
+	public PixelFormatType Type { get; set; }
 
-	[JsonConstructor]
-	public PixelFormat(PixelFormatType type)
-	{
-		Type = type;
-	}
-
+	public PixelFormat() { }
+	
 	public PixelFormat(int bitsPerPixel, bool hasAlpha, int redShift, int greenShift, int blueShift, int alphaShift)
 	{
 		Type = PixelFormatTypeFromData(bitsPerPixel, hasAlpha, redShift, greenShift, blueShift, alphaShift);

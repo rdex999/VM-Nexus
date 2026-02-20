@@ -1,7 +1,7 @@
 using System.Drawing;
 using System.Net;
 using Avalonia.Input;
-using Newtonsoft.Json;
+using MessagePack;
 using Shared.Drives;
 using Shared.VirtualMachines;
 using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
@@ -12,45 +12,37 @@ public interface IMessageInfo : IMessage {}
 
 public abstract class MessageInfo : Message, IMessageInfo
 {
-	public MessageInfo() {}
-
-	[JsonConstructor]
-	protected MessageInfo(Guid id) : base(id) {}
+	protected MessageInfo() {}
 }
 
+[MessagePackObject]
 public class MessageInfoIdentifyUdpPort : MessageInfo, IMessageTcp
 {
-	public int Port { get; }
+	[Key(1)]
+	public int Port { get; set; }
+
+	public MessageInfoIdentifyUdpPort() { }
 
 	public MessageInfoIdentifyUdpPort(int port)
 	{
 		Port = port;
 	}
-	
-	[JsonConstructor]
-	private MessageInfoIdentifyUdpPort(Guid id, int port)
-		: base(id)
-	{
-		Port = port;
-	}
-	
+
 	public override bool IsValidMessage() => base.IsValidMessage() && Port >= IPEndPoint.MinPort && Port <= IPEndPoint.MaxPort;
 }
 
+[MessagePackObject]
 public class MessageInfoCryptoUdp : MessageInfo, IMessageTcp
 {
-	public byte[] MasterKey32 { get; }
-	public byte[] Salt32 { get; }
+	[Key(1)]
+	public byte[] MasterKey32 { get; set; }
+	
+	[Key(2)]
+	public byte[] Salt32 { get; set; }
+	
+	public MessageInfoCryptoUdp() { }
 	
 	public MessageInfoCryptoUdp(byte[] masterKey32, byte[] salt32)
-	{
-		MasterKey32 = masterKey32;
-		Salt32 = salt32;
-	}
-	
-	[JsonConstructor]
-	private MessageInfoCryptoUdp(Guid id, byte[] masterKey32, byte[] salt32)
-		: base(id)
 	{
 		MasterKey32 = masterKey32;
 		Salt32 = salt32;
@@ -59,71 +51,59 @@ public class MessageInfoCryptoUdp : MessageInfo, IMessageTcp
 	public override bool IsValidMessage() => base.IsValidMessage() && MasterKey32.Length == 32 && Salt32.Length == 32;
 }
 
+[MessagePackObject]
 public class MessageInfoSubUserCreated : MessageInfo, IMessageTcp
 {
-	public SubUser SubUser { get; }
+	[Key(1)]
+	public SubUser SubUser { get; set; }
+
+	public MessageInfoSubUserCreated() { }
 
 	public MessageInfoSubUserCreated(SubUser subUser)
 	{
 		SubUser = subUser;
 	}
-	
-	[JsonConstructor]
-	private MessageInfoSubUserCreated(Guid id, SubUser subUser)
-		: base(id)
-	{
-		SubUser = subUser;
-	}
 }
 
+[MessagePackObject]
 public class MessageInfoUserData : MessageInfo, IMessageTcp
 {
-	public User User { get; }
+	[Key(1)]
+	public User User { get; set; }
+
+	public MessageInfoUserData() { }
 
 	public MessageInfoUserData(User user)
 	{
 		User = user;
 	}
-
-	[JsonConstructor]
-	public MessageInfoUserData(Guid id, User user)
-		: base(id)
-	{
-		User = user;
-	}
 }
 
+[MessagePackObject]
 public class MessageInfoUserDeleted : MessageInfo, IMessageTcp
 {
-	public int UserId { get; }
+	[Key(1)]
+	public int UserId { get; set; }
+
+	public MessageInfoUserDeleted() { }
 
 	public MessageInfoUserDeleted(int userId)
 	{
 		UserId = userId;
 	}
-	
-	[JsonConstructor]
-	private MessageInfoUserDeleted(Guid id, int userId)
-		: base(id)
-	{
-		UserId = userId;
-	}
-	
+
 	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
 }
 
+[MessagePackObject]
 public class MessageInfoVmCreated : MessageInfo, IMessageTcp
 {
-	public VmGeneralDescriptor Descriptor { get; }
+	[Key(1)]
+	public VmGeneralDescriptor Descriptor { get; set; }
+
+	public MessageInfoVmCreated() { }
 
 	public MessageInfoVmCreated(VmGeneralDescriptor descriptor)
-	{
-		Descriptor = descriptor;
-	}
-	
-	[JsonConstructor]
-	private MessageInfoVmCreated(Guid id, VmGeneralDescriptor descriptor)
-		: base(id)
 	{
 		Descriptor = descriptor;
 	}
@@ -134,66 +114,67 @@ public class MessageInfoVmCreated : MessageInfo, IMessageTcp
 	                                         && Enum.IsDefined(typeof(VmState), Descriptor.State);
 }
 
+[MessagePackObject]
 public class MessageInfoVmDeleted : MessageInfo, IMessageTcp 
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageInfoVmDeleted() { }
 
 	public MessageInfoVmDeleted(int vmId)
 	{
 		VmId = vmId;
 	}
 	
-	[JsonConstructor]
-	private MessageInfoVmDeleted(Guid id, int vmId)
-		: base(id)
-	{
-		VmId = vmId;
-	}
-
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageInfoVmScreenFrame : MessageInfo, IMessageUdp
 {
-	public int VmId { get; }
-	public Size Size { get; }
-	public byte[] CompressedFramebuffer { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+	
+	[IgnoreMember]
+	public Size Size => new Size(SizeWidth, SizeHeight);
+	
+	[Key(2)]
+	public int SizeWidth { get; set; }
+	
+	[Key(3)]
+	public int SizeHeight { get; set; }
+	
+	[Key(4)]
+	public byte[] CompressedFramebuffer { get; set; }
+	
+	public MessageInfoVmScreenFrame() { }
 
 	public MessageInfoVmScreenFrame(int vmId, Size size, byte[] compressedFramebuffer)
 	{
 		VmId = vmId;
-		Size = size;
+		SizeWidth = size.Width;
+		SizeHeight = size.Height;
 		CompressedFramebuffer = compressedFramebuffer;
 	}
 
-	[JsonConstructor]
-	private MessageInfoVmScreenFrame(Guid id, int vmId, Size size, byte[] compressedFramebuffer)
-		: base(id)
-	{
-		VmId = vmId;
-		Size = size;
-		CompressedFramebuffer = compressedFramebuffer;
-	}
-	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 &&
-	                                         Size.Width > 0 && Size.Height > 0 && 
+	                                         SizeWidth > 0 && SizeHeight > 0 && 
 	                                         CompressedFramebuffer.Length > 0;
 }
 
+[MessagePackObject]
 public class MessageInfoVmAudioPacket : MessageInfo, IMessageUdp
 {
-	public int VmId { get; }
-	public byte[] Packet { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+	
+	[Key(2)]
+	public byte[] Packet { get; set; }
+
+	public MessageInfoVmAudioPacket() { }
 
 	public MessageInfoVmAudioPacket(int vmId, byte[] packet)
-	{
-		VmId = vmId;
-		Packet = packet;
-	}
-	
-	[JsonConstructor]
-	private MessageInfoVmAudioPacket(Guid id, int vmId, byte[] packet)
-		: base(id)
 	{
 		VmId = vmId;
 		Packet = packet;
@@ -202,115 +183,125 @@ public class MessageInfoVmAudioPacket : MessageInfo, IMessageUdp
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Packet != null && Packet.Length > 0;
 }
 
+[MessagePackObject]
 public class MessageInfoVmPoweredOn : MessageInfo, IMessageTcp
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageInfoVmPoweredOn() { }
 
 	public MessageInfoVmPoweredOn(int vmId)
 	{
 		VmId = vmId;
 	}
 	
-	[JsonConstructor]
-	private MessageInfoVmPoweredOn(Guid id, int vmId)
-		: base(id)
-	{
-		VmId = vmId;
-	}
-	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageInfoVmPoweredOff : MessageInfo, IMessageTcp
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageInfoVmPoweredOff() { }
 
 	public MessageInfoVmPoweredOff(int vmId)
 	{
 		VmId = vmId;
 	}
-	
-	[JsonConstructor]
-	private MessageInfoVmPoweredOff(Guid id, int vmId)
-		: base(id)
-	{
-		VmId = vmId;
-	}
-	
+
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageInfoVmCrashed : MessageInfo, IMessageTcp 
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageInfoVmCrashed() { }
 
 	public MessageInfoVmCrashed(int vmId)
 	{
 		VmId = vmId;
 	}
 	
-	[JsonConstructor]
-	private MessageInfoVmCrashed(Guid id, int vmId)
-		: base(id)
-	{
-		VmId = vmId;
-	}
-	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageInfoPointerMoved : MessageInfo, IMessageTcp
 {
-	public int VmId { get; }
-	public Point Position { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+	
+	[IgnoreMember]
+	public Point Position => new Point(PositionX, PositionY);
+
+	[Key(2)]
+	public int PositionX { get; set; }
+	
+	[Key(3)]
+	public int PositionY { get; set; }
+
+	public MessageInfoPointerMoved() { }
 
 	public MessageInfoPointerMoved(int vmId, Point position)
 	{
 		VmId = vmId;
-		Position = position;
+		PositionX = position.X;
+		PositionY = position.Y;
 	}
 	
-	[JsonConstructor]
-	private MessageInfoPointerMoved(Guid id, int vmId, Point position)
-		: base(id)
-	{
-		VmId = vmId;
-		Position = position;
-	}
-	
-	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Position.X >= 0 && Position.Y >= 0;
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && PositionX >= 0 && PositionY >= 0;
 }
 
+[MessagePackObject]
 public class MessageInfoPointerButtonEvent : MessageInfo, IMessageTcp 
 {
-	public int VmId { get; }
-	public Point Position { get; }
-	public int PressedButtons { get; }		/* Flags - from MouseButtons. */
+	[Key(1)]
+	public int VmId { get; set; }
+	
+	[IgnoreMember]
+	public Point Position => new Point(PositionX, PositionY);
+	
+	[Key(2)]
+	public int PositionX { get; set; }
+	
+	[Key(3)]
+	public int PositionY { get; set; }
+	
+	[Key(4)]
+	public int PressedButtons { get; set; }
+
+	public MessageInfoPointerButtonEvent() { }
 
 	public MessageInfoPointerButtonEvent(int vmId, Point position, int pressedButtons)
 	{
 		VmId = vmId;
-		Position = position;
+		PositionX = position.X;
+		PositionY = position.Y;
 		PressedButtons = pressedButtons;
 	}
 	
-	[JsonConstructor]
-	private MessageInfoPointerButtonEvent(Guid id, int vmId, Point position, int pressedButtons)
-		: base(id)
-	{
-		VmId = vmId;
-		Position = position;
-		PressedButtons = pressedButtons;
-	}
-	
-	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Position.X >= 0 && Position.Y >= 0;
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && PositionX >= 0 && PositionY >= 0;
 }
 
+[MessagePackObject]
 public class MessageInfoKeyboardKeyEvent : MessageInfo, IMessageTcp
 {
-	public int VmId { get; }
-	public PhysicalKey Key { get; }
-	public bool KeyDown { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+	
+	[Key(2)]
+	public PhysicalKey Key { get; set; }
+	
+	[Key(3)]
+	public bool KeyDown { get; set; }
+
+	public MessageInfoKeyboardKeyEvent() { }
 
 	public MessageInfoKeyboardKeyEvent(int vmId, PhysicalKey key, bool keyDown)
 	{
@@ -319,40 +310,33 @@ public class MessageInfoKeyboardKeyEvent : MessageInfo, IMessageTcp
 		KeyDown = keyDown;
 	}
 	
-	[JsonConstructor]
-	private MessageInfoKeyboardKeyEvent(Guid id, int vmId, PhysicalKey key, bool keyDown)
-		: base(id)
-	{
-		VmId = vmId;
-		Key = key;
-		KeyDown = keyDown;
-	}
-
-	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Enum.IsDefined(typeof(PhysicalKey), Key);
 }
 
+[MessagePackObject]
 public class MessageInfoDriveCreated : MessageInfo, IMessageTcp
 {
-	public DriveGeneralDescriptor Descriptor { get; }
+	[Key(1)]
+	public DriveGeneralDescriptor Descriptor { get; set; }
+
+	public MessageInfoDriveCreated() { }
 
 	public MessageInfoDriveCreated(DriveGeneralDescriptor descriptor)
 	{
 		Descriptor = descriptor;
 	}
-	
-	[JsonConstructor]
-	private MessageInfoDriveCreated(Guid id, DriveGeneralDescriptor descriptor)
-		: base(id)
-	{
-		Descriptor = descriptor;
-	}
 }
 
+[MessagePackObject]
 public class MessageInfoDriveConnected : MessageInfo, IMessageTcp
 {
-	public int DriveId { get; }
-	public int VmId { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public int VmId { get; set; }
+
+	public MessageInfoDriveConnected() { }
 
 	public MessageInfoDriveConnected(int driveId, int vmId)
 	{
@@ -360,43 +344,42 @@ public class MessageInfoDriveConnected : MessageInfo, IMessageTcp
 		VmId = vmId;
 	}
 	
-	[JsonConstructor]
-	private MessageInfoDriveConnected(Guid id, int driveId, int vmId)
-		: base(id)
-	{
-		DriveId = driveId;
-		VmId = vmId;
-	}
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageInfoDriveDisconnected : MessageInfo, IMessageTcp
 {
-	public int DriveId { get; }
-	public int VmId { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public int VmId { get; set; }
+
+	public MessageInfoDriveDisconnected() { }
 
 	public MessageInfoDriveDisconnected(int driveId, int vmId)
 	{
 		DriveId = driveId;
 		VmId = vmId;
 	}
-	
-	[JsonConstructor]
-	private MessageInfoDriveDisconnected(Guid id, int driveId, int vmId)
-		: base(id)
-	{
-		DriveId = driveId;
-		VmId = vmId;
-	}
-	
+
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageInfoTransferData : MessageInfo, IMessageTcp
 {
-	public Guid StreamId { get; }
-	public ulong Offset { get; }		/* The offset of the data in the file, in bytes. */
-	public byte[] Data { get; }
+	[Key(1)]
+	public Guid StreamId { get; set; }
+	
+	[Key(2)]
+	public ulong Offset { get; set; }
+	
+	[Key(3)]
+	public byte[] Data { get; set; }
+
+	public MessageInfoTransferData() { }
 
 	public MessageInfoTransferData(Guid streamId, ulong offset, byte[] data)
 	{
@@ -405,32 +388,21 @@ public class MessageInfoTransferData : MessageInfo, IMessageTcp
 		Data = data;
 	}
 
-	[JsonConstructor]
-	private MessageInfoTransferData(Guid id, Guid streamId, ulong offset, byte[] data)
-		: base(id)
-	{
-		StreamId = streamId;
-		Offset = offset;
-		Data = data;
-	}
 	public override bool IsValidMessage() => base.IsValidMessage() && StreamId != Guid.Empty && Data.Length > 0;
 }
 
-/* "Item" In this case does NOT include drives, as there is MessageInfoDriveCreated. */
+[MessagePackObject]
 public class MessageInfoItemCreated : MessageInfo, IMessageTcp		
 {
-	public int DriveId { get; }
-	public string Path { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public string Path { get; set; }
+
+	public MessageInfoItemCreated() { }
 
 	public MessageInfoItemCreated(int driveId, string path)
-	{
-		DriveId = driveId;
-		Path = path;
-	}
-	
-	[JsonConstructor]
-	private MessageInfoItemCreated(Guid id, int driveId, string path)
-		: base(id)
 	{
 		DriveId = driveId;
 		Path = path;
@@ -439,11 +411,16 @@ public class MessageInfoItemCreated : MessageInfo, IMessageTcp
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }
 
-/* "Item" In this case includes a drive. */
+[MessagePackObject]
 public class MessageInfoItemDeleted : MessageInfo, IMessageTcp 
 {
-	public int DriveId { get; }
-	public string Path { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public string Path { get; set; }
+
+	public MessageInfoItemDeleted() { }
 
 	public MessageInfoItemDeleted(int driveId, string path)
 	{
@@ -451,13 +428,5 @@ public class MessageInfoItemDeleted : MessageInfo, IMessageTcp
 		Path = path;
 	}
 	
-	[JsonConstructor]
-	private MessageInfoItemDeleted(Guid id, int driveId, string path)
-		: base(id)
-	{
-		DriveId = driveId;
-		Path = path;
-	}
-
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }

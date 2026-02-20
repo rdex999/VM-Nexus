@@ -1,14 +1,30 @@
+using MessagePack;
+
 namespace Shared.Drives;
 
+[MessagePackObject]
 public class PartitionGptDescriptor
 {
-	public Guid Guid { get; }
-	public long StartLba { get; }
-	public long EndLba { get; }
-	public Attribute Flags { get; }
-	public string Label { get; }
-	public string Type { get; }
+	[Key(0)]
+	public Guid Guid { get; set; }
+	
+	[Key(1)]
+	public long StartLba { get; set; }
+	
+	[Key(2)]
+	public long EndLba { get; set; }
+	
+	[Key(3)]
+	public Attribute Flags { get; set; }
+	
+	[Key(4)]
+	public string Label { get; set; }
+	
+	[Key(5)]
+	public string Type { get; set; }
 
+	public PartitionGptDescriptor() { }
+	
 	public PartitionGptDescriptor(Guid guid, long startLba, long endLba, Attribute flags, string label, string type)
 	{
 		Guid = guid;

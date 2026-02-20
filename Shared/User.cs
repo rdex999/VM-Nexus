@@ -1,15 +1,24 @@
-using Newtonsoft.Json;
+using MessagePack;
 
 namespace Shared;
 
+[MessagePackObject]
 public class User
 {
-	public int Id { get; }
-	public string Username { get; }
-	public string Email { get; }
-	public DateTime CreatedAt { get; }
+	[Key(0)]
+	public int Id { get; set; }
+	
+	[Key(1)]
+	public string Username { get; set; }
+	
+	[Key(2)]
+	public string Email { get; set; }
+	
+	[Key(3)]
+	public DateTime CreatedAt { get; set; }
 
-	[JsonConstructor]
+	public User() {}
+	
 	public User(int id, string username, string email, DateTime createdAt)
 	{
 		Id = id;
@@ -19,14 +28,20 @@ public class User
 	}
 }
 
+[MessagePackObject]
 public class SubUser : User
 {
-	public int OwnerId { get; }
-	public UserPermissions OwnerPermissions { get; }
-	public string OwnerUsername { get; }
-	public string OwnerEmail { get; }
-
-	[JsonConstructor]
+	[Key(4)]
+	public int OwnerId { get; set; }
+	[Key(5)]
+	public UserPermissions OwnerPermissions { get; set; }
+	[Key(6)]
+	public string OwnerUsername { get; set; }
+	[Key(7)]
+	public string OwnerEmail { get; set; }
+	
+	public SubUser() {}
+	
 	public SubUser(int id, int ownerId, UserPermissions ownerPermissions, string ownerUsername, string ownerEmail, string username, string email, DateTime createdAt)
 		: base(id, username, email, createdAt)
 	{

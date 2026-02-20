@@ -340,7 +340,7 @@ public partial class MessagingService
 
 			while (_messageUdpChannel.Reader.TryRead(out IMessage? message))
 			{
-				byte[] messageBytes = Common.ToByteArrayWithType(message);
+				byte[] messageBytes = Common.MessageToByteArray(message);
 				int bytesSent = 0;
 				while (bytesSent < messageBytes.Length && !Cts.Token.IsCancellationRequested)
 				{
@@ -586,7 +586,7 @@ public partial class MessagingService
 		ExitCode result;
 		Stopwatch stopwatch = Stopwatch.StartNew();
 		
-		byte[] bytes = Common.ToByteArrayWithType(message);
+		byte[] bytes = Common.MessageToByteArray(message);
 		byte[] sizeInBytes = BitConverter.GetBytes(bytes.Length);
 
 		result = await SendBytesExactTcpAsync(sizeInBytes);
@@ -629,7 +629,7 @@ public partial class MessagingService
 			return null;
 		}
 
-		return (Message)Common.FromByteArrayWithType(messageBytes)!;
+		return (Message)Common.MessageFromByteArray(messageBytes)!;
 	}
 	
 	/// <summary>

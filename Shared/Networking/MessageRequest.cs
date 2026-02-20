@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+using MessagePack;
 using Shared.Drives;
 using Shared.VirtualMachines;
 using DriveType = Shared.Drives.DriveType;
@@ -11,23 +11,17 @@ public interface IMessageRequest : IMessageTcp {}
 public abstract class MessageRequest : Message, IMessageRequest
 {
 	protected MessageRequest() {}
-	
-	[JsonConstructor]
-	protected MessageRequest(Guid id) : base(id) {}
 }
 
-public class MessageRequestCheckUsername : MessageRequest	/* Check if the provided username is available (that there is no such user) */
+[MessagePackObject]
+public class MessageRequestCheckUsername : MessageRequest
 {
-	public string Username { get; }
+	[Key(1)]
+	public string Username { get; set; }
+
+	public MessageRequestCheckUsername() { }
 
 	public MessageRequestCheckUsername(string username)
-	{
-		Username = username;
-	}
-
-	[JsonConstructor]
-	private MessageRequestCheckUsername(Guid id, string username)
-		: base(id)
 	{
 		Username = username;
 	}
@@ -35,22 +29,21 @@ public class MessageRequestCheckUsername : MessageRequest	/* Check if the provid
 	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Username);
 }
 
+[MessagePackObject]
 public class MessageRequestCreateAccount : MessageRequest
 {
-	public string Username { get; }
-	public string Email { get; }
-	public string Password { get; }
+	[Key(1)]
+	public string Username { get; set; }
+	
+	[Key(2)]
+	public string Email { get; set; }
+	
+	[Key(3)]
+	public string Password { get; set; }
+
+	public MessageRequestCreateAccount() { }
 
 	public MessageRequestCreateAccount(string username, string email, string password)
-	{
-		Username = username.Trim();
-		Email = email.Trim();
-		Password = password;
-	}
-	
-	[JsonConstructor]
-	private MessageRequestCreateAccount(Guid id, string username, string email, string password)
-		: base(id)
 	{
 		Username = username.Trim();
 		Email = email.Trim();
@@ -62,18 +55,15 @@ public class MessageRequestCreateAccount : MessageRequest
 	                                                               && !string.IsNullOrEmpty(Password);
 }
 
+[MessagePackObject]
 public class MessageRequestDeleteAccount : MessageRequest
 {
-	public int UserId { get; }
+	[Key(1)]
+	public int UserId { get; set; }
+
+	public MessageRequestDeleteAccount() { }
 
 	public MessageRequestDeleteAccount(int userId)
-	{
-		UserId = userId;
-	}
-	
-	[JsonConstructor]
-	private MessageRequestDeleteAccount(Guid id, int userId)
-		: base(id)
 	{
 		UserId = userId;
 	}
@@ -81,20 +71,18 @@ public class MessageRequestDeleteAccount : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestLogin : MessageRequest
 {
-	public string Username { get; }
-	public string Password { get; }
+	[Key(1)]
+	public string Username { get; set; }
+	
+	[Key(2)]
+	public string Password { get; set; }
+
+	public MessageRequestLogin() { }
 
 	public MessageRequestLogin(string username, string password)
-	{
-		Username = username.Trim();
-		Password = password;
-	}
-
-	[JsonConstructor]
-	private MessageRequestLogin(Guid id, string username, string password)
-		: base(id)
 	{
 		Username = username.Trim();
 		Password = password;
@@ -104,29 +92,21 @@ public class MessageRequestLogin : MessageRequest
 	                                                               && !string.IsNullOrEmpty(Password);
 }
 
+[MessagePackObject]
 public class MessageRequestLogout : MessageRequest
 {
 	public MessageRequestLogout() {}
-	
-	[JsonConstructor]
-	private MessageRequestLogout(Guid id)
-		: base(id)
-	{
-	}
 }
 
+[MessagePackObject]
 public class MessageRequestLoginSubUser : MessageRequest
 {
-	public int UserId { get; }
+	[Key(1)]
+	public int UserId { get; set; }
+
+	public MessageRequestLoginSubUser() { }
 
 	public MessageRequestLoginSubUser(int userId)
-	{
-		UserId = userId;
-	}
-	
-	[JsonConstructor]
-	private MessageRequestLoginSubUser(Guid id, int userId)
-		: base(id)
 	{
 		UserId = userId;
 	}
@@ -134,24 +114,24 @@ public class MessageRequestLoginSubUser : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestCreateSubUser : MessageRequest
 {
-	public string Username { get; }
-	public string Email { get; }
-	public string Password { get; }
-	public UserPermissions Permissions { get; }
+	[Key(1)]
+	public string Username { get; set; }
+	
+	[Key(2)]
+	public string Email { get; set; }
+	
+	[Key(3)]
+	public string Password { get; set; }
+	
+	[Key(4)]
+	public UserPermissions Permissions { get; set; }
+
+	public MessageRequestCreateSubUser() { }
 
 	public MessageRequestCreateSubUser(string username, string email, string password, UserPermissions permissions)
-	{
-		Username = username.Trim();
-		Email = email.Trim();
-		Password = password;
-		Permissions = permissions.AddIncluded();
-	}
-	
-	[JsonConstructor]
-	private MessageRequestCreateSubUser(Guid id, string username, string email, string password, UserPermissions permissions)
-		: base(id)
 	{
 		Username = username.Trim();
 		Email = email.Trim();
@@ -163,11 +143,16 @@ public class MessageRequestCreateSubUser : MessageRequest
 	                                         !string.IsNullOrEmpty(Email) && !string.IsNullOrEmpty(Password);
 }
 
-/* Set new permissions the owner will have over the given user. */
+[MessagePackObject]
 public class MessageRequestSetOwnerPermissions : MessageRequest
 {
-	public int UserId { get; }		/* The ID of the user to change the owner permissions of. */
-	public UserPermissions Permissions { get; }
+	[Key(1)]
+	public int UserId { get; set; }
+	
+	[Key(2)]
+	public UserPermissions Permissions { get; set; }
+
+	public MessageRequestSetOwnerPermissions() { }
 
 	public MessageRequestSetOwnerPermissions(int userId, UserPermissions permissions)
 	{
@@ -175,31 +160,21 @@ public class MessageRequestSetOwnerPermissions : MessageRequest
 		Permissions = permissions;
 	}
 	
-	[JsonConstructor]
-	public MessageRequestSetOwnerPermissions(Guid id, int userId, UserPermissions permissions)
-		: base(id)
-	{
-		UserId = userId;
-		Permissions = permissions;
-	}
-
 	public override bool IsValidMessage() => base.IsValidMessage() && UserId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestResetPassword : MessageRequest
 {
-	public string Password { get; }
-	public string NewPassword { get; }
+	[Key(1)]
+	public string Password { get; set; }
+	
+	[Key(2)]
+	public string NewPassword { get; set; }
+
+	public MessageRequestResetPassword() { }
 
 	public MessageRequestResetPassword(string password, string newPassword)
-	{
-		Password = password;
-		NewPassword = newPassword;
-	}
-
-	[JsonConstructor]
-	private MessageRequestResetPassword(Guid id, string password, string newPassword)
-		: base(id)
 	{
 		Password = password;
 		NewPassword = newPassword;
@@ -208,36 +183,34 @@ public class MessageRequestResetPassword : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Password) && !string.IsNullOrEmpty(NewPassword);
 }
 
+[MessagePackObject]
 public class MessageRequestListSubUsers : MessageRequest
 {
 	public MessageRequestListSubUsers() {}
-	
-	[JsonConstructor]
-	private MessageRequestListSubUsers(Guid id) : base(id) {}
 }
 
+[MessagePackObject]
 public class MessageRequestCreateVm : MessageRequest
 {
-	public string Name { get; }
-	public OperatingSystem OperatingSystem { get; }
-	public CpuArchitecture CpuArchitecture { get; }
-	public int RamSizeMiB { get; }
-	public BootMode BootMode { get; }
+	[Key(1)]
+	public string Name { get; set; }
+	
+	[Key(2)]
+	public OperatingSystem OperatingSystem { get; set; }
+	
+	[Key(3)]
+	public CpuArchitecture CpuArchitecture { get; set; }
+	
+	[Key(4)]
+	public int RamSizeMiB { get; set; }
+	
+	[Key(5)]
+	public BootMode BootMode { get; set; }
+
+	public MessageRequestCreateVm() { }
 
 	public MessageRequestCreateVm(string name, OperatingSystem operatingSystem, 
 		CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode)
-	{
-		Name = name;
-		OperatingSystem = operatingSystem;
-		CpuArchitecture = cpuArchitecture;
-		RamSizeMiB = ramSizeMiB;
-		BootMode = bootMode;
-	}
-
-	[JsonConstructor]
-	private MessageRequestCreateVm(Guid id, string name, OperatingSystem operatingSystem, 
-		CpuArchitecture cpuArchitecture, int ramSizeMiB, BootMode bootMode)
-		: base(id)
 	{
 		Name = name;
 		OperatingSystem = operatingSystem;
@@ -253,18 +226,15 @@ public class MessageRequestCreateVm : MessageRequest
 	                                                               && Enum.IsDefined(typeof(BootMode), BootMode);
 }
 
+[MessagePackObject]
 public class MessageRequestDeleteVm : MessageRequest
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageRequestDeleteVm() { }
 
 	public MessageRequestDeleteVm(int vmId)
-	{
-		VmId = vmId;
-	}
-
-	[JsonConstructor]
-	private MessageRequestDeleteVm(Guid id, int vmId)
-		: base(id)
 	{
 		VmId = vmId;
 	}
@@ -272,49 +242,43 @@ public class MessageRequestDeleteVm : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestListVms : MessageRequest
 {
 	public MessageRequestListVms() {}
-	
-	[JsonConstructor]
-	private MessageRequestListVms(Guid id) : base(id) { }
 }
 
-public class MessageRequestCheckVmExist : MessageRequest	/* Check if there is a virtual machine with the given name */
+[MessagePackObject]
+public class MessageRequestCheckVmExist : MessageRequest
 {
-	public string Name { get; }
+	[Key(1)]
+	public string Name { get; set; }
+
+	public MessageRequestCheckVmExist() { }
 
 	public MessageRequestCheckVmExist(string name)
 	{
 		Name = name;
 	}
 	
-	[JsonConstructor]
-	private MessageRequestCheckVmExist(Guid id, string name)
-		: base(id)
-	{
-		Name = name;
-	}
-
 	public override bool IsValidMessage() => base.IsValidMessage() && !string.IsNullOrEmpty(Name);
 }
 
+[MessagePackObject]
 public class MessageRequestCreateDriveFs : MessageRequest
 {
-	public string Name { get; }
-	public int SizeMb { get; }
-	public FileSystemType FileSystem { get; }
+	[Key(1)]
+	public string Name { get; set; }
+	
+	[Key(2)]
+	public int SizeMb { get; set; }
+	
+	[Key(3)]
+	public FileSystemType FileSystem { get; set; }
+
+	public MessageRequestCreateDriveFs() { }
 
 	public MessageRequestCreateDriveFs(string name, int sizeMb, FileSystemType fileSystem)
-	{
-		Name = name;
-		SizeMb = sizeMb;
-		FileSystem = fileSystem;
-	}
-	
-	[JsonConstructor]
-	private MessageRequestCreateDriveFs(Guid id, string name, int sizeMb, FileSystemType fileSystem)
-		: base(id)
 	{
 		Name = name;
 		SizeMb = sizeMb;
@@ -326,22 +290,21 @@ public class MessageRequestCreateDriveFs : MessageRequest
 	                                                               && SizeMb <= SharedDefinitions.DriveSizeMbMax;
 }
 
+[MessagePackObject]
 public class MessageRequestCreateDriveFromImage : MessageRequest
 {
-	public string Name { get; }
-	public DriveType Type { get; }
-	public ulong Size { get; }
+	[Key(1)]
+	public string Name { get; set; }
+	
+	[Key(2)]
+	public DriveType Type { get; set; }
+	
+	[Key(3)]
+	public ulong Size { get; set; }
+
+	public MessageRequestCreateDriveFromImage() { }
 
 	public MessageRequestCreateDriveFromImage(string name, DriveType type, ulong size)
-	{
-		Name = name;
-		Type = type;
-		Size = size;
-	}
-	
-	[JsonConstructor]
-	private MessageRequestCreateDriveFromImage(Guid id, string name, DriveType type, ulong size)
-		: base(id)
 	{
 		Name = name;
 		Type = type;
@@ -352,23 +315,21 @@ public class MessageRequestCreateDriveFromImage : MessageRequest
 	                                                               && Size / 1024UL / 1024UL <= SharedDefinitions.DriveSizeMbMax;
 }
 
+[MessagePackObject]
 public class MessageRequestCreateDriveOs : MessageRequest
 {
-	public string Name { get; }
-	public int SizeMiB { get; }
+	[Key(1)]
+	public string Name { get; set; }
 	
-	public OperatingSystem OperatingSystem { get; }
+	[Key(2)]
+	public int SizeMiB { get; set; }
+	
+	[Key(3)]
+	public OperatingSystem OperatingSystem { get; set; }
+
+	public MessageRequestCreateDriveOs() { }
 
 	public MessageRequestCreateDriveOs(string name, int sizeMiB, OperatingSystem operatingSystem)
-	{
-		Name = name;
-		SizeMiB = sizeMiB;
-		OperatingSystem = operatingSystem;
-	}
-	
-	[JsonConstructor]
-	private MessageRequestCreateDriveOs(Guid id, string name, int sizeMiB, OperatingSystem operatingSystem)
-		: base(id)
 	{
 		Name = name;
 		SizeMiB = sizeMiB;
@@ -381,20 +342,18 @@ public class MessageRequestCreateDriveOs : MessageRequest
 	                                                               && Common.IsOperatingSystemDriveSizeValid(OperatingSystem, SizeMiB);
 }
 
-public class MessageRequestConnectDrive : MessageRequest	/* Request to mark the drive as connected to some VM. */
+[MessagePackObject]
+public class MessageRequestConnectDrive : MessageRequest
 {
-	public int DriveId { get; }
-	public int VmId { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
 	
+	[Key(2)]
+	public int VmId { get; set; }
+	
+	public MessageRequestConnectDrive() { }
+
 	public MessageRequestConnectDrive(int driveId, int vmId)
-	{
-		DriveId = driveId;
-		VmId = vmId;
-	}
-	
-	[JsonConstructor]
-	private MessageRequestConnectDrive(Guid id, int driveId, int vmId)
-		: base(id)
 	{
 		DriveId = driveId;
 		VmId = vmId;
@@ -403,48 +362,48 @@ public class MessageRequestConnectDrive : MessageRequest	/* Request to mark the 
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestDisconnectDrive : MessageRequest
 {
-	public int DriveId { get; }
-	public int VmId { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public int VmId { get; set; }
+
+	public MessageRequestDisconnectDrive() { }
 
 	public MessageRequestDisconnectDrive(int driveId, int vmId)
 	{
 		DriveId = driveId;
 		VmId = vmId;
 	}
-	
-	[JsonConstructor]
-	private MessageRequestDisconnectDrive(Guid id, int driveId, int vmId)
-		: base(id)
-	{
-		DriveId = driveId;
-		VmId = vmId;
-	}
 
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestListDriveConnections : MessageRequest
 {
 	public MessageRequestListDriveConnections() { }
-	
-	[JsonConstructor]
-	private MessageRequestListDriveConnections(Guid id) : base(id) { }
 }
 
+[MessagePackObject]
 public class MessageRequestListDrives : MessageRequest
 {
 	public MessageRequestListDrives() {}
-	
-	[JsonConstructor]
-	private MessageRequestListDrives(Guid id) : base(id) {}
 }
 
+[MessagePackObject]
 public class MessageRequestListPathItems : MessageRequest
 {
-	public int DriveId { get; }
-	public string Path { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public string Path { get; set; }
+
+	public MessageRequestListPathItems() { }
 
 	public MessageRequestListPathItems(int driveId, string path)
 	{
@@ -452,55 +411,44 @@ public class MessageRequestListPathItems : MessageRequest
 		Path = Common.CleanPath(path);
 	}
 	
-	[JsonConstructor]
-	private MessageRequestListPathItems(Guid id, int driveId, string path)
-		: base(id)
-	{
-		DriveId = driveId;
-		Path = Common.CleanPath(path);
-	}
-	
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }
 
-public class MessageRequestDownloadItem : MessageRequest	/* Download from client perspective - client receives the item from the server. */
+[MessagePackObject]
+public class MessageRequestDownloadItem : MessageRequest
 {
-	public int DriveId { get; }
-	public string Path { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public string Path { get; set; }
+
+	public MessageRequestDownloadItem() { }
 
 	public MessageRequestDownloadItem(int driveId, string path)
 	{
 		DriveId = driveId;
 		Path = Common.CleanPath(path);
 	}
-	
-	[JsonConstructor]
-	private MessageRequestDownloadItem(Guid id, int driveId, string path)
-		: base(id)
-	{
-		DriveId = driveId;
-		Path = Common.CleanPath(path);
-	}
 
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }
 
-public class MessageRequestUploadFile : MessageRequest		/* Upload from client perspective - client sends the file to the server. */
+[MessagePackObject]
+public class MessageRequestUploadFile : MessageRequest
 {
-	public int DriveId { get; }
-	public string Path { get; }		/* Destination inside the drive. Includes the filename. */
-	public ulong Size { get; }		/* In bytes. */
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public string Path { get; set; }
+	
+	[Key(3)]
+	public ulong Size { get; set; }
+
+	public MessageRequestUploadFile() { }
 
 	public MessageRequestUploadFile(int driveId, string path, ulong size)
-	{
-		DriveId = driveId;
-		Path = Common.CleanPath(path);
-		Size = size;
-	}
-	
-	[JsonConstructor]
-	private MessageRequestUploadFile(Guid id, int driveId, string path, ulong size)
-		: base(id)
 	{
 		DriveId = driveId;
 		Path = Common.CleanPath(path);
@@ -511,20 +459,18 @@ public class MessageRequestUploadFile : MessageRequest		/* Upload from client pe
 	                                         Size > 0 && Size <= SharedDefinitions.DriveSizeMbMax * 1024UL * 1024UL;
 }
 
+[MessagePackObject]
 public class MessageRequestCreateDirectory : MessageRequest
 {
-	public int DriveId { get; }
-	public string Path { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public string Path { get; set; }
+
+	public MessageRequestCreateDirectory() { }
 
 	public MessageRequestCreateDirectory(int driveId, string path)
-	{
-		DriveId = driveId;
-		Path = Common.CleanPath(path);
-	}
-	
-	[JsonConstructor]
-	private MessageRequestCreateDirectory(Guid id, int driveId, string path)
-		: base(id)
 	{
 		DriveId = driveId;
 		Path = Common.CleanPath(path);
@@ -533,20 +479,18 @@ public class MessageRequestCreateDirectory : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1 && !string.IsNullOrEmpty(Path);
 }
 
+[MessagePackObject]
 public class MessageRequestDeleteItem : MessageRequest
 {
-	public int DriveId { get; }
-	public string Path { get; }
+	[Key(1)]
+	public int DriveId { get; set; }
+	
+	[Key(2)]
+	public string Path { get; set; }
+
+	public MessageRequestDeleteItem() { }
 
 	public MessageRequestDeleteItem(int driveId, string path)
-	{
-		DriveId = driveId;
-		Path = Common.CleanPath(path);
-	}
-	
-	[JsonConstructor]
-	private MessageRequestDeleteItem(Guid id, int driveId, string path)
-		: base(id)
 	{
 		DriveId = driveId;
 		Path = Common.CleanPath(path);
@@ -555,97 +499,82 @@ public class MessageRequestDeleteItem : MessageRequest
 	public override bool IsValidMessage() => base.IsValidMessage() && DriveId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestVmStartup : MessageRequest
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageRequestVmStartup() { }
 
 	public MessageRequestVmStartup(int vmId)
 	{
 		VmId = vmId;
 	}
 	
-	[JsonConstructor]
-	private MessageRequestVmStartup(Guid id, int vmId)
-		: base(id)
-	{
-		VmId = vmId;
-	}
-	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestVmShutdown : MessageRequest
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageRequestVmShutdown() { }
 
 	public MessageRequestVmShutdown(int vmId)
 	{
 		VmId = vmId;
 	}
 	
-	[JsonConstructor]
-	private MessageRequestVmShutdown(Guid id, int vmId)
-		: base(id)
-	{
-		VmId = vmId;
-	}
-	
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestVmForceOff : MessageRequest
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageRequestVmForceOff() { }
 
 	public MessageRequestVmForceOff(int vmId)
 	{
 		VmId = vmId;
 	}
-	
-	[JsonConstructor]
-	private MessageRequestVmForceOff(Guid id, int vmId)
-		: base(id)
-	{
-		VmId = vmId;
-	}
-	
+
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
-public class MessageRequestVmStreamStart : MessageRequest		/* Request to send a video stream of the screen of a virtual machine (through MessageInfo) */
+[MessagePackObject]
+public class MessageRequestVmStreamStart : MessageRequest
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageRequestVmStreamStart() { }
 
 	public MessageRequestVmStreamStart(int vmId)
 	{
 		VmId = vmId;
 	}
-	
-	[JsonConstructor]
-	private MessageRequestVmStreamStart(Guid id, int vmId)
-		: base(id)
-	{
-		VmId = vmId;
-	}
-	
+
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }
 
+[MessagePackObject]
 public class MessageRequestVmStreamStop : MessageRequest
 {
-	public int VmId { get; }
+	[Key(1)]
+	public int VmId { get; set; }
+
+	public MessageRequestVmStreamStop() { }
 
 	public MessageRequestVmStreamStop(int vmId)
 	{
 		VmId = vmId;
 	}
-	
-	[JsonConstructor]
-	private MessageRequestVmStreamStop(Guid id, int vmId)
-		: base(id)
-	{
-		VmId = vmId;
-	}
-	
+
 	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1;
 }

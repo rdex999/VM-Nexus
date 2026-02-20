@@ -1,4 +1,4 @@
-using Newtonsoft.Json;
+using MessagePack;
 using Shared.Drives;
 using Shared.VirtualMachines;
 
@@ -6,21 +6,20 @@ namespace Shared.Networking;
 
 public interface IMessageResponse : IMessageTcp
 {
-	public Guid RequestId { get; }		/* This is a response for request ID=... */
+	public Guid RequestId { get; }
 }
 
 public abstract class MessageResponse : Message, IMessageResponse
 {
-	public Guid RequestId { get; }
+	[Key(1)]
+	public Guid RequestId { get; set; }
 	
-	public MessageResponse(Guid requestId)
+	public MessageResponse() 
 	{
-		RequestId = requestId;
+		RequestId = Guid.Empty;
 	}
 
-	[JsonConstructor]
-	protected MessageResponse(Guid id, Guid requestId)
-		: base(id)
+	public MessageResponse(Guid requestId)
 	{
 		RequestId = requestId;
 	}
@@ -28,36 +27,39 @@ public abstract class MessageResponse : Message, IMessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && RequestId != Guid.Empty;
 }
 
-public class MessageResponseInvalidRequestData : MessageResponse	/* If the received request is invalid, this is the response. (haha) */
+[MessagePackObject]
+public class MessageResponseInvalidRequestData : MessageResponse
 {
-	public MessageResponseInvalidRequestData(Guid requestId) : base(requestId) { }
+	public MessageResponseInvalidRequestData() { }
 	
-	[JsonConstructor]
-	private MessageResponseInvalidRequestData(Guid id, Guid requestId) : base(id, requestId) { }
+	public MessageResponseInvalidRequestData(Guid requestId) : base(requestId) { }
 }
 
+[MessagePackObject]
 public class MessageResponseCheckUsername : MessageResponse
 {
-	public bool Available { get; }
+	[Key(2)]
+	public bool Available { get; set; }
+
+	public MessageResponseCheckUsername() { }
 
 	public MessageResponseCheckUsername(Guid requestId, bool available)
 		: base(requestId)
 	{
 		Available = available;
 	}
-	
-	[JsonConstructor]
-	private MessageResponseCheckUsername(Guid id, Guid requestId, bool available)
-		: base(id, requestId)
-	{
-		Available = available;
-	}
 }
 
+[MessagePackObject]
 public class MessageResponseCreateAccount : MessageResponse
 {
-	public Status Result { get; }
-	public User? User { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public User User { get; set; }
+	
+	public MessageResponseCreateAccount() { }
 	
 	public MessageResponseCreateAccount(Guid requestId, Status result)
 		: base(requestId)
@@ -68,14 +70,6 @@ public class MessageResponseCreateAccount : MessageResponse
 	
 	public MessageResponseCreateAccount(Guid requestId, Status result, User user)
 		: base(requestId)
-	{ 
-		Result = result;
-		User = user;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseCreateAccount(Guid id, Guid requestId, Status result, User user)
-		: base(id, requestId)
 	{ 
 		Result = result;
 		User = user;
@@ -93,32 +87,35 @@ public class MessageResponseCreateAccount : MessageResponse
 	}
 }
 
+[MessagePackObject]
 public class MessageResponseDeleteAccount : MessageResponse
 {
-	public bool Deleted { get; }
+	[Key(2)]
+	public bool Deleted { get; set; }
+
+	public MessageResponseDeleteAccount() { }
 
 	public MessageResponseDeleteAccount(Guid requestId, bool deleted)
 		: base(requestId)
 	{
 		Deleted = deleted;
 	}
-	
-	[JsonConstructor]
-	private MessageResponseDeleteAccount(Guid id, Guid requestId, bool deleted)
-		: base(id, requestId)
-	{
-		Deleted = deleted;
-	}
 }
 
+[MessagePackObject]
 public class MessageResponseLogin : MessageResponse
 {
-	public Status Result { get; }
-	public User? User { get; }
-	public TimeSpan LoginBlock { get; }
-
+	[Key(2)]
+	public Status Result { get; set; }
 	
-	/* Successful login. */
+	[Key(3)]
+	public User User { get; set; }
+	
+	[Key(4)]
+	public TimeSpan LoginBlock { get; set; }
+
+	public MessageResponseLogin() { }
+	
 	public MessageResponseLogin(Guid requestId, User user)
 		: base(requestId)
 	{
@@ -127,7 +124,6 @@ public class MessageResponseLogin : MessageResponse
 		LoginBlock = TimeSpan.Zero;
 	}
 	
-	/* Login failed. */
 	public MessageResponseLogin(Guid requestId)
 		: base(requestId)
 	{
@@ -136,21 +132,11 @@ public class MessageResponseLogin : MessageResponse
 		LoginBlock = TimeSpan.MaxValue;
 	}
 	
-	/* Login failed. (blocked) */
 	public MessageResponseLogin(Guid requestId, TimeSpan loginBlock)		
 		: base(requestId)
 	{
 		Result = Status.Blocked;
 		User = null;
-		LoginBlock = loginBlock;
-	}
-
-	[JsonConstructor]
-	private MessageResponseLogin(Guid id, Guid requestId, Status result, User user, TimeSpan loginBlock)
-		: base(id, requestId)
-	{
-		Result = result;
-		User = user;
 		LoginBlock = loginBlock;
 	}
 
@@ -164,28 +150,26 @@ public class MessageResponseLogin : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseLogout : MessageResponse
 {
-	public Status Result { get; }
-	public User? User { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public User User { get; set; }
+
+	public MessageResponseLogout() { }
 
 	public MessageResponseLogout(Guid requestId, Status result)
-		:  base(requestId)
+		: base(requestId)
 	{
 		Result = result;
 		User = null;
 	}
 	
-	public MessageResponseLogout(Guid requestId, Status result, User? user)
-		:  base(requestId)
-	{
-		Result = result;
-		User = user;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseLogout(Guid id, Guid requestId, Status result, User? user)
-		:  base(id, requestId)
+	public MessageResponseLogout(Guid requestId, Status result, User user)
+		: base(requestId)
 	{
 		Result = result;
 		User = user;
@@ -201,10 +185,16 @@ public class MessageResponseLogout : MessageResponse
 	}
 }
 
+[MessagePackObject]
 public class MessageResponseLoginSubUser : MessageResponse
 {
+	[Key(2)]
+	public SubUser? SubUser { get; set; }
+
+	[Key(3)]
 	public bool Success => SubUser != null;
-	public SubUser? SubUser { get; }
+
+	public MessageResponseLoginSubUser() { }
 
 	public MessageResponseLoginSubUser(Guid requestId)
 		: base(requestId)
@@ -217,28 +207,18 @@ public class MessageResponseLoginSubUser : MessageResponse
 	{
 		SubUser = subUser;
 	}
-
-	[JsonConstructor]
-	private MessageResponseLoginSubUser(Guid id, Guid requestId, SubUser subUser)
-		: base(id, requestId)
-	{
-		SubUser = subUser;
-	}
 }
 
+[MessagePackObject]
 public class MessageResponseCreateSubUser : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+
+	public MessageResponseCreateSubUser() { }
 
 	public MessageResponseCreateSubUser(Guid requestId, Status result)
 		: base(requestId)
-	{
-		Result = result;
-	}
-
-	[JsonConstructor]
-	private MessageResponseCreateSubUser(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -255,27 +235,28 @@ public class MessageResponseCreateSubUser : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseSetOwnerPermissions : MessageResponse
 {
-	public bool Success { get; }
+	[Key(2)]
+	public bool Success { get; set; }
+
+	public MessageResponseSetOwnerPermissions() { }
 
 	public MessageResponseSetOwnerPermissions(Guid requestId, bool success)
 		: base(requestId)
 	{
 		Success = success;
 	}
-	
-	[JsonConstructor]
-	public MessageResponseSetOwnerPermissions(Guid id, Guid requestId, bool success)
-		: base(id, requestId)
-	{
-		Success = success;
-	}
 }
 
+[MessagePackObject]
 public class MessageResponseResetPassword : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+
+	public MessageResponseResetPassword() { }
 
 	public MessageResponseResetPassword(Guid requestId, Status result)
 		: base(requestId)
@@ -283,12 +264,6 @@ public class MessageResponseResetPassword : MessageResponse
 		Result = result;
 	}
 	
-	[JsonConstructor]
-	private MessageResponseResetPassword(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
-	{
-		Result = result;
-	}
 	public enum Status
 	{
 		Success,
@@ -297,10 +272,16 @@ public class MessageResponseResetPassword : MessageResponse
 	}
 }
 
+[MessagePackObject]
 public class MessageResponseListSubUsers : MessageResponse
 {
-	public Status Result { get; }
-	public SubUser[]? Users { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public SubUser[] Users { get; set; }
+
+	public MessageResponseListSubUsers() { }
 
 	public MessageResponseListSubUsers(Guid requestId, Status result)
 		: base(requestId)
@@ -311,14 +292,6 @@ public class MessageResponseListSubUsers : MessageResponse
 	
 	public MessageResponseListSubUsers(Guid requestId, Status result, SubUser[] users)
 		: base(requestId)
-	{
-		Result = result;
-		Users = users;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseListSubUsers(Guid id, Guid requestId, Status result, SubUser[]? users)
-		: base(id, requestId)
 	{
 		Result = result;
 		Users = users;
@@ -335,10 +308,16 @@ public class MessageResponseListSubUsers : MessageResponse
 	                                                                   || (Result != Status.Success && Users == null));
 }
 
+[MessagePackObject]
 public class MessageResponseCreateVm : MessageResponse
 {
-	public Status Result { get; }
-	public int VmId { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public int VmId { get; set; }
+
+	public MessageResponseCreateVm() { }
 
 	public MessageResponseCreateVm(Guid requestId, Status result)
 		: base(requestId)
@@ -354,14 +333,6 @@ public class MessageResponseCreateVm : MessageResponse
 		VmId = vmId;
 	}
 	
-	[JsonConstructor]
-	private MessageResponseCreateVm(Guid id, Guid requestId, Status result, int vmId)
-		: base(id, requestId)
-	{
-		Result = result;
-		VmId = vmId;
-	}
-
 	public enum Status
 	{
 		Success,
@@ -372,19 +343,16 @@ public class MessageResponseCreateVm : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (VmId >= 1 || VmId == -1);
 }
 
+[MessagePackObject]
 public class MessageResponseDeleteVm : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+
+	public MessageResponseDeleteVm() { }
 
 	public MessageResponseDeleteVm(Guid requestId, Status result)
 		: base(requestId)
-	{
-		Result = result;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseDeleteVm(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -399,10 +367,16 @@ public class MessageResponseDeleteVm : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseListVms : MessageResponse
 {
-	public Status Result { get; }
-	public VmGeneralDescriptor[]? Vms { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public VmGeneralDescriptor[]? Vms { get; set; }
+
+	public MessageResponseListVms() { }
 
 	public MessageResponseListVms(Guid requestId, Status result)
 		: base(requestId)
@@ -418,14 +392,6 @@ public class MessageResponseListVms : MessageResponse
 		Vms = vms;
 	}
 
-	[JsonConstructor]
-	private MessageResponseListVms(Guid id, Guid requestId, Status result, VmGeneralDescriptor[]? vms)
-		: base(id, requestId)
-	{
-		Result = result;
-		Vms = vms;
-	}
-	
 	public enum Status
 	{
 		Success,
@@ -435,37 +401,31 @@ public class MessageResponseListVms : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseCheckVmExist : MessageResponse
 {
-	public bool Exists { get; }
+	[Key(2)]
+	public bool Exists { get; set; }
+
+	public MessageResponseCheckVmExist() { }
 
 	public MessageResponseCheckVmExist(Guid requestId, bool exists)
 		: base(requestId)
 	{
 		Exists = exists;
 	}
-	
-	[JsonConstructor]
-	private MessageResponseCheckVmExist(Guid id, Guid requestId, bool exists)
-		: base(id, requestId)
-	{
-		Exists = exists;
-	}
 }
 
+[MessagePackObject]
 public class MessageResponseCreateDriveFs : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+
+	public MessageResponseCreateDriveFs() { }
 
 	public MessageResponseCreateDriveFs(Guid requestId, Status result)
 		: base(requestId)
-	{
-		Result = result;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseCreateDriveFs(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -478,10 +438,16 @@ public class MessageResponseCreateDriveFs : MessageResponse
 	}
 }
 
+[MessagePackObject]
 public class MessageResponseCreateDriveFromImage : MessageResponse
 {
-	public Status Result { get; }
-	public Guid ImageTransferId { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public Guid ImageTransferId { get; set; }
+
+	public MessageResponseCreateDriveFromImage() { }
 
 	public MessageResponseCreateDriveFromImage(Guid requestId, Status result)
 		: base(requestId)
@@ -497,14 +463,6 @@ public class MessageResponseCreateDriveFromImage : MessageResponse
 		ImageTransferId = imageTransferId;
 	}
 	
-	[JsonConstructor]
-	private MessageResponseCreateDriveFromImage(Guid id, Guid requestId, Status result, Guid imageTransferId)
-		: base(id, requestId)
-	{
-		Result = result;
-		ImageTransferId = imageTransferId;
-	}
-	
 	public enum Status
 	{
 		Success,
@@ -515,10 +473,16 @@ public class MessageResponseCreateDriveFromImage : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseCreateDriveOs : MessageResponse
 {
-	public Status Result { get; }
-	public int DriveId { get; }		/* The ID of the new drive */
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public int DriveId { get; set; }
+
+	public MessageResponseCreateDriveOs() { }
 
 	public MessageResponseCreateDriveOs(Guid requestId, Status result)
 		: base(requestId)
@@ -534,14 +498,6 @@ public class MessageResponseCreateDriveOs : MessageResponse
 		DriveId = driveId;
 	}
 
-	[JsonConstructor]
-	private MessageResponseCreateDriveOs(Guid id, Guid requestId, Status result, int driveId)
-		: base(id, requestId)
-	{
-		Result = result;
-		DriveId = driveId;
-	}
-	
 	public enum Status
 	{
 		Success,
@@ -552,23 +508,20 @@ public class MessageResponseCreateDriveOs : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result) && (DriveId >= 1 || DriveId == -1);
 }
 
+[MessagePackObject]
 public class MessageResponseConnectDrive : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+
+	public MessageResponseConnectDrive() { }
 
 	public MessageResponseConnectDrive(Guid requestId, Status result)
 		: base(requestId)
 	{
 		Result = result;
 	}
-	
-	[JsonConstructor]
-	private MessageResponseConnectDrive(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
-	{
-		Result = result;
-	}
-	
+
 	public enum Status
 	{
 		Success,
@@ -579,23 +532,20 @@ public class MessageResponseConnectDrive : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseDisconnectDrive : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+
+	public MessageResponseDisconnectDrive() { }
 
 	public MessageResponseDisconnectDrive(Guid requestId, Status result)
 		: base(requestId)
 	{
 		Result = result;
 	}
-	
-	[JsonConstructor]
-	private MessageResponseDisconnectDrive(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
-	{
-		Result = result;
-	}
-	
+
 	public enum Status
 	{
 		Success,
@@ -606,10 +556,16 @@ public class MessageResponseDisconnectDrive : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseListDriveConnections : MessageResponse
 {
-	public Status Result { get; }
-	public DriveConnection[]? Connections { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public DriveConnection[] Connections { get; set; }
+
+	public MessageResponseListDriveConnections() { }
 
 	public MessageResponseListDriveConnections(Guid requestId, Status result)
 		: base(requestId)
@@ -624,15 +580,7 @@ public class MessageResponseListDriveConnections : MessageResponse
 		Result = result;
 		Connections = connections;
 	}
-	
-	[JsonConstructor]
-	private MessageResponseListDriveConnections(Guid id, Guid requestId, Status result, DriveConnection[]? connections)
-		: base(id, requestId)
-	{
-		Result = result;
-		Connections = connections;
-	}
-	
+
 	public enum Status
 	{
 		Success,
@@ -642,10 +590,16 @@ public class MessageResponseListDriveConnections : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseListDrives : MessageResponse
 {
-	public Status Result { get; }
-	public DriveGeneralDescriptor[]? Drives { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public DriveGeneralDescriptor[] Drives { get; set; }
+
+	public MessageResponseListDrives() { }
 
 	public MessageResponseListDrives(Guid requestId, Status result)
 		: base(requestId)
@@ -661,14 +615,6 @@ public class MessageResponseListDrives : MessageResponse
 		Drives = drives;
 	}
 	
-	[JsonConstructor]
-	private MessageResponseListDrives(Guid id, Guid requestId, Status result, DriveGeneralDescriptor[]? drives)
-		: base(id, requestId)
-	{
-		Result = result;
-		Drives = drives;
-	}
-	
 	public enum Status
 	{
 		Success,
@@ -678,11 +624,17 @@ public class MessageResponseListDrives : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseListPathItems : MessageResponse
 {
-	public Status Result { get; }
-	public PathItem[]? PathItems { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	
+	[Key(3)]
+	public PathItem[]? PathItems { get; set; }
 
+	public MessageResponseListPathItems() { }
+	
 	public MessageResponseListPathItems(Guid requestId, Status result)
 		: base(requestId)
 	{
@@ -696,16 +648,7 @@ public class MessageResponseListPathItems : MessageResponse
 		Result = Status.Success;
 		PathItems = pathItems;
 	}
-	
-	[JsonConstructor]
-	private MessageResponseListPathItems(Guid id, Guid requestId, Status result, PathItem[]? pathItems)
-		: base(id, requestId)
-	{
-		Result = result;
-		Result = result;
-		PathItems = pathItems;
-	}
-	
+
 	public enum Status
 	{
 		Success,
@@ -716,12 +659,18 @@ public class MessageResponseListPathItems : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseDownloadItem : MessageResponse		/* Download from client perspective - client receives the item from the server. */
 {
-	public Status Result { get; }
-	public Guid StreamId { get; }
-	public ulong ItemSize { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	[Key(3)]
+	public Guid StreamId { get; set; }
+	[Key(4)]
+	public ulong ItemSize { get; set; }
 
+	public MessageResponseDownloadItem() { }
+	
 	public MessageResponseDownloadItem(Guid requestId, Status result)
 		: base(requestId)
 	{
@@ -738,15 +687,6 @@ public class MessageResponseDownloadItem : MessageResponse		/* Download from cli
 		ItemSize = itemSize;
 	}
 	
-	[JsonConstructor]
-	private MessageResponseDownloadItem(Guid id, Guid requestId, Status result, Guid streamId, ulong itemSize)
-		: base(id, requestId)
-	{
-		Result = result;
-		StreamId = streamId;
-		ItemSize = itemSize;
-	}
-	
 	public enum Status
 	{
 		Success,
@@ -757,11 +697,16 @@ public class MessageResponseDownloadItem : MessageResponse		/* Download from cli
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseUploadFile : MessageResponse		/* Upload from client perspective - client sends file to server. */
 {
-	public Status Result { get; }
-	public Guid StreamId { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	[Key(3)]
+	public Guid StreamId { get; set; }
 
+	public MessageResponseUploadFile() { }
+	
 	public MessageResponseUploadFile(Guid requestId, Status result)
 		: base(requestId)
 	{
@@ -771,14 +716,6 @@ public class MessageResponseUploadFile : MessageResponse		/* Upload from client 
 	
 	public MessageResponseUploadFile(Guid requestId, Status result, Guid streamId)
 		: base(requestId)
-	{
-		Result = result;
-		StreamId = streamId;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseUploadFile(Guid id, Guid requestId, Status result, Guid streamId)
-		: base(id, requestId)
 	{
 		Result = result;
 		StreamId = streamId;
@@ -795,19 +732,16 @@ public class MessageResponseUploadFile : MessageResponse		/* Upload from client 
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseCreateDirectory : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
 
+	public MessageResponseCreateDirectory() { }
+	
 	public MessageResponseCreateDirectory(Guid requestId, Status result)
 		: base(requestId)
-	{
-		Result = result;
-	}
-
-	[JsonConstructor]
-	private MessageResponseCreateDirectory(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -822,19 +756,16 @@ public class MessageResponseCreateDirectory : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseDeleteItem : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
 
+	public MessageResponseDeleteItem() { }
+	
 	public MessageResponseDeleteItem(Guid requestId, Status result)
 		: base(requestId)
-	{
-		Result = result;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseDeleteItem(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -849,23 +780,20 @@ public class MessageResponseDeleteItem : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseVmStartup : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
 
+	public MessageResponseVmStartup() { }
+	
 	public MessageResponseVmStartup(Guid requestId, Status result)
 		: base(requestId)
 	{
 		Result = result;
 	}
-	
-	[JsonConstructor]
-	private MessageResponseVmStartup(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
-	{
-		Result = result;
-	}
-	
+
 	public enum Status
 	{
 		Success,
@@ -877,23 +805,20 @@ public class MessageResponseVmStartup : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseVmShutdown : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
 
+	public MessageResponseVmShutdown() { }
+	
 	public MessageResponseVmShutdown(Guid requestId, Status result)
 		: base(requestId)
 	{
 		Result = result;
 	}
-	
-	[JsonConstructor]
-	private MessageResponseVmShutdown(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
-	{
-		Result = result;
-	}
-	
+
 	public enum Status
 	{
 		Success,		/* Means that a shutdown signal was sent to the virtual machine. Doesn't mean its shutdown. */
@@ -904,19 +829,16 @@ public class MessageResponseVmShutdown : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseVmForceOff : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
 
+	public MessageResponseVmForceOff() { }
+	
 	public MessageResponseVmForceOff(Guid requestId, Status result)
 		: base(requestId)
-	{
-		Result = result;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseVmForceOff(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
 	{
 		Result = result;
 	}
@@ -931,11 +853,16 @@ public class MessageResponseVmForceOff : MessageResponse
 	public override bool IsValidMessage() => base.IsValidMessage() && Enum.IsDefined(typeof(Status), Result);
 }
 
+[MessagePackObject]
 public class MessageResponseVmStreamStart : MessageResponse
 {
-	public Status Result { get; }
-	public PixelFormat? PixelFormat { get; }
+	[Key(2)]
+	public Status Result { get; set; }
+	[Key(3)]
+	public PixelFormat? PixelFormat { get; set; }
 	
+	public MessageResponseVmStreamStart() { }
+		
 	public MessageResponseVmStreamStart(Guid requestId, Status result)
 		: base(requestId)
 	{
@@ -945,14 +872,6 @@ public class MessageResponseVmStreamStart : MessageResponse
 	
 	public MessageResponseVmStreamStart(Guid requestId, Status result, PixelFormat pixelFormat)
 		: base(requestId)
-	{
-		Result = result;
-		PixelFormat = pixelFormat;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseVmStreamStart(Guid id, Guid requestId, Status result, PixelFormat pixelFormat)
-		: base(id, requestId)
 	{
 		Result = result;
 		PixelFormat = pixelFormat;
@@ -969,19 +888,16 @@ public class MessageResponseVmStreamStart : MessageResponse
 	                                          (PixelFormat == null || Enum.IsDefined(typeof(PixelFormat.PixelFormatType), PixelFormat.Type));
 }
 
+[MessagePackObject]
 public class MessageResponseVmStreamStop : MessageResponse
 {
-	public Status Result { get; }
+	[Key(2)]
+	public Status Result { get; set; }
 
+	public MessageResponseVmStreamStop() { }
+	
 	public MessageResponseVmStreamStop(Guid requestId, Status result)
 		: base(requestId)
-	{
-		Result = result;
-	}
-	
-	[JsonConstructor]
-	private MessageResponseVmStreamStop(Guid id, Guid requestId, Status result)
-		: base(id, requestId)
 	{
 		Result = result;
 	}

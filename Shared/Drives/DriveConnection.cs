@@ -1,10 +1,18 @@
+using MessagePack;
+
 namespace Shared.Drives;
 
+[MessagePackObject]
 public struct DriveConnection
 {
-    public int DriveId { get; }
-    public int VmId { get; }
+    [Key(0)]
+    public int DriveId { get; set; }
+    
+    [Key(1)]
+    public int VmId { get; set; }
 		
+    public DriveConnection() { }
+    
     public DriveConnection(int driveId, int vmId)
     {
         DriveId = driveId;

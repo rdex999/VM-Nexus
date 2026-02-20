@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -513,7 +514,7 @@ public sealed class ClientConnection : MessagingService
 
 			case MessageRequestResetPassword reqResetPassword:
 			{
-				if (!IsLoggedIn || IsLoggedInAsSubUser || Common.PasswordStrength(reqResetPassword.Password) < 5)
+				if (!IsLoggedIn || IsLoggedInAsSubUser || Common.PasswordStrength(reqResetPassword.NewPassword) < 5)
 				{
 					SendResponse(new MessageResponseResetPassword(reqResetPassword.Id, MessageResponseResetPassword.Status.Failure));
 					break;

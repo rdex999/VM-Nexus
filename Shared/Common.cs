@@ -1,5 +1,5 @@
-using System.Diagnostics;
-using Newtonsoft.Json;
+using MessagePack;
+using Shared.Networking;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Shared;
@@ -47,23 +47,26 @@ public static class Common
 	}
 
 	/// <summary>
-	/// Converts the given object to a byte array with type information.
+	/// Converts the given message into a byte array.
 	/// </summary>
-	/// <param name="obj">
-	/// The object ot convert into the byte array. obj != null.
-	/// </param>
+	/// <param name="message">The message to convert into a byte array. message != null.</param>
 	/// <returns>
-	/// A byte array with type information representing the object.
+	/// A byte array with type information representing the message.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: obj != null. <br/>
+	/// Precondition: message != null. <br/>
 	/// Postcondition: A byte array with type information representing the object is returned.
 	/// </remarks>
-	public static byte[] ToByteArrayWithType(object obj)
+	public static byte[]? MessageToByteArray(IMessage message)
 	{
-		var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
-		var json = JsonConvert.SerializeObject(obj, settings);
-		return System.Text.Encoding.UTF8.GetBytes(json);
+		try
+		{
+			return MessagePackSerializer.Serialize((Message)message, MessagePackSerializerOptions.Standard);	
+		}
+		catch (Exception)
+		{
+			return null;
+		}
 	}
 
 	/// <summary>
@@ -81,13 +84,11 @@ public static class Common
 	/// Postcondition: On success, an object representation of the given byte array is returned. <br/>
 	/// On failure, null is returned.
 	/// </remarks>
-	public static object? FromByteArrayWithType(byte[] bytes)
+	public static IMessage? MessageFromByteArray(byte[] bytes)
 	{
-		var settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All };
-		var json = System.Text.Encoding.UTF8.GetString(bytes);
 		try
 		{
-			return JsonConvert.DeserializeObject(json, settings);
+			return MessagePackSerializer.Deserialize<Message>(bytes, MessagePackSerializerOptions.Standard);
 		}
 		catch (Exception)
 		{
