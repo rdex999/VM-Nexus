@@ -43,28 +43,32 @@ public partial class MessagingService
 		/// </remarks>
 		public async Task AcquireAsync(long bytes)
 		{
-			 if (bytes < 1 || _rateBps <= 0)
-				return;
+			lock (_lock)
+			{
+				if (bytes < 1 || _rateBps <= 0)
+					return;
+			}
 
-			 while (true)
-			 {
-				 TimeSpan delay;
-				 lock (_lock)
-				 {
-					 UpdateTokens();
-					 
-					 if (_tokens >= bytes)
-					 {
-						 _tokens -= bytes;
-						 return;
-					 }
+			while (true)
+			{
+				TimeSpan delay;
+				lock (_lock)
+				{
+					UpdateTokens();
 
-					 double needed = bytes - _tokens;
-					 delay = TimeSpan.FromSeconds(needed / _rateBps);
-				 }
+					if (_tokens >= bytes)
+					{
+						_tokens -= bytes;
+						return;
+					}
 
-				 await Task.Delay(delay < TimeSpan.FromSeconds(1) ? delay : TimeSpan.FromSeconds(1)).ConfigureAwait(false);
-			 }
+					double needed = bytes - _tokens;
+					delay = TimeSpan.FromSeconds(needed / _rateBps);
+				}
+
+				await Task.Delay(delay < TimeSpan.FromSeconds(1) ? delay : TimeSpan.FromSeconds(1))
+					.ConfigureAwait(false);
+			}
 		}
 
 		/// <summary>

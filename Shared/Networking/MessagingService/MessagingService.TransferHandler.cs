@@ -15,7 +15,7 @@ public partial class MessagingService
 		public ulong Size { get; }
 		public ulong BytesReceived { get; protected set; } = 0;
 
-		public TransferHandler(ulong size)
+		protected TransferHandler(ulong size)
 		{
 			Size = size;
 			Task = Task.CompletedTask;

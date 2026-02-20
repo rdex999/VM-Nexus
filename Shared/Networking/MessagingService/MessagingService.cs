@@ -33,7 +33,7 @@ public partial class MessagingService
 	/// Precondition: No specific preconditions. <br/>
 	/// PostCondition: Service officially uninitialized 
 	/// </remarks>
-	public MessagingService(bool isServer)
+	protected MessagingService(bool isServer)
 	{
 		_isServer = isServer;
 		IsServiceInitialized = false;
@@ -178,7 +178,7 @@ public partial class MessagingService
 				{
 					await Task.Run(HandleSuddenDisconnection, Cts.Token);
 				}
-				catch (Exception e)
+				catch (Exception)
 				{
 					// ignored
 				}
@@ -340,7 +340,10 @@ public partial class MessagingService
 
 			while (_messageUdpChannel.Reader.TryRead(out IMessage? message))
 			{
-				byte[] messageBytes = Common.MessageToByteArray(message);
+				byte[]? messageBytes = Common.MessageToByteArray(message);
+				if (messageBytes == null)
+					continue;
+				
 				int bytesSent = 0;
 				while (bytesSent < messageBytes.Length && !Cts.Token.IsCancellationRequested)
 				{
@@ -586,7 +589,10 @@ public partial class MessagingService
 		ExitCode result;
 		Stopwatch stopwatch = Stopwatch.StartNew();
 		
-		byte[] bytes = Common.MessageToByteArray(message);
+		byte[]? bytes = Common.MessageToByteArray(message);
+		if (bytes == null)
+			return ExitCode.InvalidParameter;
+		
 		byte[] sizeInBytes = BitConverter.GetBytes(bytes.Length);
 
 		result = await SendBytesExactTcpAsync(sizeInBytes);
@@ -800,8 +806,9 @@ public partial class MessagingService
 	/// A message of request type was received - should be processed. request != null. <br/>
 	/// Postcondition: Request is considered processed.
 	/// </remarks>
-	protected virtual async Task ProcessRequestAsync(IMessageRequest request)
+	protected virtual Task ProcessRequestAsync(IMessageRequest request)
 	{
+		return Task.CompletedTask;
 	}
 	
 	/// <summary>

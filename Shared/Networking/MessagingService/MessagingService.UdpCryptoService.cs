@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Security.Cryptography;
 
 namespace Shared.Networking;
@@ -177,8 +176,8 @@ public partial class MessagingService
 		/// </remarks>
 		public void Dispose()
 		{
-			_aesGcmS2C?.Dispose();
-			_aesGcmC2S?.Dispose();
+			_aesGcmS2C.Dispose();
+			_aesGcmC2S.Dispose();
 		}
 	}
 }

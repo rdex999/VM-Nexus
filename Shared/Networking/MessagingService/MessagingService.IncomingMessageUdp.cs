@@ -98,7 +98,7 @@ public partial class MessagingService
 			{
 				Close();
 				
-				IMessage? msg = (IMessage?)Common.MessageFromByteArray(_data);
+				IMessage? msg = Common.MessageFromByteArray(_data);
 				if (msg == null)
 					return ExitCode.MessageUdpCorrupted;
 
