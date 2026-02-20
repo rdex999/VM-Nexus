@@ -22,8 +22,6 @@ public class PartitionGptDescriptor
 	
 	[Key(5)]
 	public string Type { get; set; }
-
-	public PartitionGptDescriptor() { }
 	
 	public PartitionGptDescriptor(Guid guid, long startLba, long endLba, Attribute flags, string label, string type)
 	{

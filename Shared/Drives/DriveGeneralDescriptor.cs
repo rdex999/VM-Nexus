@@ -22,8 +22,6 @@ public class DriveGeneralDescriptor
     
     [Key(5)]
     public PartitionTableType PartitionTableType { get; }
-		
-    public DriveGeneralDescriptor() { }
     
     public DriveGeneralDescriptor(int id, string name, int size, int sectorSize, DriveType driveType, PartitionTableType partitionTableType)
     {

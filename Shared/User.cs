@@ -7,12 +7,11 @@ public class User
 {
 	[Key(0)]
 	public int Id { get; set; }
-	
-	[Key(1)]
-	public string Username { get; set; }
-	
-	[Key(2)]
-	public string Email { get; set; }
+
+	[Key(1)] public string Username { get; set; } = null!;
+
+	[Key(2)] 
+	public string Email { get; set; } = null!;
 	
 	[Key(3)]
 	public DateTime CreatedAt { get; set; }
@@ -33,12 +32,15 @@ public class SubUser : User
 {
 	[Key(4)]
 	public int OwnerId { get; set; }
+
 	[Key(5)]
 	public UserPermissions OwnerPermissions { get; set; }
-	[Key(6)]
-	public string OwnerUsername { get; set; }
-	[Key(7)]
-	public string OwnerEmail { get; set; }
+
+	[Key(6)] 
+	public string OwnerUsername { get; set; } = null!;
+
+	[Key(7)] 
+	public string OwnerEmail { get; set; } = null!;
 	
 	public SubUser() {}
 	

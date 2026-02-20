@@ -17,11 +17,9 @@ public class PathItemDrive : PathItem
 {
 	[Key(0)]
 	public int Id { get; set; }
-	
-	[Key(1)]
-	public string Name { get; set; }
 
-	public PathItemDrive() { }
+	[Key(1)] 
+	public string Name { get; set; }
 		
 	public PathItemDrive(int id, string name)
 	{
@@ -36,8 +34,6 @@ public class PathItemPartitionGpt : PathItem
 	[Key(0)]
 	public PartitionGptDescriptor Descriptor { get; set; }
 	
-	public PathItemPartitionGpt() { }
-	
 	public PathItemPartitionGpt(PartitionGptDescriptor descriptor)
 	{
 		Descriptor = descriptor;
@@ -50,8 +46,6 @@ public class PathItemPartitionMbr : PathItem
 	[Key(0)]
 	public PartitionMbrDescriptor Descriptor { get; set; }
 	
-	public PathItemPartitionMbr() { }
-	
 	public PathItemPartitionMbr(PartitionMbrDescriptor descriptor)
 	{
 		Descriptor = descriptor;
@@ -59,7 +53,7 @@ public class PathItemPartitionMbr : PathItem
 }
 
 [MessagePackObject]
-public partial class PathItemFile : PathItem
+public class PathItemFile : PathItem
 {
 	[Key(0)]
 	public string Name { get; set; }
@@ -75,8 +69,6 @@ public partial class PathItemFile : PathItem
 	
 	[Key(4)]
 	public DateTime Created { get; set; }
-
-	public PathItemFile() { }
 	
 	public PathItemFile(string name, ulong sizeBytes, DateTime accessed, DateTime modified, DateTime created)
 	{
@@ -99,8 +91,6 @@ public class PathItemDirectory : PathItem
 
 	[Key(2)]
 	public DateTime Created { get; set; }
-
-	public PathItemDirectory() { }
 	
 	public PathItemDirectory(string name, DateTime modified, DateTime created)
 	{

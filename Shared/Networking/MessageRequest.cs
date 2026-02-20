@@ -10,14 +10,13 @@ public interface IMessageRequest : IMessageTcp {}
 
 public abstract class MessageRequest : Message, IMessageRequest
 {
-	protected MessageRequest() {}
 }
 
 [MessagePackObject]
 public class MessageRequestCheckUsername : MessageRequest
 {
-	[Key(1)]
-	public string Username { get; set; }
+	[Key(1)] 
+	public string Username { get; set; } = null!;
 
 	public MessageRequestCheckUsername() { }
 
@@ -32,14 +31,14 @@ public class MessageRequestCheckUsername : MessageRequest
 [MessagePackObject]
 public class MessageRequestCreateAccount : MessageRequest
 {
-	[Key(1)]
-	public string Username { get; set; }
-	
-	[Key(2)]
-	public string Email { get; set; }
-	
-	[Key(3)]
-	public string Password { get; set; }
+	[Key(1)] 
+	public string Username { get; set; } = null!;
+
+	[Key(2)] 
+	public string Email { get; set; } = null!;
+
+	[Key(3)] 
+	public string Password { get; set; } = null!;
 
 	public MessageRequestCreateAccount() { }
 
@@ -74,11 +73,11 @@ public class MessageRequestDeleteAccount : MessageRequest
 [MessagePackObject]
 public class MessageRequestLogin : MessageRequest
 {
-	[Key(1)]
-	public string Username { get; set; }
-	
-	[Key(2)]
-	public string Password { get; set; }
+	[Key(1)] 
+	public string Username { get; set; } = null!;
+
+	[Key(2)] 
+	public string Password { get; set; } = null!;
 
 	public MessageRequestLogin() { }
 
@@ -95,7 +94,6 @@ public class MessageRequestLogin : MessageRequest
 [MessagePackObject]
 public class MessageRequestLogout : MessageRequest
 {
-	public MessageRequestLogout() {}
 }
 
 [MessagePackObject]
@@ -117,14 +115,14 @@ public class MessageRequestLoginSubUser : MessageRequest
 [MessagePackObject]
 public class MessageRequestCreateSubUser : MessageRequest
 {
-	[Key(1)]
-	public string Username { get; set; }
-	
-	[Key(2)]
-	public string Email { get; set; }
-	
-	[Key(3)]
-	public string Password { get; set; }
+	[Key(1)] 
+	public string Username { get; set; } = null!;
+
+	[Key(2)] 
+	public string Email { get; set; } = null!;
+
+	[Key(3)] 
+	public string Password { get; set; } = null!;
 	
 	[Key(4)]
 	public UserPermissions Permissions { get; set; }
@@ -166,11 +164,11 @@ public class MessageRequestSetOwnerPermissions : MessageRequest
 [MessagePackObject]
 public class MessageRequestResetPassword : MessageRequest
 {
-	[Key(1)]
-	public string Password { get; set; }
-	
-	[Key(2)]
-	public string NewPassword { get; set; }
+	[Key(1)] 
+	public string Password { get; set; } = null!;
+
+	[Key(2)] 
+	public string NewPassword { get; set; } = null!;
 
 	public MessageRequestResetPassword() { }
 
@@ -186,14 +184,13 @@ public class MessageRequestResetPassword : MessageRequest
 [MessagePackObject]
 public class MessageRequestListSubUsers : MessageRequest
 {
-	public MessageRequestListSubUsers() {}
 }
 
 [MessagePackObject]
 public class MessageRequestCreateVm : MessageRequest
 {
-	[Key(1)]
-	public string Name { get; set; }
+	[Key(1)] 
+	public string Name { get; set; } = null!;
 	
 	[Key(2)]
 	public OperatingSystem OperatingSystem { get; set; }
@@ -245,14 +242,13 @@ public class MessageRequestDeleteVm : MessageRequest
 [MessagePackObject]
 public class MessageRequestListVms : MessageRequest
 {
-	public MessageRequestListVms() {}
 }
 
 [MessagePackObject]
 public class MessageRequestCheckVmExist : MessageRequest
 {
-	[Key(1)]
-	public string Name { get; set; }
+	[Key(1)] 
+	public string Name { get; set; } = null!;
 
 	public MessageRequestCheckVmExist() { }
 
@@ -267,8 +263,8 @@ public class MessageRequestCheckVmExist : MessageRequest
 [MessagePackObject]
 public class MessageRequestCreateDriveFs : MessageRequest
 {
-	[Key(1)]
-	public string Name { get; set; }
+	[Key(1)] 
+	public string Name { get; set; } = null!;
 	
 	[Key(2)]
 	public int SizeMb { get; set; }
@@ -293,8 +289,8 @@ public class MessageRequestCreateDriveFs : MessageRequest
 [MessagePackObject]
 public class MessageRequestCreateDriveFromImage : MessageRequest
 {
-	[Key(1)]
-	public string Name { get; set; }
+	[Key(1)] 
+	public string Name { get; set; } = null!;
 	
 	[Key(2)]
 	public DriveType Type { get; set; }
@@ -318,8 +314,8 @@ public class MessageRequestCreateDriveFromImage : MessageRequest
 [MessagePackObject]
 public class MessageRequestCreateDriveOs : MessageRequest
 {
-	[Key(1)]
-	public string Name { get; set; }
+	[Key(1)] 
+	public string Name { get; set; } = null!;
 	
 	[Key(2)]
 	public int SizeMiB { get; set; }
@@ -385,13 +381,11 @@ public class MessageRequestDisconnectDrive : MessageRequest
 [MessagePackObject]
 public class MessageRequestListDriveConnections : MessageRequest
 {
-	public MessageRequestListDriveConnections() { }
 }
 
 [MessagePackObject]
 public class MessageRequestListDrives : MessageRequest
 {
-	public MessageRequestListDrives() {}
 }
 
 [MessagePackObject]
@@ -399,9 +393,9 @@ public class MessageRequestListPathItems : MessageRequest
 {
 	[Key(1)]
 	public int DriveId { get; set; }
-	
-	[Key(2)]
-	public string Path { get; set; }
+
+	[Key(2)] 
+	public string Path { get; set; } = null!;
 
 	public MessageRequestListPathItems() { }
 
@@ -419,9 +413,9 @@ public class MessageRequestDownloadItem : MessageRequest
 {
 	[Key(1)]
 	public int DriveId { get; set; }
-	
-	[Key(2)]
-	public string Path { get; set; }
+
+	[Key(2)] 
+	public string Path { get; set; } = null!;
 
 	public MessageRequestDownloadItem() { }
 
@@ -439,9 +433,9 @@ public class MessageRequestUploadFile : MessageRequest
 {
 	[Key(1)]
 	public int DriveId { get; set; }
-	
-	[Key(2)]
-	public string Path { get; set; }
+
+	[Key(2)] 
+	public string Path { get; set; } = null!;
 	
 	[Key(3)]
 	public ulong Size { get; set; }
@@ -464,9 +458,9 @@ public class MessageRequestCreateDirectory : MessageRequest
 {
 	[Key(1)]
 	public int DriveId { get; set; }
-	
-	[Key(2)]
-	public string Path { get; set; }
+
+	[Key(2)] 
+	public string Path { get; set; } = null!;
 
 	public MessageRequestCreateDirectory() { }
 
@@ -484,9 +478,9 @@ public class MessageRequestDeleteItem : MessageRequest
 {
 	[Key(1)]
 	public int DriveId { get; set; }
-	
-	[Key(2)]
-	public string Path { get; set; }
+
+	[Key(2)] 
+	public string Path { get; set; } = null!;
 
 	public MessageRequestDeleteItem() { }
 

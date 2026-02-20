@@ -16,8 +16,6 @@ public class PartitionMbrDescriptor
 	
 	[Key(3)]
 	public long Sectors { get; set; }
-
-	public PartitionMbrDescriptor() { }
 	
 	public PartitionMbrDescriptor(bool bootable, Type partitionType, long startLba, long sectors)
 	{

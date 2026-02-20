@@ -11,8 +11,6 @@ public struct DriveConnection
     [Key(1)]
     public int VmId { get; set; }
 		
-    public DriveConnection() { }
-    
     public DriveConnection(int driveId, int vmId)
     {
         DriveId = driveId;

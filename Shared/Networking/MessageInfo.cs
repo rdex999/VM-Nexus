@@ -12,7 +12,6 @@ public interface IMessageInfo : IMessage {}
 
 public abstract class MessageInfo : Message, IMessageInfo
 {
-	protected MessageInfo() {}
 }
 
 [MessagePackObject]
@@ -34,11 +33,11 @@ public class MessageInfoIdentifyUdpPort : MessageInfo, IMessageTcp
 [MessagePackObject]
 public class MessageInfoCryptoUdp : MessageInfo, IMessageTcp
 {
-	[Key(1)]
-	public byte[] MasterKey32 { get; set; }
-	
-	[Key(2)]
-	public byte[] Salt32 { get; set; }
+	[Key(1)] 
+	public byte[] MasterKey32 { get; set; } = null!;
+
+	[Key(2)] 
+	public byte[] Salt32 { get; set; } = null!;
 	
 	public MessageInfoCryptoUdp() { }
 	
@@ -54,8 +53,8 @@ public class MessageInfoCryptoUdp : MessageInfo, IMessageTcp
 [MessagePackObject]
 public class MessageInfoSubUserCreated : MessageInfo, IMessageTcp
 {
-	[Key(1)]
-	public SubUser SubUser { get; set; }
+	[Key(1)] 
+	public SubUser SubUser { get; set; } = null!;
 
 	public MessageInfoSubUserCreated() { }
 
@@ -68,8 +67,8 @@ public class MessageInfoSubUserCreated : MessageInfo, IMessageTcp
 [MessagePackObject]
 public class MessageInfoUserData : MessageInfo, IMessageTcp
 {
-	[Key(1)]
-	public User User { get; set; }
+	[Key(1)] 
+	public User User { get; set; } = null!;
 
 	public MessageInfoUserData() { }
 
@@ -98,8 +97,8 @@ public class MessageInfoUserDeleted : MessageInfo, IMessageTcp
 [MessagePackObject]
 public class MessageInfoVmCreated : MessageInfo, IMessageTcp
 {
-	[Key(1)]
-	public VmGeneralDescriptor Descriptor { get; set; }
+	[Key(1)] 
+	public VmGeneralDescriptor Descriptor { get; set; } = null!;
 
 	public MessageInfoVmCreated() { }
 
@@ -144,9 +143,9 @@ public class MessageInfoVmScreenFrame : MessageInfo, IMessageUdp
 	
 	[Key(3)]
 	public int SizeHeight { get; set; }
-	
-	[Key(4)]
-	public byte[] CompressedFramebuffer { get; set; }
+
+	[Key(4)] 
+	public byte[] CompressedFramebuffer { get; set; } = null!;
 	
 	public MessageInfoVmScreenFrame() { }
 
@@ -168,9 +167,9 @@ public class MessageInfoVmAudioPacket : MessageInfo, IMessageUdp
 {
 	[Key(1)]
 	public int VmId { get; set; }
-	
-	[Key(2)]
-	public byte[] Packet { get; set; }
+
+	[Key(2)] 
+	public byte[] Packet { get; set; } = null!;
 
 	public MessageInfoVmAudioPacket() { }
 
@@ -180,7 +179,7 @@ public class MessageInfoVmAudioPacket : MessageInfo, IMessageUdp
 		Packet = packet;
 	}
 	
-	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Packet != null && Packet.Length > 0;
+	public override bool IsValidMessage() => base.IsValidMessage() && VmId >= 1 && Packet.Length > 0;
 }
 
 [MessagePackObject]
@@ -316,8 +315,8 @@ public class MessageInfoKeyboardKeyEvent : MessageInfo, IMessageTcp
 [MessagePackObject]
 public class MessageInfoDriveCreated : MessageInfo, IMessageTcp
 {
-	[Key(1)]
-	public DriveGeneralDescriptor Descriptor { get; set; }
+	[Key(1)] 
+	public DriveGeneralDescriptor Descriptor { get; set; } = null!;
 
 	public MessageInfoDriveCreated() { }
 
@@ -375,9 +374,9 @@ public class MessageInfoTransferData : MessageInfo, IMessageTcp
 	
 	[Key(2)]
 	public ulong Offset { get; set; }
-	
-	[Key(3)]
-	public byte[] Data { get; set; }
+
+	[Key(3)] 
+	public byte[] Data { get; set; } = null!;
 
 	public MessageInfoTransferData() { }
 
@@ -396,9 +395,9 @@ public class MessageInfoItemCreated : MessageInfo, IMessageTcp
 {
 	[Key(1)]
 	public int DriveId { get; set; }
-	
-	[Key(2)]
-	public string Path { get; set; }
+
+	[Key(2)] 
+	public string Path { get; set; } = null!;
 
 	public MessageInfoItemCreated() { }
 
@@ -416,9 +415,9 @@ public class MessageInfoItemDeleted : MessageInfo, IMessageTcp
 {
 	[Key(1)]
 	public int DriveId { get; set; }
-	
-	[Key(2)]
-	public string Path { get; set; }
+
+	[Key(2)] 
+	public string Path { get; set; } = null!;
 
 	public MessageInfoItemDeleted() { }
 

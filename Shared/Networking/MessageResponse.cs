@@ -11,13 +11,10 @@ public interface IMessageResponse : IMessageTcp
 
 public abstract class MessageResponse : Message, IMessageResponse
 {
-	[Key(1)]
-	public Guid RequestId { get; set; }
+	[Key(1)] 
+	public Guid RequestId { get; set; } = Guid.Empty;
 	
-	public MessageResponse() 
-	{
-		RequestId = Guid.Empty;
-	}
+	public MessageResponse() { }
 
 	public MessageResponse(Guid requestId)
 	{
@@ -30,8 +27,6 @@ public abstract class MessageResponse : Message, IMessageResponse
 [MessagePackObject]
 public class MessageResponseInvalidRequestData : MessageResponse
 {
-	public MessageResponseInvalidRequestData() { }
-	
 	public MessageResponseInvalidRequestData(Guid requestId) : base(requestId) { }
 }
 
@@ -55,9 +50,9 @@ public class MessageResponseCreateAccount : MessageResponse
 {
 	[Key(2)]
 	public Status Result { get; set; }
-	
-	[Key(3)]
-	public User User { get; set; }
+
+	[Key(3)] 
+	public User? User { get; set; } 
 	
 	public MessageResponseCreateAccount() { }
 	
@@ -107,15 +102,13 @@ public class MessageResponseLogin : MessageResponse
 {
 	[Key(2)]
 	public Status Result { get; set; }
-	
-	[Key(3)]
-	public User User { get; set; }
+
+	[Key(3)] 
+	public User? User { get; set; }
 	
 	[Key(4)]
 	public TimeSpan LoginBlock { get; set; }
 
-	public MessageResponseLogin() { }
-	
 	public MessageResponseLogin(Guid requestId, User user)
 		: base(requestId)
 	{
@@ -128,7 +121,7 @@ public class MessageResponseLogin : MessageResponse
 		: base(requestId)
 	{
 		Result = Status.Failure;
-		User = null;
+		User = null!;
 		LoginBlock = TimeSpan.MaxValue;
 	}
 	
@@ -136,7 +129,7 @@ public class MessageResponseLogin : MessageResponse
 		: base(requestId)
 	{
 		Result = Status.Blocked;
-		User = null;
+		User = null!;
 		LoginBlock = loginBlock;
 	}
 
@@ -155,9 +148,9 @@ public class MessageResponseLogout : MessageResponse
 {
 	[Key(2)]
 	public Status Result { get; set; }
-	
-	[Key(3)]
-	public User User { get; set; }
+
+	[Key(3)] 
+	public User? User { get; set; }
 
 	public MessageResponseLogout() { }
 
@@ -188,13 +181,11 @@ public class MessageResponseLogout : MessageResponse
 [MessagePackObject]
 public class MessageResponseLoginSubUser : MessageResponse
 {
-	[Key(2)]
+	[Key(2)] 
 	public SubUser? SubUser { get; set; }
 
 	[Key(3)]
 	public bool Success => SubUser != null;
-
-	public MessageResponseLoginSubUser() { }
 
 	public MessageResponseLoginSubUser(Guid requestId)
 		: base(requestId)
@@ -277,9 +268,9 @@ public class MessageResponseListSubUsers : MessageResponse
 {
 	[Key(2)]
 	public Status Result { get; set; }
-	
-	[Key(3)]
-	public SubUser[] Users { get; set; }
+
+	[Key(3)] 
+	public SubUser[]? Users { get; set; }
 
 	public MessageResponseListSubUsers() { }
 
@@ -561,9 +552,9 @@ public class MessageResponseListDriveConnections : MessageResponse
 {
 	[Key(2)]
 	public Status Result { get; set; }
-	
-	[Key(3)]
-	public DriveConnection[] Connections { get; set; }
+
+	[Key(3)] 
+	public DriveConnection[]? Connections { get; set; }
 
 	public MessageResponseListDriveConnections() { }
 
@@ -595,9 +586,9 @@ public class MessageResponseListDrives : MessageResponse
 {
 	[Key(2)]
 	public Status Result { get; set; }
-	
-	[Key(3)]
-	public DriveGeneralDescriptor[] Drives { get; set; }
+
+	[Key(3)] 
+	public DriveGeneralDescriptor[]? Drives { get; set; }
 
 	public MessageResponseListDrives() { }
 
