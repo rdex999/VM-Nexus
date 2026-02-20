@@ -11,7 +11,7 @@ public interface IMessageResponse : IMessageTcp
 
 public abstract class MessageResponse : Message, IMessageResponse
 {
-	[Key(1)] 
+	[Key(0)] 
 	public Guid RequestId { get; set; } = Guid.Empty;
 	
 	public MessageResponse() { }
@@ -48,10 +48,10 @@ public class MessageResponseCheckUsername : MessageResponse
 [MessagePackObject]
 public class MessageResponseCreateAccount : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
-	[Key(3)] 
+	[Key(2)] 
 	public User? User { get; set; } 
 	
 	public MessageResponseCreateAccount() { }
@@ -85,7 +85,7 @@ public class MessageResponseCreateAccount : MessageResponse
 [MessagePackObject]
 public class MessageResponseDeleteAccount : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public bool Deleted { get; set; }
 
 	public MessageResponseDeleteAccount() { }
@@ -100,13 +100,13 @@ public class MessageResponseDeleteAccount : MessageResponse
 [MessagePackObject]
 public class MessageResponseLogin : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
-	[Key(3)] 
+	[Key(2)] 
 	public User? User { get; set; }
 	
-	[Key(4)]
+	[Key(3)]
 	public TimeSpan LoginBlock { get; set; }
 
 	public MessageResponseLogin(Guid requestId, User user)
@@ -146,10 +146,10 @@ public class MessageResponseLogin : MessageResponse
 [MessagePackObject]
 public class MessageResponseLogout : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
-	[Key(3)] 
+	[Key(2)] 
 	public User? User { get; set; }
 
 	public MessageResponseLogout() { }
@@ -181,10 +181,10 @@ public class MessageResponseLogout : MessageResponse
 [MessagePackObject]
 public class MessageResponseLoginSubUser : MessageResponse
 {
-	[Key(2)] 
+	[Key(1)] 
 	public SubUser? SubUser { get; set; }
 
-	[Key(3)]
+	[Key(2)]
 	public bool Success => SubUser != null;
 
 	public MessageResponseLoginSubUser(Guid requestId)
@@ -203,7 +203,7 @@ public class MessageResponseLoginSubUser : MessageResponse
 [MessagePackObject]
 public class MessageResponseCreateSubUser : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseCreateSubUser() { }
@@ -229,7 +229,7 @@ public class MessageResponseCreateSubUser : MessageResponse
 [MessagePackObject]
 public class MessageResponseSetOwnerPermissions : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public bool Success { get; set; }
 
 	public MessageResponseSetOwnerPermissions() { }
@@ -244,7 +244,7 @@ public class MessageResponseSetOwnerPermissions : MessageResponse
 [MessagePackObject]
 public class MessageResponseResetPassword : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseResetPassword() { }
@@ -266,10 +266,10 @@ public class MessageResponseResetPassword : MessageResponse
 [MessagePackObject]
 public class MessageResponseListSubUsers : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
-	[Key(3)] 
+	[Key(2)] 
 	public SubUser[]? Users { get; set; }
 
 	public MessageResponseListSubUsers() { }
@@ -302,10 +302,10 @@ public class MessageResponseListSubUsers : MessageResponse
 [MessagePackObject]
 public class MessageResponseCreateVm : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 	
-	[Key(3)]
+	[Key(2)]
 	public int VmId { get; set; }
 
 	public MessageResponseCreateVm() { }
@@ -337,7 +337,7 @@ public class MessageResponseCreateVm : MessageResponse
 [MessagePackObject]
 public class MessageResponseDeleteVm : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseDeleteVm() { }
@@ -361,10 +361,10 @@ public class MessageResponseDeleteVm : MessageResponse
 [MessagePackObject]
 public class MessageResponseListVms : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 	
-	[Key(3)]
+	[Key(2)]
 	public VmGeneralDescriptor[]? Vms { get; set; }
 
 	public MessageResponseListVms() { }
@@ -395,7 +395,7 @@ public class MessageResponseListVms : MessageResponse
 [MessagePackObject]
 public class MessageResponseCheckVmExist : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public bool Exists { get; set; }
 
 	public MessageResponseCheckVmExist() { }
@@ -410,7 +410,7 @@ public class MessageResponseCheckVmExist : MessageResponse
 [MessagePackObject]
 public class MessageResponseCreateDriveFs : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseCreateDriveFs() { }
@@ -432,10 +432,10 @@ public class MessageResponseCreateDriveFs : MessageResponse
 [MessagePackObject]
 public class MessageResponseCreateDriveFromImage : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 	
-	[Key(3)]
+	[Key(2)]
 	public Guid ImageTransferId { get; set; }
 
 	public MessageResponseCreateDriveFromImage() { }
@@ -467,10 +467,10 @@ public class MessageResponseCreateDriveFromImage : MessageResponse
 [MessagePackObject]
 public class MessageResponseCreateDriveOs : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 	
-	[Key(3)]
+	[Key(2)]
 	public int DriveId { get; set; }
 
 	public MessageResponseCreateDriveOs() { }
@@ -502,7 +502,7 @@ public class MessageResponseCreateDriveOs : MessageResponse
 [MessagePackObject]
 public class MessageResponseConnectDrive : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseConnectDrive() { }
@@ -526,7 +526,7 @@ public class MessageResponseConnectDrive : MessageResponse
 [MessagePackObject]
 public class MessageResponseDisconnectDrive : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseDisconnectDrive() { }
@@ -550,10 +550,10 @@ public class MessageResponseDisconnectDrive : MessageResponse
 [MessagePackObject]
 public class MessageResponseListDriveConnections : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
-	[Key(3)] 
+	[Key(2)] 
 	public DriveConnection[]? Connections { get; set; }
 
 	public MessageResponseListDriveConnections() { }
@@ -584,10 +584,10 @@ public class MessageResponseListDriveConnections : MessageResponse
 [MessagePackObject]
 public class MessageResponseListDrives : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
-	[Key(3)] 
+	[Key(2)] 
 	public DriveGeneralDescriptor[]? Drives { get; set; }
 
 	public MessageResponseListDrives() { }
@@ -618,10 +618,10 @@ public class MessageResponseListDrives : MessageResponse
 [MessagePackObject]
 public class MessageResponseListPathItems : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 	
-	[Key(3)]
+	[Key(2)]
 	public PathItem[]? PathItems { get; set; }
 
 	public MessageResponseListPathItems() { }
@@ -653,11 +653,11 @@ public class MessageResponseListPathItems : MessageResponse
 [MessagePackObject]
 public class MessageResponseDownloadItem : MessageResponse		/* Download from client perspective - client receives the item from the server. */
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
-	[Key(3)]
+	[Key(2)]
 	public Guid StreamId { get; set; }
-	[Key(4)]
+	[Key(3)]
 	public ulong ItemSize { get; set; }
 
 	public MessageResponseDownloadItem() { }
@@ -691,9 +691,9 @@ public class MessageResponseDownloadItem : MessageResponse		/* Download from cli
 [MessagePackObject]
 public class MessageResponseUploadFile : MessageResponse		/* Upload from client perspective - client sends file to server. */
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
-	[Key(3)]
+	[Key(2)]
 	public Guid StreamId { get; set; }
 
 	public MessageResponseUploadFile() { }
@@ -726,7 +726,7 @@ public class MessageResponseUploadFile : MessageResponse		/* Upload from client 
 [MessagePackObject]
 public class MessageResponseCreateDirectory : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseCreateDirectory() { }
@@ -750,7 +750,7 @@ public class MessageResponseCreateDirectory : MessageResponse
 [MessagePackObject]
 public class MessageResponseDeleteItem : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseDeleteItem() { }
@@ -774,7 +774,7 @@ public class MessageResponseDeleteItem : MessageResponse
 [MessagePackObject]
 public class MessageResponseVmStartup : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseVmStartup() { }
@@ -799,7 +799,7 @@ public class MessageResponseVmStartup : MessageResponse
 [MessagePackObject]
 public class MessageResponseVmShutdown : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseVmShutdown() { }
@@ -823,7 +823,7 @@ public class MessageResponseVmShutdown : MessageResponse
 [MessagePackObject]
 public class MessageResponseVmForceOff : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseVmForceOff() { }
@@ -847,9 +847,9 @@ public class MessageResponseVmForceOff : MessageResponse
 [MessagePackObject]
 public class MessageResponseVmStreamStart : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
-	[Key(3)]
+	[Key(2)]
 	public PixelFormat? PixelFormat { get; set; }
 	
 	public MessageResponseVmStreamStart() { }
@@ -882,7 +882,7 @@ public class MessageResponseVmStreamStart : MessageResponse
 [MessagePackObject]
 public class MessageResponseVmStreamStop : MessageResponse
 {
-	[Key(2)]
+	[Key(1)]
 	public Status Result { get; set; }
 
 	public MessageResponseVmStreamStop() { }

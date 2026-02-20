@@ -20,7 +20,7 @@ public partial class MessagingService
 	protected bool IsServiceInitialized;
 	private readonly ConcurrentDictionary<Guid, TaskCompletionSource<IMessageResponse>> _responses;
 	private readonly Channel<IMessage> _messageTcpChannel;
-	private readonly Channel<IMessage> _messageUdpChannel;
+	private readonly Channel<IMessageUdp> _messageUdpChannel;
 	protected bool IsUdpMessagingRunning = false;
 	private static readonly byte[] MessageMagic = Encoding.ASCII.GetBytes("VMNX");
 	private readonly ConcurrentDictionary<Guid, IncomingMessageUdp> _incomingUdpMessages;
@@ -41,7 +41,7 @@ public partial class MessagingService
 		Cts = new CancellationTokenSource();
 		_responses = new ConcurrentDictionary<Guid, TaskCompletionSource<IMessageResponse>>();
 		_messageTcpChannel = Channel.CreateUnbounded<IMessage>();
-		_messageUdpChannel = Channel.CreateUnbounded<IMessage>();
+		_messageUdpChannel = Channel.CreateUnbounded<IMessageUdp>();
 		_incomingUdpMessages = new ConcurrentDictionary<Guid, IncomingMessageUdp>();
 		_ongoingTransfers = new ConcurrentDictionary<Guid, TransferHandler>();
 		TransferLimiter = new TransferRateLimiter();
@@ -338,7 +338,7 @@ public partial class MessagingService
 				continue;
 			}
 
-			while (_messageUdpChannel.Reader.TryRead(out IMessage? message))
+			while (_messageUdpChannel.Reader.TryRead(out IMessageUdp? message))
 			{
 				byte[]? messageBytes = Common.MessageToByteArray(message);
 				if (messageBytes == null)
@@ -566,8 +566,8 @@ public partial class MessagingService
 		if (message is IMessageTcp || UdpSocket == null || !IsUdpMessagingRunning)
 			_messageTcpChannel.Writer.TryWrite(message);
 		
-		else if (message is IMessageUdp)
-			_messageUdpChannel.Writer.TryWrite(message);
+		else if (message is IMessageUdp messageUdp)
+			_messageUdpChannel.Writer.TryWrite(messageUdp);
 	}
 
 	/// <summary>

@@ -4,13 +4,15 @@ namespace Shared.Networking;
 
 public interface IMessage
 {
-	public Guid Id { get; }
-
 	public bool IsValidMessage();
 }
 
 public interface IMessageTcp : IMessage {}
-public interface IMessageUdp : IMessage {}
+
+public interface IMessageUdp : IMessage
+{
+	public Guid Id { get; set; }
+}
 
 [MessagePackObject]
 [Union(0, typeof(MessageInfoIdentifyUdpPort))]
@@ -101,13 +103,5 @@ public interface IMessageUdp : IMessage {}
 [Union(232, typeof(MessageResponseVmStreamStop))]
 public abstract class Message : IMessage
 {
-	[Key(0)]
-	public Guid Id { get; set; }
-
-	protected Message()
-	{
-		Id = Guid.NewGuid();
-	}
-	
-	public virtual bool IsValidMessage() => Id != Guid.Empty;
+	public virtual bool IsValidMessage() => true;
 }

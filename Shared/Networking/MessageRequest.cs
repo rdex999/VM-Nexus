@@ -6,10 +6,22 @@ using OperatingSystem = Shared.VirtualMachines.OperatingSystem;
 
 namespace Shared.Networking;
 
-public interface IMessageRequest : IMessageTcp {}
+public interface IMessageRequest : IMessageTcp
+{
+	public Guid Id { get; set; }
+}
 
 public abstract class MessageRequest : Message, IMessageRequest
 {
+	[Key(0)]
+	public Guid Id { get; set; }
+
+	public MessageRequest()
+	{
+		Id = Guid.NewGuid();
+	}
+
+	public override bool IsValidMessage() => base.IsValidMessage() && Id != Guid.Empty;
 }
 
 [MessagePackObject]

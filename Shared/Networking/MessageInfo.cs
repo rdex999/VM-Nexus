@@ -14,8 +14,25 @@ public abstract class MessageInfo : Message, IMessageInfo
 {
 }
 
+public abstract class MessageInfoTcp : MessageInfo, IMessageTcp
+{
+}
+
+public abstract class MessageInfoUdp : MessageInfo, IMessageUdp
+{
+	[Key(0)]
+	public Guid Id { get; set; }
+
+	public MessageInfoUdp()
+	{
+		Id = Guid.NewGuid();
+	}
+	
+	public override bool IsValidMessage() => base.IsValidMessage() && Id != Guid.Empty;
+}
+
 [MessagePackObject]
-public class MessageInfoIdentifyUdpPort : MessageInfo, IMessageTcp
+public class MessageInfoIdentifyUdpPort : MessageInfoTcp
 {
 	[Key(1)]
 	public int Port { get; set; }
@@ -31,7 +48,7 @@ public class MessageInfoIdentifyUdpPort : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoCryptoUdp : MessageInfo, IMessageTcp
+public class MessageInfoCryptoUdp : MessageInfoTcp
 {
 	[Key(1)] 
 	public byte[] MasterKey32 { get; set; } = null!;
@@ -51,7 +68,7 @@ public class MessageInfoCryptoUdp : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoSubUserCreated : MessageInfo, IMessageTcp
+public class MessageInfoSubUserCreated : MessageInfoTcp
 {
 	[Key(1)] 
 	public SubUser SubUser { get; set; } = null!;
@@ -65,7 +82,7 @@ public class MessageInfoSubUserCreated : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoUserData : MessageInfo, IMessageTcp
+public class MessageInfoUserData : MessageInfoTcp
 {
 	[Key(1)] 
 	public User User { get; set; } = null!;
@@ -79,7 +96,7 @@ public class MessageInfoUserData : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoUserDeleted : MessageInfo, IMessageTcp
+public class MessageInfoUserDeleted : MessageInfoTcp
 {
 	[Key(1)]
 	public int UserId { get; set; }
@@ -95,7 +112,7 @@ public class MessageInfoUserDeleted : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoVmCreated : MessageInfo, IMessageTcp
+public class MessageInfoVmCreated : MessageInfoTcp
 {
 	[Key(1)] 
 	public VmGeneralDescriptor Descriptor { get; set; } = null!;
@@ -114,7 +131,7 @@ public class MessageInfoVmCreated : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoVmDeleted : MessageInfo, IMessageTcp 
+public class MessageInfoVmDeleted : MessageInfoTcp 
 {
 	[Key(1)]
 	public int VmId { get; set; }
@@ -130,7 +147,7 @@ public class MessageInfoVmDeleted : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoVmScreenFrame : MessageInfo, IMessageUdp
+public class MessageInfoVmScreenFrame : MessageInfoUdp
 {
 	[Key(1)]
 	public int VmId { get; set; }
@@ -163,7 +180,7 @@ public class MessageInfoVmScreenFrame : MessageInfo, IMessageUdp
 }
 
 [MessagePackObject]
-public class MessageInfoVmAudioPacket : MessageInfo, IMessageUdp
+public class MessageInfoVmAudioPacket : MessageInfoUdp
 {
 	[Key(1)]
 	public int VmId { get; set; }
@@ -183,7 +200,7 @@ public class MessageInfoVmAudioPacket : MessageInfo, IMessageUdp
 }
 
 [MessagePackObject]
-public class MessageInfoVmPoweredOn : MessageInfo, IMessageTcp
+public class MessageInfoVmPoweredOn : MessageInfoTcp
 {
 	[Key(1)]
 	public int VmId { get; set; }
@@ -199,7 +216,7 @@ public class MessageInfoVmPoweredOn : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoVmPoweredOff : MessageInfo, IMessageTcp
+public class MessageInfoVmPoweredOff : MessageInfoTcp
 {
 	[Key(1)]
 	public int VmId { get; set; }
@@ -215,7 +232,7 @@ public class MessageInfoVmPoweredOff : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoVmCrashed : MessageInfo, IMessageTcp 
+public class MessageInfoVmCrashed : MessageInfoTcp 
 {
 	[Key(1)]
 	public int VmId { get; set; }
@@ -231,7 +248,7 @@ public class MessageInfoVmCrashed : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoPointerMoved : MessageInfo, IMessageTcp
+public class MessageInfoPointerMoved : MessageInfoTcp
 {
 	[Key(1)]
 	public int VmId { get; set; }
@@ -258,7 +275,7 @@ public class MessageInfoPointerMoved : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoPointerButtonEvent : MessageInfo, IMessageTcp 
+public class MessageInfoPointerButtonEvent : MessageInfoTcp 
 {
 	[Key(1)]
 	public int VmId { get; set; }
@@ -289,7 +306,7 @@ public class MessageInfoPointerButtonEvent : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoKeyboardKeyEvent : MessageInfo, IMessageTcp
+public class MessageInfoKeyboardKeyEvent : MessageInfoTcp
 {
 	[Key(1)]
 	public int VmId { get; set; }
@@ -313,7 +330,7 @@ public class MessageInfoKeyboardKeyEvent : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoDriveCreated : MessageInfo, IMessageTcp
+public class MessageInfoDriveCreated : MessageInfoTcp
 {
 	[Key(1)] 
 	public DriveGeneralDescriptor Descriptor { get; set; } = null!;
@@ -327,7 +344,7 @@ public class MessageInfoDriveCreated : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoDriveConnected : MessageInfo, IMessageTcp
+public class MessageInfoDriveConnected : MessageInfoTcp
 {
 	[Key(1)]
 	public int DriveId { get; set; }
@@ -347,7 +364,7 @@ public class MessageInfoDriveConnected : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoDriveDisconnected : MessageInfo, IMessageTcp
+public class MessageInfoDriveDisconnected : MessageInfoTcp
 {
 	[Key(1)]
 	public int DriveId { get; set; }
@@ -367,7 +384,7 @@ public class MessageInfoDriveDisconnected : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoTransferData : MessageInfo, IMessageTcp
+public class MessageInfoTransferData : MessageInfoTcp
 {
 	[Key(1)]
 	public Guid StreamId { get; set; }
@@ -391,7 +408,7 @@ public class MessageInfoTransferData : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoItemCreated : MessageInfo, IMessageTcp		
+public class MessageInfoItemCreated : MessageInfoTcp		
 {
 	[Key(1)]
 	public int DriveId { get; set; }
@@ -411,7 +428,7 @@ public class MessageInfoItemCreated : MessageInfo, IMessageTcp
 }
 
 [MessagePackObject]
-public class MessageInfoItemDeleted : MessageInfo, IMessageTcp 
+public class MessageInfoItemDeleted : MessageInfoTcp 
 {
 	[Key(1)]
 	public int DriveId { get; set; }
