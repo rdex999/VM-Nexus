@@ -4,10 +4,55 @@ namespace Shared.Networking;
 
 public interface IMessage
 {
+	/// <summary>
+	/// Checks whether this message is valid. (Validation of data)
+	/// </summary>
+	/// <returns>True if this message is valid, false otherwise.</returns>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: Returns true if this message is valid, false otherwise.
+	/// </remarks>
 	public bool IsValidMessage();
+	
+	/// <summary>
+	/// Converts this message into a byte array.
+	/// </summary>
+	/// <returns>
+	/// A byte array with type information representing the message.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: A byte array with type information representing this message is returned.
+	/// </remarks>
+	public byte[]? ToByteArray();
+	
+	/// <summary>
+	/// Converts a byte array with type information into a message.
+	/// </summary>
+	/// <param name="bytes">
+	/// The bytes array to convert back into a message. bytes != null.
+	/// </param>
+	/// <returns>On success, the resulted message is returned. On failure, null is returned.</returns>
+	/// <remarks>
+	/// Precondition: bytes != null. <br/>
+	/// Postcondition: On success, the resulted message is returned. On failure, null is returned.
+	/// </remarks>
+	public static IMessage? FromByteArray(byte[] bytes)
+	{
+		try
+		{
+			return MessagePackSerializer.Deserialize<Message>(bytes, MessagePackSerializerOptions.Standard);
+		}
+		catch (Exception)
+		{
+			return null;
+		}
+	}
 }
 
-public interface IMessageTcp : IMessage {}
+public interface IMessageTcp : IMessage
+{
+}
 
 public interface IMessageUdp : IMessage
 {
@@ -104,4 +149,26 @@ public interface IMessageUdp : IMessage
 public abstract class Message : IMessage
 {
 	public virtual bool IsValidMessage() => true;
+	
+	/// <summary>
+	/// Converts this message into a byte array.
+	/// </summary>
+	/// <returns>
+	/// A byte array with type information representing the message.
+	/// </returns>
+	/// <remarks>
+	/// Precondition: No specific precondition. <br/>
+	/// Postcondition: A byte array with type information representing this message is returned.
+	/// </remarks>
+	public byte[]? ToByteArray()
+	{
+		try
+		{
+			return MessagePackSerializer.Serialize(this, MessagePackSerializerOptions.Standard);	
+		}
+		catch (Exception)
+		{
+			return null;
+		}
+	}
 }

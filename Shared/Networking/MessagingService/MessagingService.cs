@@ -167,7 +167,7 @@ public partial class MessagingService
 				return;
 			}
 
-			Message? message;
+			IMessage? message;
 			try
 			{
 				message = await ReceiveMessageTcpAsync().WaitAsync(Cts.Token).ConfigureAwait(false);
@@ -340,7 +340,7 @@ public partial class MessagingService
 
 			while (_messageUdpChannel.Reader.TryRead(out IMessageUdp? message))
 			{
-				byte[]? messageBytes = Common.MessageToByteArray(message);
+				byte[]? messageBytes = message.ToByteArray();
 				if (messageBytes == null)
 					continue;
 				
@@ -588,8 +588,8 @@ public partial class MessagingService
 	{
 		ExitCode result;
 		Stopwatch stopwatch = Stopwatch.StartNew();
-		
-		byte[]? bytes = Common.MessageToByteArray(message);
+
+		byte[]? bytes = message.ToByteArray();
 		if (bytes == null)
 			return ExitCode.InvalidParameter;
 		
@@ -620,7 +620,7 @@ public partial class MessagingService
 	/// Precondition: The service must be fully initialized and connected to the server. <br/>
 	/// Postcondition: On success, the received message is returned. On failure, null is returned.
 	/// </remarks>
-	private async Task<Message?> ReceiveMessageTcpAsync()
+	private async Task<IMessage?> ReceiveMessageTcpAsync()
 	{
 		byte[]? messageSizeInBytes = await ReceiveBytesExactTcpAsync(4);
 		if (messageSizeInBytes == null || messageSizeInBytes.Length == 0)
@@ -635,7 +635,7 @@ public partial class MessagingService
 			return null;
 		}
 
-		return (Message)Common.MessageFromByteArray(messageBytes)!;
+		return IMessage.FromByteArray(messageBytes);
 	}
 	
 	/// <summary>

@@ -97,8 +97,8 @@ public partial class MessagingService
 			if (_bytesReceived >= packet.MessageSize)
 			{
 				Close();
-				
-				IMessage? msg = Common.MessageFromByteArray(_data);
+
+				IMessage? msg = IMessage.FromByteArray(_data);
 				if (msg == null)
 					return ExitCode.MessageUdpCorrupted;
 
