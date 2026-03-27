@@ -1,0 +1,17 @@
+name: vm-nexus
+services:
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    restart: no
+    network_mode: host
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: VM_Nexus_DB
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./backups:/backups
+
+volumes:
+  postgres_data:
