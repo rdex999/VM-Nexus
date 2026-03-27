@@ -10,8 +10,8 @@
 	<UserControl.Resources>
 		<ResourceDictionary>
 			<ResourceDictionary.MergedDictionaries>
-				<MergeResourceInclude Source="/Resources/Geometries.axaml"/>
-				<MergeResourceInclude Source="/Resources/Colors.axaml"/>
+				<ResourceInclude Source="/Resources/Geometries.axaml"/>
+				<ResourceInclude Source="/Resources/Colors.axaml"/>
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</UserControl.Resources>
@@ -74,6 +74,18 @@
 				<Button HorizontalAlignment="Center" Classes="submit" Command="{Binding NavigateToCreateAccountCommand}">Create Account</Button>
 			</StackPanel>
 		</Border>
+	
+		<StackPanel Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Orientation="Horizontal" Margin="15" Spacing="8">
+			<TextBox Text="{Binding ServerIp}" BorderThickness="1" Width="150" Watermark="Server IP" MaxLength="15">
+				<TextBox.KeyBindings>
+					<KeyBinding Gesture="Enter" Command="{Binding ChangeIpCommand}" />
+				</TextBox.KeyBindings>
+			</TextBox>
+			
+			<Button Command="{Binding ChangeIpCommand}" CornerRadius="10" Padding="5">
+				<PathIcon Data="{StaticResource ArrowRightRegular}" Height="18" Width="18"/>
+			</Button>
+		</StackPanel>
 		
 	</Grid>	
 	

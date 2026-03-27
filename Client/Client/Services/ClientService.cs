@@ -7,6 +7,7 @@ using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Input;
 using Shared;
@@ -74,15 +75,19 @@ public class ClientService : MessagingService
 				UdpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
 		}
 
+		CancellationToken ct = Cts.Token;
 		bool connected;
 		do
 		{
-			await ConnectToServerAsync();
+			await ConnectToServerAsync(ct);
 			if (System.OperatingSystem.IsBrowser())
 				break;
-			
-			connected = await TlsInitialize() == ExitCode.Success;
-		} while (!connected);
+
+			connected = await TlsInitialize(ct) == ExitCode.Success;
+		} while (!connected && !ct.IsCancellationRequested);
+
+		if (ct.IsCancellationRequested)
+			return;
 		
 		StartTcp();
 		
@@ -115,11 +120,11 @@ public class ClientService : MessagingService
 	{
 		if (serverIp.Equals(ServerIp))
 			return;
-		
-		if (IsInitialized() || IsConnected())
-			await Task.Run(Disconnect);
+
+		await Task.Run(Disconnect);
 
 		ServerIp = serverIp;
+		Cts = new CancellationTokenSource();
 
 		await InitializeAsync();
 	}
@@ -962,16 +967,17 @@ public class ClientService : MessagingService
 	/// <summary>
 	/// Connects to the server. Retries connecting in time intervals if connection is denied or failed.
 	/// </summary>
+	/// <param name="ct">The cancellation token. ct != null. </param>
 	/// <remarks>
-	/// Precondition: Base service initialized. (base.Initialize() was called already) <br/>
+	/// Precondition: Base service initialized. (base.Initialize() was called already) ct != null. <br/>
 	/// Postcondition: If the cancellation token did not require canceling the operation - the service is connected to the server. <br/>
 	/// If the cancellation token required cancelling the operation, the service should be considered as not connected to the server.
 	/// </remarks>
-	private async Task ConnectToServerAsync()
+	private async Task ConnectToServerAsync(CancellationToken ct)
 	{
-		while (!Cts.Token.IsCancellationRequested)
+		while (!ct.IsCancellationRequested)
 		{
-			bool socketConnected = await SocketConnectToServer();
+			bool socketConnected = await SocketConnectToServer(ct);
 			if (socketConnected)
 			{
 				break;
@@ -999,7 +1005,7 @@ public class ClientService : MessagingService
 			
 			try
 			{
-				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout, Cts.Token);
+				await Task.Delay(SharedDefinitions.ConnectionDeniedRetryTimeout, ct);
 			}
 			catch (Exception)
 			{
@@ -1022,7 +1028,7 @@ public class ClientService : MessagingService
 	/// the returned exit code indicates success. <br/>
 	/// On failure, TcpSslStream is set to null, the TCP socket is disposed, and the returned exit code indicates the error.
 	/// </remarks>
-	private async Task<ExitCode> TlsInitialize()
+	private async Task<ExitCode> TlsInitialize(CancellationToken ct)
 	{
 		if (System.OperatingSystem.IsBrowser() || !IsConnected())
 			return ExitCode.CallOnInvalidCondition;
@@ -1049,7 +1055,7 @@ public class ClientService : MessagingService
 				TargetHost = SharedDefinitions.ServerIp,
 				EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
 				CertificateRevocationCheckMode = X509RevocationMode.Online
-			});
+			}, ct);
 		}
 		catch (AuthenticationException)
 		{
@@ -1070,15 +1076,16 @@ public class ClientService : MessagingService
 	/// <summary>
 	/// Tries to perform a socket connection to the server.
 	/// </summary>
+	/// <param name="ct">The cancellation token. ct != null. </param>
 	/// <returns>
 	/// True if the connection has succeeded, false otherwise.
 	/// </returns>
 	/// <remarks>
-	/// Precondition: Base service initialized. (base.Initialize() was called already) <br/>
+	/// Precondition: Base service initialized. (base.Initialize() was called already) ct != null. <br/>
 	/// Postcondition: On success, (indicated by the returned value being true) the socket will be connected to the server. <br/>
 	/// On failure, (indicated by the return value being false) the socket is not connected to the server.
 	/// </remarks>
-	private async Task<bool> SocketConnectToServer()
+	private async Task<bool> SocketConnectToServer(CancellationToken ct)
 	{
 		if (IsConnected() && IsInitialized())
 			return false;
@@ -1089,12 +1096,13 @@ public class ClientService : MessagingService
 			if (System.OperatingSystem.IsBrowser())
 			{
 				ClientWebSocket webSocket = (ClientWebSocket)WebSocket!;
-				await webSocket.ConnectAsync(new Uri($"wss://{ServerIp.ToString()}:443/"), Cts.Token);
+				await webSocket.ConnectAsync(new Uri($"wss://{ServerIp.ToString()}:443/"), ct);
 				IsServiceInitialized = webSocket.State == WebSocketState.Open;
 				return IsServiceInitialized;
 			}
-			
-			await TcpSocket!.ConnectAsync(ServerIp, SharedDefinitions.ServerTcpPort, Cts.Token);
+
+			await TcpSocket!.ConnectAsync(ServerIp, SharedDefinitions.ServerTcpPort, ct);
+			// await TcpSocket.SendAsync(BitConverter.GetBytes(-1), Cts.Token);		/* To update the socket Connected property. */
 		}
 		catch (OperationCanceledException)
 		{
@@ -1116,7 +1124,7 @@ public class ClientService : MessagingService
 		try
 		{
 			UdpSocket!.Bind(new IPEndPoint(IPAddress.Any, 0));
-			await UdpSocket!.ConnectAsync(ServerIp, SharedDefinitions.ServerUdpPort);
+			await UdpSocket!.ConnectAsync(ServerIp, SharedDefinitions.ServerUdpPort, ct);
 		}
 		catch (Exception)
 		{

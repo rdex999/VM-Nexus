@@ -1,4 +1,5 @@
 using System;
+using System.Net;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Client.Services;
@@ -24,6 +25,9 @@ public partial class LoginViewModel : ViewModelBase
 	[ObservableProperty]
 	private bool _loginButtonIsEnabled = false;
 
+	[ObservableProperty]
+	private string _serverIp;
+	
 	/// <summary>
 	/// Initializes a new instance of LoginViewModel.
 	/// </summary>
@@ -41,6 +45,7 @@ public partial class LoginViewModel : ViewModelBase
 	public LoginViewModel(NavigationService navigationSvc, ClientService clientSvc)
 		: base(navigationSvc, clientSvc)
 	{
+		ServerIp = ClientSvc.ServerIp.ToString();
 		ClientSvc.Reconnected += OnReconnected;
 		ClientSvc.FailEvent += OnFailure;
 	}
@@ -100,6 +105,23 @@ public partial class LoginViewModel : ViewModelBase
 		
 		else
 			ErrorMessage = $"Too many failed login attempts. Try again in {double.Ceiling(res.LoginBlock.TotalMinutes)} minutes.";
+	}
+
+	/// <summary>
+	/// Changes the defined server IP and connects to the new server. Disconnects from the current one if connected.
+	/// </summary>
+	/// <remarks>
+	/// Precondition: ServerIp != null. <br/>
+	/// Postcondition: If the given IP is invalid, nothing will happen and the currently connected server will stay connected. <br/>
+	/// Does not wait for the connection to succeed.
+	/// </remarks>
+	[RelayCommand]
+	private void ChangeIp()
+	{
+		if (!IPAddress.TryParse(ServerIp, out IPAddress? ip))
+			return;
+
+		_ = ClientSvc.ChangeServerAsync(ip);
 	}
 
 	/// <summary>

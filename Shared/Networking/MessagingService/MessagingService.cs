@@ -16,7 +16,7 @@ public partial class MessagingService
 	protected Socket? UdpSocket;
 	protected WebSocket? WebSocket;
 	protected SslStream? TcpSslStream;
-	protected readonly CancellationTokenSource Cts;
+	protected CancellationTokenSource Cts;
 	protected bool IsServiceInitialized;
 	private readonly ConcurrentDictionary<Guid, TaskCompletionSource<IMessageResponse>> _responses;
 	private readonly Channel<IMessage> _messageTcpChannel;
@@ -866,15 +866,24 @@ public partial class MessagingService
 			// ignored
 		}
 
+		if (TcpSslStream == null && TcpSocket != null)
+		{
+			TcpSocket.Close();
+			TcpSocket.Dispose();
+		}
 		TcpSslStream?.Dispose();
+		TcpSslStream = null;
+		TcpSocket = null;
 
 		if (UdpSocket != null)
 		{
 			UdpSocket.Close();
 			UdpSocket.Dispose();
+			UdpSocket = null;
 		}
 
 		_cryptoService?.Dispose();
+		_cryptoService = null;
 		
 		IsServiceInitialized = false;
 		
