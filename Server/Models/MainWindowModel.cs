@@ -77,18 +77,10 @@ public class MainWindowModel : IDisposable
 		
 		_virtualMachineService.Initialize();
 		
-		/* Socket initialization and listening */
-		IPHostEntry ipHost = await Dns.GetHostEntryAsync(Dns.GetHostName());		/* Get local host ip addresses */
-
-		/* Filter out ip addresses that are not IPv4, and loop-back ip's. Basically leave only usable ip's. Then from the array get the first ip, or null if empty. */
-		IPAddress? ipAddr = ipHost.AddressList.FirstOrDefault(ip => ip.AddressFamily == AddressFamily.InterNetwork && !IPAddress.IsLoopback(ip));
-		if (ipAddr == null)
-			return ExitCode.ServerNoValidLocalhostIp;
-				
-		IPEndPoint localEndPoint = new IPEndPoint(ipAddr, SharedDefinitions.ServerTcpPort);			/* Combination of IP and port - End point. */
+		IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, SharedDefinitions.ServerTcpPort);		/* Combination of IP and port - Endpoint. */
 	
-		Socket socket = new Socket(ipAddr.AddressFamily, SocketType.Stream, ProtocolType.Tcp);		/* Create the socket */	
-		socket.Bind(localEndPoint);																	/* Associate the IP address and port (end point) in the socket */
+		Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+		socket.Bind(localEndPoint);
 
 		_clients.Clear();
 		
@@ -187,7 +179,7 @@ public class MainWindowModel : IDisposable
 	private async Task ListenForWebClients(CancellationToken token)
 	{
 		using HttpListener listener = new HttpListener();
-		listener.Prefixes.Add($"http://{SharedDefinitions.ServerIp}:{SharedDefinitions.ServerTcpWebPort}/");
+		listener.Prefixes.Add($"http://+:{SharedDefinitions.ServerTcpWebPort}/");
 		listener.Start();
 
 		while (!token.IsCancellationRequested)
