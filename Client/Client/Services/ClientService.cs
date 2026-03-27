@@ -42,9 +42,12 @@ public class ClientService : MessagingService
 	public bool IsLoggedInAsSubUser { get; private set; } = false;
 	public User? User { get; private set; }
 
+	public IPAddress ServerIp { get; private set; }
+	
 	public ClientService()
 		: base(false)
 	{
+		ServerIp = IPAddress.Parse(SharedDefinitions.ServerIp);
 		_ = InitializeAsync();
 	}
 	
@@ -97,6 +100,28 @@ public class ClientService : MessagingService
 	public void OnExit()
 	{
 		Disconnect();
+	}
+
+	/// <summary>
+	/// Changes the defined server IP and connects to the new server. Disconnects from the current one if connected.
+	/// </summary>
+	/// <param name="serverIp">The IP of the new server to connect to. serverIp != null.</param>
+	/// <remarks>
+	/// Precondition: serverIp != null. <br/>
+	/// Postcondition: While running, disconnects from the currently connected server, (if any) and connects to the given one.
+	/// After returning, the client is connected to the new server.
+	/// </remarks>
+	public async Task ChangeServerAsync(IPAddress serverIp)
+	{
+		if (serverIp.Equals(ServerIp))
+			return;
+		
+		if (IsInitialized() || IsConnected())
+			await Task.Run(Disconnect);
+
+		ServerIp = serverIp;
+
+		await InitializeAsync();
 	}
 
 	/// <summary>
@@ -1064,12 +1089,12 @@ public class ClientService : MessagingService
 			if (System.OperatingSystem.IsBrowser())
 			{
 				ClientWebSocket webSocket = (ClientWebSocket)WebSocket!;
-				await webSocket.ConnectAsync(new Uri($"wss://{SharedDefinitions.ServerIp}:443/"), Cts.Token);
+				await webSocket.ConnectAsync(new Uri($"wss://{ServerIp.ToString()}:443/"), Cts.Token);
 				IsServiceInitialized = webSocket.State == WebSocketState.Open;
 				return IsServiceInitialized;
 			}
 			
-			await TcpSocket!.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerTcpPort, Cts.Token);
+			await TcpSocket!.ConnectAsync(ServerIp, SharedDefinitions.ServerTcpPort, Cts.Token);
 		}
 		catch (OperationCanceledException)
 		{
@@ -1091,7 +1116,7 @@ public class ClientService : MessagingService
 		try
 		{
 			UdpSocket!.Bind(new IPEndPoint(IPAddress.Any, 0));
-			await UdpSocket!.ConnectAsync(IPAddress.Parse(SharedDefinitions.ServerIp), SharedDefinitions.ServerUdpPort);
+			await UdpSocket!.ConnectAsync(ServerIp, SharedDefinitions.ServerUdpPort);
 		}
 		catch (Exception)
 		{
