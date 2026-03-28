@@ -246,7 +246,7 @@
   &lt;Assembly Path="/home/rdex999/.nuget/packages/marcusw.vncclient/1.0.0-alpha4/lib/netcoreapp3.1/MarcusW.VncClient.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
 	<s:String x:Key="/Default/Environment/Hierarchy/Build/SolBuilderDuo/CustomGlobalProperties/=AndroidSdkDirectory/@EntryIndexedValue">/home/rdex999/dotnetSDKs/android</s:String>
-	<s:Boolean x:Key="/Default/UnloadedProject/UnloadedProjects/=8ac38600_002Dfa09_002D4068_002Dafbc_002Dd6bc3ae5bb03_0023Client_002EiOS/@EntryIndexedValue">True</s:Boolean>
+	
 	<s:Boolean x:Key="/Default/UserDictionary/Words/=cd_002Drom/@EntryIndexedValue">True</s:Boolean>
 	
 	

@@ -2,7 +2,6 @@ name: vm-nexus
 services:
   postgres:
     image: postgres:18
-    container_name: postgres
     restart: no
     network_mode: host
     environment:

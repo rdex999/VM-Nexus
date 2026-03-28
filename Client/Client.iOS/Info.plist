@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>Client</string>
+	<string>VM Nexus</string>
 	<key>CFBundleIdentifier</key>
-	<string>companyName.Client</string>
+	<string>com.companyname.vmnexus</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>
