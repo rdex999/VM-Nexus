@@ -103,7 +103,6 @@
 							          SelectionChanged="VmCreationInfoChangedComboBoxAsync">
 								<ComboBoxItem>x86-64 (64 bit)</ComboBoxItem>
 								<ComboBoxItem>x86 (32 bit)</ComboBoxItem>
-								<ComboBoxItem>ARM</ComboBoxItem>
 							</ComboBox>
 						</Grid>
 

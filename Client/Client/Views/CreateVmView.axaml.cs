@@ -1,8 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Markup.Xaml;
 using Client.ViewModels;
 
 namespace Client.Views;
@@ -35,8 +33,8 @@ public partial class CreateVmView : UserControl
 	/// <summary>
 	/// Handles a change in one or more of the VM creation settings input field. (Calls the view model handler for this event.)
 	/// </summary>
-	/// <param name="sender"></param>
-	/// <param name="e"></param>
+	/// <param name="sender">Unused.</param>
+	/// <param name="e">Unused.</param>
 	/// <remarks>
 	/// Precondition: The user has changed one or more of the VM's creation settings input fields. <br/>
 	/// Postcondition: The changed is handled and the VM creation settings change accordingly.
@@ -47,8 +45,27 @@ public partial class CreateVmView : UserControl
 			await vm.VmCreationInfoChangedAsync();
 	}
 
+	/// <summary>
+	/// Handles a change in one or more of the VM text creation settings input field.
+	/// (Calls the view model handler for this event.)
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="e">Unused.</param>
+	/// <remarks>
+	/// Precondition: The user has changed one or more of the VM's text creation settings input fields. <br/>
+	/// Postcondition: The changed is handled and the VM creation settings change accordingly.
+	/// </remarks>
 	private async void VmCreationInfoChangedTextAsync(object? sender, TextChangedEventArgs e) => await VmCreationInfoChangedAsync(sender, e);
 
+	/// <summary>
+	/// Handles a change in the VM OS drive size input field. (Calls the view model handler for this event.)
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="e">Unused.</param>
+	/// <remarks>
+	/// Precondition: The user has changed the VM's OS drive size creation settings input fields. <br/>
+	/// Postcondition: The changed is handled and the VM creation settings change accordingly.
+	/// </remarks>
 	private async void OnOsDriveSizeChangedAsync(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (DataContext is CreateVmViewModel vm)
@@ -61,8 +78,29 @@ public partial class CreateVmView : UserControl
 		}
 		await VmCreationInfoChangedAsync(sender, e);
 	}
+	
+	/// <summary>
+	/// Handles a change in one or more of the VM combo box creation settings input fields.
+	/// (Calls the view model handler for this event.)
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="e">Unused.</param>
+	/// <remarks>
+	/// Precondition: The user has changed one or more of the VM's combo box creation settings input fields. <br/>
+	/// Postcondition: The changed is handled and the VM creation settings change accordingly.
+	/// </remarks>
 	private async void VmCreationInfoChangedComboBoxAsync(object? sender, SelectionChangedEventArgs e) => await VmCreationInfoChangedAsync(sender, e);
 
+	/// <summary>
+	/// Handles a change in the VM's RAM size creation setting input field.
+	/// (Calls the view model handler for this event.)
+	/// </summary>
+	/// <param name="sender">Unused.</param>
+	/// <param name="e">Unused.</param>
+	/// <remarks>
+	/// Precondition: The user has changed the VM's RAM size creation setting input field. <br/>
+	/// Postcondition: The changed is handled and the VM creation settings change accordingly.
+	/// </remarks>
 	private async void OnRamSizeChangedAsync(object? sender, NumericUpDownValueChangedEventArgs e)
 	{
 		if (DataContext is CreateVmViewModel vm)
