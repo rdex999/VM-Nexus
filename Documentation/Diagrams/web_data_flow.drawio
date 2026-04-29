@@ -1,0 +1,58 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.5.2 Safari/537.36" version="29.6.1">
+  <diagram name="Page-1" id="E9MdTDnviSkSxu770rGI">
+    <mxGraphModel dx="814" dy="481" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="155" width="390" x="30" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-24" edge="1" parent="1" source="Kd912Vmz3yWoG_kaoYWa-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" target="Kd912Vmz3yWoG_kaoYWa-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;מאזין לוקאלית במפתח 5001&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="40" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-4" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;מחשב השרת&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="110" x="170" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-5" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="תהליך שרת" vertex="1">
+          <mxGeometry height="30" width="70" x="65" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-23" edge="1" parent="1" source="Kd912Vmz3yWoG_kaoYWa-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="Kd912Vmz3yWoG_kaoYWa-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-31" edge="1" parent="1" source="Kd912Vmz3yWoG_kaoYWa-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;dashed=1;dashPattern=8 8;strokeWidth=2;" target="Kd912Vmz3yWoG_kaoYWa-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="110" width="130" x="280" y="215" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-7" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Nginx שירות" vertex="1">
+          <mxGeometry height="30" width="70" x="315" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="תקשורת לא מוצפנת&lt;div&gt;Plaintext&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="107.5" x="170" y="255" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-30" edge="1" parent="1" source="Kd912Vmz3yWoG_kaoYWa-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;dashed=1;dashPattern=8 8;strokeWidth=2;" target="Kd912Vmz3yWoG_kaoYWa-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-12" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;לקוח&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="80" x="670" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;מתחבר לשרת במפתח 5001 לכל לקוח&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="125" x="282.5" y="252.5" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-21" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 10px;&quot;&gt;מאזין במפתח 443 לחיבורים חיצוניים&lt;/font&gt;" vertex="1">
+          <mxGeometry height="28" width="120" x="285" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-27" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;תקשורת מוצפנת&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="120" x="500" y="255" as="geometry" />
+        </mxCell>
+        <mxCell id="Kd912Vmz3yWoG_kaoYWa-28" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 19px;&quot;&gt;&lt;b&gt;רשת פתוחה&lt;/b&gt;&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="115" x="505" y="190" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

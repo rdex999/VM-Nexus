@@ -1,0 +1,52 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.5.2 Safari/537.36" version="29.6.1">
+  <diagram name="Page-1" id="nr3oaFu7ctxqyRmRdENX">
+    <mxGraphModel dx="678" dy="401" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="180" width="260" x="100" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-5" edge="1" parent="1" source="ez0TBIyfRv-dZw_ornHb-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ez0TBIyfRv-dZw_ornHb-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-2" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="מחכה ללקוח" vertex="1">
+          <mxGeometry height="40" width="80" x="130" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-7" edge="1" parent="1" source="ez0TBIyfRv-dZw_ornHb-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="ez0TBIyfRv-dZw_ornHb-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-3" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="קבלת לקוח חדש" vertex="1">
+          <mxGeometry height="40" width="80" x="250" y="180" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-4" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="תהליכון קבלת לקוחות" vertex="1">
+          <mxGeometry height="30" width="130" x="165" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-9" edge="1" parent="1" source="ez0TBIyfRv-dZw_ornHb-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="ez0TBIyfRv-dZw_ornHb-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-10" edge="1" parent="1" source="ez0TBIyfRv-dZw_ornHb-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" target="ez0TBIyfRv-dZw_ornHb-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-15" edge="1" parent="1" source="ez0TBIyfRv-dZw_ornHb-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="ez0TBIyfRv-dZw_ornHb-12">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-16" edge="1" parent="1" source="ez0TBIyfRv-dZw_ornHb-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="ez0TBIyfRv-dZw_ornHb-14">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-6" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="העברה למשימת הדרכה" vertex="1">
+          <mxGeometry height="50" width="90" x="245" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="משימת הדרכה ללקוח&lt;div&gt;&lt;b&gt;לקוח 1&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="490" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="משימת הדרכה ללקוח&lt;div&gt;&lt;b&gt;לקוח 2&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="490" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="ez0TBIyfRv-dZw_ornHb-14" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="משימת הדרכה ללקוח&lt;div&gt;&lt;b&gt;לקוח 3&lt;/b&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="490" y="280" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

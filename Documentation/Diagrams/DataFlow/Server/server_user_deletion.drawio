@@ -1,0 +1,102 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.9 Safari/537.36" version="29.6.1">
+  <diagram name="Page-1" id="zMoDafGGmUB832bVzDTE">
+    <mxGraphModel dx="982" dy="581" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="מכונה וירטואלית 1&lt;div&gt;של המשתמש&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="50" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-5" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="iNsWz3Wm9YUazsft7TMZ-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="260" y="420" />
+              <mxPoint x="110" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-6" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="iNsWz3Wm9YUazsft7TMZ-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-7" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="iNsWz3Wm9YUazsft7TMZ-4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="260" y="420" />
+              <mxPoint x="410" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-13" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=0;entryDy=0;dashed=1;dashPattern=8 4 1 4;" target="iNsWz3Wm9YUazsft7TMZ-11">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="454" y="300" />
+              <mxPoint x="454" y="292" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="PkBdXEsMKYUH1GONuWMd-4" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="PkBdXEsMKYUH1GONuWMd-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-2" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=1;entryDx=0;entryDy=0;dashed=1;dashPattern=8 4 1 4;" target="iNsWz3Wm9YUazsft7TMZ-11">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="340" />
+              <mxPoint x="450" y="348" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-6" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="P4vIt_YLi2fRL5N_WEWi-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;שרת&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="200" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="מכונה וירטואלית 2&lt;div&gt;של המשתמש&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="200" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="מכונה וירטואלית 3&lt;div&gt;של המשתמש&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="350" y="470" as="geometry" />
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="אות כיבוי" vertex="1">
+          <mxGeometry height="30" width="60" x="260" y="360" as="geometry" />
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="כיבוי מוכפה לאחר דקה במידה ולא נכבה." vertex="1">
+          <mxGeometry height="30" width="160" x="260" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="iNsWz3Wm9YUazsft7TMZ-11" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;משתמש בעל של המשתמש&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="570" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="PkBdXEsMKYUH1GONuWMd-1" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" value="מסד נתונים" vertex="1">
+          <mxGeometry height="60" width="120" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="PkBdXEsMKYUH1GONuWMd-3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font&gt;מחיקת רישום לכל מכונה וירטואלית, לאחר שנכבתה&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="160" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="עדכון לגבי מחיקת תת משתמש" vertex="1">
+          <mxGeometry height="30" width="170" x="390" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font&gt;עדכון לגבי העברת בעלות על תתי-המשתמשים של המשתמש&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="170" x="390" y="350" as="geometry" />
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-4" parent="1" style="shape=card;whiteSpace=wrap;html=1;" value="כונן 2 של משתמש" vertex="1">
+          <mxGeometry height="80" width="60" x="190" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-5" parent="1" style="shape=card;whiteSpace=wrap;html=1;" value="&lt;font&gt;כונן 1 של משתמש&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="60" x="270" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-7" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="P4vIt_YLi2fRL5N_WEWi-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-8" parent="1" style="shape=mxgraph.sysml.x;" value="" vertex="1">
+          <mxGeometry height="20" width="20" x="230" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-9" parent="1" style="shape=mxgraph.sysml.x;" value="" vertex="1">
+          <mxGeometry height="20" width="20" x="270" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="P4vIt_YLi2fRL5N_WEWi-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;מחיקת כל הכוננים של המשתמש, לאחר כיבוי כל המכונות הוירטואליות שלו&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="170" x="300" y="210" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

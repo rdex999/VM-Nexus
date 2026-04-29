@@ -1,0 +1,38 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.9 Safari/537.36" version="29.6.1">
+  <diagram name="Page-1" id="uQK5taGV42zOulGOnQ1n">
+    <mxGraphModel dx="396" dy="234" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="6S9fLqL2uVPfHSbeeUet-3" edge="1" parent="1" source="6S9fLqL2uVPfHSbeeUet-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="6S9fLqL2uVPfHSbeeUet-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="345" />
+              <mxPoint x="380" y="345" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6S9fLqL2uVPfHSbeeUet-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;שרת&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="410" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="6S9fLqL2uVPfHSbeeUet-4" edge="1" parent="1" source="6S9fLqL2uVPfHSbeeUet-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" target="6S9fLqL2uVPfHSbeeUet-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="375" />
+              <mxPoint x="300" y="375" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6S9fLqL2uVPfHSbeeUet-2" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;מסד נתונים&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="110" y="330" as="geometry" />
+        </mxCell>
+        <mxCell id="c-XTyEHmyn-IiKhddNss-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="חיפוש מכונות וירטואליות לפי טקסט חיפוש" vertex="1">
+          <mxGeometry height="30" width="150" x="250" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="c-XTyEHmyn-IiKhddNss-2" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="תיאור מכונות וירטואליות שנמצאו" vertex="1">
+          <mxGeometry height="30" width="160" x="240" y="370" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
