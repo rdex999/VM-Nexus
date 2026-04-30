@@ -1,100 +1,108 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.9 Safari/537.36" version="29.6.1">
   <diagram name="Page-1" id="zMoDafGGmUB832bVzDTE">
-    <mxGraphModel dx="982" dy="581" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="-172" dy="401" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="מכונה וירטואלית 1&lt;div&gt;של המשתמש&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="50" y="470" as="geometry" />
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-2" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;מסד נתונים&lt;/font&gt;" vertex="1">
+          <mxGeometry height="140" width="120" x="905" y="500" as="geometry" />
         </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-5" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="iNsWz3Wm9YUazsft7TMZ-1">
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-3" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="yOAQZYXt9x55Wzp3cmBi-2">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="260" y="420" />
-              <mxPoint x="110" y="420" />
+              <mxPoint x="1175" y="550" />
+              <mxPoint x="1100" y="550" />
+              <mxPoint x="1100" y="535" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-6" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="iNsWz3Wm9YUazsft7TMZ-3">
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-5" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="yOAQZYXt9x55Wzp3cmBi-18">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-7" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="iNsWz3Wm9YUazsft7TMZ-4">
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-6" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="yOAQZYXt9x55Wzp3cmBi-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-7" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="yOAQZYXt9x55Wzp3cmBi-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-8" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.75;exitDx=0;exitDy=0;">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
-              <mxPoint x="260" y="420" />
-              <mxPoint x="410" y="420" />
+              <mxPoint x="1175" y="590" />
+            </Array>
+            <mxPoint x="1025" y="590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-35" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;entryX=0;entryY=0;entryDx=0;entryDy=0;dashed=1;dashPattern=8 4 1 4;" target="yOAQZYXt9x55Wzp3cmBi-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-36" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=1;entryDx=0;entryDy=0;dashed=1;dashPattern=8 4 1 4;" target="yOAQZYXt9x55Wzp3cmBi-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;שרת&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="1175" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-16" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;משתמש בעל&lt;/font&gt;" vertex="1">
+          <mxGeometry height="80" width="120" x="1500" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="עדכון לגבי תתי משתמשים חדשים (העברת בעלות)" vertex="1">
+          <mxGeometry height="30" width="190" x="1310" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-18" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;font&gt;מכונה וירטואלית 1&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="1115" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-19" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;font&gt;מכונה וירטואלית 2&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="120" x="1245" y="700" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-20" parent="1" style="shape=card;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;כונן 1&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="60" x="1165" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-21" parent="1" style="shape=card;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;כונן 2&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="60" x="1245" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-24" parent="1" style="shape=mxgraph.sysml.x;" value="" vertex="1">
+          <mxGeometry height="20" width="20" x="1205" y="445" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-25" parent="1" style="shape=mxgraph.sysml.x;" value="" vertex="1">
+          <mxGeometry height="20" width="20" x="1245" y="445" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-26" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="מחיקת כוננים לאחר שהמכונות הוירטואליות כובו" vertex="1">
+          <mxGeometry height="30" width="130" x="1275" y="445" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-27" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="מחיקת רישום מכונות וירטואליות, לאחר שכובו" vertex="1">
+          <mxGeometry height="30" width="130" x="1035" y="500" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-28" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="מחיקת רישום כוננים" vertex="1">
+          <mxGeometry height="30" width="130" x="1035" y="550" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-29" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="מחיקת רישום משתמש" vertex="1">
+          <mxGeometry height="30" width="120" x="1045" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-30" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;br&gt;&lt;div&gt;כיבוי מוכפה לאחר דקה במידה ולא נכבה&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="130" x="1175" y="650" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-31" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="אות כיבוי" vertex="1">
+          <mxGeometry height="30" width="60" x="1205" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-32" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="עדכון לגבי מחיקת תת משתמש" vertex="1">
+          <mxGeometry height="30" width="190" x="1310" y="600" as="geometry" />
+        </mxCell>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-33" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" target="yOAQZYXt9x55Wzp3cmBi-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1185" y="600" />
+              <mxPoint x="1185" y="628" />
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-13" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=0;entryDy=0;dashed=1;dashPattern=8 4 1 4;" target="iNsWz3Wm9YUazsft7TMZ-11">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="454" y="300" />
-              <mxPoint x="454" y="292" />
-            </Array>
-          </mxGeometry>
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-34" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="עדכון בעלות על תתי משתמשים" vertex="1">
+          <mxGeometry height="30" width="160" x="1025" y="600" as="geometry" />
         </mxCell>
-        <mxCell id="PkBdXEsMKYUH1GONuWMd-4" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" target="PkBdXEsMKYUH1GONuWMd-1">
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-37" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="yOAQZYXt9x55Wzp3cmBi-20">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-2" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=1;entryDx=0;entryDy=0;dashed=1;dashPattern=8 4 1 4;" target="iNsWz3Wm9YUazsft7TMZ-11">
-          <mxGeometry relative="1" as="geometry">
-            <Array as="points">
-              <mxPoint x="450" y="340" />
-              <mxPoint x="450" y="348" />
-            </Array>
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-6" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="P4vIt_YLi2fRL5N_WEWi-4">
+        <mxCell id="yOAQZYXt9x55Wzp3cmBi-38" edge="1" parent="1" source="yOAQZYXt9x55Wzp3cmBi-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="yOAQZYXt9x55Wzp3cmBi-21">
           <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;שרת&lt;/font&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="200" y="290" as="geometry" />
-        </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="מכונה וירטואלית 2&lt;div&gt;של המשתמש&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="200" y="470" as="geometry" />
-        </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="מכונה וירטואלית 3&lt;div&gt;של המשתמש&lt;/div&gt;" vertex="1">
-          <mxGeometry height="60" width="120" x="350" y="470" as="geometry" />
-        </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="אות כיבוי" vertex="1">
-          <mxGeometry height="30" width="60" x="260" y="360" as="geometry" />
-        </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="כיבוי מוכפה לאחר דקה במידה ולא נכבה." vertex="1">
-          <mxGeometry height="30" width="160" x="260" y="390" as="geometry" />
-        </mxCell>
-        <mxCell id="iNsWz3Wm9YUazsft7TMZ-11" parent="1" style="ellipse;whiteSpace=wrap;html=1;" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;משתמש בעל של המשתמש&lt;/font&gt;" vertex="1">
-          <mxGeometry height="80" width="120" x="570" y="280" as="geometry" />
-        </mxCell>
-        <mxCell id="PkBdXEsMKYUH1GONuWMd-1" parent="1" style="shape=process;whiteSpace=wrap;html=1;backgroundOutline=1;" value="מסד נתונים" vertex="1">
-          <mxGeometry height="60" width="120" y="290" as="geometry" />
-        </mxCell>
-        <mxCell id="PkBdXEsMKYUH1GONuWMd-3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font&gt;מחיקת רישום לכל מכונה וירטואלית, לאחר שנכבתה&lt;/font&gt;" vertex="1">
-          <mxGeometry height="30" width="160" y="260" as="geometry" />
-        </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-1" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="עדכון לגבי מחיקת תת משתמש" vertex="1">
-          <mxGeometry height="30" width="170" x="390" y="270" as="geometry" />
-        </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font&gt;עדכון לגבי העברת בעלות על תתי-המשתמשים של המשתמש&lt;/font&gt;" vertex="1">
-          <mxGeometry height="30" width="170" x="390" y="350" as="geometry" />
-        </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-4" parent="1" style="shape=card;whiteSpace=wrap;html=1;" value="כונן 2 של משתמש" vertex="1">
-          <mxGeometry height="80" width="60" x="190" y="120" as="geometry" />
-        </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-5" parent="1" style="shape=card;whiteSpace=wrap;html=1;" value="&lt;font&gt;כונן 1 של משתמש&lt;/font&gt;" vertex="1">
-          <mxGeometry height="80" width="60" x="270" y="120" as="geometry" />
-        </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-7" edge="1" parent="1" source="iNsWz3Wm9YUazsft7TMZ-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;" target="P4vIt_YLi2fRL5N_WEWi-5">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-8" parent="1" style="shape=mxgraph.sysml.x;" value="" vertex="1">
-          <mxGeometry height="20" width="20" x="230" y="220" as="geometry" />
-        </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-9" parent="1" style="shape=mxgraph.sysml.x;" value="" vertex="1">
-          <mxGeometry height="20" width="20" x="270" y="220" as="geometry" />
-        </mxCell>
-        <mxCell id="P4vIt_YLi2fRL5N_WEWi-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;מחיקת כל הכוננים של המשתמש, לאחר כיבוי כל המכונות הוירטואליות שלו&lt;/span&gt;&lt;/div&gt;" vertex="1">
-          <mxGeometry height="30" width="170" x="300" y="210" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
