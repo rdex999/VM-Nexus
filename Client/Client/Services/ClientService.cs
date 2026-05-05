@@ -1149,6 +1149,8 @@ public class ClientService : MessagingService
 		}
 
 		IsServiceInitialized = true;
+		
+		/* Queued. Not sent until secure encryption is established over TCP. */
 		SendInfo(new MessageInfoIdentifyUdpPort(localPort));
 
 		return true;
