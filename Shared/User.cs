@@ -2,13 +2,24 @@ using MessagePack;
 
 namespace Shared;
 
+[Union(0, typeof(User))]
+[Union(1, typeof(SubUser))]
+public interface IUser
+{
+	int Id { get; }
+	string Username { get; }
+	string Email { get; }
+	DateTime CreatedAt { get; }
+}
+
 [MessagePackObject]
-public class User
+public class User : IUser
 {
 	[Key(0)]
 	public int Id { get; set; }
 
-	[Key(1)] public string Username { get; set; } = null!;
+	[Key(1)] 
+	public string Username { get; set; } = null!;
 
 	[Key(2)] 
 	public string Email { get; set; } = null!;

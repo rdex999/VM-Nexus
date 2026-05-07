@@ -52,7 +52,7 @@ public class MessageResponseCreateAccount : MessageResponse
 	public Status Result { get; set; }
 
 	[Key(2)] 
-	public User? User { get; set; } 
+	public IUser? User { get; set; } 
 	
 	public MessageResponseCreateAccount() { }
 	
@@ -63,7 +63,7 @@ public class MessageResponseCreateAccount : MessageResponse
 		User = null;
 	}
 	
-	public MessageResponseCreateAccount(Guid requestId, Status result, User user)
+	public MessageResponseCreateAccount(Guid requestId, Status result, IUser user)
 		: base(requestId)
 	{ 
 		Result = result;
@@ -104,12 +104,12 @@ public class MessageResponseLogin : MessageResponse
 	public Status Result { get; set; }
 
 	[Key(2)] 
-	public User? User { get; set; }
+	public IUser? User { get; set; }
 	
 	[Key(3)]
 	public TimeSpan LoginBlock { get; set; }
 
-	public MessageResponseLogin(Guid requestId, User user)
+	public MessageResponseLogin(Guid requestId, IUser user)
 		: base(requestId)
 	{
 		Result = Status.Success;
@@ -150,7 +150,7 @@ public class MessageResponseLogout : MessageResponse
 	public Status Result { get; set; }
 
 	[Key(2)] 
-	public User? User { get; set; }
+	public IUser? User { get; set; }
 
 	public MessageResponseLogout() { }
 
@@ -161,7 +161,7 @@ public class MessageResponseLogout : MessageResponse
 		User = null;
 	}
 	
-	public MessageResponseLogout(Guid requestId, Status result, User user)
+	public MessageResponseLogout(Guid requestId, Status result, IUser user)
 		: base(requestId)
 	{
 		Result = result;

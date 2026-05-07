@@ -85,11 +85,11 @@ public class MessageInfoSubUserCreated : MessageInfoTcp
 public class MessageInfoUserData : MessageInfoTcp
 {
 	[Key(1)] 
-	public User User { get; set; } = null!;
+	public IUser User { get; set; } = null!;
 
 	public MessageInfoUserData() { }
 
-	public MessageInfoUserData(User user)
+	public MessageInfoUserData(IUser user)
 	{
 		User = user;
 	}

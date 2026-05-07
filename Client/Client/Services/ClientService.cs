@@ -183,7 +183,10 @@ public class ClientService : MessagingService
 		MessageResponseCreateAccount res = (MessageResponseCreateAccount)response!;
 		if (res.Result == MessageResponseCreateAccount.Status.Success)
 		{
-			User = res.User;
+			if (res.User is not User user)
+				return MessageResponseCreateAccount.Status.Failure;
+
+			User = user;
 			IsLoggedInAsSubUser = false;
 		}
 		return res.Result;
@@ -215,7 +218,10 @@ public class ClientService : MessagingService
 		MessageResponseLogin res = (MessageResponseLogin)response!;
 		if (res.Result == MessageResponseLogin.Status.Success)
 		{
-			User = res.User;
+			if (res.User is not User user)
+				return null;
+			
+			User = user;
 			IsLoggedInAsSubUser = false;
 		}
 		
@@ -260,7 +266,10 @@ public class ClientService : MessagingService
 			return  MessageResponseLogout.Status.Failure;
 		
 		MessageResponseLogout resLogout = (MessageResponseLogout)response!;
-		User = resLogout.User;
+		if (resLogout.User is not User _ && resLogout.User is not null)
+			return MessageResponseLogout.Status.Failure;
+
+		User = resLogout.User as User;
 		IsLoggedInAsSubUser = false;
 		
 		return resLogout.Result;
@@ -1214,10 +1223,13 @@ public class ClientService : MessagingService
 			}
 			case MessageInfoUserData infoUserData:
 			{
-				if (User != null && infoUserData.User.Id == User.Id)
-					User = infoUserData.User;
+				if (infoUserData.User is not User user)
+					return;
+				
+				if (User != null && user.Id == User.Id)
+					User = user;
 					
-				UserDataChanged?.Invoke(this, infoUserData.User);
+				UserDataChanged?.Invoke(this, user);
 				break;
 			}
 			case MessageInfoVmCreated infoVmCreated:
