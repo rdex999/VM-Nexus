@@ -145,7 +145,7 @@
 		</templated:OverlayPopup>
 		
 		<templated:OverlayPopup Grid.Row="0" IsOpen="{Binding RemovePrmsPopupIsOpen}"
-		                        PlacementTarget="Grid" Background="White" Placement="Center" Title="Grant Permissions"
+		                        PlacementTarget="Grid" Background="White" Placement="Center" Title="Remove Permissions"
 		                        ClosedCommand="{Binding CloseRemovePrmsPopupCommand}">
 
 			<StackPanel Spacing="5">
