@@ -88,7 +88,7 @@
 										<MenuFlyout Placement="Right" HorizontalOffset="5">
 											<MenuItem Header="Power Off" Command="{Binding PowerOffClickCommand}" />
 											<MenuItem Header="Force Off" Command="{Binding ForceOffClickCommand}" />
-											<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}"/>
+											<MenuItem Header="Delete (Instantly)" Command="{Binding DeleteClickCommand}"/>
 										</MenuFlyout>
 									</Button.Flyout>
 								</Button>

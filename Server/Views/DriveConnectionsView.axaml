@@ -74,7 +74,7 @@
 									
 									<Button.Flyout>
 										<MenuFlyout Placement="Right" HorizontalOffset="5">
-											<MenuItem Header="Delete" Command="{Binding DeleteClickCommand}"
+											<MenuItem Header="Delete (Instantly)" Command="{Binding DeleteClickCommand}"
 											          ToolTip.Tip="Disconnect the drive from the virtual machine. The drive will not be connected on next VM startup." />
 										</MenuFlyout>
 									</Button.Flyout>
