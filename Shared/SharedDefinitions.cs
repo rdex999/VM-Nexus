@@ -6,7 +6,7 @@ public static class SharedDefinitions
 	public const int ServerTcpPort = 5000;
 	public const int ServerTcpWebPort = 5001;
 	public const int ServerUdpPort = 5002;
-	public const string ServerIp = "192.168.1.155";		/* local IP in network */
+	public const string DefaultServerIp = "127.0.0.1";		/* local IP in network */
 
 	public const int MaxUdpMessageSize = 150 * 1024 * 1024;
 	

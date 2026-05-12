@@ -48,7 +48,7 @@ public class ClientService : MessagingService
 	public ClientService()
 		: base(false)
 	{
-		ServerIp = IPAddress.Parse(SharedDefinitions.ServerIp);
+		ServerIp = IPAddress.Parse(SharedDefinitions.DefaultServerIp);
 		_ = InitializeAsync();
 	}
 	
@@ -1061,7 +1061,7 @@ public class ClientService : MessagingService
 		{
 			await TcpSslStream.AuthenticateAsClientAsync(new SslClientAuthenticationOptions
 			{
-				TargetHost = SharedDefinitions.ServerIp,
+				TargetHost = ServerIp.ToString(),
 				EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
 				CertificateRevocationCheckMode = X509RevocationMode.Online
 			}, ct);
