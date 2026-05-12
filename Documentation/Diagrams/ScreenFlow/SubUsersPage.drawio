@@ -1,0 +1,156 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.9 Safari/537.36" version="29.6.1">
+  <diagram name="Page-1" id="vm4KDBKdacqRYPlp-d90">
+    <mxGraphModel dx="2037" dy="702" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-23" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.25;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" target="Yq3jS1j8ZDm34-1Xb4UX-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-25" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=0;entryDx=0;entryDy=0;" target="Yq3jS1j8ZDm34-1Xb4UX-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="365" y="110" />
+              <mxPoint x="270" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="מסך התחברות" vertex="1">
+          <mxGeometry height="60" width="120" x="305" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-24" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.75;entryDx=0;entryDy=0;" target="Yq3jS1j8ZDm34-1Xb4UX-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-26" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" target="Yq3jS1j8ZDm34-1Xb4UX-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="110" y="110" />
+              <mxPoint x="210" y="110" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="מסך הרשמה" vertex="1">
+          <mxGeometry height="60" width="120" x="50" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-5" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;font style=&quot;font-size: 16px;&quot;&gt;מסך ראשוני&lt;/font&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="430" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-27" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="Yq3jS1j8ZDm34-1Xb4UX-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="מסך ראשי" vertex="1">
+          <mxGeometry height="60" width="120" x="180" y="185" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="התחברות צלחה" vertex="1">
+          <mxGeometry height="30" width="60" x="290" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="הרשמה צלחה (כוללת התחברות אוטומטית למשתמש)" vertex="1">
+          <mxGeometry height="30" width="110" x="80" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-9" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="cZxizrs6ink-5exljzHe-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-10" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="cZxizrs6ink-5exljzHe-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-14" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="cZxizrs6ink-5exljzHe-5">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="330" />
+              <mxPoint x="420" y="560" />
+              <mxPoint x="323" y="560" />
+              <mxPoint x="323" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-11" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="מסך תתי-משתמשים" vertex="1">
+          <mxGeometry height="60" width="120" x="180" y="300" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-14" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="לחיצה על כפתור הרשמה" vertex="1">
+          <mxGeometry height="30" width="80" x="200" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-15" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="לחיצה על כפתור התחברות" vertex="1">
+          <mxGeometry height="30" width="90" x="190" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-78" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="לחיצה על כפתור מסך תתי-משתמשים" vertex="1">
+          <mxGeometry height="30" width="110" x="110" y="255" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-83" parent="1" style="swimlane;startSize=0;" value="" vertex="1">
+          <mxGeometry height="350" width="200" x="-240" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-84" parent="Yq3jS1j8ZDm34-1Xb4UX-83" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="תרשימי זרימת מסכים נפרדים" vertex="1">
+          <mxGeometry height="30" width="155" x="20" y="5" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-80" parent="Yq3jS1j8ZDm34-1Xb4UX-83" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;" value="מסך הבית" vertex="1">
+          <mxGeometry height="80" width="120" x="40" y="47.5" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-81" parent="Yq3jS1j8ZDm34-1Xb4UX-83" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;" value="מסך יצירת מכונה וירטואלית ומסכיו" vertex="1">
+          <mxGeometry height="80" width="120" x="40" y="142.5" as="geometry" />
+        </mxCell>
+        <mxCell id="Yq3jS1j8ZDm34-1Xb4UX-82" parent="Yq3jS1j8ZDm34-1Xb4UX-83" style="shape=cube;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;darkOpacity=0.05;darkOpacity2=0.1;" value="מסך ניהול כוננים ומסכיו" vertex="1">
+          <mxGeometry height="80" width="120" x="40" y="242.5" as="geometry" />
+        </mxCell>
+        <mxCell id="VJvuOzYjKibgZUn8_A5S-1" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=120;entryDy=50;entryPerimeter=0;" target="Yq3jS1j8ZDm34-1Xb4UX-81">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint y="215" />
+              <mxPoint y="203" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VJvuOzYjKibgZUn8_A5S-2" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=120;entryDy=50;entryPerimeter=0;" target="Yq3jS1j8ZDm34-1Xb4UX-80">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint y="215" />
+              <mxPoint y="108" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="VJvuOzYjKibgZUn8_A5S-3" edge="1" parent="1" source="Yq3jS1j8ZDm34-1Xb4UX-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0;entryDx=120;entryDy=50;entryPerimeter=0;" target="Yq3jS1j8ZDm34-1Xb4UX-82">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint y="215" />
+              <mxPoint y="303" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="תפריט הרשאות גישה על תת-משתמש" vertex="1">
+          <mxGeometry height="60" width="120" x="255" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-12" edge="1" parent="1" source="cZxizrs6ink-5exljzHe-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="cZxizrs6ink-5exljzHe-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="תפריט משתמש" vertex="1">
+          <mxGeometry height="60" width="120" x="105" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-7" edge="1" parent="1" source="cZxizrs6ink-5exljzHe-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="cZxizrs6ink-5exljzHe-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-5" parent="1" style="whiteSpace=wrap;html=1;" value="מסך יצירת תת-משתמש חדש" vertex="1">
+          <mxGeometry height="60" width="120" x="262.5" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-6" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="תפריט בחירת הרשאות על התת-משתמש החדש" vertex="1">
+          <mxGeometry height="60" width="120" x="262.5" y="730" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-8" parent="1" style="whiteSpace=wrap;html=1;" value="מסך הורדת הרשאות על תת-משתמש" vertex="1">
+          <mxGeometry height="60" width="120" x="97.5" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-15" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="לחיצה על כפתור יצירת תת-משתמש חדש" vertex="1">
+          <mxGeometry height="30" width="120" x="330" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-16" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="לחיצה על כפתור הורדת הרשאות גישה" vertex="1">
+          <mxGeometry height="30" width="120" x="160" y="570" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-18" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="לחיצה על כפתור בחירת הרשאות גישה" vertex="1">
+          <mxGeometry height="30" width="110" x="330" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-19" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="לחיצה על כפתור תפריט הרשאות גישה" vertex="1">
+          <mxGeometry height="30" width="80" x="320" y="410" as="geometry" />
+        </mxCell>
+        <mxCell id="cZxizrs6ink-5exljzHe-20" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="לחיצה על כפתור תפריט משתמש" vertex="1">
+          <mxGeometry height="30" width="90" x="170" y="420" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
