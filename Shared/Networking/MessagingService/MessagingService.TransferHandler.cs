@@ -12,6 +12,8 @@ public partial class MessagingService
 		public Task Task { get; protected set; }					/* Usable only after Start() has been called - Its in completed state before Start() */
 		public bool IsStarted => Id != Guid.Empty;
 		public bool IsDownloading { get; protected set; } = false;
+		public bool HasSucceeded => !HasFailed && BytesReceived == Size;
+		public bool HasFailed { get; private set; } = false;
 		public ulong Size { get; }
 		public ulong BytesReceived { get; protected set; } = 0;
 
@@ -78,8 +80,9 @@ public partial class MessagingService
 		/// Precondition: This transfer has failed. <br/>
 		/// Postcondition: The Failed and Ended events are raised.
 		/// </remarks>
-		protected void RaiseFailed()
+		public virtual void RaiseFailed()
 		{
+			HasFailed = true;
 			Failed?.Invoke(this, EventArgs.Empty);
 			Ended?.Invoke(this, EventArgs.Empty);
 		}

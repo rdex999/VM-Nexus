@@ -832,12 +832,18 @@ public partial class MessagingService
 				ResetUdpCrypto(cryptoInfo.MasterKey32, cryptoInfo.Salt32);
 				break;
 			}
-			case MessageInfoTransferData downloadData:
+			case MessageInfoTransferData transferData:
 			{
-				if (!_ongoingTransfers.TryGetValue(downloadData.StreamId, out TransferHandler? handler))
+				if (!_ongoingTransfers.TryGetValue(transferData.StreamId, out TransferHandler? handler))
 					return;
 
-				await handler.ReceiveAsync(downloadData);
+				if (!transferData.IsValidHash())
+				{
+					handler.RaiseFailed();
+					return;
+				}
+
+				await handler.ReceiveAsync(transferData);
 			
 				if (!handler.IsDownloading)	
 					OnTransferEnded(handler, EventArgs.Empty);

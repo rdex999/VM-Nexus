@@ -155,6 +155,7 @@ public partial class DriveExplorerViewModel : ViewModelBase
 				provider = topLevel.StorageProvider;
 		}
 
+		MessagingService.DownloadHandler? handler = null;
 		if (provider != null)
 		{
 			file = await provider.SaveFilePickerAsync(new FilePickerSaveOptions()
@@ -168,14 +169,34 @@ public partial class DriveExplorerViewModel : ViewModelBase
 				return;
 			
 			stream = await file.OpenWriteAsync();
-			await ClientSvc.StartItemDownloadAsync(driveId, path, stream);
+			handler = await ClientSvc.StartItemDownloadAsync(driveId, path, stream);
 		}
 		else
 		{
 			string destinationPath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + "/Downloads/" + suggestedFileName;
-			await ClientSvc.StartItemDownloadAsync(driveId, path, destinationPath);
+			handler = await ClientSvc.StartItemDownloadAsync(driveId, path, destinationPath);
 		}
 
+		if (handler == null)
+		{
+			file?.Dispose();
+			return;
+		}
+
+		await handler.Task;
+
+		if (handler.HasFailed && file != null)
+		{
+			try
+			{
+				File.Delete(file.Path.ToString());
+			}
+			catch (Exception)
+			{
+				// ignored
+			}
+		}
+		
 		file?.Dispose();
 	}
 	

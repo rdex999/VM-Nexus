@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Net;
+using System.Security.Cryptography;
 using Avalonia.Input;
 using MessagePack;
 using Shared.Drives;
@@ -393,18 +394,36 @@ public class MessageInfoTransferData : MessageInfoTcp
 	public ulong Offset { get; set; }
 
 	[Key(3)] 
+	public string Hash { get; set; } = string.Empty;
+
+	[Key(4)] 
 	public byte[] Data { get; set; } = null!;
 
 	public MessageInfoTransferData() { }
 
 	public MessageInfoTransferData(Guid streamId, ulong offset, byte[] data)
-	{
-		StreamId = streamId;
-		Offset = offset;
-		Data = data;
-	}
+    {
+        StreamId = streamId;
+        Offset = offset;
+        Data = data;
+        Hash = Convert.ToBase64String(SHA256.HashData(data));
+    }
 
-	public override bool IsValidMessage() => base.IsValidMessage() && StreamId != Guid.Empty && Data.Length > 0;
+    /// <summary>
+    /// Checks whether the received data's hash matches the received hash.
+    /// </summary>
+    /// <returns>True if the hash is valid, false otherwise.</returns>
+    /// <remarks>
+    /// Precondition: This message was received by a side. <br/>
+    /// Postcondition: Returns whether the received data's hash matches the received hash.
+    /// </remarks>
+    public bool IsValidHash()
+    {
+        string computed = Convert.ToBase64String(SHA256.HashData(Data));
+        return computed == Hash;
+    }
+
+    public override bool IsValidMessage() => base.IsValidMessage() && StreamId != Guid.Empty && Data.Length > 0 && !string.IsNullOrEmpty(Hash) && Hash.Length == 44;
 }
 
 [MessagePackObject]

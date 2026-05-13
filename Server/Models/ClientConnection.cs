@@ -943,12 +943,17 @@ public sealed class ClientConnection : MessagingService
 				
 				SendResponse(new MessageResponseCreateDriveFromImage(reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.Success, transferId));
 
-				handler.Completed += async (_, _) =>
+				await handler.Task;
+
+				if (handler.HasSucceeded)
 				{
 					DriveGeneralDescriptor? descriptor = await _driveService.GetDriveGeneralDescriptorAsync(ActionUser.Id, name);
 					if (descriptor != null)
 						await _userService.NotifyDriveCreatedAsync(descriptor);
-				};
+				}
+				else
+					await _driveService.DeleteDriveAsync(driveId);
+				
 				break;
 			}
 
@@ -1152,6 +1157,12 @@ public sealed class ClientConnection : MessagingService
 
 				await handler.Task;
 				stream.Dispose();
+
+				if (handler.HasFailed)
+				{
+					await _driveService.DeleteItemAsync(reqUploadFile.DriveId, path);
+					break;
+				}
 
 				await _userService.NotifyItemCreatedAsync(reqUploadFile.DriveId, trimmedPath);
 				break;

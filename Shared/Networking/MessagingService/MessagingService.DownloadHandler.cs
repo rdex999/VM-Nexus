@@ -4,8 +4,8 @@ public partial class MessagingService
 {
 	public class DownloadHandler : TransferHandler
 	{
-		private Stream _destination;
-		private TaskCompletionSource _tcs;
+		private readonly Stream _destination;
+		private readonly TaskCompletionSource _tcs;
 
 		public DownloadHandler(ulong size, string filePath)
 			: base(size)
@@ -66,6 +66,15 @@ public partial class MessagingService
 			}
 			
 			RaiseDataReceived();
+		}
+
+		public override void RaiseFailed()
+		{
+			IsDownloading = false;
+			_destination.SetLength(0);
+			_destination.Dispose();
+			base.RaiseFailed();
+			_tcs.SetResult();
 		}
 	}
 }
