@@ -66,8 +66,6 @@ public class MainWindowModel : IDisposable
 	/// </remarks>
 	public async Task<ExitCode> ServerStartAsync()
 	{
-		_listenerCts = new CancellationTokenSource();
-
 		ExitCode status = await _databaseService.InitializeAsync();
 		if(status != ExitCode.Success)
 		{
@@ -75,7 +73,14 @@ public class MainWindowModel : IDisposable
 			return status;
 		}
 		
-		_virtualMachineService.Initialize();
+		status = await _virtualMachineService.InitializeAsync();
+		if (status != ExitCode.Success)
+		{
+			_logger.Fatal($"Failed to initialize virtual machine service. Exit code {status}.");
+			return status;
+		}
+		
+		_listenerCts = new CancellationTokenSource();
 		
 		IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, SharedDefinitions.ServerTcpPort);		/* Combination of IP and port - Endpoint. */
 	
@@ -127,8 +132,6 @@ public class MainWindowModel : IDisposable
 		}
 
 		_userService.Close();
-
-		_databaseService.Close();
 
 		_logger.Information("Server stopped.");
 		

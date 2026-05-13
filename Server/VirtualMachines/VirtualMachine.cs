@@ -63,7 +63,7 @@ public class VirtualMachine
 	private bool _isRightShiftKeyDown = false;
 	private readonly string _pcmAudioFilePath;
 	private readonly int _fps = 20;
-	private SemaphoreSlim _frameAvailable;
+	private readonly SemaphoreSlim _frameAvailable;
 	private VirtualMachineFrame? _lastFrame = null;
 	private Task _allBackgroundTasks = null!;
 	private bool _closing = false;
@@ -691,6 +691,8 @@ public class VirtualMachine
 	/// </remarks>
 	private XDocument AsLibvirtDomainXml()
 	{
+		/* See: https://libvirt.org/docs.html */
+		
 		string cpuArch = _cpuArchitecture switch
 		{
 			CpuArchitecture.X86_64 => "x86_64",
@@ -730,8 +732,8 @@ public class VirtualMachine
 				new XAttribute("type", "vnc"),
 				new XAttribute("autoport", "yes")
 			),
-			new XElement("graphics", new XAttribute("type", "egl-headless")
-				// new XElement("gl", new XAttribute("enabled", "yes"))
+			new XElement("graphics", new XAttribute("type", "egl-headless"),
+				new XElement("gl", new XAttribute("enabled", "yes"))
 			),
 			new XElement("interface", new XAttribute("type", "network"),
 				new XElement("source", new XAttribute("network", "VM-Nexus-Isolated-Network")),

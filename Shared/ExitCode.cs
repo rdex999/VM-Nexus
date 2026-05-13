@@ -9,6 +9,7 @@ public enum ExitCode
 	UnsupportedOperation,
 	UnsupportedPlatform,
 	AlreadyInitialized,
+	MisconfiguredSystem,
 	DataFetchFailed,
 	ServerNoValidLocalhostIp,
 	ConnectionToServerFailed,

@@ -110,17 +110,6 @@ public class DatabaseService
 	}
 
 	/// <summary>
-	/// Closes the database connection.
-	/// </summary>
-	/// <remarks>
-	/// Precondition: Service connected to the database. <br/>
-	/// Postcondition: The connection to the database is closed.
-	/// </remarks>
-	public void Close()
-	{
-	}
-
-	/// <summary>
 	/// Checks if there is at least one user with the given username.
 	/// </summary>
 	/// <param name="username">
