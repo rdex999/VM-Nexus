@@ -23,6 +23,18 @@ public class AccountService
 		_driveService = driveService;
 	}
 
+	/// <summary>
+	/// Deletes the users account. Stops all running VMs,
+	/// deletes all drives, and transfers ownership of sub-users
+	/// to the owner of the given user.
+	/// </summary>
+	/// <param name="userId">The ID of the user to delete. userId >= 1.</param>
+	/// <returns>An exit code indicating the result of the operation.</returns>
+	/// <remarks>
+	/// Precondition: A user with the given username exists. userId >= 1. <br/>
+	/// Postcondition: On success, the user is deleted. On failure,
+	/// the user is not deleted and the returned exit code indicates the error.
+	/// </remarks>
 	public async Task<ExitCode> DeleteAccountAsync(int userId)
 	{
 		Task<VmGeneralDescriptor[]?> vmsTask = _databaseService.GetVmGeneralDescriptorsOfUserAsync(userId);
