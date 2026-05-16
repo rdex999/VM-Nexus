@@ -105,7 +105,6 @@ public class DatabaseService
 		if (rows == null)
 			return ExitCode.DatabaseStartupFailed;
 
-		ExitCode c = await UpdateOwnerPermissionsAsync(1, UserPermissions.VirtualMachineUse.AddIncluded());
 		return ExitCode.Success;
 	}
 
