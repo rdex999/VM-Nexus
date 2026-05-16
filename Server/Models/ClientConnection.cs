@@ -50,7 +50,6 @@ public sealed class ClientConnection : MessagingService
 	private readonly VirtualMachineService _virtualMachineService;
 	private readonly DriveService _driveService;
 	private readonly AccountService _accountService;
-	private readonly ConcurrentDictionary<Guid, TransferHandler> _downloads;
 	private bool _hasDisconnected = false;		/* Has the Disconnect function run? */
 	private int _streamVmId = -1;
 
@@ -78,7 +77,6 @@ public sealed class ClientConnection : MessagingService
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
 		_accountService = accountService;
-		_downloads = new ConcurrentDictionary<Guid, TransferHandler>();
 		ClientId = Guid.NewGuid();
 
 		Socket udpSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -114,7 +112,6 @@ public sealed class ClientConnection : MessagingService
 		_virtualMachineService = virtualMachineService;
 		_driveService = driveService;
 		_accountService = accountService;
-		_downloads = new ConcurrentDictionary<Guid, TransferHandler>();
 		ClientId = Guid.NewGuid();
 
 		WebSocket = socket;
