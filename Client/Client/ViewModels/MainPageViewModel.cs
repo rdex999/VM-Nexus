@@ -690,7 +690,6 @@ public partial class SideMenuItemTemplate : ObservableObject
 	public string Title { get; }
 	public ViewModelBase ViewModel { get; }
 	public string IconKey { get; }
-	public bool DefaultBackground { get; }
 
 	[ObservableProperty] 
 	private Geometry? _icon;
