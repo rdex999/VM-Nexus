@@ -21,7 +21,6 @@ namespace Client.ViewModels;
 
 public partial class DriveExplorerViewModel : ViewModelBase
 {
-	public Action<int, string>? DownloadItem;
 	private readonly DriveService _driveService;
 	public ObservableCollection<PathPartItemTemplate> PathParts { get; }
 	private readonly Stack<string> _prevPathParts;

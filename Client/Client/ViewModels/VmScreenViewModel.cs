@@ -368,7 +368,7 @@ public partial class VmScreenViewModel : ViewModelBase
 				catch (Exception)
 				{
 					ArrayPool<byte>.Shared.Return(framebuffer);
-					return;	
+					continue;	
 				}
 				
 				if (read == 0)
@@ -380,7 +380,7 @@ public partial class VmScreenViewModel : ViewModelBase
 			if (totalRead != size)
 			{
 				ArrayPool<byte>.Shared.Return(framebuffer);
-				return;
+				continue;
 			}
 
 			Dispatcher.UIThread.Post(() =>
