@@ -25,7 +25,6 @@ public class VirtualMachineService
 	/* By virtual machine ID's */
 	private readonly ConcurrentDictionary<int, VirtualMachine> _aliveVirtualMachines;
 	private readonly Connect _libvirtConnection;
-	private int _totalSystemRamMiB = 0;
 	private int _vmUsedRamMiB = 0;
 
 	public VirtualMachineService(ILogger logger, DatabaseService databaseService, UserService userService, DriveService driveService)
@@ -56,33 +55,6 @@ public class VirtualMachineService
 		{
 			return ExitCode.MisconfiguredSystem;
 		}
-		
-		Dictionary<string, ulong> memInfo = new Dictionary<string, ulong>();
-		await foreach (string line in File.ReadLinesAsync("/proc/meminfo").ConfigureAwait(false))
-		{
-			string[] keyValue = line.Split(':');
-			if (keyValue.Length != 2)
-				continue;
-			
-			int kbIndex = keyValue[1].IndexOf("kB", StringComparison.Ordinal);
-			if (kbIndex < 0)
-				continue;
-			
-			string key = keyValue[0].Trim();
-			string valueStr = keyValue[1].Substring(0, kbIndex);
-			if (!ulong.TryParse(valueStr, out ulong value))
-				continue;
-
-			memInfo.TryAdd(key, value);
-		}
-
-		if (!memInfo.TryGetValue("MemAvailable", out ulong memAvailableKb))
-			return ExitCode.MisconfiguredSystem;
-
-		if (!memInfo.TryGetValue("SwapFree", out ulong swapFreeKb))
-			return ExitCode.MisconfiguredSystem;
-
-		_totalSystemRamMiB = (int)((memAvailableKb + swapFreeKb) / 1024);
 
 		return ExitCode.Success;
 	}
@@ -585,11 +557,38 @@ public class VirtualMachineService
 		if (sizeMiB < 1) 
 			return false;
 
-		if (_totalSystemRamMiB - _vmUsedRamMiB < sizeMiB)
+		Dictionary<string, ulong> memInfo = new Dictionary<string, ulong>();
+		await foreach (string line in File.ReadLinesAsync("/proc/meminfo").ConfigureAwait(false))
+		{
+			string[] keyValue = line.Split(':');
+			if (keyValue.Length != 2)
+				continue;
+			
+			int kbIndex = keyValue[1].IndexOf("kB", StringComparison.Ordinal);
+			if (kbIndex < 0)
+				continue;
+			
+			string key = keyValue[0].Trim();
+			string valueStr = keyValue[1].Substring(0, kbIndex);
+			if (!ulong.TryParse(valueStr, out ulong value))
+				continue;
+
+			memInfo.TryAdd(key, value);
+		}
+
+		if (!memInfo.TryGetValue("MemAvailable", out ulong memAvailableKb))
+			return false;
+
+		if (!memInfo.TryGetValue("SwapFree", out ulong swapFreeKb))
+			return false;
+
+		int totalAvailableMiB = (int)((memAvailableKb + swapFreeKb) / 1024);
+		
+		if (sizeMiB + _vmUsedRamMiB >= totalAvailableMiB)
 			return false;
 
 		_vmUsedRamMiB += sizeMiB;
-		_logger.Information($"Allocated {sizeMiB/1024f} GiB. Virtual machines are using {_vmUsedRamMiB/1024f} GiB of RAM. {_totalSystemRamMiB/1024f - _vmUsedRamMiB/1024f} GiB left.");
+		_logger.Information($"Allocated {sizeMiB/1024f} GiB. Virtual machines are using {_vmUsedRamMiB/1024f} GiB of RAM. {totalAvailableMiB/1024f - _vmUsedRamMiB/1024f} GiB left.");
 		return true;
 	}
 
@@ -605,6 +604,6 @@ public class VirtualMachineService
 	private void FreeVmRam(int sizeMiB)
 	{
 		_vmUsedRamMiB -= Math.Min(_vmUsedRamMiB, Math.Max(sizeMiB, 0));
-		_logger.Information($"Freed {sizeMiB/1024f} GiB. Virtual machines are using {_vmUsedRamMiB/1024f} GiB of RAM. {_totalSystemRamMiB/1024f - _vmUsedRamMiB/1024f} GiB left.");
+		_logger.Information($"Freed {sizeMiB / 1024f} GiB. Virtual machines are now using {_vmUsedRamMiB / 1024f} GiB of RAM.");
 	}
 }
