@@ -624,16 +624,15 @@ public partial class MessagingService
 	{
 		byte[]? messageSizeInBytes = await ReceiveBytesExactTcpAsync(4);
 		if (messageSizeInBytes == null || messageSizeInBytes.Length == 0)
-		{
 			return null;
-		}
-		int size =  BitConverter.ToInt32(messageSizeInBytes, 0);	/* If the size is 0, then its an invalid message */
-	
+		
+		int size =  BitConverter.ToInt32(messageSizeInBytes);
+		if (size <= 0)
+			return null;
+		
 		byte[]? messageBytes = await ReceiveBytesExactTcpAsync(size);
 		if (messageBytes == null || messageBytes.Length == 0)
-		{
 			return null;
-		}
 
 		return IMessage.FromByteArray(messageBytes);
 	}
