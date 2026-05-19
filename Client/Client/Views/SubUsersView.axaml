@@ -191,7 +191,8 @@
 			<ScrollViewer HorizontalScrollBarVisibility="Auto">
 				<Grid RowDefinitions="Auto, *">
 					<Button Classes="clean" Padding="12, 8" Margin="8" Background="White"
-					        Command="{Binding CreateSubUserClickCommand}">
+					        Command="{Binding CreateSubUserClickCommand}"
+					        IsEnabled="{Binding SubUserLoginIsEnabled}">
 						<StackPanel Orientation="Horizontal" Spacing="20">
 							<PathIcon Data="{StaticResource AddRegular}" Width="30" Height="30" VerticalAlignment="Center">
 								<PathIcon.Foreground>
