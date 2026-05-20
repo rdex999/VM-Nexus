@@ -46,5 +46,6 @@
 
 	<ItemGroup>
 	  <Folder Include="Keys\" />
+	  <Folder Include="Logs\" />
 	</ItemGroup>
 </Project>

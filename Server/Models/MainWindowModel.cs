@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Serilog;
 using Serilog.Core;
 using Server.Services;
 using Shared;
@@ -160,7 +161,9 @@ public class MainWindowModel : IDisposable
 				bool added;
 				do
 				{
-					ClientConnection clientConnection = new ClientConnection(clientSocket, _databaseService, _userService, 
+					ClientConnection clientConnection = new ClientConnection(
+						_logger.ForContext("Source", "Client Connection"), 
+						clientSocket, _databaseService, _userService, 
 						_virtualMachineService, _driveService, _accountService);
 					
 					clientConnection.Disconnected += OnClientDisconnected;
@@ -211,7 +214,9 @@ public class MainWindowModel : IDisposable
 			bool added;
 			do
 			{
-				ClientConnection clientConnection = new ClientConnection(wsContext.WebSocket, _databaseService, 
+				ClientConnection clientConnection = new ClientConnection(
+					_logger.ForContext("Source", "Client Connection"),
+					wsContext.WebSocket, _databaseService, 
 					_userService, _virtualMachineService, _driveService, _accountService);
 				
 				clientConnection.Disconnected += OnClientDisconnected;

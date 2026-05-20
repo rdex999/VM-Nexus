@@ -517,7 +517,8 @@ public class VirtualMachineService
 	/// </remarks>
 	private void OnVirtualMachinePoweredOff(object? sender, int id)
 	{
-		if (!_aliveVirtualMachines.TryRemove(id, out VirtualMachine? virtualMachine)) return;
+		if (!_aliveVirtualMachines.TryRemove(id, out VirtualMachine? virtualMachine)) 
+			return;
 	
 		_ = virtualMachine.CloseAsync();
 		_ = _userService.NotifyVirtualMachinePoweredOffAsync(id);
@@ -535,11 +536,14 @@ public class VirtualMachineService
 	/// </remarks>
 	private void OnVirtualMachineCrashed(object? sender, int id)
 	{
-		if (!_aliveVirtualMachines.TryRemove(id, out VirtualMachine? virtualMachine)) return;
+		if (!_aliveVirtualMachines.TryRemove(id, out VirtualMachine? virtualMachine)) 
+			return;
 		
 		_ = virtualMachine.CloseAsync();
 		_ = _userService.NotifyVirtualMachineCrashedAsync(id);
 		FreeVmRam(virtualMachine.RamSizeMiB);
+		
+		_logger.Warning("Virtual machine {Id} has crashed.", id);
 	}
 
 	/// <summary>

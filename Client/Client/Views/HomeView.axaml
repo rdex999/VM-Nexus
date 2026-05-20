@@ -88,7 +88,7 @@
 
 												<CheckBox Grid.Column="4" Margin="10, 0, 0, 0"
 												          IsChecked="{Binding IsMarkedForDeletion}" 
-												          IsEnabled="{Binding !IsInUse}"/>
+												          IsEnabled="{Binding IsEnabled}"/>
 											</Grid>
 											
 											<TextBlock Classes="error" IsVisible="{Binding IsInUse}"

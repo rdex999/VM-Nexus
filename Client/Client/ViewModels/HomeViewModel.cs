@@ -73,6 +73,7 @@ public partial class HomeViewModel : ViewModelBase
 		{
 			VmItemTemplate.CanUse = subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineUse);
 			VmItemTemplate.CanDelete = subUser.OwnerPermissions.HasPermission(UserPermissions.VirtualMachineDelete);
+			DeletionDriveItemTemplate.CanDelete = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveDelete);
 			DriveConnectionItemTemplate.CanConnect = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveConnect);
 			DriveConnectionItemTemplate.CanDisconnect = subUser.OwnerPermissions.HasPermission(UserPermissions.DriveDisconnect);
 		}
@@ -80,6 +81,7 @@ public partial class HomeViewModel : ViewModelBase
 		{
 			VmItemTemplate.CanUse = true;
 			VmItemTemplate.CanDelete = true;
+			DeletionDriveItemTemplate.CanDelete = true;
 			DriveConnectionItemTemplate.CanConnect = true;
 			DriveConnectionItemTemplate.CanDisconnect = true;
 		}
@@ -800,6 +802,7 @@ public partial class VmItemTemplate : ObservableObject
 
 public partial class DeletionDriveItemTemplate : ObservableObject
 {
+	public static bool CanDelete;
 	public int Id { get; }
 	public string Name { get; }
 	public DriveType DriveType { get; }
@@ -816,6 +819,8 @@ public partial class DeletionDriveItemTemplate : ObservableObject
 			return $"{Size} MiB";
 		}
 	}
+
+	public bool IsEnabled { get; }
 	
 	[ObservableProperty]
 	private bool _isInUse;
@@ -830,7 +835,8 @@ public partial class DeletionDriveItemTemplate : ObservableObject
 		DriveType = driveType;
 		Size = size;
 		IsInUse = isDriveInUse;
-		IsMarkedForDeletion = !isDriveInUse;
+		IsEnabled = !IsInUse && CanDelete;
+		IsMarkedForDeletion = !isDriveInUse && CanDelete;
 	}
 }
 

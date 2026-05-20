@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Input;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
+using Serilog.Formatting.Display;
 using Server.Models;
 using Server.Services;
 using Shared;
@@ -169,12 +170,18 @@ public class LogItemTemplate
 	public Brush LevelColor { get; }
 	public string Source { get; }
 	public string Message { get; }
+	
+	private static readonly MessageTemplateTextFormatter Formatter = new MessageTemplateTextFormatter("{Message:l}");
+	
 	public LogItemTemplate(LogEvent log)
 	{
 		Date = log.Timestamp.ToString("dd-MM-yyyyy HH:mm:ss");
 		Level = log.Level.ToString();
 		Source = log.Properties.TryGetValue("Source", out var source) ? source.ToString().Trim('"') : "Server";
-		Message = log.MessageTemplate.Text;
+		
+		using StringWriter sw = new StringWriter();
+		Formatter.Format(log, sw);
+		Message = sw.ToString();
 
 		LevelColor = log.Level switch
 		{

@@ -1,9 +1,5 @@
 using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -11,6 +7,7 @@ using System.Net.WebSockets;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
+using Serilog;
 using Server.Drives;
 using Server.Services;
 using Server.VirtualMachines;
@@ -26,7 +23,7 @@ namespace Server.Models;
 public sealed class ClientConnection : MessagingService
 {
 	public event EventHandler? Disconnected;
-	public Guid ClientId { get; private init; }
+	public Guid ClientId { get; }
 	public User? ActualUser { get; private set; }		/* The user itself - if logged in as sub-user, this is the owner. */
 	public SubUser? User { get; private set; }			/* The sub-user. Null if not logged in as a sub-user. */
 	public User? ActionUser								/* The user that actions such as creating a VM, deleting a drive, will be done as. */
@@ -45,6 +42,7 @@ public sealed class ClientConnection : MessagingService
 	public bool IsLoggedIn => ActualUser != null;
 	public bool IsLoggedInAsSubUser => User != null && ActualUser != null;	
 	
+	private readonly ILogger _logger;
 	private readonly DatabaseService _databaseService;
 	private readonly UserService _userService;
 	private readonly VirtualMachineService _virtualMachineService;
@@ -56,6 +54,7 @@ public sealed class ClientConnection : MessagingService
 	/// <summary>
 	/// Creates and initializes the ClientConnection object.
 	/// </summary>
+	/// <param name="logger">The logger. logger != null.</param>
 	/// <param name="tcpSocket">The socket on which the client has connected. socket != null.</param>
 	/// <param name="databaseService">A reference to the database service. databaseService != null.</param>
 	/// <param name="userService">A reference to the user service. userService != null.</param>
@@ -63,15 +62,16 @@ public sealed class ClientConnection : MessagingService
 	/// <param name="driveService">A reference to the drive service. driveService != null.</param>
 	/// <param name="accountService">A reference to the account service. accountService != null.</param>
 	/// <remarks>
-	/// Precondition: Client has connected to the server.
+	/// Precondition: Client has connected to the server. logger != null &amp;&amp;
 	/// socket != null &amp;&amp; userService != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null.
 	/// &amp;&amp; driveService != null &amp;&amp; accountService != null. <br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
-	public ClientConnection(Socket tcpSocket, DatabaseService databaseService, UserService userService, 
+	public ClientConnection(ILogger logger, Socket tcpSocket, DatabaseService databaseService, UserService userService, 
 		VirtualMachineService virtualMachineService, DriveService driveService, AccountService accountService)
 		: base(true)
 	{
+		_logger = logger;
 		_databaseService = databaseService;
 		_userService = userService;
 		_virtualMachineService = virtualMachineService;
@@ -92,6 +92,7 @@ public sealed class ClientConnection : MessagingService
 	/// <summary>
 	/// Creates and initializes the ClientConnection object.
 	/// </summary>
+	/// <param name="logger">The logger. logger != null.</param>
 	/// <param name="socket">The socket on which the client has connected. socket != null.</param>
 	/// <param name="databaseService">A reference to the database service. databaseService != null.</param>
 	/// <param name="userService">A reference to the user service. userService != null.</param>
@@ -99,14 +100,15 @@ public sealed class ClientConnection : MessagingService
 	/// <param name="driveService">A reference to the drive service. driveService != null.</param>
 	/// <param name="accountService">A reference to the account service. accountService != null.</param>
 	/// <remarks>
-	/// Precondition: Client has connected to the server.
+	/// Precondition: Client has connected to the server. logger != null &amp;&amp;
 	/// socket != null &amp;&amp; userService != null &amp;&amp; databaseService != null. &amp;&amp; virtualMachineService != null. &amp;&amp; driveService != null.<br/>
 	/// Postcondition: Messaging service fully initialized and connected to the client.
 	/// </remarks>
-	public ClientConnection(WebSocket socket, DatabaseService databaseService, UserService userService, 
+	public ClientConnection(ILogger logger, WebSocket socket, DatabaseService databaseService, UserService userService, 
 		VirtualMachineService virtualMachineService, DriveService driveService, AccountService accountService)
 		: base(true)
 	{
+		_logger = logger;
 		_databaseService = databaseService;
 		_userService = userService;
 		_virtualMachineService = virtualMachineService;
@@ -244,6 +246,7 @@ public sealed class ClientConnection : MessagingService
 			{
 				bool usernameAvailable = !await _databaseService.IsUserExistAsync(reqCheckUsername.Username.Trim());
 				SendResponse(new MessageResponseCheckUsername(reqCheckUsername.Id, usernameAvailable));
+				_logger.Verbose("Connection {Id} made check username.", ClientId);
 				break;
 			}
 
@@ -283,6 +286,7 @@ public sealed class ClientConnection : MessagingService
 					{
 						_userService.LoginAsUser(this, ActualUser.Id);
 						SendResponse(new MessageResponseCreateAccount(reqCreateAccount.Id, MessageResponseCreateAccount.Status.Success, ActualUser));
+						_logger.Information("Created account {Username}, {Email}", usernameTrimmed, emailTrimmed);
 					}
 					
 					break;
@@ -293,6 +297,7 @@ public sealed class ClientConnection : MessagingService
 					status = MessageResponseCreateAccount.Status.Failure;
 				
 				SendResponse(new MessageResponseCreateAccount(reqCreateAccount.Id, status));
+				_logger.Warning("Account creation failed. Error {Error}.", result);
 				break;
 			}
 
@@ -309,6 +314,7 @@ public sealed class ClientConnection : MessagingService
 					if (IsLoggedInAsSubUser && !HasPermission(UserPermissions.UserDelete))
 					{
 						SendResponse(new MessageResponseDeleteAccount(reqDeleteAccount.Id, false));
+						_logger.Warning("User {Username} attempted account deletion of user {UserId}. Permission denied.", ActualUser!.Username, reqDeleteAccount.UserId);
 						break;
 					}
 				}
@@ -319,6 +325,7 @@ public sealed class ClientConnection : MessagingService
 					                                || !subUser.OwnerPermissions.HasPermission(UserPermissions.UserDelete.AddIncluded()))
 					{
 						SendResponse(new MessageResponseDeleteAccount(reqDeleteAccount.Id, false));
+						_logger.Warning("User {Username} attempted account deletion of user {UserId}. Permission denied.", ActualUser!.Username, reqDeleteAccount.UserId);
 						break;
 					}
 				}
@@ -326,6 +333,12 @@ public sealed class ClientConnection : MessagingService
 				result = await _accountService.DeleteAccountAsync(reqDeleteAccount.UserId);
 				
 				SendResponse(new MessageResponseDeleteAccount(reqDeleteAccount.Id, result == ExitCode.Success));
+				
+				if (result == ExitCode.Success)
+					_logger.Information("User {Username} deleted {TargetId}.", ActualUser!.Username, reqDeleteAccount.UserId);
+				else
+					_logger.Information("Failed deleting user with ID {UserId}. By {User}.", reqDeleteAccount.UserId,  ActualUser!.Username);
+				
 				break;
 			}
 
@@ -335,6 +348,7 @@ public sealed class ClientConnection : MessagingService
 				User? user = await _databaseService.GetUserAsync(usernameTrimmed);
 				if (user == null)
 				{
+					_logger.Warning("Login attempt on non-existing user {Username}.", usernameTrimmed);
 					SendResponse(new MessageResponseLogin(reqLogin.Id));
 					break;	
 				}
@@ -347,7 +361,8 @@ public sealed class ClientConnection : MessagingService
 					
 					else 
 						SendResponse(new MessageResponseLogin(reqLogin.Id, loginBlock.Value));
-					
+				
+					_logger.Information("User {User} attempted login while blocked. Block time left: {Time}", usernameTrimmed, loginBlock.Value);
 					break;
 				}
 				
@@ -357,10 +372,16 @@ public sealed class ClientConnection : MessagingService
 					bool blocked = await _databaseService.UserBadLoginAsync(user.Id);
 
 					if (blocked)
+					{
 						SendResponse(new MessageResponseLogin(reqLogin.Id, SharedDefinitions.BadLoginBlock));
+						_logger.Information("User {User} blocked from login for {Time} time due to multiple failed login attempts.", usernameTrimmed, SharedDefinitions.BadLoginBlock);
+					}
 
 					else
+					{
 						SendResponse(new MessageResponseLogin(reqLogin.Id));
+						_logger.Information("Failed login attempt on user {Username}.", usernameTrimmed);
+					}
 					
 					break;
 				}
@@ -371,6 +392,7 @@ public sealed class ClientConnection : MessagingService
 				SendResponse(new MessageResponseLogin(reqLogin.Id, ActualUser));
 				
 				await _databaseService.UserGoodLoginAsync(ActualUser.Id);
+				_logger.Information("User {Username} has successfully logged in.", usernameTrimmed);
 				break;
 			}
 
@@ -379,16 +401,23 @@ public sealed class ClientConnection : MessagingService
 				if (IsLoggedIn)
 				{
 					_userService.Logout(this);
-					
+
 					if (IsLoggedInAsSubUser)
+					{
+						_logger.Information("User {Actual} successfully logged out from sub-user {SubUser}.", ActualUser!.Username, User!.Username);
 						User = null;
+					}
 					else
+					{
+						_logger.Information("User {Actual} successfully logged out.", ActualUser!.Username);
 						ActualUser = null;
+					}
 					
-					SendResponse(new MessageResponseLogout(reqLogout.Id, MessageResponseLogout.Status.Success, ActualUser));
+					SendResponse(new MessageResponseLogout(reqLogout.Id, MessageResponseLogout.Status.Success, ActualUser!));
 				}
 				else
 				{
+					_logger.Warning("Logout attempt from user when client not logged in.");
 					SendResponse(new MessageResponseLogout(reqLogout.Id, MessageResponseLogout.Status.UserNotLoggedIn));
 				}
 
@@ -401,6 +430,7 @@ public sealed class ClientConnection : MessagingService
 				if (!IsLoggedIn || IsLoggedInAsSubUser || user is not SubUser subUser || subUser.OwnerId != ActualUser!.Id)
 				{
 					SendResponse(new MessageResponseLoginSubUser(reqLoginSubUser.Id));
+					_logger.Warning("Login into sub-user failed attempt. Permission denied. Attempted login into {UserId}.", reqLoginSubUser.UserId);
 					break;
 				}
 
@@ -409,6 +439,7 @@ public sealed class ClientConnection : MessagingService
 				_userService.LoginToSubUser(this);
 				
 				SendResponse(new MessageResponseLoginSubUser(reqLoginSubUser.Id, subUser));
+				_logger.Information("User {Actual} successfully logged into sub-user {SubUser}.", ActualUser.Username, user.Username);
 				break;
 			}
 
@@ -417,18 +448,21 @@ public sealed class ClientConnection : MessagingService
 				if (!IsLoggedIn || IsLoggedInAsSubUser || Common.PasswordStrength(reqCreateSubUser.Password) < 5)
 				{
 					SendResponse(new MessageResponseCreateSubUser(reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Failure));
+					_logger.Warning("Attempted create sub-user on invalid condition. User/client {User}.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
 				if (!Common.IsValidUsername(reqCreateSubUser.Username))
 				{
 					SendResponse(new MessageResponseCreateSubUser(reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.InvalidUsernameSyntax));
+					_logger.Warning("Attempted create sub-user with invalid username syntax. User/client {User}.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
 				if (!Common.IsValidEmail(reqCreateSubUser.Email))
 				{
 					SendResponse(new MessageResponseCreateSubUser(reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.InvalidEmail));
+					_logger.Warning("Attempted create sub-user with invalid email syntax. User/client {User}.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 				
@@ -442,12 +476,16 @@ public sealed class ClientConnection : MessagingService
 					User? user = await _databaseService.GetUserAsync(reqCreateSubUser.Username);
 					if (user is SubUser subUser)
 						_userService.NotifySubUserCreated(subUser);
+					
+					_logger.Information("Created sub-user \"{SubUser}\" - \"{Email}\" under {Username}.", reqCreateSubUser.Username, reqCreateSubUser.Email, ActualUser!.Username);
+					break;
 				}
-				else if (result == ExitCode.UserAlreadyExists)
+				if (result == ExitCode.UserAlreadyExists)
 					SendResponse(new MessageResponseCreateSubUser(reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.UsernameNotAvailable));
 				else
 					SendResponse(new MessageResponseCreateSubUser(reqCreateSubUser.Id, MessageResponseCreateSubUser.Status.Failure));
 				
+				_logger.Information("Failed to create sub-user with username {Username} email {Email}. Error {Error}. By user {User}.", reqCreateSubUser.Username, reqCreateSubUser.Email, result, ActualUser!.Username);
 				break;
 			}
 
@@ -456,6 +494,7 @@ public sealed class ClientConnection : MessagingService
 				if (!IsLoggedIn || reqSetOwnerPermissions.Permissions.AddIncluded() != reqSetOwnerPermissions.Permissions)
 				{
 					SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
+					_logger.Warning("Set owner permissions on user {UserId} failed, Permission denied. By user/client {User}.", reqSetOwnerPermissions.UserId, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -467,6 +506,7 @@ public sealed class ClientConnection : MessagingService
 					    || (subUser.OwnerPermissions & reqSetOwnerPermissions.Permissions) != subUser.OwnerPermissions)
 					{
 						SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
+						_logger.Warning("Removing owner permissions on user {UserId} failed, Permission denied.", reqSetOwnerPermissions.UserId);
 						break;
 					}
 					
@@ -481,6 +521,7 @@ public sealed class ClientConnection : MessagingService
 					    || (reqSetOwnerPermissions.Permissions & subUser.OwnerPermissions) != reqSetOwnerPermissions.Permissions)
 					{
 						SendResponse(new MessageResponseSetOwnerPermissions(reqSetOwnerPermissions.Id, false));
+						_logger.Warning("Grant owner permissions on user {UserId} failed, Permission denied.", reqSetOwnerPermissions.UserId);
 						break;					
 					}
 
@@ -504,7 +545,11 @@ public sealed class ClientConnection : MessagingService
 						ActualUser = subUser;
 
 					_userService.NotifyUserDataChanged(user);
+
+					_logger.Information("Set owner permissions successfull. Set on user {Target} by {Actual}.", user.Username, ActualUser.Username);
 				}
+				else
+					_logger.Warning("Set owner permissions on user ID {UserId} has failed. Error {Error}. By user {User}.", reqSetOwnerPermissions.UserId, result, ActualUser!.Username);
 				
 				break;
 			}
@@ -514,21 +559,29 @@ public sealed class ClientConnection : MessagingService
 				if (!IsLoggedIn || IsLoggedInAsSubUser || Common.PasswordStrength(reqResetPassword.NewPassword) < 5)
 				{
 					SendResponse(new MessageResponseResetPassword(reqResetPassword.Id, MessageResponseResetPassword.Status.Failure));
+					_logger.Warning("Reset password on user {UserId} failed, permission denied.", ActualUser?.Username ?? string.Empty);
 					break;
 				}
 
 				if (!await _databaseService.IsValidLoginAsync(ActionUser!.Username, reqResetPassword.Password))
 				{
 					SendResponse(new MessageResponseResetPassword(reqResetPassword.Id, MessageResponseResetPassword.Status.InvalidPassword));
+					_logger.Warning("Reset password on user {UserId} failed, invalid password.", ActualUser!.Username);
 					break;
 				}
 
 				result = await _databaseService.ResetUserPasswordAsync(ActionUser.Id, reqResetPassword.NewPassword);
-				
+
 				if (result == ExitCode.Success)
+				{
 					SendResponse(new MessageResponseResetPassword(reqResetPassword.Id, MessageResponseResetPassword.Status.Success));
+					_logger.Information("Password reset successfully on user {User}.", ActualUser!.Username);
+				}
 				else
+				{
 					SendResponse(new MessageResponseResetPassword(reqResetPassword.Id, MessageResponseResetPassword.Status.Failure));
+					_logger.Information("Password reset on user {User} has failed. Error {Error}", ActualUser!.Username, result);
+				}
 				
 				break;
 			}
@@ -538,6 +591,7 @@ public sealed class ClientConnection : MessagingService
 				if (!IsLoggedIn)
 				{
 					SendResponse(new MessageResponseListSubUsers(reqListSubUsers.Id, MessageResponseListSubUsers.Status.Failure));
+					_logger.Information("Attempted list sub-users by not logged in client. Connection ID {Id}", ClientId);
 					break;
 				}
 
@@ -545,10 +599,12 @@ public sealed class ClientConnection : MessagingService
 				if (subUsers == null)
 				{
 					SendResponse(new MessageResponseListSubUsers(reqListSubUsers.Id, MessageResponseListSubUsers.Status.Failure));
+					_logger.Warning("List sub-users of user {Action} by {Actual} has failed.", ActionUser.Username, ActualUser!.Username);
 					break;				
 				}
 				
 				SendResponse(new MessageResponseListSubUsers(reqListSubUsers.Id, MessageResponseListSubUsers.Status.Success, subUsers));
+				_logger.Information("Listed sub-users of {Action} by {Actual} successfully.", ActionUser.Username, ActualUser!.Username);
 				break;
 			}
 
@@ -557,6 +613,7 @@ public sealed class ClientConnection : MessagingService
 				if (!HasPermission(UserPermissions.VirtualMachineCreate))
 				{
 					SendResponse(new MessageResponseCreateVm(reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
+					_logger.Warning("Attempt to create VM by user/client {ActualUser} has failed, permission denied.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 			
@@ -567,12 +624,14 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.VmAlreadyExists)
 				{
 					SendResponse(new MessageResponseCreateVm(reqCreateVm.Id, MessageResponseCreateVm.Status.VmAlreadyExists));
+					_logger.Information("VM creation by user {User} has failed. VM already exists.", ActualUser!.Username);
 					break;
 				}
 
 				if (result != ExitCode.Success)
 				{
 					SendResponse(new MessageResponseCreateVm(reqCreateVm.Id, MessageResponseCreateVm.Status.Failure));
+					_logger.Information("VM creation by user {User} has failed. Error {Error}.", ActualUser!.Username, result);
 					break;				
 				}
 
@@ -585,6 +644,7 @@ public sealed class ClientConnection : MessagingService
 					)
 				);
 				
+				_logger.Information("Successfully created VM by user {User}.", ActualUser!.Username);
 				break;
 			}
 
@@ -593,12 +653,14 @@ public sealed class ClientConnection : MessagingService
 				if (!HasPermission(UserPermissions.VirtualMachineDelete) || await _databaseService.GetVmOwnerIdAsync(reqDeleteVm.VmId) != ActionUser!.Id)
 				{
 					SendResponse(new MessageResponseDeleteVm(reqDeleteVm.Id, MessageResponseDeleteVm.Status.Failure));
+					_logger.Warning("Attempt to delete VM {Id} by user/client {ActualUser} has failed, permission denied.", reqDeleteVm.VmId, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
 				if (await _virtualMachineService.GetVmStateAsync(reqDeleteVm.VmId) != VmState.ShutDown)
 				{
 					SendResponse(new MessageResponseDeleteVm(reqDeleteVm.Id, MessageResponseDeleteVm.Status.VirtualMachineIsRunning));
+					_logger.Information("User {Actual} attempted deletion of a running VM. ({Id})", ActualUser!.Username, reqDeleteVm.VmId);
 					break;					
 				}
 
@@ -611,10 +673,12 @@ public sealed class ClientConnection : MessagingService
 				
 					/* Must succeed because the VM exists. */
 					await _databaseService.DeleteVmAsync(reqDeleteVm.VmId);
+					_logger.Information("Successfully deleted VM {VmId}. By user {User}.", reqDeleteVm.VmId, ActualUser!.Username);
 				}
 				else
 				{
 					SendResponse(new MessageResponseDeleteVm(reqDeleteVm.Id, MessageResponseDeleteVm.Status.Failure));
+					_logger.Warning("Failed deleting VM {VmId}. User {User}.", reqDeleteVm.VmId, ActualUser!.Username);
 				}
 				
 				break;
@@ -625,6 +689,7 @@ public sealed class ClientConnection : MessagingService
 				if (!HasPermission(UserPermissions.VirtualMachineList))
 				{
 					SendResponse(new MessageResponseListVms(reqListVms.Id, MessageResponseListVms.Status.Failure));
+					_logger.Warning("Attempt to list VMs by user/client {ActualUser} has failed, permission denied.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 				
@@ -632,10 +697,12 @@ public sealed class ClientConnection : MessagingService
 				if (vms == null)
 				{
 					SendResponse(new MessageResponseListVms(reqListVms.Id, MessageResponseListVms.Status.Failure));
+					_logger.Warning("Could not fetch VMs of user {User}.", ActionUser!.Username);
 					break;
 				}
 				
 				SendResponse(new MessageResponseListVms(reqListVms.Id, MessageResponseListVms.Status.Success, vms));
+				_logger.Information("List VMs successfully. User {ActualUser}", ActualUser!.Username);
 				
 				break;
 			}
@@ -645,12 +712,15 @@ public sealed class ClientConnection : MessagingService
 				if (!HasPermission(UserPermissions.VirtualMachineList))
 				{
 					SendResponse(new MessageResponseCheckVmExist(reqCheckVmExist.Id, false));
+					_logger.Warning("Attempt to check VM ({VM}) exists by user/client {ActualUser} has failed, permission denied.", reqCheckVmExist.Name, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 			
-				SendResponse(new MessageResponseCheckVmExist( reqCheckVmExist.Id, 
+				SendResponse(new MessageResponseCheckVmExist(reqCheckVmExist.Id, 
 					IsLoggedIn && await _virtualMachineService.IsVmExistsAsync(ActionUser!.Id, reqCheckVmExist.Name.Trim()))
 				);
+				
+				_logger.Information("Check VM exists done successfully. By user {User}.", ActualUser!.Username);
 				break;
 			}
 
@@ -659,6 +729,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineUse, reqVmStartup.VmId))
 				{
 					SendResponse(new MessageResponseVmStartup(reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
+					_logger.Warning("Attempt to power on VM {VM} by user/client {ActualUser} has failed, permission denied.", reqVmStartup.VmId, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -670,12 +741,15 @@ public sealed class ClientConnection : MessagingService
 					{
 						SendResponse(new MessageResponseVmStartup(reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
 						await _virtualMachineService.PowerOffAndDestroyOnTimeoutAsync(reqVmStartup.VmId);
+						_logger.Warning("VM {VM} descriptor fetch failed.", reqVmStartup.VmId);
 						break;
 					}
 					
 					SendResponse(new MessageResponseVmStartup(reqVmStartup.Id, MessageResponseVmStartup.Status.Success));
+					_logger.Information("VM {VM} powered on successfully. By user {User}.", reqVmStartup.VmId, ActualUser!.Username);
+					break;
 				} 
-				else if (result == ExitCode.VmAlreadyRunning)
+				if (result == ExitCode.VmAlreadyRunning)
 					SendResponse(new MessageResponseVmStartup(reqVmStartup.Id, MessageResponseVmStartup.Status.VmAlreadyRunning));
 				
 				else if (result == ExitCode.InsufficientMemory)
@@ -683,6 +757,8 @@ public sealed class ClientConnection : MessagingService
 				
 				else
 					SendResponse(new MessageResponseVmStartup(reqVmStartup.Id, MessageResponseVmStartup.Status.Failure));
+			
+				_logger.Information("Failed power on VM {VM}. By user {User}. Error {Error}.", reqVmStartup.VmId, ActualUser!.Username, result);
 				
 				break;
 			}
@@ -692,6 +768,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineUse, reqVmShutdown.VmId))
 				{
 					SendResponse(new MessageResponseVmShutdown(reqVmShutdown.Id, MessageResponseVmShutdown.Status.Failure));
+					_logger.Warning("Attempt to power off VM {VM} by user/client {ActualUser} has failed, permission denied.", reqVmShutdown.VmId, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 				
@@ -708,8 +785,9 @@ public sealed class ClientConnection : MessagingService
 						SendResponse(new MessageResponseVmShutdown(reqVmShutdown.Id, MessageResponseVmShutdown.Status.Failure));
 				}
 				else
-					SendResponse(new  MessageResponseVmShutdown(reqVmShutdown.Id, MessageResponseVmShutdown.Status.Success));
-				
+					SendResponse(new MessageResponseVmShutdown(reqVmShutdown.Id, MessageResponseVmShutdown.Status.Success));
+		
+				_logger.Information("Sent shutdown signal to VM {VM}. By user {User}.", reqVmShutdown.VmId, ActualUser!.Username);
 				break;
 			}
 
@@ -718,6 +796,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineUse, reqVmForceOff.VmId))
 				{
 					SendResponse(new MessageResponseVmForceOff(reqVmForceOff.Id, MessageResponseVmForceOff.Status.Failure));
+					_logger.Warning("Attempt to force off VM {VM} by user/client {ActualUser} has failed, permission denied.", reqVmForceOff.VmId, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -725,15 +804,17 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.Success)
 				{
 					SendResponse(new MessageResponseVmForceOff(reqVmForceOff.Id, MessageResponseVmForceOff.Status.Success));
+					_logger.Information("Successfully forced off VM {VM}. By user {User}", reqVmForceOff.VmId, ActualUser!.Username);
+					break;
 				}
-				else if (result == ExitCode.VmIsShutDown)
-				{
+			
+				if (result == ExitCode.VmIsShutDown)
 					SendResponse(new MessageResponseVmForceOff(reqVmForceOff.Id, MessageResponseVmForceOff.Status.VmIsShutDown));
-				}
+				
 				else
-				{
 					SendResponse(new MessageResponseVmForceOff(reqVmForceOff.Id, MessageResponseVmForceOff.Status.Failure));
-				}
+			
+				_logger.Information("Failed force off VM {VM} by user {User}. Error {Error}.", reqVmForceOff.VmId, ActualUser!.Username, result);
 				
 				break;
 			}
@@ -743,6 +824,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineWatch, reqVmStreamStart.VmId))
 				{
 					SendResponse(new MessageResponseVmStreamStart(reqVmStreamStart.Id, MessageResponseVmStreamStart.Status.Failure));
+					_logger.Warning("Attempt to start stream of VM {VM} by user/client {ActualUser} has failed, permission denied.", reqVmStreamStart.VmId, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -761,7 +843,9 @@ public sealed class ClientConnection : MessagingService
 						else
 						{
 							SendResponse(new MessageResponseVmStreamStart(reqVmStreamStart.Id,
-								MessageResponseVmStreamStart.Status.Failure));			
+								MessageResponseVmStreamStart.Status.Failure));
+							
+							_logger.Warning("Could not get VM {VM} stream pixel format. By user {User}.", reqVmStreamStart.VmId, ActualUser!.Username);
 						}
 						
 						break;
@@ -782,6 +866,7 @@ public sealed class ClientConnection : MessagingService
 				{
 					SendResponse(new MessageResponseVmStreamStart(reqVmStreamStart.Id, 
 						MessageResponseVmStreamStart.Status.Failure));
+					_logger.Warning("Could not subscribe to VM {VM} screen stream. By user {User}.", reqVmStreamStart.VmId, ActualUser!.Username);
 					break;
 				}
 				
@@ -793,6 +878,7 @@ public sealed class ClientConnection : MessagingService
 					if (result != ExitCode.Success)
 					{
 						SendResponse(new MessageResponseVmStreamStart(reqVmStreamStart.Id, MessageResponseVmStreamStart.Status.Failure));
+						_logger.Warning("Could not subscribe to VM {VM} audio stream. By user {User}.", reqVmStreamStart.VmId, ActualUser!.Username);
 
 						_virtualMachineService.UnsubscribeFromVmNewFrameReceived(reqVmStreamStart.VmId, OnVmNewFrame);
 						break;
@@ -806,6 +892,7 @@ public sealed class ClientConnection : MessagingService
 					
 				_streamVmId = reqVmStreamStart.VmId;
 				_virtualMachineService.EnqueueGetFullFrame(reqVmStreamStart.VmId);
+				_logger.Information("Successfully started VM {VM} stream. By user {User}.", reqVmStreamStart.VmId, ActualUser!.Username);
 				break;
 			}
 
@@ -814,12 +901,14 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionVmOwnerAsync(UserPermissions.VirtualMachineWatch, reqVmStreamStop.VmId))
 				{
 					SendResponse(new MessageResponseVmStreamStop(reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.Failure));
+					_logger.Warning("Attempt to stop stream of VM {VM} by user/client {ActualUser} has failed, permission denied.", reqVmStreamStop.VmId, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
 				if (_streamVmId == -1)
 				{
 					SendResponse(new MessageResponseVmStreamStop(reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.StreamNotRunning));
+					_logger.Warning("Attempt to stop stream of VM {VM} by user {ActualUser} has failed, stream not running.", reqVmStreamStop.VmId, ActualUser!.Username);
 					break;
 				}
 				
@@ -829,15 +918,18 @@ public sealed class ClientConnection : MessagingService
 				{
 					SendResponse(new MessageResponseVmStreamStop(reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.Success));
 					_streamVmId = -1;
+					_logger.Information("Successfully stopped stream of VM {VM}. By user {ActualUser}.", reqVmStreamStop.VmId, ActualUser!.Username);
 				} 
 				else if (result == ExitCode.VmScreenStreamNotRunning)	/* Should not happen. Doing it for safety. */
 				{
 					SendResponse(new MessageResponseVmStreamStop(reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.StreamNotRunning));
 					_streamVmId = -1;
+					_logger.Warning("Attempt to stop stream of VM {VM} by user {ActualUser} has failed, stream not running.", reqVmStreamStop.VmId, ActualUser!.Username);
 				}
 				else
 				{
 					SendResponse(new MessageResponseVmStreamStop(reqVmStreamStop.Id, MessageResponseVmStreamStop.Status.Failure));
+					_logger.Warning("Attempt to stop stream of VM {VM} by user {ActualUser} has failed, error {Error}", reqVmStreamStop.VmId, ActualUser!.Username, result);
 				}
 				break;
 			}
@@ -847,6 +939,7 @@ public sealed class ClientConnection : MessagingService
 				if (!HasPermission(UserPermissions.DriveCreate))
 				{
 					SendResponse(new MessageResponseCreateDriveOs(reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.Failure));
+					_logger.Warning("Attempt to create OS drive by user/client {ActualUser} has failed, permission denied.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 				
@@ -857,6 +950,7 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.DriveAlreadyExists)
 				{
 					SendResponse(new MessageResponseCreateDriveOs( reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.DriveAlreadyExists));
+					_logger.Information("Attempt to create OS drive by user {User} failed, drive already exists.", ActualUser!.Username);
 					break;			
 				}
 				if (result == ExitCode.Success)
@@ -877,11 +971,13 @@ public sealed class ClientConnection : MessagingService
 							_driveService.GetDrivePartitionTableType(driveId)
 						)
 					);
-					
+				
+					_logger.Information("Successfully created OS drive. By user {User}.", ActualUser!.Username);
 					break;				
 				}
 
 				SendResponse(new MessageResponseCreateDriveOs(reqCreateDrive.Id, MessageResponseCreateDriveOs.Status.Failure));
+				_logger.Warning("Failed creating OS drive, by user {User}. Error {Error}.", ActualUser!.Username, result);
 				break;
 			}
 
@@ -890,6 +986,7 @@ public sealed class ClientConnection : MessagingService
 				if (!HasPermission(UserPermissions.DriveCreate))
 				{
 					SendResponse(new MessageResponseCreateDriveFs(reqCreateDriveFs.Id, MessageResponseCreateDriveFs.Status.Failure));
+					_logger.Warning("Attempt to create filesystem drive by user/client {ActualUser} has failed, permission denied.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -902,12 +999,15 @@ public sealed class ClientConnection : MessagingService
 					
 					DriveGeneralDescriptor descriptor = (await _driveService.GetDriveGeneralDescriptorAsync(ActionUser.Id, driveName))!;
 					await _userService.NotifyDriveCreatedAsync(descriptor);
+					_logger.Information("Successfully created filesystem drive. By user {User}.", ActualUser!.Username);
+					break;
 				}
-				else if (result == ExitCode.DriveAlreadyExists)
+				if (result == ExitCode.DriveAlreadyExists)
 					SendResponse(new MessageResponseCreateDriveFs(reqCreateDriveFs.Id, MessageResponseCreateDriveFs.Status.DriveAlreadyExists));
 				else
 					SendResponse(new MessageResponseCreateDriveFs(reqCreateDriveFs.Id, MessageResponseCreateDriveFs.Status.Failure));
 				
+				_logger.Warning("Failed creating filesystem drive, by user {User}. Error {Error}.", ActualUser!.Username, result);
 				break;
 			}
 
@@ -916,6 +1016,7 @@ public sealed class ClientConnection : MessagingService
 				if (!HasPermission(UserPermissions.DriveCreate))
 				{
 					SendResponse(new MessageResponseCreateDriveFromImage(reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.Failure));
+					_logger.Warning("Attempt to create drive by disk image by user/client {ActualUser} has failed, permission denied.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -924,11 +1025,13 @@ public sealed class ClientConnection : MessagingService
 				if (result == ExitCode.DriveAlreadyExists)
 				{
 					SendResponse(new MessageResponseCreateDriveFromImage(reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.DriveAlreadyExists));
-					break;				
+					_logger.Information("Failed creating drive from disk image. By user {User}. Drive already exists.", ActualUser!.Username);
+					break;
 				}
 				if (result != ExitCode.Success)
 				{
 					SendResponse(new MessageResponseCreateDriveFromImage(reqCreateDrive.Id, MessageResponseCreateDriveFromImage.Status.DriveAlreadyExists));
+					_logger.Warning("Failed creating drive from disk image. By user {User}. Error {Error}.", ActualUser!.Username, result);
 					break;								
 				}
 
@@ -946,10 +1049,19 @@ public sealed class ClientConnection : MessagingService
 				{
 					DriveGeneralDescriptor? descriptor = await _driveService.GetDriveGeneralDescriptorAsync(ActionUser.Id, name);
 					if (descriptor != null)
+					{
 						await _userService.NotifyDriveCreatedAsync(descriptor);
+						_logger.Information("Successfully created disk image drive. By user {User}.", ActualUser!.Username);
+					}
+
+					else
+						_logger.Warning("Failed fetching drive descriptor after creation by disk image. By user {User}.", ActualUser!.Username);
 				}
 				else
+				{
 					await _driveService.DeleteDriveAsync(driveId);
+					_logger.Warning("Failed downloading drive disk image. By user {User}.", ActualUser!.Username);
+				}
 				
 				break;
 			}
@@ -959,6 +1071,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveConnect, reqConnectDrive.DriveId))
 				{
 					SendResponse(new MessageResponseConnectDrive(reqConnectDrive.Id, MessageResponseConnectDrive.Status.Failure));
+					_logger.Warning("Attempt to connect drive {Drive} to VM {VM} by user/client {ActualUser} has failed, permission denied.", reqConnectDrive.DriveId, reqConnectDrive.VmId, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -968,14 +1081,17 @@ public sealed class ClientConnection : MessagingService
 				{
 					SendResponse(new MessageResponseConnectDrive(reqConnectDrive.Id, MessageResponseConnectDrive.Status.Success));
 					await _userService.NotifyDriveConnected(reqConnectDrive.DriveId, reqConnectDrive.VmId);
+					_logger.Information("Successfully connected drive {Drive} to VM {VM}. By user {User}.", reqConnectDrive.DriveId, reqConnectDrive.VmId, ActualUser!.Username);
 				}
 				else if (result == ExitCode.DriveConnectionAlreadyExists)
 				{
 					SendResponse(new MessageResponseConnectDrive(reqConnectDrive.Id, MessageResponseConnectDrive.Status.AlreadyConnected));
+					_logger.Warning("Failed connecting drive {Drive} to VM {VM}. By user {User}. Drive already connected.", reqConnectDrive.DriveId, reqConnectDrive.VmId, ActualUser!.Username);
 				}
 				else
 				{
 					SendResponse(new MessageResponseConnectDrive(reqConnectDrive.Id, MessageResponseConnectDrive.Status.Failure));
+					_logger.Warning("Failed connecting drive {Drive} to VM {VM}. By user {User}. Error {Error}.", reqConnectDrive.DriveId, reqConnectDrive.VmId, ActualUser!.Username, result);
 				}
 				
 				break;
@@ -986,6 +1102,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveDisconnect, reqDisconnectDrive.DriveId))
 				{
 					SendResponse(new MessageResponseDisconnectDrive(reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.Failure));
+					_logger.Warning("Attempt to disconnect drive {Drive} from VM {VM} by user/client {ActualUser} has failed, permission denied.", reqDisconnectDrive.DriveId, reqDisconnectDrive.VmId, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -995,11 +1112,18 @@ public sealed class ClientConnection : MessagingService
 				{
 					SendResponse(new MessageResponseDisconnectDrive(reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.Success));
 					await _userService.NotifyDriveDisconnectedAsync(reqDisconnectDrive.DriveId, reqDisconnectDrive.VmId);
+					_logger.Information("Successfully disconnected drive {Drive} from VM {VM}. By user {User}.", reqDisconnectDrive.DriveId, reqDisconnectDrive.VmId, ActualUser!.Username);
 				}
 				else if (result == ExitCode.DriveConnectionAlreadyExists)
+				{
 					SendResponse(new MessageResponseDisconnectDrive(reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.NotConnected));
+					_logger.Warning("Failed disconnecting drive {Drive} from VM {VM}. By user {User}. Drive not connected.", reqDisconnectDrive.DriveId, reqDisconnectDrive.VmId, ActualUser!.Username);
+				}
 				else
+				{
 					SendResponse(new MessageResponseDisconnectDrive(reqDisconnectDrive.Id, MessageResponseDisconnectDrive.Status.Failure));
+					_logger.Warning("Failed disconnecting drive {Drive} from VM {VM}. By user {User}. Error {Error}.", reqDisconnectDrive.DriveId, reqDisconnectDrive.VmId, ActualUser!.Username, result);
+				}
 				
 				break;
 			}
@@ -1009,6 +1133,7 @@ public sealed class ClientConnection : MessagingService
 				if (!HasPermission(UserPermissions.DriveConnectionList))
 				{
 					SendResponse(new MessageResponseListDriveConnections(reqListDriveConnections.Id, MessageResponseListDriveConnections.Status.Failure));
+					_logger.Warning("Attempt to list drive connections by user/client {ActualUser} has failed, permission denied.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 				
@@ -1017,12 +1142,15 @@ public sealed class ClientConnection : MessagingService
 				{
 					SendResponse(new MessageResponseListDriveConnections(reqListDriveConnections.Id, 
 						MessageResponseListDriveConnections.Status.Failure));
+					
+					_logger.Warning("Failed fetching drive connections of user {User}. By user {Actual}.", ActionUser!.Username, ActualUser!.Username);
 					break;				
 				}
 			
 				SendResponse(new MessageResponseListDriveConnections(reqListDriveConnections.Id, 
 					MessageResponseListDriveConnections.Status.Success, connections));
-				
+			
+				_logger.Information("List drive connections successfully done. By user {User}.", ActualUser!.Username);
 				break;
 			}
 			
@@ -1031,6 +1159,7 @@ public sealed class ClientConnection : MessagingService
 				if (!HasPermission(UserPermissions.DriveList))
 				{
 					SendResponse(new MessageResponseListDrives(reqListDrives.Id, MessageResponseListDrives.Status.Failure));
+					_logger.Warning("Attempt to list drives by user/client {ActualUser} has failed, permission denied.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 				
@@ -1038,11 +1167,13 @@ public sealed class ClientConnection : MessagingService
 				if (descriptors == null)
 				{
 					SendResponse(new MessageResponseListDrives(reqListDrives.Id, MessageResponseListDrives.Status.Failure));
+					_logger.Warning("Failed fetching drives of user {User}. By user {Actual}.", ActionUser!.Username, ActualUser!.Username);
 					break;
 				}
 				
 				SendResponse(new MessageResponseListDrives(reqListDrives.Id, MessageResponseListDrives.Status.Success, descriptors));
-
+				
+				_logger.Information("List drives successfully done. By user {User}.", ActualUser!.Username);
 				break;
 			}
 
@@ -1051,15 +1182,21 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemList, reqListPathItems.DriveId))
 				{
 					SendResponse(new MessageResponseListPathItems(reqListPathItems.Id, MessageResponseListPathItems.Status.Failure));
+					_logger.Warning("Attempt to list path items by user/client {ActualUser} has failed, permission denied.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 				
 				PathItem[]? items = _driveService.ListItems(reqListPathItems.DriveId, reqListPathItems.Path);
 				if (items == null)
+				{
 					SendResponse(new MessageResponseListPathItems(reqListPathItems.Id, MessageResponseListPathItems.Status.InvalidPath));
-				
+					_logger.Warning("Failed fetching path items on drive {Drive} on path \"{Path}\". By user {Actual}.", reqListPathItems.DriveId, reqListPathItems.Path, ActualUser!.Username);
+				}
 				else
+				{
 					SendResponse(new MessageResponseListPathItems(reqListPathItems.Id, items));
+					_logger.Information("Successfully listed path items. By user {User}.", ActualUser!.Username);
+				}
 				
 				break;
 			}
@@ -1069,6 +1206,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemDownload, reqDownloadItem.DriveId))
 				{
 					SendResponse(new MessageResponseDownloadItem(reqDownloadItem.Id, MessageResponseDownloadItem.Status.Failure));
+					_logger.Warning("Attempt to download item by user/client {ActualUser} has failed, permission denied.", ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -1076,6 +1214,7 @@ public sealed class ClientConnection : MessagingService
 				if (stream == null)
 				{
 					SendResponse(new MessageResponseDownloadItem(reqDownloadItem.Id, MessageResponseDownloadItem.Status.NoSuchItem));
+					_logger.Warning("Failed fetching item stream of item on drive {Drive} on path \"{Path}\". By user {Actual}.", reqDownloadItem.DriveId, reqDownloadItem.Path, ActualUser!.Username);
 					break;
 				}
 			
@@ -1083,6 +1222,8 @@ public sealed class ClientConnection : MessagingService
 				SendResponse(new MessageResponseDownloadItem(reqDownloadItem.Id, 
 					MessageResponseDownloadItem.Status.Success, streamGuid, (ulong)stream.Stream.Length)
 				);
+				
+				_logger.Information("Successfully started upload of item to user {User}.", ActualUser!.Username);
 
 				await Task.Delay(500);
 				
@@ -1101,6 +1242,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemCreate, reqUploadFile.DriveId))
 				{
 					SendResponse(new MessageResponseUploadFile(reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
+					_logger.Warning("Attempt to upload item into drive {Drive} at path \"{Path}\" by user/client {ActualUser} has failed, permission denied.", reqUploadFile.DriveId, reqUploadFile.Path, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 
@@ -1109,6 +1251,7 @@ public sealed class ClientConnection : MessagingService
 				if (pathParts.Length == 0 || string.IsNullOrEmpty(pathParts[0]))
 				{
 					SendResponse(new MessageResponseUploadFile(reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
+					_logger.Information("Failed file upload into drive {Drive} to path \"{Path}\". Invalid path syntax. By user {User}.", reqUploadFile.DriveId, reqUploadFile.Path, ActualUser!.Username);
 					break;
 				}
 				
@@ -1116,6 +1259,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await _driveService.ItemExistsAsync(reqUploadFile.DriveId, fileParentDirectory))
 				{
 					SendResponse(new MessageResponseUploadFile(reqUploadFile.Id, MessageResponseUploadFile.Status.InvalidPath));
+					_logger.Information("Failed file upload into drive {Drive} to path \"{Path}\". Path does not exist. By user {User}.", reqUploadFile.DriveId, reqUploadFile.Path, ActualUser!.Username);
 					break;
 				}
 				
@@ -1135,6 +1279,7 @@ public sealed class ClientConnection : MessagingService
 				if (stream == null)
 				{
 					SendResponse(new MessageResponseUploadFile(reqUploadFile.Id, MessageResponseUploadFile.Status.Failure));
+					_logger.Warning("Failed creating item in drive {Drive} on path \"{Path}\". By user {User}.", reqUploadFile.DriveId, reqUploadFile.Path, ActualUser!.Username);
 					break;
 				}
 
@@ -1143,6 +1288,7 @@ public sealed class ClientConnection : MessagingService
 					SendResponse(new MessageResponseUploadFile(reqUploadFile.Id, MessageResponseUploadFile.Status.FileTooLarge));
 					stream.Dispose();
 					await _driveService.DeleteItemAsync(reqUploadFile.DriveId, reqUploadFile.Path);
+					_logger.Information("Failed file upload into drive {Drive} to path \"{Path}\". File is too large. By user {User}.", reqUploadFile.DriveId, reqUploadFile.Path, ActualUser!.Username);
 					break;
 				}
 
@@ -1158,10 +1304,12 @@ public sealed class ClientConnection : MessagingService
 				if (handler.HasFailed)
 				{
 					await _driveService.DeleteItemAsync(reqUploadFile.DriveId, path);
+					_logger.Warning("Failed file upload into drive {Drive} to path \"{Path}\". Upload failed. By user {User}.", reqUploadFile.DriveId, reqUploadFile.Path, ActualUser!.Username);
 					break;
 				}
 
 				await _userService.NotifyItemCreatedAsync(reqUploadFile.DriveId, trimmedPath);
+				_logger.Information("Upload file into drive successfully done. By user {User}. ", ActualUser!.Username);
 				break;
 			}
 
@@ -1170,6 +1318,7 @@ public sealed class ClientConnection : MessagingService
 				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemCreate, reqCreateDirectory.DriveId))
 				{
 					SendResponse(new MessageResponseCreateDirectory(reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.Failure));
+					_logger.Warning("Attempt to create directory in drive {Drive} at \"{Path}\" by user/client {ActualUser} has failed, permission denied.", reqCreateDirectory.DriveId, reqCreateDirectory.Path, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 				
@@ -1178,22 +1327,28 @@ public sealed class ClientConnection : MessagingService
 				{
 					SendResponse(new MessageResponseCreateDirectory(reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.Success));
 					await _userService.NotifyItemCreatedAsync(reqCreateDirectory.DriveId, reqCreateDirectory.Path);
+					_logger.Information("Created directory successfully in drive. By user {User}.", ActualUser!.Username);
+					break;
 				}
 				
-				else if (result == ExitCode.InvalidPath)
+				if (result == ExitCode.InvalidPath)
 					SendResponse(new MessageResponseCreateDirectory(reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.InvalidPath));
 				
 				else
 					SendResponse(new MessageResponseCreateDirectory(reqCreateDirectory.Id, MessageResponseCreateDirectory.Status.Failure));
+				
+				_logger.Information("Failed creating directory in drive {Drive} at path \"{Path}\". Error {Error}. By user {User}.", reqCreateDirectory.DriveId, reqCreateDirectory.Path, result, ActualUser!.Username);
 					
 				break;
 			}
 
 			case MessageRequestDeleteItem reqDeleteItem:
 			{
-				if (!await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemDelete, reqDeleteItem.DriveId))
+				if ((!Common.IsPathToDrive(reqDeleteItem.Path) && !await HasPermissionDriveOwnerAsync(UserPermissions.DriveItemDelete, reqDeleteItem.DriveId))
+				    || (Common.IsPathToDrive(reqDeleteItem.Path) && !await HasPermissionDriveOwnerAsync(UserPermissions.DriveDelete, reqDeleteItem.DriveId)))
 				{
 					SendResponse(new MessageResponseDeleteItem(reqDeleteItem.Id, MessageResponseDeleteItem.Status.Failure));
+					_logger.Warning("Attempt to delete file in drive {Drive} at \"{Path}\" by user/client {ActualUser} has failed, permission denied.", reqDeleteItem.DriveId, reqDeleteItem.Path, ActualUser?.Username ?? ClientId.ToString());
 					break;
 				}
 				
@@ -1202,14 +1357,19 @@ public sealed class ClientConnection : MessagingService
 				result = await _driveService.DeleteItemAsync(reqDeleteItem.DriveId, reqDeleteItem.Path);
 
 				if (result == ExitCode.Success)
+				{
 					SendResponse(new MessageResponseDeleteItem(reqDeleteItem.Id, MessageResponseDeleteItem.Status.Success));
+					_logger.Information("Deleted item successfully. By user {User}.", ActualUser!.Username);
+					break;
+				}
 				
-				else if (result == ExitCode.InvalidPath)
+				if (result == ExitCode.InvalidPath)
 					SendResponse(new MessageResponseDeleteItem(reqDeleteItem.Id, MessageResponseDeleteItem.Status.NoSuchItem));
 				
 				else
 					SendResponse(new MessageResponseDeleteItem(reqDeleteItem.Id, MessageResponseDeleteItem.Status.Failure));
-				
+
+				_logger.Warning("Failed to delete file in drive {Drive} at \"{Path}\". Error {Error}. By user {User}.", reqDeleteItem.DriveId, reqDeleteItem.Path, result, ActualUser!.Username);
 				break;
 			}
 
@@ -1253,13 +1413,15 @@ public sealed class ClientConnection : MessagingService
 
 				IPAddress remoteIp = ((IPEndPoint)TcpSocket!.RemoteEndPoint!).Address;
 				IPEndPoint udpRemote = new IPEndPoint(remoteIp, infoIdentifyUdp.Port);
-
+				
 				try
 				{
 					await UdpSocket.ConnectAsync(udpRemote);
+					_logger.Information("Client at {IP} identified UDP port {Port}. Connected successfully.", remoteIp, infoIdentifyUdp.Port);
 				}
 				catch (Exception)
 				{
+					_logger.Information("Failed connecting to client UDP port. {IP}:{Port}.", remoteIp, infoIdentifyUdp.Port);
 					break;
 				}
 				
