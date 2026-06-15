@@ -174,6 +174,10 @@ public sealed class ClientConnection : MessagingService
 		StartTcp();
 
 		ResetUdpCrypto();
+
+		IPEndPoint udpClient = (IPEndPoint)(await UdpSocket!.ReceiveFromAsync(new byte[1200], new IPEndPoint(IPAddress.Any, 0))).RemoteEndPoint;
+		await UdpSocket.ConnectAsync(udpClient);
+		StartUdp();
 	}
 	
 	/// <summary>
@@ -1408,6 +1412,7 @@ public sealed class ClientConnection : MessagingService
 		{
 			case MessageInfoIdentifyUdpPort infoIdentifyUdp:
 			{
+				break;
 				if (IsUdpMessagingRunning || UdpSocket!.RemoteEndPoint != null)
 					break;
 

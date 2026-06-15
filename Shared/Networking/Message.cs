@@ -41,7 +41,7 @@ public interface IMessage
 	{
 		try
 		{
-			return MessagePackSerializer.Deserialize<Message>(bytes, MessagePackSerializerOptions.Standard);
+			return MessagePackSerializer.Deserialize<Message>(bytes, MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block));
 		}
 		catch (Exception)
 		{
@@ -164,7 +164,7 @@ public abstract class Message : IMessage
 	{
 		try
 		{
-			return MessagePackSerializer.Serialize(this, MessagePackSerializerOptions.Standard);	
+			return MessagePackSerializer.Serialize(this, MessagePackSerializerOptions.Standard.WithCompression(MessagePackCompression.Lz4Block));	
 		}
 		catch (Exception)
 		{

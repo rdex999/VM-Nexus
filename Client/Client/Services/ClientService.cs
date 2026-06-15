@@ -1211,6 +1211,12 @@ public class ClientService : MessagingService
 		
 		switch (info)
 		{
+			case MessageInfoCryptoUdp:
+			{
+				/* Just send a UDP packet so the server knows client NAT UDP port. */
+				SendInfo(new MessageInfoVmAudioPacket(1, [1]));
+				break;
+			}
 			case MessageInfoUserDeleted infoUserDeleted:
 			{
 				UserDeleted?.Invoke(this, infoUserDeleted.UserId);
