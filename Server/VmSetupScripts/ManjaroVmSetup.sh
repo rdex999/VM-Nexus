@@ -59,14 +59,10 @@ then
 	exit 7
 fi
 
-if ! userdel --remove --force $setup_user_username
-then
-	echo -e "\nDeleting $setup_user_username has failed. Quiting."
-	userdel -r "$new_username"
-	exit 8
-fi
-
 echo -e "\nThe new user was created successfully!"
-echo -e "The system will now reboot, after that tou may now log in as the new user."
+echo -e "The system will reboot shortly. You may log in as '$new_username' after restart."
+
+userdel --remove --force $setup_user_username
+wait
 sleep 3
 reboot
