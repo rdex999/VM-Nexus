@@ -10,7 +10,7 @@ public static class SharedDefinitions
 
 	public const int MaxUdpMessageSize = 150 * 1024 * 1024;
 	
-	public const int MessageTimeoutMilliseconds = 3 * 60 * 1000;
+	public const int MessageTimeoutMilliseconds = 10 * 60 * 1000;
 	public const int ConnectionDeniedRetryTimeout = 4000;
 
 	public const int CredentialsMaxLength = 64;
